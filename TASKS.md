@@ -1,0 +1,275 @@
+# Better Todo Implementation Tasks
+
+A real-time markdown todo app with Notion-style input, daily notes, and Convex backend.
+
+## Completed Tasks
+
+- [x] Set up React 18 with TypeScript and Vite
+- [x] Configure Convex backend with real-time database
+- [x] Implement database schema (todos, notes, archivedDates, dateLabels tables)
+- [x] Create TodoItem component with markdown rendering
+- [x] Create TodoList component with Notion-style inline input
+- [x] Add drag and drop functionality using @dnd-kit
+- [x] Implement date-based organization system
+- [x] Build resizable sidebar (200px - 500px)
+- [x] Add sidebar collapse/expand functionality
+- [x] Create dark theme (Sublime Text style)
+- [x] Create light theme (Apple Notes style)
+- [x] Implement theme switching with localStorage persistence
+- [x] Add auto-archive on todo completion
+- [x] Build ArchiveSection component
+- [x] Add three-dot menu for moving todos between dates
+- [x] Implement copy todos to Tomorrow/Previous/Next/Custom date
+- [x] Add NotesSection with Edit/Preview tabs
+- [x] Implement markdown support with syntax highlighting
+- [x] Add multi-line input support (Enter for new lines, Shift+Enter to create)
+- [x] Create mobile-optimized UI with auto-collapse sidebar
+- [x] Add mobile overlay for sidebar
+- [x] Implement paste detection for markdown lists
+- [x] Add custom date labels feature
+- [x] Build line numbers in notes section
+- [x] Create bulk actions (Archive All/Delete All) for todos
+- [x] Add delete controls for archived todos
+- [x] Implement custom ConfirmDialog component
+- [x] Build full-text search across todos and notes
+- [x] Add keyboard shortcuts (Cmd/Ctrl+K for search)
+- [x] Create SearchModal component
+- [x] Add mobile-friendly add button ("+") for touch devices
+- [x] Implement archive date functionality
+- [x] Add multiple notes per date with drag-and-drop reordering
+- [x] Configure WorkOS AuthKit integration (ready to enable)
+- [x] Add search indexes to schema for efficient full-text search
+- [x] Implement local state with debouncing for notes typing
+- [x] Add keyboard shortcuts for delete confirmations (Enter/Escape)
+- [x] Create favicon and social meta tags
+- [x] Add custom scrollbar styling for sidebar
+- [x] Remove focus rings for clean minimal design
+- [x] Enable native spell check, disable Grammarly
+- [x] Implement CSS custom properties for font sizes
+- [x] Add color system (mint green for positive, soft red for destructive)
+- [x] Create comprehensive documentation (README, QUICKSTART, GETTING_STARTED)
+
+## In Progress Tasks
+
+- [ ] create open graph images
+- [ ] User authentication with WorkOS AuthKit
+- [ ] User-specific data isolation
+
+## Future Tasks
+
+### Authentication
+
+- [ ] Enable WorkOS AuthKit authentication flow
+- [ ] Add user profile management
+- [ ] Implement logout functionality
+- [ ] Add user-specific queries and mutations
+- [ ] Update schema to include userId fields
+
+### Collaboration Features
+
+- [ ] Share todos with other users
+- [ ] Real-time collaboration indicators
+- [ ] Comments on todos
+- [ ] Mentions system (@username)
+
+### Advanced Todo Features
+
+- [ ] Recurring tasks (daily, weekly, monthly)
+- [ ] Due date reminders
+- [ ] Priority levels (high, medium, low)
+- [ ] Tags/categories for todos
+- [ ] Subtasks within todos
+- [ ] Time tracking for todos
+- [ ] Todo templates
+
+### Notes Enhancements
+
+- [ ] Rich text editor for notes
+- [ ] Attach files/images to notes
+- [ ] Export notes as PDF/Markdown
+- [ ] Notes templates
+- [ ] Version history for notes
+
+### Search and Filter
+
+- [ ] Advanced filters (by status, date range, tags)
+- [ ] Save search queries
+- [ ] Search within specific date ranges
+- [ ] Filter by priority or tags
+
+### Calendar and Views
+
+- [ ] Calendar view for todos
+- [ ] Week view
+- [ ] Month view
+- [ ] Gantt chart for project planning
+- [ ] Kanban board view
+
+### Data Management
+
+- [ ] Export all data as JSON
+- [ ] Import from other todo apps
+- [ ] Bulk edit operations
+- [ ] Undo/redo functionality
+- [ ] Data backup and restore
+
+### Integrations
+
+- [ ] Email integration (send todos via email)
+- [ ] Calendar sync (Google Calendar, Apple Calendar)
+- [ ] Slack notifications
+- [ ] GitHub issues integration
+- [ ] API for third-party integrations
+
+### Performance and PWA
+
+- [ ] Progressive Web App (PWA) support
+- [ ] Offline mode with sync
+- [ ] Push notifications for reminders
+- [ ] Install as standalone app
+
+### Analytics and Insights
+
+- [ ] Productivity dashboard
+- [ ] Completion rate statistics
+- [ ] Time spent on tasks
+- [ ] Weekly/monthly reports
+- [ ] Streaks and achievements
+
+### Accessibility
+
+- [ ] Screen reader optimization
+- [ ] Keyboard-only navigation
+- [ ] High contrast mode
+- [ ] Font size adjustments
+- [ ] ARIA labels and roles
+
+## Implementation Plan
+
+### Current Architecture
+
+The application is built on a modern, real-time architecture:
+
+**Frontend:**
+
+- React 18 with TypeScript for type safety
+- Vite for fast development and building
+- Custom CSS with CSS variables for theming
+- Component-based architecture with context for state management
+
+**Backend:**
+
+- Convex for real-time database and backend functions
+- File-based routing for API organization
+- Automatic type generation for end-to-end type safety
+- Search indexes for full-text search
+
+**Key Technical Decisions:**
+
+- Notion-style inline input for better UX
+- Markdown support for rich content
+- Real-time sync for multi-device use
+- Mobile-first responsive design
+- Custom confirmation dialogs instead of browser defaults
+
+### Relevant Files
+
+- `src/App.tsx` - Main app layout and state management
+- `src/components/TodoItem.tsx` - Individual todo with markdown and actions
+- `src/components/TodoList.tsx` - Todo list with inline input and DnD
+- `src/components/Sidebar.tsx` - Resizable sidebar with date navigation
+- `src/components/NotesSection.tsx` - Daily notes with Edit/Preview tabs
+- `src/components/ArchiveSection.tsx` - Collapsed archive with bulk actions
+- `src/components/SearchModal.tsx` - Full-text search modal
+- `src/components/ConfirmDialog.tsx` - Custom confirmation dialogs
+- `src/context/ThemeContext.tsx` - Dark/light theme management
+- `src/styles/global.css` - CSS variables and theming
+- `convex/schema.ts` - Database schema (todos, notes, archivedDates, dateLabels)
+- `convex/todos.ts` - Todo queries and mutations
+- `convex/notes.ts` - Notes queries and mutations
+- `convex/search.ts` - Full-text search implementation
+- `convex/dates.ts` - Date management mutations
+- `convex/dateLabels.ts` - Custom date labels
+- `convex/archivedDates.ts` - Archive management
+
+### Environment Configuration
+
+Current setup:
+
+- Convex deployment configured
+- WorkOS AuthKit ready but not enabled
+- Local development with hot reload
+- Real-time sync across browsers
+
+To enable authentication:
+
+1. Set WorkOS environment variables
+2. Update mutations to include userId
+3. Add auth checks to queries
+4. Update UI to show user profile
+
+### Data Flow
+
+1. **Creating Todos:**
+   - User types in inline input
+   - Shift+Enter (desktop) or "+" button (mobile) triggers create
+   - Mutation creates todo in Convex
+   - Real-time update renders new todo immediately
+
+2. **Editing Todos:**
+   - Click todo to enter edit mode
+   - Changes save on blur or Shift+Enter
+   - Updates propagate in real-time
+
+3. **Notes:**
+   - Local state with 500ms debounce
+   - Saves to Convex after typing stops
+   - Immediate save on blur
+
+4. **Search:**
+   - Cmd/Ctrl+K opens modal
+   - Real-time search as user types
+   - Uses Convex search indexes
+   - Top 30 results displayed
+
+### Next Steps for Authentication
+
+1. Enable WorkOS in Convex:
+
+   ```bash
+   npx convex env set WORKOS_API_KEY your_key
+   npx convex env set WORKOS_CLIENT_ID your_client_id
+   ```
+
+2. Update schema to include userId:
+
+   ```typescript
+   todos: defineTable({
+     userId: v.string(),
+     // ... other fields
+   }).index("by_user_and_date", ["userId", "date"]);
+   ```
+
+3. Add auth checks to queries and mutations
+
+4. Update UI with user profile and logout
+
+### Future Enhancements Priority
+
+**High Priority:**
+
+- User authentication (WorkOS already configured)
+- Recurring tasks
+- Due date reminders
+
+**Medium Priority:**
+
+- Tags/categories
+- Priority levels
+- Export functionality
+
+**Low Priority:**
+
+- Third-party integrations
+- Advanced analytics
+- PWA features
