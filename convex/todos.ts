@@ -25,6 +25,7 @@ export const getTodosByDate = query({
       order: v.number(),
       parentId: v.optional(v.id("todos")),
       collapsed: v.boolean(),
+      pinned: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -35,6 +36,46 @@ export const getTodosByDate = query({
       .query("todos")
       .withIndex("by_user_and_date", (q) =>
         q.eq("userId", userId).eq("date", args.date),
+      )
+      .collect();
+
+    // Sort by order
+    return todos.sort((a, b) => a.order - b.order);
+  },
+});
+
+// Get all pinned todos for a user
+export const getPinnedTodos = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("todos"),
+      _creationTime: v.number(),
+      userId: v.string(),
+      date: v.string(),
+      content: v.string(),
+      type: v.union(
+        v.literal("todo"),
+        v.literal("h1"),
+        v.literal("h2"),
+        v.literal("h3"),
+      ),
+      completed: v.boolean(),
+      archived: v.boolean(),
+      order: v.number(),
+      parentId: v.optional(v.id("todos")),
+      collapsed: v.boolean(),
+      pinned: v.optional(v.boolean()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    // Use fixed userId since auth is disabled
+    const userId = "anonymous";
+
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_pinned", (q) =>
+        q.eq("userId", userId).eq("pinned", true),
       )
       .collect();
 
@@ -115,6 +156,7 @@ export const updateTodo = mutation({
     completed: v.optional(v.boolean()),
     collapsed: v.optional(v.boolean()),
     archived: v.optional(v.boolean()),
+    pinned: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -129,6 +171,7 @@ export const updateTodo = mutation({
     const updates: Record<string, any> = {};
     if (args.content !== undefined) updates.content = args.content;
     if (args.collapsed !== undefined) updates.collapsed = args.collapsed;
+    if (args.pinned !== undefined) updates.pinned = args.pinned;
 
     // If completing a todo, automatically archive it
     // If uncompleting a todo, automatically unarchive it

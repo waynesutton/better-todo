@@ -24,7 +24,11 @@ function App() {
 
   // Fetch available dates and todos
   const availableDates = useQuery(api.todos.getAvailableDates);
-  const todos = useQuery(api.todos.getTodosByDate, { date: selectedDate });
+  const pinnedTodos = useQuery(api.todos.getPinnedTodos);
+  const todos = useQuery(
+    api.todos.getTodosByDate,
+    selectedDate === "pinned" ? "skip" : { date: selectedDate },
+  );
 
   // Ensure current date is always available
   useEffect(() => {
@@ -93,6 +97,10 @@ function App() {
   }
 
   const formatCurrentDate = () => {
+    if (selectedDate === "pinned") {
+      return "Pinned";
+    }
+
     const date = new Date(selectedDate + "T00:00:00");
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -111,6 +119,10 @@ function App() {
       year: "numeric",
     });
   };
+
+  // Determine which todos to display
+  const displayTodos =
+    selectedDate === "pinned" ? pinnedTodos || [] : todos || [];
 
   return (
     <div
@@ -163,10 +175,11 @@ function App() {
         </div>
 
         <TodoList
-          todos={todos || []}
+          todos={displayTodos}
           date={selectedDate}
           expandedNoteId={expandedNoteId}
           onNoteExpanded={() => setExpandedNoteId(null)}
+          isPinnedView={selectedDate === "pinned"}
         />
       </div>
       {/* Overlay for mobile - clicking closes sidebar */}

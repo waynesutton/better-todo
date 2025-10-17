@@ -9,7 +9,6 @@ import {
   DragEndEvent,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
@@ -35,6 +34,7 @@ interface Todo {
   order: number;
   parentId?: Id<"todos">;
   collapsed: boolean;
+  pinned?: boolean;
 }
 
 export interface TodoListProps {
@@ -42,6 +42,7 @@ export interface TodoListProps {
   date: string;
   expandedNoteId: string | null;
   onNoteExpanded: () => void;
+  isPinnedView?: boolean;
 }
 
 export function TodoList({
@@ -49,6 +50,7 @@ export function TodoList({
   date,
   expandedNoteId,
   onNoteExpanded,
+  isPinnedView = false,
 }: TodoListProps) {
   const [newTodoContent, setNewTodoContent] = useState("");
   const [focusedInput, setFocusedInput] = useState(false);
@@ -231,6 +233,8 @@ export function TodoList({
               completed={todo.completed}
               collapsed={todo.collapsed}
               date={todo.date}
+              pinned={todo.pinned}
+              isPinnedView={isPinnedView}
               onMoveToPreviousDay={() => handleMoveToPreviousDay(todo._id)}
               onMoveToNextDay={() => handleMoveToNextDay(todo._id)}
               onMoveToTomorrow={() => handleMoveToTomorrow(todo._id)}
@@ -239,121 +243,125 @@ export function TodoList({
         </SortableContext>
       </DndContext>
 
-      {/* Notion-like inline input - always visible */}
-      <div className="inline-todo-input">
-        <textarea
-          ref={todoInputRef}
-          className="notion-input"
-          placeholder={
-            isMobile
-              ? "Type to add a todo... (Use #, ##, ### for headers)"
-              : "Type to add a todo... (Use #, ##, ### for headers, Enter for new lines, Shift+Enter to create)"
-          }
-          value={newTodoContent}
-          onChange={(e) => {
-            setNewTodoContent(e.target.value);
-            // Auto-resize textarea based on content
-            e.target.style.height = "auto";
-            e.target.style.height = e.target.scrollHeight + "px";
-          }}
-          onFocus={() => setFocusedInput(true)}
-          onPaste={(e) => {
-            const pastedText = e.clipboardData.getData("text");
-            const lines = pastedText
-              .split("\n")
-              .filter((line) => line.trim())
-              .map((line) =>
-                line
-                  .replace(/^[\s-*•]+/, "")
-                  .replace(/^\[[ x]\]\s*/, "")
-                  .trim(),
-              )
-              .filter((line) => line);
+      {/* Notion-like inline input - hide on pinned view */}
+      {!isPinnedView && (
+        <div className="inline-todo-input">
+          <textarea
+            ref={todoInputRef}
+            className="notion-input"
+            placeholder={
+              isMobile
+                ? "Type to add a todo... (Use #, ##, ### for headers)"
+                : "Type to add a todo... (Use #, ##, ### for headers, Enter for new lines, Shift+Enter to create)"
+            }
+            value={newTodoContent}
+            onChange={(e) => {
+              setNewTodoContent(e.target.value);
+              // Auto-resize textarea based on content
+              e.target.style.height = "auto";
+              e.target.style.height = e.target.scrollHeight + "px";
+            }}
+            onFocus={() => setFocusedInput(true)}
+            onPaste={(e) => {
+              const pastedText = e.clipboardData.getData("text");
+              const lines = pastedText
+                .split("\n")
+                .filter((line) => line.trim())
+                .map((line) =>
+                  line
+                    .replace(/^[\s-*•]+/, "")
+                    .replace(/^\[[ x]\]\s*/, "")
+                    .trim(),
+                )
+                .filter((line) => line);
 
-            if (lines.length > 1) {
-              e.preventDefault();
-              lines.forEach(async (line) => {
-                let type: "todo" | "h1" | "h2" | "h3" = "todo";
-                let content = line;
+              if (lines.length > 1) {
+                e.preventDefault();
+                lines.forEach(async (line) => {
+                  let type: "todo" | "h1" | "h2" | "h3" = "todo";
+                  let content = line;
 
-                if (content.startsWith("### ")) {
-                  type = "h3";
-                  content = content.substring(4);
-                } else if (content.startsWith("## ")) {
-                  type = "h2";
-                  content = content.substring(3);
-                } else if (content.startsWith("# ")) {
-                  type = "h1";
-                  content = content.substring(2);
-                }
+                  if (content.startsWith("### ")) {
+                    type = "h3";
+                    content = content.substring(4);
+                  } else if (content.startsWith("## ")) {
+                    type = "h2";
+                    content = content.substring(3);
+                  } else if (content.startsWith("# ")) {
+                    type = "h1";
+                    content = content.substring(2);
+                  }
 
-                await createTodo({
-                  date,
-                  content: content.trim(),
-                  type,
+                  await createTodo({
+                    date,
+                    content: content.trim(),
+                    type,
+                  });
                 });
-              });
-              setNewTodoContent("");
-              // Close archive section when adding todos via paste
-              setArchiveExpanded(false);
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && e.shiftKey) {
-              // Shift+Enter creates the todo
-              e.preventDefault();
-              handleAddTodo();
-              // Reset textarea height
-              (e.target as HTMLTextAreaElement).style.height = "auto";
-            } else if (e.key === "Enter") {
-              // Regular Enter allows new lines
-              return;
-            }
-          }}
-          autoFocus={focusedInput}
-          rows={1}
-          spellCheck={true}
-          data-gramm="false"
-          data-gramm_editor="false"
-          data-enable-grammarly="false"
-        />
-        {isMobile && newTodoContent.trim() && (
-          <button
-            className="mobile-add-button"
-            onClick={() => {
-              handleAddTodo();
-              if (todoInputRef.current) {
-                todoInputRef.current.style.height = "auto";
+                setNewTodoContent("");
+                // Close archive section when adding todos via paste
+                setArchiveExpanded(false);
               }
             }}
-            title="Add todo"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && e.shiftKey) {
+                // Shift+Enter creates the todo
+                e.preventDefault();
+                handleAddTodo();
+                // Reset textarea height
+                (e.target as HTMLTextAreaElement).style.height = "auto";
+              } else if (e.key === "Enter") {
+                // Regular Enter allows new lines
+                return;
+              }
+            }}
+            autoFocus={focusedInput}
+            rows={1}
+            spellCheck={true}
+            data-gramm="false"
+            data-gramm_editor="false"
+            data-enable-grammarly="false"
+          />
+          {isMobile && newTodoContent.trim() && (
+            <button
+              className="mobile-add-button"
+              onClick={() => {
+                handleAddTodo();
+                if (todoInputRef.current) {
+                  todoInputRef.current.style.height = "auto";
+                }
+              }}
+              title="Add todo"
             >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </button>
-        )}
-      </div>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
 
-      {/* Add note button */}
-      <AddNoteButton date={date} onAddNote={handleAddNote} />
+      {/* Add note button - hide on pinned view */}
+      {!isPinnedView && <AddNoteButton date={date} onAddNote={handleAddNote} />}
 
-      {/* Notes section below add note button */}
-      <NotesSection
-        date={date}
-        expandedNoteId={expandedNoteId}
-        onNoteExpanded={onNoteExpanded}
-      />
+      {/* Notes section below add note button - hide on pinned view */}
+      {!isPinnedView && (
+        <NotesSection
+          date={date}
+          expandedNoteId={expandedNoteId}
+          onNoteExpanded={onNoteExpanded}
+        />
+      )}
 
       {/* Archive section at the bottom */}
       <ArchiveSection
@@ -367,8 +375,8 @@ export function TodoList({
         onToggleExpanded={() => setArchiveExpanded(!archiveExpanded)}
       />
 
-      {/* Bulk action buttons at the bottom */}
-      {activeTodos.length > 0 && (
+      {/* Bulk action buttons at the bottom - hide on pinned view */}
+      {activeTodos.length > 0 && !isPinnedView && (
         <div className="bulk-actions">
           <button
             className="bulk-action-button"

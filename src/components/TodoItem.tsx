@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useMutation } from "convex/react";
@@ -13,6 +14,9 @@ interface TodoItemProps {
   completed: boolean;
   collapsed: boolean;
   date: string;
+  isArchived?: boolean;
+  pinned?: boolean;
+  isPinnedView?: boolean;
   onMoveToPreviousDay: () => void;
   onMoveToNextDay: () => void;
   onMoveToTomorrow: () => void;
@@ -25,6 +29,9 @@ export function TodoItem({
   completed,
   collapsed,
   date,
+  isArchived = false,
+  pinned = false,
+  isPinnedView = false,
   onMoveToPreviousDay,
   onMoveToNextDay,
   onMoveToTomorrow,
@@ -33,6 +40,10 @@ export function TodoItem({
   const [editContent, setEditContent] = useState(content);
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuDropdownRef = useRef<HTMLDivElement>(null);
+  const archivedMenuRef = useRef<HTMLDivElement>(null);
 
   const updateTodo = useMutation(api.todos.updateTodo);
   const deleteTodo = useMutation(api.todos.deleteTodo);
@@ -101,7 +112,35 @@ export function TodoItem({
     setShowDeleteConfirm(false);
   };
 
-  // Handle ESC key to close menu
+  const handleUnarchive = async () => {
+    await updateTodo({
+      id,
+      archived: false,
+      completed: false,
+    });
+    setShowMenu(false);
+  };
+
+  const handleTogglePin = async () => {
+    await updateTodo({
+      id,
+      pinned: !pinned,
+    });
+    setShowMenu(false);
+  };
+
+  const handleMenuToggle = () => {
+    if (!showMenu && menuButtonRef.current) {
+      const rect = menuButtonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+      });
+    }
+    setShowMenu(!showMenu);
+  };
+
+  // Handle ESC key and clicks outside to close menu
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -116,12 +155,33 @@ export function TodoItem({
       }
     };
 
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showMenu) {
+        const target = e.target as Node;
+        const isInsideButton = menuButtonRef.current?.contains(target);
+        const isInsideDropdown = menuDropdownRef.current?.contains(target);
+        const isInsideArchivedMenu = archivedMenuRef.current?.contains(target);
+
+        if (!isInsideButton && !isInsideDropdown && !isInsideArchivedMenu) {
+          setShowMenu(false);
+        }
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [showMenu]);
 
   return (
-    <div ref={setNodeRef} style={style} className="todo-item">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`todo-item ${pinned && !isPinnedView ? "pinned" : ""}`}
+    >
       {/* Drag handle */}
       <div {...attributes} {...listeners} className="drag-handle">
         ⋮⋮
@@ -194,44 +254,79 @@ export function TodoItem({
 
       {/* Three dots menu */}
       <div className="todo-menu">
-        <button className="menu-button" onClick={() => setShowMenu(!showMenu)}>
+        <button
+          ref={menuButtonRef}
+          className="menu-button"
+          onClick={handleMenuToggle}
+        >
           ⋯
         </button>
 
-        {showMenu && (
-          <div className="menu-dropdown">
-            <div
-              className="menu-item"
-              onClick={() => {
-                onMoveToTomorrow();
-                setShowMenu(false);
-              }}
-            >
-              Move to Tomorrow
+        {showMenu &&
+          (isArchived ? (
+            createPortal(
+              <div
+                ref={archivedMenuRef}
+                className="menu-dropdown"
+                style={{
+                  position: "absolute",
+                  top: `${menuPosition.top}px`,
+                  left: `${menuPosition.left}px`,
+                  zIndex: 10000,
+                  minWidth: "160px",
+                  maxWidth: "180px",
+                }}
+              >
+                {!completed && (
+                  <div className="menu-item" onClick={handleUnarchive}>
+                    Unarchive
+                  </div>
+                )}
+                <div className="menu-item danger" onClick={handleDeleteClick}>
+                  Delete
+                </div>
+              </div>,
+              document.body,
+            )
+          ) : (
+            <div className="menu-dropdown" ref={menuDropdownRef}>
+              {!completed && (
+                <div className="menu-item" onClick={handleTogglePin}>
+                  {pinned ? "Unpin" : "Pin"}
+                </div>
+              )}
+              <div
+                className="menu-item"
+                onClick={() => {
+                  onMoveToTomorrow();
+                  setShowMenu(false);
+                }}
+              >
+                Move to Tomorrow
+              </div>
+              <div
+                className="menu-item"
+                onClick={() => {
+                  onMoveToPreviousDay();
+                  setShowMenu(false);
+                }}
+              >
+                Move to Previous Day
+              </div>
+              <div
+                className="menu-item"
+                onClick={() => {
+                  onMoveToNextDay();
+                  setShowMenu(false);
+                }}
+              >
+                Move to Next Day
+              </div>
+              <div className="menu-item danger" onClick={handleDeleteClick}>
+                Delete
+              </div>
             </div>
-            <div
-              className="menu-item"
-              onClick={() => {
-                onMoveToPreviousDay();
-                setShowMenu(false);
-              }}
-            >
-              Move to Previous Day
-            </div>
-            <div
-              className="menu-item"
-              onClick={() => {
-                onMoveToNextDay();
-                setShowMenu(false);
-              }}
-            >
-              Move to Next Day
-            </div>
-            <div className="menu-item danger" onClick={handleDeleteClick}>
-              Delete
-            </div>
-          </div>
-        )}
+          ))}
       </div>
 
       <ConfirmDialog

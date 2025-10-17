@@ -20,8 +20,8 @@ This document describes the structure and purpose of each file in the Better Tod
 ### Database Schema
 
 - `schema.ts` - Database schema with tables:
-  - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, and optional parentId
-    - Index: `by_user_and_date`, `by_user`
+  - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, optional parentId, and pinned status
+    - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`
     - Search index: `search_content` on content field for full-text search
   - **notes**: Stores multiple notes per date with optional title, content, order, and collapsed state
     - Index: `by_user_and_date`
@@ -36,8 +36,9 @@ This document describes the structure and purpose of each file in the Better Tod
 - `todos.ts` - Queries and mutations for todo operations:
   - `getAvailableDates` - Get all dates with todos
   - `getTodosByDate` - Get todos for a specific date
+  - `getPinnedTodos` - Get all pinned todos for user
   - `createTodo` - Create new todo with auto-ordering
-  - `updateTodo` - Update todo (auto-archives on complete, auto-unarchives on uncheck)
+  - `updateTodo` - Update todo (auto-archives on complete, auto-unarchives on uncheck, supports pin/unpin)
   - `deleteTodo` - Remove a todo
   - `reorderTodos` - Update order after drag-and-drop
   - `moveTodoToDate` - Move todo to different date
@@ -88,17 +89,31 @@ This document describes the structure and purpose of each file in the Better Tod
   - Sidebar collapse/expand states (full 260px, collapsed 60px, mobile hidden)
   - Collapsed sidebar shows compact MM/DD date format
   - Mobile detection and auto-hide on small screens (≤768px)
-  - Date selection and navigation state
+  - Date selection and navigation state (including special "pinned" view)
+  - Pinned todos page handling with dedicated display
   - Search modal integration (Cmd/Ctrl+K keyboard shortcut)
   - Theme context provider
 
 ### Components (`src/components/`)
 
+- `ui/tooltip.tsx` - Reusable tooltip component with:
+  - Built on Radix UI Tooltip primitive
+  - Portal rendering to document body (prevents clipping by parent containers)
+  - Positioned outside sidebar hierarchy for proper display
+  - Configurable side and offset positioning
+  - Smooth fade-in animation
+  - Works in both light and dark themes
+
 - `TodoItem.tsx` - Individual todo item with:
   - Plain text display (no markdown rendering in todos)
   - Drag handle for reordering (⋮⋮) - visible on hover
   - Checkbox for completion (auto-archives when checked)
-  - Three-dot menu for moving to tomorrow, previous/next day, or deleting
+  - Three-dot menu for pinning, moving to tomorrow, previous/next day, or deleting
+  - Pin/unpin option (only for active, non-completed todos)
+  - Blue border (#56B5DB) around pinned todos on original page (not on pinned view)
+  - Portal-rendered menu (prevents clipping in archive section)
+  - Unarchive option for unchecked archived todos
+  - Click outside or ESC to close menu
   - Inline editing with Enter for new lines, Shift+Enter to save
   - Custom confirmation dialog for delete actions
   - Auto-textarea expansion for multi-line content
@@ -117,6 +132,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - Integrates NotesSection above archive
 
 - `Sidebar.tsx` - Resizable and collapsible navigation sidebar with:
+  - Pinned section at top (shows "Pinned" when todos are pinned, hidden when empty)
+  - Collapsed view shows pin emoji (📌) for pinned section
   - Date list showing all days with todos (scrollable with custom scrollbar)
   - Collapsible view with compact date format (MM/DD) via panel icon in header
   - Collapse button next to "better todo" title (PanelLeft icon)
@@ -132,7 +149,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Archived dates section (collapsible)
   - Login link (authentication ready to enable)
   - Custom confirmation dialog for delete actions
-  - Hover tooltips show full date labels in collapsed view
+  - Hover tooltips for all footer icons (positioned to the right, never clipped)
 
 - `ConfirmDialog.tsx` - Reusable confirmation modal component with:
   - Custom styled dialog matching site design system
@@ -159,12 +176,14 @@ This document describes the structure and purpose of each file in the Better Tod
   - Shows all completed/archived todos for selected date
   - Displays count of archived items in header
   - Uncheck checkbox to restore todo to active list (auto-unarchive)
+  - "Unarchive" option in three-dot menu for unchecked archived todos
   - X delete button on hover for each archived todo (soft red #e16d76)
   - "Delete All" button in header to remove all archived todos at once
   - Custom confirmation dialogs matching app design system
   - Controlled expand/collapse state from parent component
   - Auto-collapses when new todos are added
   - Supports moving archived items to other dates via three-dot menu
+  - Portal-rendered menus prevent clipping
   - Clean, borderless design
 
 - `SearchModal.tsx` - Full-text search modal with:
@@ -232,9 +251,18 @@ This document describes the structure and purpose of each file in the Better Tod
 - Convex logo files (black and white variants)
 - SVG favicon with checkmark design
 
-## Current Version: 1.8.3 (October 16, 2025)
+## Current Version: 1.8.4 (October 17, 2025)
 
-### Latest Features (v1.8.3)
+### Latest Features (v1.8.4)
+
+- **Pinned todos** for quick access to important tasks
+  - Pin any active todo (excludes completed todos)
+  - Pinned section at top of sidebar (only shows when todos are pinned)
+  - Dedicated pinned page with full functionality
+  - Blue border (#56B5DB) on original page, no border on pinned view
+  - Pin/unpin from three-dot menu
+
+### Previous Version Features (v1.8.3)
 
 - **Collapsible sidebar** with compact MM/DD date view (260px → 60px)
 - **Improved light mode contrast** for date menu and buttons

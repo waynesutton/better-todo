@@ -18,9 +18,11 @@ export default defineSchema({
     order: v.number(), // For drag-drop positioning
     parentId: v.optional(v.id("todos")), // For nested items under collapsible headers
     collapsed: v.boolean(), // For header sections
+    pinned: v.optional(v.boolean()), // For pinned todos
   })
     .index("by_user_and_date", ["userId", "date"])
     .index("by_user", ["userId"])
+    .index("by_user_and_pinned", ["userId", "pinned"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],

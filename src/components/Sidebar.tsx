@@ -3,7 +3,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { format, addDays, subDays } from "date-fns";
-import { PanelLeft, LogIn } from "lucide-react";
+import { PanelLeft, LogIn, Pin } from "lucide-react";
 // Note: CircleUserRound will be used for logged-in user profile when auth is implemented
 import { ConfirmDialog } from "./ConfirmDialog";
 import {
@@ -43,6 +43,7 @@ export function Sidebar({
 
   const archivedDates = useQuery(api.archivedDates.getArchivedDates) || [];
   const dateLabelsData = useQuery(api.dateLabels.getDateLabels) || [];
+  const pinnedTodos = useQuery(api.todos.getPinnedTodos) || [];
   const copyTodosToDate = useMutation(api.todos.copyTodosToDate);
   const archiveDate = useMutation(api.archivedDates.archiveDate);
   const unarchiveDate = useMutation(api.archivedDates.unarchiveDate);
@@ -212,7 +213,7 @@ export function Sidebar({
                 <PanelLeft size={18} />
               </button>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="right" sideOffset={8}>
               {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             </TooltipContent>
           </Tooltip>
@@ -221,6 +222,18 @@ export function Sidebar({
 
       {!isCollapsed ? (
         <div className="sidebar-dates">
+          {/* Pinned section */}
+          {pinnedTodos.length > 0 && (
+            <div
+              key="pinned"
+              className={`date-item-container pinned-section ${"pinned" === selectedDate ? "active" : ""}`}
+            >
+              <div className="date-item" onClick={() => onSelectDate("pinned")}>
+                Pinned
+              </div>
+            </div>
+          )}
+
           {activeDates.map((date) => (
             <div
               key={date}
@@ -433,6 +446,18 @@ export function Sidebar({
         </div>
       ) : (
         <div className="sidebar-dates collapsed">
+          {/* Pinned section in collapsed view */}
+          {pinnedTodos.length > 0 && (
+            <div
+              key="pinned"
+              className={`date-item-collapsed ${"pinned" === selectedDate ? "active" : ""}`}
+              onClick={() => onSelectDate("pinned")}
+              title="Pinned"
+            >
+              <Pin size={16} />
+            </div>
+          )}
+
           {activeDates.map((date) => (
             <div
               key={date}
@@ -459,7 +484,9 @@ export function Sidebar({
                 <LogIn size={18} />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Sign in to your account</TooltipContent>
+            <TooltipContent side="right" sideOffset={8}>
+              Sign in to your account
+            </TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -476,7 +503,7 @@ export function Sidebar({
                 </svg>
               </button>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="right" sideOffset={8}>
               {`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             </TooltipContent>
           </Tooltip>
@@ -484,7 +511,7 @@ export function Sidebar({
           <Tooltip>
             <TooltipTrigger asChild>
               <a
-                href="https://github.com/waynesutton"
+                href="https://github.com/waynesutton/better-todo"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="github-link"
@@ -500,7 +527,9 @@ export function Sidebar({
                 </svg>
               </a>
             </TooltipTrigger>
-            <TooltipContent>View source code on GitHub</TooltipContent>
+            <TooltipContent side="right" sideOffset={8}>
+              View source code on GitHub
+            </TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -521,7 +550,9 @@ export function Sidebar({
                 />
               </a>
             </TooltipTrigger>
-            <TooltipContent>Powered by Convex - Learn more</TooltipContent>
+            <TooltipContent side="right" sideOffset={8}>
+              Powered by Convex - Learn more
+            </TooltipContent>
           </Tooltip>
         </div>
       </div>

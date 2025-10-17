@@ -1,6 +1,8 @@
 # Better todo
 
-A real-time markdown todo app with Notion-style input, daily notes, and Convex backend. Features beautiful dark mode (Sublime Text style) and light mode (Apple Notes style).
+An open source, real-time to-do list that never falls out of sync — built on Convex. Features beautiful dark mode (Sublime Text style) and light mode (Apple Notes style).
+
+**Live Demo**: [better-todo.netlify.app](https://better-todo.netlify.app)
 
 ## Features
 
@@ -25,6 +27,7 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 - **Resizable sidebar** - drag to adjust width (200px - 500px)
 - **Collapsible sidebar** - compact date view (MM/DD format) with 60px width
 - **Dark and light themes** with smooth transitions
+- **Sharp font rendering** - optimized text display across all browsers and devices
 - **Mobile-optimized** with auto-hide sidebar and touch-friendly interface
   - Visible add button ("+") on mobile devices for easy todo creation
   - Touch-optimized button sizes and spacing
@@ -41,8 +44,6 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 - **Vite** - Lightning-fast build tool
 - **Convex** - Real-time database and backend
 - **WorkOS AuthKit** - Authentication (ready to enable)
-- **react-markdown** - Markdown rendering with full support
-- **react-syntax-highlighter** - Beautiful code highlighting
 - **@dnd-kit** - Smooth drag and drop
 - **date-fns** - Date manipulation and formatting
 - **lucide-react** - Clean, consistent icons
@@ -100,7 +101,7 @@ You'll receive an email invitation to set up your WorkOS account.
 - **Type directly** - just start typing to add a todo (Notion-style)
 - **Press Enter** - add new lines within your todo for multi-line content
 - **Press Shift+Enter** (desktop) or tap the **+ button** (mobile) - create the todo
-- Todos display as plain text (markdown available in notes section)
+- Todos display as plain text for a clean, distraction-free experience
 
 ### Editing Todos
 
@@ -187,15 +188,20 @@ better-todo/
 │   ├── schema.ts              # Database schema (todos + notes tables)
 │   ├── todos.ts               # Todo queries and mutations
 │   ├── notes.ts               # Notes queries and mutations
-│   ├── auth.config.ts         # WorkOS AuthKit configuration
+│   ├── dates.ts               # Date operations and queries
+│   ├── dateLabels.ts          # Custom date labels
+│   ├── archivedDates.ts       # Archived dates
+│   ├── search.ts              # Search functionality
 │   └── http.ts                # HTTP routes for auth
 ├── src/
 │   ├── components/            # React components
-│   │   ├── TodoItem.tsx       # Individual todo with markdown
-│   │   ├── TodoList.tsx       # Todo list with DnD
-│   │   ├── Sidebar.tsx        # Resizable sidebar
-│   │   ├── NotesSection.tsx   # Notes with preview
-│   │   └── ArchiveSection.tsx # Archived todos
+│   │   ├── TodoItem.tsx       # Individual todo component
+│   │   ├── TodoList.tsx       # Todo list with drag and drop
+│   │   ├── Sidebar.tsx        # Resizable sidebar with dates
+│   │   ├── NotesSection.tsx   # Notes with line numbers
+│   │   ├── ArchiveSection.tsx # Archived todos
+│   │   ├── SearchModal.tsx    # Search modal
+│   │   └── ConfirmDialog.tsx  # Confirmation dialogs
 │   ├── context/
 │   │   └── ThemeContext.tsx   # Theme management
 │   ├── styles/
@@ -244,9 +250,9 @@ npm run lint
 npm run build
 ```
 
-### Deploying
+### Deploying to Netlify
 
-The app can be deployed to any static hosting service. The Convex backend is automatically deployed when you push changes.
+The app is configured for easy deployment to Netlify. The Convex backend is automatically deployed when you push changes.
 
 For production deployment:
 
@@ -256,13 +262,24 @@ For production deployment:
 npx convex deploy
 ```
 
-2. Build frontend:
+2. Connect your repository to Netlify:
+   - Sign up for a free account at [netlify.com](https://netlify.com)
+   - Click "Add new site" and connect your GitHub repository
+   - Netlify will auto-detect the build settings
 
-```bash
-npm run build
-```
+3. Configure build settings (if needed):
+   - Build command: `npm run build`
+   - Publish directory: `dist`
 
-3. Deploy the `dist` folder to your hosting service
+4. Add environment variables in Netlify:
+   - Go to Site settings > Environment variables
+   - Add your Convex deployment URL and any other required variables
+
+5. Deploy:
+   - Push to your repository and Netlify will automatically build and deploy
+   - Your app will be live at `your-site-name.netlify.app`
+
+The app supports continuous deployment, so every push to your main branch will trigger a new deployment.
 
 ## Keyboard Shortcuts
 
@@ -277,22 +294,48 @@ npm run build
 ## Tips & Tricks
 
 1. **Multi-line todos**: Use Enter to write detailed notes within a single todo item
-2. **Paste lists**: Copy markdown lists and paste - they'll automatically create multiple todos
-3. **Multiple notes**: Add unlimited notes per date with custom titles for different topics
-4. **Quick navigation**: Click dates in sidebar to jump between days, use Cmd/Ctrl+K to search
-5. **Custom labels**: Add meaningful names to dates like "Team Meeting" or "Project Launch"
-6. **Bulk actions**: Use Archive All/Delete All buttons at the bottom to manage multiple todos
-7. **Line numbers**: Notes display line numbers like a code editor (they won't copy with text)
-8. **Bulk move**: Use the date menu (three dots) to copy all todos to another date
-9. **Compact sidebar**: Click panel icon to collapse sidebar for more workspace
-10. **Archive dates**: Hide completed days to keep sidebar clean while preserving data
-11. **Mobile**: Sidebar auto-hides on mobile - tap the panel icon to show/hide, use + button to add todos
+2. **Multiple notes**: Add unlimited notes per date with custom titles for different topics
+3. **Quick navigation**: Click dates in sidebar to jump between days, use Cmd/Ctrl+K to search
+4. **Custom labels**: Add meaningful names to dates like "Team Meeting" or "Project Launch"
+5. **Bulk actions**: Use Archive All/Delete All buttons at the bottom to manage multiple todos
+6. **Line numbers**: Notes display line numbers like a code editor (they won't copy with text)
+7. **Bulk move**: Use the date menu (three dots) to copy all todos to another date
+8. **Compact sidebar**: Click panel icon to collapse sidebar for more workspace
+9. **Archive dates**: Hide completed days to keep sidebar clean while preserving data
+10. **Mobile**: Sidebar auto-hides on mobile - tap the panel icon to show/hide, use + button to add todos
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+This is an open source project and contributions are welcome! Here's how you can help:
+
+1. **Fork the repository** and create your branch from `main`
+2. **Make your changes** and test thoroughly
+3. **Commit your changes** with clear, descriptive messages
+4. **Push to your fork** and submit a Pull Request
+5. **Describe your changes** in the PR description
+
+### Areas for contribution:
+
+- Bug fixes and improvements
+- New features and enhancements
+- Documentation updates
+- UI/UX improvements
+- Performance optimizations
+
+Please feel free to open issues for bugs, feature requests, or questions.
 
 ## License
 
-MIT
-# better-todo
+MIT License - feel free to use this project for personal or commercial purposes.
+
+## Support
+
+If you find this project helpful, please consider:
+
+- ⭐ Starring the repository
+- 🐛 Reporting bugs
+- 💡 Suggesting new features
+- 📖 Improving documentation
+- 🤝 Contributing code
+
+Built with ❤️ using Convex and React

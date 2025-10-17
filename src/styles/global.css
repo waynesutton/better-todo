@@ -223,6 +223,20 @@ body {
   color: white;
 }
 
+.date-item-container.active .date-item {
+  padding: 6px 16px;
+}
+
+/* Pinned section specific styles */
+.date-item-container.pinned-section {
+  border-bottom: 0px solid var(--border-color);
+}
+
+.date-item-container.pinned-section .date-item {
+  font-weight: 500;
+  padding: 12px 16px;
+}
+
 .date-item {
   padding: 6px 16px;
   cursor: pointer;
@@ -936,6 +950,13 @@ body {
   transition: background-color 0.15s ease;
 }
 
+.todo-item.pinned {
+  border: 2px solid #56b5db;
+  border-radius: 4px;
+  padding: 4px;
+  margin-bottom: 4px;
+}
+
 .todo-item:hover {
   background-color: var(--bg-hover);
 }
@@ -978,8 +999,8 @@ body {
 }
 
 .todo-checkbox.checked {
-  background-color: var(--accent);
-  border-color: var(--accent);
+  background-color: #56b5db;
+  border-color: #56b5db;
   color: white;
 }
 
@@ -1052,6 +1073,7 @@ body {
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 160px;
+  max-width: 180px;
   z-index: 100;
   margin-top: 4px;
   font-size: var(--font-todo);
@@ -1401,6 +1423,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .date-item,
+  .date-item-container.active .date-item,
+  .date-item-container.pinned-section .date-item {
+    min-height: 44px;
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
   }
 
   .sidebar-toggle {
@@ -1821,7 +1852,6 @@ body {
 /* Tooltip styles */
 .tooltip-content {
   z-index: 9999;
-  overflow: hidden;
   border-radius: 4px;
   background-color: var(--text-primary);
   color: var(--bg-primary);
@@ -1831,7 +1861,7 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: tooltipFadeIn 0.15s ease-in-out;
   max-width: 200px;
-  word-wrap: break-word;
+  white-space: nowrap;
 }
 
 @keyframes tooltipFadeIn {

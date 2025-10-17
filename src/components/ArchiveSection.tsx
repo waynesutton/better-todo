@@ -15,6 +15,7 @@ interface Todo {
   order: number;
   parentId?: Id<"todos">;
   collapsed: boolean;
+  pinned?: boolean;
 }
 
 interface ArchiveSectionProps {
@@ -110,6 +111,8 @@ export function ArchiveSection({
                 completed={todo.completed}
                 collapsed={todo.collapsed}
                 date={todo.date}
+                isArchived={true}
+                pinned={todo.pinned}
                 onMoveToPreviousDay={() => onMoveToPreviousDay(todo._id)}
                 onMoveToNextDay={() => onMoveToNextDay(todo._id)}
                 onMoveToTomorrow={() => onMoveToTomorrow(todo._id)}

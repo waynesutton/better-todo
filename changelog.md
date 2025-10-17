@@ -4,9 +4,64 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.8.4] - 2025-10-17
+
+### Added
+
+- **Pinned todos** for quick access to important tasks
+  - Pin any active todo from the three-dot menu (excludes completed todos)
+  - Pinned section appears at top of sidebar before dates
+  - Only shows when at least one todo is pinned
+  - Click "Pinned" in sidebar to view all pinned todos on dedicated page
+  - Pinned todos display with blue border (#56B5DB) on original page
+  - Border only shows on original date page, not on pinned view
+  - Unpin option available in three-dot menu
+  - Works like a normal today page with full functionality
+  - Collapsed sidebar shows Pin icon for pinned section
+  - Supports drag-and-drop reordering within pinned view
+
+### Fixed
+
+- **Three-dot menu click handling** for all todos
+  - Menu items now properly execute before menu closes
+  - Added dropdown refs to prevent premature menu closure on click
+  - Fixes pin/unpin and move to date functionality
+  - Fixes unarchive functionality in done section
+  - Applied fix to both regular and archived todo menus
+
+### Changed
+
+- **Pinned section styling** improved for consistency
+  - Replaced emoji with Lucide Pin icon in collapsed sidebar
+  - Pin icon works in both light and dark modes
+  - Padding and sizing now matches other dates in both desktop and mobile views
+  - Proper touch targets (44px minimum) on mobile for better tap experience
+  - Dedicated CSS class (`.pinned-section`) with unique styling
+  - Visual separator with bottom border and spacing to distinguish from dates
+  - Medium font weight (500) to make pinned section stand out
+- **Pinned view simplified** for focused task management
+  - Hides bulk actions (Archive All, Delete All) on pinned view
+  - Hides add todo input on pinned view (pin existing todos from other dates)
+  - Hides notes section on pinned view (notes are date-specific)
+  - Individual todo actions (delete, unpin, move to date) still work normally
+
 ## [1.8.3] - 2025-10-16
 
 ### Added
+
+- **Unarchive option** for unchecked archived todos
+  - New "Unarchive" option appears in three-dot menu for archived todos that are not completed
+  - Quickly move accidentally archived todos back to active list
+  - Only shows when todo is in archive section and checkbox is unchecked
+  - Seamlessly restores todo to main list without moving dates
+
+- **Tooltip portal rendering** for proper display
+  - Tooltips now render using React Portal at document body level
+  - Prevents clipping by sidebar or parent container overflow properties
+  - Tooltips positioned to the right with 8px offset from trigger elements
+  - Full text always visible (no more cut-off tooltip text)
+  - Applied to all sidebar footer icons (login, theme toggle, GitHub, Convex)
+  - Uses Radix UI TooltipPortal component for reliable positioning
 
 - **Auto-delete on clear text**
   - Todos are automatically deleted when text is edited and cleared
@@ -29,6 +84,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Sidebar toggle removed from todos page header for cleaner layout
 
 ### Fixed
+
+- **Todo three-dot menu clipping** in archive section
+  - Menus now render using React Portal at document body level
+  - Prevents clipping by archive container overflow
+  - Menu positioned dynamically based on button location
+  - Proper z-index ensures menu appears above all content
+  - Click outside menu to close (in addition to ESC key)
 
 - **Light mode date menu contrast** improved for better readability
   - Three dots button (⋯) now darker in light mode (#3d3d3d)
