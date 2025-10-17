@@ -1205,6 +1205,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  width: 100%;
 }
 
 .notion-input {
@@ -1224,6 +1225,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Critical for flex children to shrink on very small screens */
+  min-width: 0;
 }
 
 .notion-input::placeholder {
@@ -1343,7 +1346,7 @@ body {
 @media (max-width: 768px) {
   .app-container {
     position: relative;
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
 
@@ -1370,14 +1373,14 @@ body {
   .main-content {
     width: 100%;
     margin-left: 0;
-    height: 100vh;
+    height: 100dvh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   .todo-container {
     padding: 8px;
-    min-height: calc(100vh - 60px);
+    min-height: calc(100dvh - 60px);
   }
 
   .main-header {
@@ -1462,6 +1465,15 @@ body {
 
   .notion-input {
     padding: 4px 0;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+  .mobile-add-button {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 6px;
   }
 }
 

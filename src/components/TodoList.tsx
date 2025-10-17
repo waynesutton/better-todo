@@ -251,7 +251,7 @@ export function TodoList({
             placeholder={
               isMobile
                 ? "Type to add a todo... (Use #, ##, ### for headers)"
-                : "Type to add a todo... (Use #, ##, ### for headers, Enter for new lines, Shift+Enter to create)"
+                : "Type to add a todo... (Use #, ##, ### for headers, Shift+Enter for new lines, Enter to create)"
             }
             value={newTodoContent}
             onChange={(e) => {
@@ -303,14 +303,20 @@ export function TodoList({
               }
             }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && e.shiftKey) {
-                // Shift+Enter creates the todo
+              if (e.key === "Enter" && !e.shiftKey && !isMobile) {
+                // On desktop: Enter saves the todo
+                e.preventDefault();
+                handleAddTodo();
+                // Reset textarea height
+                (e.target as HTMLTextAreaElement).style.height = "auto";
+              } else if (e.key === "Enter" && e.shiftKey && isMobile) {
+                // On mobile: Shift+Enter saves the todo
                 e.preventDefault();
                 handleAddTodo();
                 // Reset textarea height
                 (e.target as HTMLTextAreaElement).style.height = "auto";
               } else if (e.key === "Enter") {
-                // Regular Enter allows new lines
+                // Shift+Enter on desktop or Enter on mobile allows new lines
                 return;
               }
             }}

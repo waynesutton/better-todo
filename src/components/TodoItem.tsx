@@ -41,6 +41,20 @@ export function TodoItem({
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const menuDropdownRef = useRef<HTMLDivElement>(null);
   const archivedMenuRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(
+        window.innerWidth <= 768 ||
+          /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+      );
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const updateTodo = useMutation(api.todos.updateTodo);
   const deleteTodo = useMutation(api.todos.deleteTodo);
@@ -202,8 +216,12 @@ export function TodoItem({
             onChange={handleContentChange}
             onBlur={handleBlur}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && e.shiftKey) {
-                // Shift+Enter saves the todo
+              if (e.key === "Enter" && !e.shiftKey && !isMobile) {
+                // On desktop: Enter saves the todo
+                e.preventDefault();
+                handleBlur();
+              } else if (e.key === "Enter" && e.shiftKey && isMobile) {
+                // On mobile: Shift+Enter saves the todo
                 e.preventDefault();
                 handleBlur();
               } else if (e.key === "Escape") {
@@ -215,7 +233,7 @@ export function TodoItem({
                 setEditContent(content);
                 setIsEditing(false);
               }
-              // Regular Enter allows new lines
+              // Shift+Enter on desktop or Enter on mobile allows new lines
             }}
             autoFocus
             rows={3}
