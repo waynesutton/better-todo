@@ -1484,6 +1484,19 @@ body {
     /* Prevent iOS Safari auto-zoom on focus when editing todos */
     font-size: 16px;
   }
+
+  .note-textarea,
+  .notes-textarea {
+    /* Prevent iOS Safari auto-zoom on focus */
+    font-size: 16px;
+  }
+
+  .note-title-input,
+  .date-picker-input,
+  .search-input {
+    /* Prevent iOS Safari auto-zoom on focus */
+    font-size: 16px;
+  }
 }
 
 /* Small mobile devices */
@@ -1530,6 +1543,19 @@ body {
   .drag-handle {
     padding: 3px;
   }
+
+  .note-textarea,
+  .notes-textarea {
+    /* Keep 16px to prevent iOS zoom */
+    font-size: 16px;
+  }
+
+  .note-title-input,
+  .date-picker-input,
+  .search-input {
+    /* Keep 16px to prevent iOS zoom */
+    font-size: 16px;
+  }
 }
 
 /* Extra small devices */
@@ -1569,6 +1595,19 @@ body {
 
   .drag-handle {
     padding: 2px;
+  }
+
+  .note-textarea,
+  .notes-textarea {
+    /* Keep 16px to prevent iOS zoom */
+    font-size: 16px;
+  }
+
+  .note-title-input,
+  .date-picker-input,
+  .search-input {
+    /* Keep 16px to prevent iOS zoom */
+    font-size: 16px;
   }
 }
 
