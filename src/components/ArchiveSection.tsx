@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { TodoItem } from "./TodoItem";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
@@ -110,7 +110,6 @@ export function ArchiveSection({
                 type={todo.type}
                 completed={todo.completed}
                 collapsed={todo.collapsed}
-                date={todo.date}
                 isArchived={true}
                 pinned={todo.pinned}
                 onMoveToPreviousDay={() => onMoveToPreviousDay(todo._id)}

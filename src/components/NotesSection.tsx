@@ -58,7 +58,7 @@ function NoteItem({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState(note.title || "Untitled");
   const [contentInput, setContentInput] = useState(note.content);
-  const contentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const contentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Update local state when note prop changes (from external updates)
@@ -229,7 +229,6 @@ function NoteItem({
 }
 
 interface NotesWithAddButtonProps {
-  date: string;
   onAddNote: () => void;
 }
 
@@ -357,7 +356,7 @@ export function NotesSection({
   );
 }
 
-export function AddNoteButton({ date, onAddNote }: NotesWithAddButtonProps) {
+export function AddNoteButton({ onAddNote }: NotesWithAddButtonProps) {
   return (
     <button className="add-note-button" onClick={onAddNote}>
       <Plus size={14} />

@@ -1,6 +1,5 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel";
 
 // Get all todos for a specific date and user
 export const getTodosByDate = query({
@@ -68,7 +67,7 @@ export const getPinnedTodos = query({
       pinned: v.optional(v.boolean()),
     }),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     // Use fixed userId since auth is disabled
     const userId = "anonymous";
 
@@ -88,7 +87,7 @@ export const getPinnedTodos = query({
 export const getAvailableDates = query({
   args: {},
   returns: v.array(v.string()),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     // Use fixed userId since auth is disabled
     const userId = "anonymous";
 
@@ -238,7 +237,6 @@ export const reorderTodos = mutation({
       .collect();
 
     const sortedTodos = todos.sort((a, b) => a.order - b.order);
-    const oldOrder = todo.order;
 
     // Remove the todo from its current position
     const filtered = sortedTodos.filter((t) => t._id !== args.todoId);

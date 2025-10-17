@@ -13,7 +13,6 @@ interface TodoItemProps {
   type: "todo" | "h1" | "h2" | "h3";
   completed: boolean;
   collapsed: boolean;
-  date: string;
   isArchived?: boolean;
   pinned?: boolean;
   isPinnedView?: boolean;
@@ -27,8 +26,6 @@ export function TodoItem({
   content,
   type,
   completed,
-  collapsed,
-  date,
   isArchived = false,
   pinned = false,
   isPinnedView = false,
@@ -67,13 +64,6 @@ export function TodoItem({
     await updateTodo({
       id,
       completed: !completed,
-    });
-  };
-
-  const handleCollapseToggle = async () => {
-    await updateTodo({
-      id,
-      collapsed: !collapsed,
     });
   };
 

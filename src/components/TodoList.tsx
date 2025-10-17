@@ -232,7 +232,6 @@ export function TodoList({
               type={todo.type}
               completed={todo.completed}
               collapsed={todo.collapsed}
-              date={todo.date}
               pinned={todo.pinned}
               isPinnedView={isPinnedView}
               onMoveToPreviousDay={() => handleMoveToPreviousDay(todo._id)}
@@ -352,7 +351,7 @@ export function TodoList({
       )}
 
       {/* Add note button - hide on pinned view */}
-      {!isPinnedView && <AddNoteButton date={date} onAddNote={handleAddNote} />}
+      {!isPinnedView && <AddNoteButton onAddNote={handleAddNote} />}
 
       {/* Notes section below add note button - hide on pinned view */}
       {!isPinnedView && (

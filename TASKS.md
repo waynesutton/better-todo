@@ -48,14 +48,14 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 - [x] Implement CSS custom properties for font sizes
 - [x] Add color system (mint green for positive, soft red for destructive)
 - [x] Create comprehensive documentation (README, QUICKSTART, GETTING_STARTED)
+- [x] create open graph images
 
 ## In Progress Tasks
 
-- [ ] create open graph images
 - [ ] User authentication with WorkOS AuthKit
 - [ ] User-specific data isolation
 
-## Future Tasks
+## Future Tasks To be determined
 
 ### Authentication
 

@@ -2,7 +2,9 @@
 
 An open source, real-time to-do list that never falls out of sync — built on Convex. Features beautiful dark mode (Sublime Text style) and light mode (Apple Notes style).
 
-**Live Demo**: [better-todo.netlify.app](https://better-todo.netlify.app)
+**Live Demo**: [betterdone.netlify.app](https://betterdone.netlify.app)
+
+[![Netlify Status](https://api.netlify.com/api/v1/badges/853e020c-ce69-4cac-9099-05bcad891445/deploy-status)](https://app.netlify.com/projects/betterdone/deploys)
 
 ## Features
 
