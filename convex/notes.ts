@@ -77,18 +77,14 @@ export const updateNote = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = "anonymous";
-
-    const note = await ctx.db.get(args.id);
-    if (!note || note.userId !== userId) {
-      throw new Error("Note not found or unauthorized");
-    }
-
+    // Build updates object only with provided fields
     const updates: Record<string, any> = {};
     if (args.title !== undefined) updates.title = args.title;
     if (args.content !== undefined) updates.content = args.content;
     if (args.collapsed !== undefined) updates.collapsed = args.collapsed;
 
+    // Patch directly without reading first to avoid write conflicts
+    // ctx.db.patch will throw if the document doesn't exist
     await ctx.db.patch(args.id, updates);
     return null;
   },
@@ -121,15 +117,13 @@ export const reorderNotes = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = "anonymous";
+    // Patch all notes with new order in parallel to avoid sequential conflicts
+    // ctx.db.patch will silently ignore notes that don't exist
+    const updates = args.noteIds.map((noteId, index) =>
+      ctx.db.patch(noteId, { order: index }),
+    );
 
-    for (let i = 0; i < args.noteIds.length; i++) {
-      const note = await ctx.db.get(args.noteIds[i]);
-      if (note && note.userId === userId && note.date === args.date) {
-        await ctx.db.patch(args.noteIds[i], { order: i });
-      }
-    }
-
+    await Promise.all(updates);
     return null;
   },
 });
