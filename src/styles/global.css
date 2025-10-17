@@ -1354,12 +1354,14 @@ body {
     position: fixed !important;
     left: 0;
     top: 0;
-    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
     z-index: 1000;
     width: 280px !important;
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
   }
 
   .sidebar-resizer {
@@ -1461,19 +1463,73 @@ body {
   .inline-todo-input {
     margin-top: 8px;
     gap: 6px;
+    width: 90%;
   }
 
   .notion-input {
     padding: 4px 0;
+    /* Prevent iOS Safari auto-zoom on focus */
+    font-size: 16px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .todo-container {
+    padding: 6px;
+  }
+
+  .main-header {
+    padding: 6px 10px;
+  }
+
+  .inline-todo-input {
+    width: 95%;
+    gap: 4px;
+  }
+
+  .mobile-add-button {
+    min-width: 34px;
+    min-height: 34px;
+    padding: 7px;
+  }
+
+  .notion-input {
+    padding: 3px 0;
+    /* Keep 16px to prevent iOS zoom */
+    font-size: 16px;
+  }
+
+  .todo-checkbox {
+    width: 18px;
+    height: 18px;
   }
 }
 
 /* Extra small devices */
 @media (max-width: 360px) {
+  .todo-container {
+    padding: 4px;
+  }
+
+  .main-header {
+    padding: 4px 8px;
+  }
+
+  .inline-todo-input {
+    width: 100%;
+    gap: 3px;
+  }
+
   .mobile-add-button {
     min-width: 32px;
     min-height: 32px;
     padding: 6px;
+  }
+
+  .notion-input {
+    /* Keep 16px to prevent iOS zoom */
+    font-size: 16px;
   }
 }
 
