@@ -1412,12 +1412,20 @@ body {
   .todo-item {
     padding: 4px 2px;
     min-height: 24px;
+    align-items: center;
+    gap: 6px;
   }
 
   .todo-checkbox {
     width: 20px;
     height: 20px;
-    margin-right: 8px;
+    margin-right: 0;
+    margin-top: 0;
+  }
+
+  .drag-handle {
+    padding: 4px;
+    margin-top: 0;
   }
 
   .menu-button,
@@ -1471,6 +1479,11 @@ body {
     /* Prevent iOS Safari auto-zoom on focus */
     font-size: 16px;
   }
+
+  .todo-input {
+    /* Prevent iOS Safari auto-zoom on focus when editing todos */
+    font-size: 16px;
+  }
 }
 
 /* Small mobile devices */
@@ -1500,9 +1513,22 @@ body {
     font-size: 16px;
   }
 
+  .todo-input {
+    /* Keep 16px to prevent iOS zoom */
+    font-size: 16px;
+  }
+
+  .todo-item {
+    gap: 4px;
+  }
+
   .todo-checkbox {
     width: 18px;
     height: 18px;
+  }
+
+  .drag-handle {
+    padding: 3px;
   }
 }
 
@@ -1530,6 +1556,19 @@ body {
   .notion-input {
     /* Keep 16px to prevent iOS zoom */
     font-size: 16px;
+  }
+
+  .todo-input {
+    /* Keep 16px to prevent iOS zoom */
+    font-size: 16px;
+  }
+
+  .todo-item {
+    gap: 3px;
+  }
+
+  .drag-handle {
+    padding: 2px;
   }
 }
 
