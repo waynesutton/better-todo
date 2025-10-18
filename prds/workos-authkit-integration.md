@@ -498,23 +498,76 @@ Create `convex/users.ts` and `convex/schema.ts` updates as shown above.
 
 ### Netlify Configuration
 
-1. Set environment variables in Netlify dashboard:
-   - `VITE_CONVEX_URL`
-   - `VITE_WORKOS_CLIENT_ID`
-   - `VITE_WORKOS_REDIRECT_URI=https://your-domain.netlify.app/callback`
+**Step 1: Set Environment Variables in Netlify Dashboard**
 
-2. Update WorkOS Dashboard:
-   - Add production redirect URI
-   - Add production CORS origin
-   - Update JWT template if needed
+1. Go to https://app.netlify.com/
+2. Select your site
+3. Navigate to **Site configuration** → **Environment variables**
+4. Add these variables:
 
-3. Deploy Convex backend:
+```
+VITE_CONVEX_URL=https://your-deployment.convex.cloud
+VITE_WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
+VITE_WORKOS_REDIRECT_URI=https://your-domain.netlify.app/callback
+```
 
-   ```bash
-   npx convex deploy
-   ```
+**Important:** All frontend environment variables must be prefixed with `VITE_` for Vite to expose them during build time.
 
-4. Set production environment variables in Convex dashboard
+**Step 2: Update WorkOS Dashboard Settings**
+
+1. Go to https://dashboard.workos.com/
+2. Navigate to your application settings
+3. Add production settings:
+   - **Redirect URIs**: `https://your-domain.netlify.app/callback`
+   - **CORS Origins**: `https://your-domain.netlify.app`
+
+**Step 3: Deploy Convex Backend**
+
+```bash
+npx convex deploy
+```
+
+**Step 4: Set Production Environment Variables in Convex Dashboard**
+
+1. Go to https://dashboard.convex.dev/
+2. Select your production deployment
+3. Navigate to **Settings** → **Environment Variables**
+4. Add:
+
+```
+WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+**Step 5: Configure Netlify Build Settings**
+
+In Netlify dashboard, go to **Site configuration** → **Build & deploy** → **Build settings**:
+
+- **Build command**: `npx convex deploy --cmd 'npm run build'`
+- **Publish directory**: `dist`
+
+This ensures Convex backend is deployed before the frontend build.
+
+**Step 6: Common Netlify Issues and Solutions**
+
+**Issue: "NoClientIdProvidedException" Error**
+
+- **Cause**: Missing `VITE_WORKOS_CLIENT_ID` environment variable
+- **Solution**: Add the environment variable in Netlify dashboard and redeploy
+
+**Issue: Infinite Loading Screen**
+
+- **Cause**: WorkOS AuthKit can't initialize without proper client ID
+- **Solution**: Verify all `VITE_` prefixed environment variables are set correctly
+
+**Issue: Build Fails with TypeScript Errors**
+
+- **Cause**: Missing `@types/node` package for `process.env` usage
+- **Solution**: Add `@types/node` to devDependencies in package.json
+
+**Issue: Authentication Redirects Fail**
+
+- **Cause**: Redirect URI mismatch between WorkOS and Netlify
+- **Solution**: Ensure redirect URIs match exactly in both WorkOS dashboard and environment variables
 
 ### Domain Configuration
 

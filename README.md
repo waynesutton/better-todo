@@ -10,6 +10,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
 
 ### Core Functionality
 
+- **User authentication** with WorkOS AuthKit - secure login/logout with private user data
 - **Real-time synchronization** across browsers using Convex
 - **Notion-style inline input** - type directly to add todos (no button needed)
 - **Daily notes section** with line numbers, Edit/Preview tabs, and code block support
@@ -77,6 +78,7 @@ This will:
 - Set up WorkOS AuthKit automatically (no manual configuration needed)
 - Generate environment variables in `.env.local`
 - Configure JWT authentication with proper aud/iss claims
+- Set up production deployment configuration
 
 3. Start the development server:
 
@@ -102,10 +104,13 @@ You'll receive an email invitation to set up your WorkOS account. Once authentic
 
 ### Authentication
 
-- **Sign in required** - Click the login icon in the sidebar to authenticate with WorkOS
-- **Private data** - Each user has their own private todos and notes
+- **Sign in required** - Click the login icon in the sidebar to authenticate with WorkOS AuthKit
+- **Private data** - Each user has their own private todos and notes (completely isolated)
+- **Theme-aware icons** - Login/user icons automatically switch between dark and light variants
 - **Sign out** - Click your profile icon in the sidebar to sign out
 - **First-time users** - You'll see a "Sign In Required" modal when trying to create todos/notes
+- **Automatic user storage** - Your profile data is automatically saved to the database on first login
+- **Secure JWT tokens** - Authentication uses industry-standard JWT tokens with proper validation
 
 ### Creating Todos
 
@@ -234,7 +239,7 @@ Edit CSS variables in `src/styles/global.css`:
 :root[data-theme="dark"] {
   --font-app-name: 16px; /* App title */
   --font-sidebar: 13px; /* Sidebar dates */
-  --font-todo: 14px; /* Todos and notes */
+  --font-todo: 15px; /* Todos and notes */
   --font-archive: 13px; /* Archive section */
 }
 ```
@@ -265,7 +270,7 @@ npm run build
 
 ### Deploying to Netlify
 
-The app is configured for easy deployment to Netlify. The Convex backend is automatically deployed when you push changes.
+The app is configured for easy deployment to Netlify with WorkOS AuthKit integration. The Convex backend is automatically deployed when you push changes.
 
 For production deployment:
 
@@ -280,19 +285,30 @@ npx convex deploy
    - Click "Add new site" and connect your GitHub repository
    - Netlify will auto-detect the build settings
 
-3. Configure build settings (if needed):
-   - Build command: `npm run build`
+3. Configure build settings:
+   - Build command: `npx convex deploy --cmd 'npm run build'`
    - Publish directory: `dist`
 
 4. Add environment variables in Netlify:
    - Go to Site settings > Environment variables
-   - Add your Convex deployment URL and any other required variables
+   - Add these required variables:
+     ```
+     VITE_CONVEX_URL=https://your-deployment.convex.cloud
+     VITE_WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
+     VITE_WORKOS_REDIRECT_URI=https://your-domain.netlify.app/callback
+     ```
 
-5. Deploy:
+5. Configure WorkOS Dashboard:
+   - Add production redirect URI: `https://your-domain.netlify.app/callback`
+   - Add production CORS origin: `https://your-domain.netlify.app`
+
+6. Deploy:
    - Push to your repository and Netlify will automatically build and deploy
    - Your app will be live at `your-site-name.netlify.app`
 
 The app supports continuous deployment, so every push to your main branch will trigger a new deployment.
+
+**Note:** All environment variables prefixed with `VITE_` are exposed to the frontend during build time. Never include sensitive information like API keys in these variables.
 
 ## Keyboard Shortcuts
 
@@ -306,16 +322,18 @@ The app supports continuous deployment, so every push to your main branch will t
 
 ## Tips & Tricks
 
-1. **Multi-line todos**: Use Enter to write detailed notes within a single todo item
-2. **Multiple notes**: Add unlimited notes per date with custom titles for different topics
-3. **Quick navigation**: Click dates in sidebar to jump between days, use Cmd/Ctrl+K to search
-4. **Custom labels**: Add meaningful names to dates like "Team Meeting" or "Project Launch"
-5. **Bulk actions**: Use Archive All/Delete All buttons at the bottom to manage multiple todos
-6. **Line numbers**: Notes display line numbers like a code editor (they won't copy with text)
-7. **Bulk move**: Use the date menu (three dots) to copy all todos to another date
-8. **Compact sidebar**: Click panel icon to collapse sidebar for more workspace
-9. **Archive dates**: Hide completed days to keep sidebar clean while preserving data
-10. **Mobile**: Sidebar auto-hides on mobile - tap the panel icon to show/hide, use + button to add todos
+1. **Authentication**: Sign in once and your data stays private and synced across all devices
+2. **Multi-line todos**: Use Enter to write detailed notes within a single todo item
+3. **Multiple notes**: Add unlimited notes per date with custom titles for different topics
+4. **Quick navigation**: Click dates in sidebar to jump between days, use Cmd/Ctrl+K to search
+5. **Custom labels**: Add meaningful names to dates like "Team Meeting" or "Project Launch"
+6. **Bulk actions**: Use Archive All/Delete All buttons at the bottom to manage multiple todos
+7. **Line numbers**: Notes display line numbers like a code editor (they won't copy with text)
+8. **Bulk move**: Use the date menu (three dots) to copy all todos to another date
+9. **Compact sidebar**: Click panel icon to collapse sidebar for more workspace
+10. **Archive dates**: Hide completed days to keep sidebar clean while preserving data
+11. **Mobile**: Sidebar auto-hides on mobile - tap the panel icon to show/hide, use + button to add todos
+12. **Theme switching**: Login/user icons automatically adapt to your current theme (dark/light)
 
 ## Contributing
 

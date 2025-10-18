@@ -4,7 +4,27 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.9.0] - 2025-10-17
+## [1.9.1] - 2025-01-17
+
+### Fixed
+
+- **Production deployment issues** - Resolved Netlify build failures
+  - Fixed TypeScript error in NotesSection.tsx onClick handler for WorkOS signIn function
+  - Added @types/node package to devDependencies for process.env support in Convex backend
+  - Updated WorkOS AuthKit integration guide with comprehensive Netlify deployment steps
+  - Documented environment variable configuration for production deployment
+  - Added troubleshooting section for common deployment issues
+
+### Added
+
+- **Production deployment documentation** - Complete Netlify setup guide
+  - Step-by-step environment variable configuration
+  - WorkOS dashboard settings for production domains
+  - Build command optimization with Convex deployment integration
+  - Common deployment issues and solutions
+  - Security best practices for environment variables
+
+## [1.9.0] - 2025-01-17
 
 ### Added
 

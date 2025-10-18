@@ -79,6 +79,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - User Management JWT: `https://api.workos.com/user_management/${clientId}`
   - Organization SAML/SSO JWT: `https://api.workos.com/`
   - Uses RS256 algorithm with JWKS endpoint for token validation
+  - Properly configured for production deployment with environment variables
 - `users.ts` - User management functions:
   - `storeUser` - Store/update WorkOS user data in Convex database
   - `getCurrentUser` - Get authenticated user information
@@ -89,9 +90,10 @@ This document describes the structure and purpose of each file in the Better Tod
 ### Main Files
 
 - `main.tsx` - Application entry point with WorkOS AuthKit and Convex providers:
-  - AuthKitProvider with WorkOS client ID and redirect URI
+  - AuthKitProvider with WorkOS client ID and redirect URI from environment variables
   - ConvexProviderWithAuthKit for WorkOS-Convex integration
   - ThemeProvider for dark/light mode management
+  - Properly configured for both development and production environments
 - `App.tsx` - Main app component with:
   - Layout management (sidebar + main content)
   - Sidebar resize functionality (200px - 500px)
@@ -279,9 +281,18 @@ This document describes the structure and purpose of each file in the Better Tod
 - Convex logo files (black and white variants)
 - SVG favicon with checkmark design
 
-## Current Version: 1.9.0 (October 17, 2025)
+## Current Version: 1.9.1 (January 17, 2025)
 
-### Latest Features (v1.9.0)
+### Latest Features (v1.9.1)
+
+- **Production Deployment Fixes** - Resolved Netlify build and deployment issues
+  - Fixed TypeScript errors in WorkOS AuthKit integration
+  - Added @types/node package for Convex backend support
+  - Comprehensive Netlify deployment documentation
+  - Environment variable configuration guide
+  - Troubleshooting section for common deployment issues
+
+### Previous Features (v1.9.0)
 
 - **WorkOS AuthKit Integration** - Complete authentication system
   - User login/logout with WorkOS AuthKit
@@ -328,4 +339,4 @@ This document describes the structure and purpose of each file in the Better Tod
 - Resizable sidebar (200px - 500px)
 - Mobile-optimized with auto-hide and overlay
 - Keyboard shortcuts (Enter, Shift+Enter, Cmd/Ctrl+K, Escape)
-- WorkOS AuthKit integration (fully implemented and working)
+- WorkOS AuthKit integration (fully implemented, deployed, and working in production)
