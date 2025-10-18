@@ -376,13 +376,16 @@ export function TodoList({
             }}
             autoFocus={focusedInput}
             rows={1}
-            spellCheck={true}
+            spellCheck={false}
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
             data-gramm="false"
             data-gramm_editor="false"
             data-enable-grammarly="false"
+            data-1p-ignore
+            data-lpignore="true"
+            inputMode="text"
           />
           {isMobile && newTodoContent.trim() && (
             <button

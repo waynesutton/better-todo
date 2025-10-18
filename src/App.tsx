@@ -11,6 +11,7 @@ import { ConfirmDialog } from "./components/ConfirmDialog";
 import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { format } from "date-fns";
 import { Search, Menu } from "lucide-react";
+import { CopyIcon, CheckIcon } from "@radix-ui/react-icons";
 import { Id } from "../convex/_generated/dataModel";
 import { localData } from "./lib/localData";
 import { useTheme } from "./context/ThemeContext";
@@ -47,6 +48,7 @@ function App() {
   const [focusedTodoIndex, setFocusedTodoIndex] = useState(-1);
   const [lastCompletedTodo, setLastCompletedTodo] =
     useState<Id<"todos"> | null>(null);
+  const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
 
   // Local ephemeral data for unsigned users
   const [localTodos, setLocalTodos] = useState<any[]>([]);
@@ -249,6 +251,17 @@ function App() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Handle Shift+Tab in textarea to scroll to top
+      if (
+        e.key === "Tab" &&
+        e.shiftKey &&
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
       // Don't trigger shortcuts when typing in inputs
       if (
         e.target instanceof HTMLInputElement ||
@@ -414,19 +427,55 @@ function App() {
               )}
               <div className="current-date">{formatCurrentDate()}</div>
             </div>
-            <button
-              className="search-button"
-              onClick={() => {
-                if (!authIsLoading && isAuthenticated) {
-                  setSearchModalOpen(true);
-                } else {
-                  setShowSignInToSearchModal(true);
-                }
-              }}
-              title="Search (Cmd+K)"
-            >
-              <Search size={18} />
-            </button>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                className="search-button"
+                onClick={() => {
+                  // Copy all unchecked (incomplete) todos to clipboard
+                  const incompleteTodos = activeTodos.filter(
+                    (todo) => !todo.completed,
+                  );
+                  const todoText = incompleteTodos
+                    .map((todo) => `- ${todo.content}`)
+                    .join("\n");
+
+                  if (todoText) {
+                    navigator.clipboard
+                      .writeText(todoText)
+                      .then(() => {
+                        // Show brief success indicator
+                        setShowCopyConfirmation(true);
+                        setTimeout(() => {
+                          setShowCopyConfirmation(false);
+                        }, 2000);
+                      })
+                      .catch((err) => {
+                        console.error("Failed to copy todos:", err);
+                      });
+                  }
+                }}
+                title="Copy unchecked todos"
+              >
+                {showCopyConfirmation ? (
+                  <CheckIcon style={{ width: 18, height: 18 }} />
+                ) : (
+                  <CopyIcon style={{ width: 18, height: 18 }} />
+                )}
+              </button>
+              <button
+                className="search-button"
+                onClick={() => {
+                  if (!authIsLoading && isAuthenticated) {
+                    setSearchModalOpen(true);
+                  } else {
+                    setShowSignInToSearchModal(true);
+                  }
+                }}
+                title="Search (Cmd+K)"
+              >
+                <Search size={18} />
+              </button>
+            </div>
           </div>
 
           {!authIsLoading && !isAuthenticated && (
