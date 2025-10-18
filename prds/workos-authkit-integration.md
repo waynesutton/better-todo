@@ -496,9 +496,237 @@ Create `convex/users.ts` and `convex/schema.ts` updates as shown above.
 
 ## Production Deployment
 
-### Netlify Configuration
+### Critical: Netlify Functions Required for SPA Deployment
 
-**Step 1: Set Environment Variables in Netlify Dashboard**
+**Why This Is Needed:**
+
+WorkOS AuthKit React SDK (`@workos-inc/authkit-react`) expects **server-side session management** with HTTP-only cookies. In a pure Single Page Application (SPA) deployment without a backend, WorkOS authentication will succeed but the browser won't receive session cookies because there's no server endpoint on your domain to set them.
+
+**The Problem:**
+
+1. User logs in via WorkOS → Session created on WorkOS servers ✅
+2. WorkOS redirects back to your app → Browser has no cookies ❌
+3. Frontend shows `hasWorkOSUser: false` even though authentication succeeded ❌
+
+**The Solution:**
+
+Create Netlify Functions (serverless API endpoints) that:
+
+1. Handle OAuth callback and exchange code for tokens
+2. Set secure HTTP-only session cookies on your domain
+3. Provide endpoints for checking auth status and logout
+
+### Step 1: Install Dependencies
+
+```bash
+npm install @workos-inc/node
+```
+
+### Step 2: Create Netlify Functions
+
+**netlify/functions/auth-callback.ts:**
+
+```typescript
+import { WorkOS } from "@workos-inc/node";
+
+const workos = new WorkOS(process.env.WORKOS_API_KEY);
+const clientId = process.env.WORKOS_CLIENT_ID;
+
+export const handler = async (event: any) => {
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      },
+      body: "",
+    };
+  }
+
+  try {
+    const { code } = event.queryStringParameters || {};
+
+    if (!code || !clientId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Missing required parameters" }),
+      };
+    }
+
+    // Exchange code for access token
+    const { accessToken, refreshToken, user } =
+      await workos.userManagement.authenticateWithCode({
+        code,
+        clientId,
+      });
+
+    // Create session cookies (7 days)
+    const cookieExpiry = new Date();
+    cookieExpiry.setDate(cookieExpiry.getDate() + 7);
+
+    const cookies = [
+      `workos_access_token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${cookieExpiry.toUTCString()}`,
+      `workos_refresh_token=${refreshToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${cookieExpiry.toUTCString()}`,
+      `workos_user=${encodeURIComponent(JSON.stringify(user))}; Path=/; Secure; SameSite=Lax; Expires=${cookieExpiry.toUTCString()}`,
+    ];
+
+    return {
+      statusCode: 302,
+      headers: {
+        Location: "/",
+        "Set-Cookie": cookies.join(", "),
+      },
+      body: "",
+    };
+  } catch (error: any) {
+    console.error("Authentication error:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: "Authentication failed",
+        message: error.message,
+      }),
+    };
+  }
+};
+```
+
+**netlify/functions/auth-me.ts:**
+
+```typescript
+export const handler = async (event: any) => {
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+      },
+      body: "",
+    };
+  }
+
+  try {
+    const cookies = event.headers.cookie || "";
+    const userCookie = cookies
+      .split(";")
+      .find((c: string) => c.trim().startsWith("workos_user="));
+
+    if (!userCookie) {
+      return {
+        statusCode: 401,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ error: "Not authenticated" }),
+      };
+    }
+
+    const userJson = decodeURIComponent(userCookie.split("=")[1]);
+    const user = JSON.parse(userJson);
+
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ user }),
+    };
+  } catch (error: any) {
+    return {
+      statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ error: "Failed to read session" }),
+    };
+  }
+};
+```
+
+**netlify/functions/auth-logout.ts:**
+
+```typescript
+export const handler = async (event: any) => {
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+      },
+      body: "",
+    };
+  }
+
+  try {
+    const clearCookies = [
+      "workos_access_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+      "workos_refresh_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+      "workos_user=; Path=/; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+    ];
+
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+        "Set-Cookie": clearCookies.join(", "),
+      },
+      body: JSON.stringify({ success: true }),
+    };
+  } catch (error: any) {
+    return {
+      statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ error: "Failed to logout" }),
+    };
+  }
+};
+```
+
+### Step 3: Create Netlify Configuration
+
+**netlify.toml:**
+
+```toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/auth/callback"
+  to = "/.netlify/functions/auth-callback"
+  status = 200
+
+[[redirects]]
+  from = "/api/auth/me"
+  to = "/.netlify/functions/auth-me"
+  status = 200
+
+[[redirects]]
+  from = "/api/auth/logout"
+  to = "/.netlify/functions/auth-logout"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
+### Step 4: Set Environment Variables in Netlify Dashboard
 
 1. Go to https://app.netlify.com/
 2. Select your site
@@ -506,28 +734,44 @@ Create `convex/users.ts` and `convex/schema.ts` updates as shown above.
 4. Add these variables:
 
 ```
-VITE_CONVEX_URL=https://your-deployment.convex.cloud
+WORKOS_API_KEY=sk_live_YOUR_API_KEY_HERE
+WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
+VITE_CONVEX_URL=https://your-production-deployment.convex.cloud
 VITE_WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
-VITE_WORKOS_REDIRECT_URI=https://your-domain.netlify.app/callback
+VITE_WORKOS_REDIRECT_URI=https://your-domain.netlify.app/api/auth/callback
 ```
+
+**Critical Changes:**
+
+- Added `WORKOS_API_KEY` for server-side OAuth
+- Redirect URI now points to `/api/auth/callback` (Netlify Function)
+- Must use production Convex URL, not development URL
 
 **Important:** All frontend environment variables must be prefixed with `VITE_` for Vite to expose them during build time.
 
-**Step 2: Update WorkOS Dashboard Settings**
+**Step 5: Update WorkOS Dashboard Settings**
 
 1. Go to https://dashboard.workos.com/
 2. Navigate to your application settings
 3. Add production settings:
-   - **Redirect URIs**: `https://your-domain.netlify.app/callback`
+   - **Redirect URIs**: `https://your-domain.netlify.app/api/auth/callback` (changed from `/callback`)
    - **CORS Origins**: `https://your-domain.netlify.app`
 
-**Step 3: Deploy Convex Backend**
+**Step 6: Deploy Convex Production Backend**
+
+First, set the production environment variable:
 
 ```bash
-npx convex deploy
+npx convex env set WORKOS_CLIENT_ID client_01XXXXXXXXXXXXXXXXXXXXXXXX --prod
 ```
 
-**Step 4: Set Production Environment Variables in Convex Dashboard**
+Then deploy your functions:
+
+```bash
+npx convex deploy -y
+```
+
+**Step 7: Set Production Environment Variables in Convex Dashboard**
 
 1. Go to https://dashboard.convex.dev/
 2. Select your production deployment
@@ -538,16 +782,19 @@ npx convex deploy
 WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-**Step 5: Configure Netlify Build Settings**
+**Step 8: Deploy to Netlify**
 
-In Netlify dashboard, go to **Site configuration** → **Build & deploy** → **Build settings**:
+Commit and push your changes:
 
-- **Build command**: `npx convex deploy --cmd 'npm run build'`
-- **Publish directory**: `dist`
+```bash
+git add .
+git commit -m "Add Netlify Functions for WorkOS OAuth"
+git push
+```
 
-This ensures Convex backend is deployed before the frontend build.
+Netlify will automatically build and deploy with the new functions.
 
-**Step 6: Common Netlify Issues and Solutions**
+**Step 9: Common Netlify Issues and Solutions**
 
 **Issue: "NoClientIdProvidedException" Error**
 
@@ -568,6 +815,28 @@ This ensures Convex backend is deployed before the frontend build.
 
 - **Cause**: Redirect URI mismatch between WorkOS and Netlify
 - **Solution**: Ensure redirect URIs match exactly in both WorkOS dashboard and environment variables
+
+**Issue: WorkOS Session Created but Frontend Shows Not Authenticated**
+
+- **Cause**: Missing Netlify Functions to handle OAuth and set cookies
+- **Symptoms**:
+  - WorkOS logs show successful `authentication.oauth_succeeded` and `session.created` events
+  - Browser console shows `hasWorkOSUser: false` and `isAuthenticated: false`
+  - No WorkOS cookies in browser
+- **Solution**:
+  - Implement Netlify Functions as shown in this guide
+  - Update redirect URI to `/api/auth/callback` endpoint
+  - Add `WORKOS_API_KEY` to Netlify environment variables
+  - Deploy with `netlify.toml` configuration
+
+**Issue: Using Wrong Convex Deployment URL**
+
+- **Cause**: Frontend configured with development Convex URL instead of production
+- **Symptoms**: Auth works locally but fails in production
+- **Solution**:
+  - Check Convex deployments: development vs production URLs are different
+  - Set `VITE_CONVEX_URL` in Netlify to your production Convex deployment
+  - Deploy auth config to production Convex with `npx convex deploy -y`
 
 ### Domain Configuration
 

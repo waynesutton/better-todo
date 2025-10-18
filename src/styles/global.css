@@ -444,6 +444,23 @@ body {
   background-color: var(--bg-hover);
 }
 
+.settings-link {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.settings-link:hover {
+  background-color: var(--bg-hover);
+}
+
 .login-button {
   display: flex;
   align-items: center;

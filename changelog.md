@@ -4,6 +4,51 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.9.3] - 2025-01-18
+
+### Added
+
+- **User profile settings link** - Added settings gear icon in sidebar footer
+  - Settings icon appears next to Convex logo
+  - Only visible when user is logged in
+  - Links to WorkOS user profile management page
+  - Adapts to light and dark mode themes
+  - Includes tooltip with "Manage your profile" description
+
+## [1.9.2] - 2025-01-18
+
+### Fixed
+
+- **Production authentication with Netlify Functions** - Resolved WorkOS session authentication failure
+  - WorkOS OAuth succeeded but frontend couldn't access session cookies (SPA limitation)
+  - Implemented Netlify Functions for server-side OAuth callback handling
+  - Created `/api/auth/callback` endpoint to exchange OAuth code for tokens and set HTTP-only cookies
+  - Created `/api/auth/me` endpoint to retrieve current user from session cookies
+  - Created `/api/auth/logout` endpoint to clear authentication cookies
+  - Added `netlify.toml` configuration for function routing
+  - Installed `@workos-inc/node` package for server-side WorkOS SDK
+  - Updated WorkOS redirect URI from `/callback` to `/api/auth/callback`
+  - Fixed production Convex deployment URL configuration (was using dev URL)
+  - Set `WORKOS_CLIENT_ID` on production Convex deployment to match frontend
+  - Deployed Convex auth config to production with `npx convex deploy -y`
+
+### Added
+
+- **Netlify Functions for WorkOS authentication** - Server-side OAuth handling
+  - `netlify/functions/auth-callback.ts` - Handles OAuth callback and sets session cookies
+  - `netlify/functions/auth-me.ts` - Returns current user from session
+  - `netlify/functions/auth-logout.ts` - Clears authentication cookies
+  - `netlify.toml` - Routes `/api/auth/*` to Netlify Functions
+  - Debug logging for environment variables and auth state in browser console
+
+### Changed
+
+- **Environment variables configuration** updated for production deployment
+  - Added `WORKOS_API_KEY` (server-side, required for OAuth token exchange)
+  - Changed `VITE_WORKOS_REDIRECT_URI` to point to `/api/auth/callback` endpoint
+  - Ensured `VITE_CONVEX_URL` uses production deployment URL, not development
+  - Production Convex deployment now has correct `WORKOS_CLIENT_ID` environment variable
+
 ## [1.9.1] - 2025-01-17
 
 ### Fixed
