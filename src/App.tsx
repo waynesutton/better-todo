@@ -12,8 +12,14 @@ import "./styles/global.css";
 
 function App() {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const { user, signIn } = useAuth();
+  const workOSAuth = useAuth();
+  const { user, signIn } = workOSAuth;
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Debug WorkOS auth object
+  useEffect(() => {
+    console.log("WorkOS useAuth() full object:", workOSAuth);
+  }, [workOSAuth]);
   const [selectedDate, setSelectedDate] = useState<string>(
     format(new Date(), "yyyy-MM-dd"),
   );
@@ -35,7 +41,19 @@ function App() {
       isAuthenticated,
       hasWorkOSUser: !!user,
       userEmail: user?.email,
+      currentPath: window.location.pathname,
+      currentSearch: window.location.search,
     });
+
+    // Check for WorkOS session cookies
+    const cookies = document.cookie.split(";").map((c) => c.trim());
+    console.log("All cookies:", cookies);
+    const workOSCookies = cookies.filter(
+      (c) =>
+        c.toLowerCase().includes("workos") ||
+        c.toLowerCase().includes("session"),
+    );
+    console.log("WorkOS/Session cookies:", workOSCookies);
   }, [isLoading, isAuthenticated, user]);
 
   // Redirect from callback to home when authenticated
