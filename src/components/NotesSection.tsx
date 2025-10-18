@@ -366,7 +366,7 @@ export function AddNoteButton({ onAddNote }: NotesWithAddButtonProps) {
 
   if (!isAuthenticated) {
     return (
-      <button className="add-note-button" onClick={signIn}>
+      <button className="add-note-button" onClick={() => signIn()}>
         <Plus size={14} />
         <span>Sign In to Add Note</span>
       </button>
