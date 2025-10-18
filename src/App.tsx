@@ -47,21 +47,10 @@ function App() {
   const [focusedTodoIndex, setFocusedTodoIndex] = useState(-1);
   const [lastCompletedTodo, setLastCompletedTodo] =
     useState<Id<"todos"> | null>(null);
-  const [focusFirstTodoCallback, setFocusFirstTodoCallback] = useState<
-    (() => void) | null
-  >(null);
 
   // Local ephemeral data for unsigned users
   const [localTodos, setLocalTodos] = useState<any[]>([]);
   const [localDates, setLocalDates] = useState<string[]>([]);
-
-  // Handle focus first todo callback
-  const handleFocusFirstTodo = (callback: () => void) => {
-    setFocusFirstTodoCallback(() => {
-      // Don't set focusedTodoIndex here - only set it when using arrow keys
-      callback();
-    });
-  };
 
   // Mutations for footer actions
   const archiveAllTodos = useMutation(api.todos.archiveAllTodos);
@@ -250,7 +239,11 @@ function App() {
     activeId: Id<"todos">,
     overId: Id<"todos">,
   ) => {
-    await reorderTodos({ activeId, overId });
+    // Find the new order based on the overId position
+    const overIndex = archivedTodos.findIndex((t) => t._id === overId);
+    if (overIndex !== -1) {
+      await reorderTodos({ todoId: activeId, newOrder: overIndex });
+    }
   };
 
   // Keyboard shortcuts
@@ -367,7 +360,6 @@ function App() {
 
   // Clerk appearance customization
   const clerkAppearance = {
-    baseTheme: theme === "dark" ? "dark" : undefined,
     variables: {
       colorPrimary: theme === "dark" ? "#ffffff" : "#000000",
       colorBackground: theme === "dark" ? "#2E3842" : "#ffffff",
@@ -467,7 +459,6 @@ function App() {
               isPinnedView={selectedDate === "pinned"}
               todoInputRef={todoInputRef}
               focusedTodoIndex={focusedTodoIndex}
-              onFocusFirstTodo={handleFocusFirstTodo}
               onRequireSignIn={() => setShowSignInToCreateModal(true)}
               onRequireSignInForNote={() => setShowSignInToNoteModal(true)}
             />
@@ -623,7 +614,6 @@ function App() {
               <SignIn
                 appearance={clerkAppearance}
                 afterSignInUrl="/"
-                signUpUrl={null}
                 routing="hash"
               />
             </div>
@@ -644,7 +634,6 @@ function App() {
                 appearance={clerkAppearance}
                 afterSignInUrl="/"
                 afterSignUpUrl="/"
-                signInUrl={null}
                 routing="hash"
               />
             </div>

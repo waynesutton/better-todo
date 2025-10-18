@@ -1,4 +1,3 @@
-import React from "react";
 import { createPortal } from "react-dom";
 import { Cross2Icon } from "@radix-ui/react-icons";
 
