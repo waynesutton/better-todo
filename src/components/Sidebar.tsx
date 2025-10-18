@@ -214,7 +214,13 @@ export function Sidebar({
   return (
     <TooltipProvider delayDuration={300}>
       <div className={`sidebar-header ${isCollapsed ? "collapsed" : ""}`}>
-        <div className="sidebar-title">better todo</div>
+        <a
+          href="/"
+          className="sidebar-title"
+          style={{ textDecoration: "none", color: "inherit" }}
+        >
+          better todo
+        </a>
         {onToggleCollapse && (
           <Tooltip>
             <TooltipTrigger asChild>
