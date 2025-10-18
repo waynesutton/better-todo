@@ -1,7 +1,7 @@
 {
   "name": "better-todo",
   "version": "1.0.0",
-  "description": "Real-time markdown todo app with Convex and WorkOS AuthKit",
+  "description": "Real-time markdown todo app with Convex and Clerk",
   "type": "module",
   "scripts": {
     "dev": "npm-run-all --parallel dev:frontend dev:backend",
