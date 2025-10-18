@@ -39,9 +39,7 @@ alwaysApply: true
 - you are an expert on convex auth functions https://docs.convex.dev/auth/functions-auth
 - you use convex Mutations https://docs.convex.dev/functions/mutation-functions
 - you use convex search https://docs.convex.dev/search/vector-search
-- you are an expert in convex and workos authkit https://workos.com/blog/convex-authkit
-- you are an expert in convex and workos https://docs.convex.dev/auth/authkit/
-- you are an expert in convex and workos  Automatic AuthKit Configurationhttps://docs.convex.dev/auth/authkit/auto-provision
+- you are an expert in clerk https://clerk.com/docs/react/reference/components/authentication/sign-in
 - you an an expert in convex vector search https://docs.convex.dev/search/vector-search
 - you are an expert in understanding how Uploading and Storing Files with convex https://docs.convex.dev/file-storage/upload-files
 

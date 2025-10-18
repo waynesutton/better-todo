@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
+import { useUser } from "@clerk/clerk-react";
 import { api } from "../../convex/_generated/api";
 import { format, addDays, subDays } from "date-fns";
 import { PanelLeft, Pin } from "lucide-react";
@@ -20,6 +21,9 @@ interface SidebarProps {
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   onShowKeyboardShortcuts?: () => void;
+  onOpenSignIn?: () => void;
+  onOpenSignUp?: () => void;
+  onOpenProfile?: () => void;
 }
 
 export function Sidebar({
@@ -29,8 +33,13 @@ export function Sidebar({
   isCollapsed = false,
   onToggleCollapse,
   onShowKeyboardShortcuts,
+  onOpenSignIn,
+  onOpenSignUp,
+  onOpenProfile,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
+  const { isLoading: authIsLoading, isAuthenticated } = useConvexAuth();
+  const { user } = useUser();
   const [showMenuForDate, setShowMenuForDate] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState<string | null>(null);
   const [showRenameInput, setShowRenameInput] = useState<string | null>(null);
@@ -476,23 +485,80 @@ export function Sidebar({
 
       <div className="sidebar-footer">
         <div className="sidebar-footer-left">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button className="login-button">
-                <img
-                  src={
-                    theme === "dark" ? "/login-light.svg" : "/login-dark.svg"
-                  }
-                  alt="Sign in"
-                  width="18"
-                  height="18"
-                />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8}>
-              Sign in to your account
-            </TooltipContent>
-          </Tooltip>
+          {/* Show profile icon only when Convex auth is ready AND Clerk user is loaded */}
+          {!authIsLoading && isAuthenticated && user ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="login-button"
+                  onClick={() => onOpenProfile?.()}
+                >
+                  <img
+                    src={
+                      theme === "dark" ? "/user-light.svg" : "/user-dark.svg"
+                    }
+                    alt="User profile"
+                    width="18"
+                    height="18"
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                {user?.firstName || user?.emailAddresses[0]?.emailAddress} -
+                View profile
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <>
+              {/* Sign Up Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className="login-button"
+                    onClick={() => onOpenSignUp?.()}
+                  >
+                    <img
+                      src={
+                        theme === "dark"
+                          ? "/sign-up-light.svg"
+                          : "/sign-up-dark.svg"
+                      }
+                      alt="Sign up"
+                      width="18"
+                      height="18"
+                    />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>
+                  Sign up to save your data
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Sign In Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className="login-button"
+                    onClick={() => onOpenSignIn?.()}
+                  >
+                    <img
+                      src={
+                        theme === "dark"
+                          ? "/login-light.svg"
+                          : "/login-dark.svg"
+                      }
+                      alt="Sign in"
+                      width="18"
+                      height="18"
+                    />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>
+                  Sign in to save your data
+                </TooltipContent>
+              </Tooltip>
+            </>
+          )}
 
           <Tooltip>
             <TooltipTrigger asChild>

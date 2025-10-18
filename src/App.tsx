@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { useUser } from "@clerk/clerk-react";
+import { SignIn, SignUp, UserProfile, SignOutButton } from "@clerk/clerk-react";
 import { api } from "../convex/_generated/api";
 import { Sidebar } from "./components/Sidebar";
 import { TodoList } from "./components/TodoList";
@@ -10,9 +12,15 @@ import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { format } from "date-fns";
 import { Search, Menu } from "lucide-react";
 import { Id } from "../convex/_generated/dataModel";
+import { localData } from "./lib/localData";
+import { useTheme } from "./context/ThemeContext";
 import "./styles/global.css";
 
 function App() {
+  const { isLoading: authIsLoading, isAuthenticated } = useConvexAuth();
+  const { user } = useUser();
+  const { theme } = useTheme();
+
   const [selectedDate, setSelectedDate] = useState<string>(
     format(new Date(), "yyyy-MM-dd"),
   );
@@ -28,6 +36,11 @@ function App() {
   const [confirmArchiveAll, setConfirmArchiveAll] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [showSignInModal, setShowSignInModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showSignInToSearchModal, setShowSignInToSearchModal] = useState(false);
+  const [showSignInToCreateModal, setShowSignInToCreateModal] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const todoInputRef = useRef<HTMLTextAreaElement>(null);
   const [focusedTodoIndex, setFocusedTodoIndex] = useState(-1);
@@ -36,6 +49,10 @@ function App() {
   const [focusFirstTodoCallback, setFocusFirstTodoCallback] = useState<
     (() => void) | null
   >(null);
+
+  // Local ephemeral data for unsigned users
+  const [localTodos, setLocalTodos] = useState<any[]>([]);
+  const [localDates, setLocalDates] = useState<string[]>([]);
 
   // Handle focus first todo callback
   const handleFocusFirstTodo = (callback: () => void) => {
@@ -53,13 +70,34 @@ function App() {
   const reorderTodos = useMutation(api.todos.reorderTodos);
   const updateTodo = useMutation(api.todos.updateTodo);
 
-  // Fetch available dates and todos
-  const availableDates = useQuery(api.todos.getAvailableDates);
-  const pinnedTodos = useQuery(api.todos.getPinnedTodos);
+  // Fetch available dates and todos (skip if not authenticated)
+  const availableDates = useQuery(
+    api.todos.getAvailableDates,
+    isAuthenticated ? undefined : "skip",
+  );
+  const pinnedTodos = useQuery(
+    api.todos.getPinnedTodos,
+    isAuthenticated ? undefined : "skip",
+  );
   const todos = useQuery(
     api.todos.getTodosByDate,
-    selectedDate !== "pinned" ? { date: selectedDate } : "skip",
+    isAuthenticated && selectedDate !== "pinned"
+      ? { date: selectedDate }
+      : "skip",
   );
+
+  // Refresh local data when needed
+  useEffect(() => {
+    if (!authIsLoading && !isAuthenticated) {
+      setLocalTodos(localData.getTodosByDate(selectedDate));
+      setLocalDates(localData.getAvailableDates());
+    } else if (isAuthenticated) {
+      // Clear local data when authenticated
+      localData.clear();
+      setLocalTodos([]);
+      setLocalDates([]);
+    }
+  }, [selectedDate, authIsLoading, isAuthenticated]);
 
   // Ensure current date is always available
   useEffect(() => {
@@ -76,26 +114,50 @@ function App() {
   // Show all dates including today if not in list
   const allDates = React.useMemo(() => {
     const today = format(new Date(), "yyyy-MM-dd");
-    const dates = availableDates || [];
+    const dates =
+      !authIsLoading && isAuthenticated ? availableDates || [] : localDates;
 
     if (!dates.includes(today)) {
       return [today, ...dates];
     }
     return dates;
-  }, [availableDates]);
+  }, [availableDates, localDates, authIsLoading, isAuthenticated]);
 
   // Handle keyboard shortcut for search (Cmd+K / Ctrl+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setSearchModalOpen(true);
+        if (!authIsLoading && isAuthenticated) {
+          setSearchModalOpen(true);
+        } else {
+          setShowSignInToSearchModal(true);
+        }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [authIsLoading, isAuthenticated]);
+
+  // After closing Clerk modals, refresh Clerk user so Sidebar tooltip/profile reflects updates
+  useEffect(() => {
+    if (!showProfileModal) {
+      void user?.reload?.();
+    }
+  }, [showProfileModal, user]);
+
+  useEffect(() => {
+    if (!showSignUpModal) {
+      void user?.reload?.();
+    }
+  }, [showSignUpModal, user]);
+
+  useEffect(() => {
+    if (!showSignInModal) {
+      void user?.reload?.();
+    }
+  }, [showSignInModal, user]);
 
   // Handle sidebar resize
   useEffect(() => {
@@ -148,7 +210,11 @@ function App() {
 
   // Determine which todos to display
   const displayTodos =
-    selectedDate === "pinned" ? pinnedTodos || [] : todos || [];
+    !authIsLoading && isAuthenticated
+      ? selectedDate === "pinned"
+        ? pinnedTodos || []
+        : todos || []
+      : localTodos;
 
   // Separate archived and active todos
   const activeTodos = displayTodos.filter((t) => !t.archived);
@@ -298,6 +364,17 @@ function App() {
     }
   }, [activeTodos.length, focusedTodoIndex]);
 
+  // Clerk appearance customization
+  const clerkAppearance = {
+    baseTheme: theme === "dark" ? "dark" : undefined,
+    variables: {
+      colorPrimary: theme === "dark" ? "#ffffff" : "#000000",
+      colorBackground: theme === "dark" ? "#2E3842" : "#ffffff",
+      colorText: theme === "dark" ? "#ffffff" : "#000000",
+      borderRadius: "4px",
+    },
+  };
+
   return (
     <>
       <div
@@ -318,6 +395,9 @@ function App() {
             isCollapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
             onShowKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
+            onOpenSignIn={() => setShowSignInModal(true)}
+            onOpenSignUp={() => setShowSignUpModal(true)}
+            onOpenProfile={() => setShowProfileModal(true)}
           />
         </div>
         {!sidebarHidden && !sidebarCollapsed && (
@@ -343,12 +423,39 @@ function App() {
             </div>
             <button
               className="search-button"
-              onClick={() => setSearchModalOpen(true)}
+              onClick={() => {
+                if (!authIsLoading && isAuthenticated) {
+                  setSearchModalOpen(true);
+                } else {
+                  setShowSignInToSearchModal(true);
+                }
+              }}
               title="Search (Cmd+K)"
             >
               <Search size={18} />
             </button>
           </div>
+
+          {!authIsLoading && !isAuthenticated && (
+            <div
+              style={{
+                padding: "12px 24px",
+                background:
+                  theme === "dark"
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.05)",
+                borderBottom: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
+                fontSize: "14px",
+                textAlign: "center",
+                color:
+                  theme === "dark"
+                    ? "rgba(255,255,255,0.7)"
+                    : "rgba(0,0,0,0.7)",
+              }}
+            >
+              Sign in to save todos and notes. Data will be lost on refresh.
+            </div>
+          )}
 
           <div className="main-content-body">
             <TodoList
@@ -360,6 +467,7 @@ function App() {
               todoInputRef={todoInputRef}
               focusedTodoIndex={focusedTodoIndex}
               onFocusFirstTodo={handleFocusFirstTodo}
+              onRequireSignIn={() => setShowSignInToCreateModal(true)}
             />
           </div>
 
@@ -454,6 +562,101 @@ function App() {
           onCancel={() => setConfirmDeleteAll(false)}
           isDangerous={true}
         />
+
+        {/* Sign In To Search Modal */}
+        <ConfirmDialog
+          isOpen={showSignInToSearchModal}
+          title="Sign In to Search"
+          message="Search requires an account. Sign in to search your todos and notes."
+          confirmText="Sign Up"
+          cancelText="Cancel"
+          onConfirm={() => {
+            setShowSignInToSearchModal(false);
+            setShowSignUpModal(true);
+          }}
+          onCancel={() => setShowSignInToSearchModal(false)}
+          isDangerous={false}
+        />
+
+        {/* Sign In To Create Modal */}
+        <ConfirmDialog
+          isOpen={showSignInToCreateModal}
+          title="Sign In to Create Todos"
+          message="Creating todos requires an account. Sign in to save your todos."
+          confirmText="Sign Up"
+          cancelText="Cancel"
+          onConfirm={() => {
+            setShowSignInToCreateModal(false);
+            setShowSignUpModal(true);
+          }}
+          onCancel={() => setShowSignInToCreateModal(false)}
+          isDangerous={false}
+        />
+
+        {/* Clerk Sign In Modal */}
+        {showSignInModal && (
+          <div
+            className="search-overlay"
+            onClick={() => setShowSignInModal(false)}
+          >
+            <div
+              className="clerk-modal-container"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SignIn
+                appearance={clerkAppearance}
+                afterSignInUrl="/"
+                signUpUrl="#"
+                signUpForceRedirectUrl="/"
+                routing="hash"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Clerk Sign Up Modal */}
+        {showSignUpModal && (
+          <div
+            className="search-overlay"
+            onClick={() => setShowSignUpModal(false)}
+          >
+            <div
+              className="clerk-modal-container"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SignUp
+                appearance={clerkAppearance}
+                afterSignInUrl="/"
+                afterSignUpUrl="/"
+                signInUrl="#"
+                signInForceRedirectUrl="/"
+                routing="hash"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Clerk User Profile Modal - only show when authenticated and user is loaded */}
+        {showProfileModal && !authIsLoading && isAuthenticated && user && (
+          <div
+            className="search-overlay"
+            onClick={() => setShowProfileModal(false)}
+          >
+            <div
+              className="clerk-modal-container"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <UserProfile appearance={clerkAppearance} routing="hash" />
+
+              {/* Sign Out Button */}
+              <div className="clerk-signout-container">
+                <SignOutButton>
+                  <button className="clerk-signout-button">Sign Out</button>
+                </SignOutButton>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

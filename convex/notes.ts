@@ -19,12 +19,11 @@ export const getNotesByDate = query({
     }),
   ),
   handler: async (ctx, args) => {
-    // Get authenticated user ID from WorkOS
-    // No auth required
-    if (false) {
-      
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
     }
-    const userId = "demo-user";
+    const userId = identity.subject;
 
     const notes = await ctx.db
       .query("notes")
@@ -46,12 +45,11 @@ export const createNote = mutation({
   },
   returns: v.id("notes"),
   handler: async (ctx, args) => {
-    // Get authenticated user ID from WorkOS
-    // No auth required
-    if (false) {
-      
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
     }
-    const userId = "demo-user";
+    const userId = identity.subject;
 
     // Get the highest order number
     const existingNotes = await ctx.db
@@ -107,12 +105,11 @@ export const deleteNote = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Get authenticated user ID from WorkOS
-    // No auth required
-    if (false) {
-      
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
     }
-    const userId = "demo-user";
+    const userId = identity.subject;
 
     const note = await ctx.db.get(args.id);
     if (!note || note.userId !== userId) {

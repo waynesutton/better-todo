@@ -44,6 +44,7 @@ export interface TodoListProps {
   todoInputRef?: React.RefObject<HTMLTextAreaElement>;
   focusedTodoIndex?: number;
   onFocusFirstTodo?: (callback: () => void) => void;
+  onRequireSignIn?: () => void; // trigger styled auth modal instead of alert
 }
 
 export function TodoList({
@@ -55,6 +56,7 @@ export function TodoList({
   todoInputRef: externalTodoInputRef,
   focusedTodoIndex = -1,
   onFocusFirstTodo,
+  onRequireSignIn,
 }: TodoListProps) {
   const [newTodoContent, setNewTodoContent] = useState("");
   const [focusedInput, setFocusedInput] = useState(false);
@@ -118,14 +120,7 @@ export function TodoList({
     {} as Record<string, Todo[]>,
   );
 
-  // Filter out nested items that should be hidden
-  const visibleActiveTodos = activeTodos.filter((todo) => {
-    if (!todo.parentId) return true;
-
-    // Check if parent is collapsed
-    const parent = todos.find((t) => t._id === todo.parentId);
-    return parent ? !parent.collapsed : true;
-  });
+  // Filter out nested items that should be hidden (computed inline below where needed)
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -173,7 +168,11 @@ export function TodoList({
       setFocusedInput(false);
     } catch (error) {
       console.error("Error creating todo:", error);
-      alert("Failed to create todo. Please make sure you're signed in.");
+      if (onRequireSignIn) {
+        onRequireSignIn();
+      } else {
+        alert("Failed to create todo. Please make sure you're signed in.");
+      }
     }
   };
 
@@ -322,14 +321,23 @@ export function TodoList({
 
               if (lines.length > 1) {
                 e.preventDefault();
-                lines.forEach(async (line) => {
-                  await createTodo({
-                    date,
-                    content: line.trim(),
-                    type: "todo",
-                  });
-                });
-                setNewTodoContent("");
+                (async () => {
+                  try {
+                    for (const line of lines) {
+                      await createTodo({
+                        date,
+                        content: line.trim(),
+                        type: "todo",
+                      });
+                    }
+                    setNewTodoContent("");
+                  } catch (err) {
+                    console.error("Error creating todos from paste:", err);
+                    if (onRequireSignIn) {
+                      onRequireSignIn();
+                    }
+                  }
+                })();
               }
             }}
             onKeyDown={(e) => {

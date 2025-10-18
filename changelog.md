@@ -4,6 +4,62 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.0.0] - 2025-01-18
+
+### Added
+
+- **Clerk authentication integration** - Replaced WorkOS with Clerk for user authentication
+  - Added `@clerk/clerk-react` package for React integration
+  - Created `convex/auth.config.ts` for Clerk authentication with Convex
+  - Uses `ConvexProviderWithClerk` from `convex/react-clerk` for proper integration
+  - Integrated ClerkProvider in `src/main.tsx` with Convex token sync via `useAuth` hook
+  - Uses `useConvexAuth()` hook for reliable authentication state across app
+  - Added SignIn and UserProfile modals with theme-aware appearance customization
+  - Theme-aware user profile icons (`user-light.svg`, `user-dark.svg`)
+  - Automatic JWT token synchronization between Clerk and Convex
+
+- **Ephemeral mode for unsigned users** - Work without account, data lost on refresh
+  - Created `src/lib/localData.ts` in-memory storage for todos and notes
+  - Unsigned users can create, edit, delete, and organize todos locally
+  - All CRUD operations work identically for signed and unsigned users
+  - Warning banner displays when not signed in
+  - Search feature gated behind sign-in requirement
+
+- **Enhanced security and data isolation**
+  - All Convex queries/mutations require authentication (return empty if not signed in)
+  - Replaced hardcoded demo user with `identity.subject` from Clerk JWT
+  - Each signed-in user sees only their own data
+  - Mutations throw "Not authenticated" error when called without auth
+
+### Changed
+
+- **Authentication flow completely redesigned**
+  - Sidebar login button shows SignIn modal when signed out
+  - Sidebar login button becomes user profile button when signed in
+  - User can view/edit profile and sign out via UserProfile modal
+  - All modals match site UI theme (dark/light mode)
+- **Search functionality gated by authentication**
+  - Search button shows "Sign In to Search" modal when not signed in
+  - Search only works for authenticated users with persisted data
+  - Keyboard shortcut (Cmd+K) respects authentication state
+
+### Removed
+
+- **WorkOS AuthKit removed** - Replaced entirely with Clerk
+  - Removed `@workos-inc/authkit-react` and `@convex-dev/workos` packages
+  - Removed Netlify Functions for WorkOS OAuth (`auth-callback.ts`, `auth-me.ts`, `auth-logout.ts`)
+  - Removed WorkOS-specific environment variables and configuration
+  - Removed `netlify.toml` and `netlify/` folder (no longer needed)
+
+### Migration Notes
+
+- Users will need to sign up again with Clerk (WorkOS sessions are incompatible)
+- Environment variables changed from `VITE_WORKOS_*` to `VITE_CLERK_*`
+- Required environment variables:
+  - `VITE_CLERK_PUBLISHABLE_KEY` (frontend)
+  - `CLERK_SECRET_KEY` (Convex backend)
+  - `VITE_CLERK_FRONTEND_API_URL` (Convex auth config)
+
 ## [1.9.2] - 2025-01-18
 
 ### Fixed
