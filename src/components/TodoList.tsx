@@ -45,6 +45,7 @@ export interface TodoListProps {
   focusedTodoIndex?: number;
   onFocusFirstTodo?: (callback: () => void) => void;
   onRequireSignIn?: () => void; // trigger styled auth modal instead of alert
+  onRequireSignInForNote?: () => void; // trigger styled auth modal for notes
 }
 
 export function TodoList({
@@ -57,6 +58,7 @@ export function TodoList({
   focusedTodoIndex = -1,
   onFocusFirstTodo,
   onRequireSignIn,
+  onRequireSignInForNote,
 }: TodoListProps) {
   const [newTodoContent, setNewTodoContent] = useState("");
   const [focusedInput, setFocusedInput] = useState(false);
@@ -211,6 +213,11 @@ export function TodoList({
       await createNote({ date, title: "Untitled" });
     } catch (error) {
       console.error("Error creating note:", error);
+      if (onRequireSignInForNote) {
+        onRequireSignInForNote();
+      } else {
+        alert("Failed to create note. Please make sure you're signed in.");
+      }
     }
   };
 

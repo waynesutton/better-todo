@@ -92,13 +92,62 @@
 - convex-auth-identity: Use ctx.auth.getUserIdentity() in todos/notes/search
 - types-pass: Verify types, adjust props and handlers for local mode
 
-### To-dos
+### Implementation Notes
 
-- [ ] Add ClerkProvider and set Convex auth using Clerk getToken
-- [ ] Add sign-in and user profile modals with Clerk components and appearance
-- [ ] Gate search button; show sign-in prompt when signed out
-- [ ] Show a signed-out banner under current date
-- [ ] Switch sidebar icon and open profile/sign-in accordingly
-- [ ] Implement local in-memory CRUD for unsigned users and wire UI
-- [ ] Replace DEMO_USER_ID with identity.subject in Convex fns
-- [ ] Tighten types and props for signed vs unsigned paths
+**Completed Implementation:**
+
+1. **ClerkProvider Setup** ✅
+   - Added `@clerk/clerk-react` dependency
+   - Wrapped app with `ClerkProvider` using `VITE_CLERK_PUBLISHABLE_KEY`
+   - Synced Clerk tokens to Convex using `convex.setAuth(async () => await getToken({ template: "convex" }))`
+
+2. **Authentication Modals** ✅
+   - Added SignIn and UserProfile modals with theme-aware appearance
+   - Custom styling to match site UI (dark/light mode support)
+   - Removed "Don't have an account?" links since sidebar has dedicated buttons
+
+3. **Search Gating** ✅
+   - Search button shows "Sign In to Search" modal when signed out
+   - Keyboard shortcut (Cmd/Ctrl+K) respects authentication state
+   - Search only works for authenticated users
+
+4. **Warning Banner** ✅
+   - Shows "Sign in to save todos and notes. Data will be lost on refresh." when signed out
+   - Positioned under current date header
+
+5. **Sidebar Authentication** ✅
+   - Login button shows SignIn modal when signed out
+   - User profile button shows UserProfile modal when signed in
+   - Theme-aware icons (user-light.svg/user-dark.svg, login-light.svg/login-dark.svg)
+
+6. **Ephemeral Mode** ✅
+   - Created `src/lib/localData.ts` for in-memory storage
+   - Unsigned users can create/edit todos and notes locally
+   - Data lost on refresh (ephemeral behavior)
+
+7. **Convex Authentication** ✅
+   - Replaced `DEMO_USER_ID` with `ctx.auth.getUserIdentity()`
+   - Queries return empty arrays when not authenticated
+   - Mutations throw "Not authenticated" error when called without auth
+   - Each user sees only their own data
+
+8. **UI Improvements** ✅
+   - Clerk button styling: white text in light mode, black text in dark mode
+   - OTP code field styling with blue accent border
+   - Authentication popup for "+ add note" button when not signed in
+   - Custom confirmation dialogs for sign-in prompts
+
+### Key Technical Decisions
+
+- **Token Template**: Used "convex" template for Clerk JWT tokens
+- **Authentication State**: Used `useConvexAuth()` hook for reliable auth state
+- **Modal Management**: Reused existing ConfirmDialog component for sign-in prompts
+- **Theme Integration**: Clerk components respect app's dark/light theme
+- **Error Handling**: Graceful fallback to local storage when not authenticated
+
+### Migration from WorkOS
+
+- Removed `@workos-inc/authkit-react` and `@convex-dev/workos` packages
+- Removed Netlify Functions for WorkOS OAuth
+- Updated environment variables from `VITE_WORKOS_*` to `VITE_CLERK_*`
+- Users need to sign up again with Clerk (WorkOS sessions incompatible)

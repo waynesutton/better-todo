@@ -10,7 +10,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
 
 ### Core Functionality
 
-- **User authentication** with WorkOS AuthKit - secure login/logout with private user data
+- **User authentication** with Clerk - secure login/logout with private user data
 - **Real-time synchronization** across browsers using Convex
 - **Notion-style inline input** - type directly to add todos (no button needed)
 - **Daily notes section** with line numbers, Edit/Preview tabs, and code block support
@@ -46,7 +46,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
 - **TypeScript** - Type-safe development
 - **Vite** - Lightning-fast build tool
 - **Convex** - Real-time database and backend
-- **WorkOS AuthKit** - Authentication (fully implemented)
+- **Clerk** - Authentication (fully implemented)
 - **@dnd-kit** - Smooth drag and drop
 - **date-fns** - Date manipulation and formatting
 - **lucide-react** - Clean, consistent icons
@@ -75,9 +75,9 @@ npx convex dev
 This will:
 
 - Create a new Convex project
-- Set up WorkOS AuthKit automatically (no manual configuration needed)
+- Set up Clerk authentication automatically (no manual configuration needed)
 - Generate environment variables in `.env.local`
-- Configure JWT authentication with proper aud/iss claims
+- Configure JWT authentication with proper token templates
 - Set up production deployment configuration
 
 3. Start the development server:
@@ -92,25 +92,26 @@ The app will open at `http://localhost:5173`
 
 When you run `npm run dev` for the first time, the Convex CLI will automatically:
 
-- Create a WorkOS team if you don't have one
-- Set up AuthKit environments for your deployments
+- Create a Clerk application if you don't have one
+- Set up authentication environments for your deployments
 - Configure redirect URIs and CORS settings
 - Store API keys securely
-- Set up JWT authentication with proper configuration
+- Set up JWT authentication with proper token templates
 
-You'll receive an email invitation to set up your WorkOS account. Once authenticated, you'll have your own private todo and notes data.
+You'll be able to sign up and sign in with Clerk. Once authenticated, you'll have your own private todo and notes data.
 
 ## Usage
 
 ### Authentication
 
-- **Sign in required** - Click the login icon in the sidebar to authenticate with WorkOS AuthKit
+- **Sign in required** - Click the login icon in the sidebar to authenticate with Clerk
 - **Private data** - Each user has their own private todos and notes (completely isolated)
 - **Theme-aware icons** - Login/user icons automatically switch between dark and light variants
 - **Sign out** - Click your profile icon in the sidebar to sign out
 - **First-time users** - You'll see a "Sign In Required" modal when trying to create todos/notes
 - **Automatic user storage** - Your profile data is automatically saved to the database on first login
 - **Secure JWT tokens** - Authentication uses industry-standard JWT tokens with proper validation
+- **Ephemeral mode** - Unsigned users can use the app with local storage (data lost on refresh)
 
 ### Creating Todos
 
@@ -173,6 +174,7 @@ You'll receive an email invitation to set up your WorkOS account. Once authentic
 - **Press Enter** to navigate to selected result
 - **Search term highlighting** in results
 - **Result badges** show type (Todo/Note), date, and status
+- **Authentication required** - Search only works for signed-in users
 
 ### Bulk Actions
 
@@ -202,7 +204,7 @@ Toggle between dark and light modes using the **half-moon icon** at the bottom o
 better-todo/
 ├── convex/                    # Backend functions and schema
 │   ├── schema.ts              # Database schema (todos + notes + users tables)
-│   ├── auth.config.ts         # WorkOS JWT authentication configuration
+│   ├── auth.config.ts         # Clerk JWT authentication configuration
 │   ├── todos.ts               # Todo queries and mutations
 │   ├── notes.ts               # Notes queries and mutations
 │   ├── users.ts               # User management functions
@@ -224,6 +226,8 @@ better-todo/
 │   │   └── ThemeContext.tsx   # Theme management
 │   ├── styles/
 │   │   └── global.css         # CSS with variables
+│   ├── lib/
+│   │   └── localData.ts       # Ephemeral in-memory storage for unsigned users
 │   ├── App.tsx                # Main layout and state
 │   └── main.tsx               # Entry point
 └── package.json
@@ -270,7 +274,7 @@ npm run build
 
 ### Deploying to Netlify
 
-The app is configured for easy deployment to Netlify with WorkOS AuthKit integration. The Convex backend is automatically deployed when you push changes.
+The app is configured for easy deployment to Netlify with Clerk authentication integration. The Convex backend is automatically deployed when you push changes.
 
 For production deployment:
 
@@ -294,12 +298,11 @@ npx convex deploy
    - Add these required variables:
      ```
      VITE_CONVEX_URL=https://your-deployment.convex.cloud
-     VITE_WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
-     VITE_WORKOS_REDIRECT_URI=https://your-domain.netlify.app/callback
+     VITE_CLERK_PUBLISHABLE_KEY=pk_test_XXXXXXXXXXXXXXXXXXXXXXXX
      ```
 
-5. Configure WorkOS Dashboard:
-   - Add production redirect URI: `https://your-domain.netlify.app/callback`
+5. Configure Clerk Dashboard:
+   - Add production redirect URI: `https://your-domain.netlify.app`
    - Add production CORS origin: `https://your-domain.netlify.app`
 
 6. Deploy:
@@ -322,7 +325,7 @@ The app supports continuous deployment, so every push to your main branch will t
 
 ## Tips & Tricks
 
-1. **Authentication**: Sign in once and your data stays private and synced across all devices
+1. **Authentication**: Sign in once and your data stays private and synced across all devices. Unsigned users can use the app with local storage (data lost on refresh)
 2. **Multi-line todos**: Use Enter to write detailed notes within a single todo item
 3. **Multiple notes**: Add unlimited notes per date with custom titles for different topics
 4. **Quick navigation**: Click dates in sidebar to jump between days, use Cmd/Ctrl+K to search
@@ -369,4 +372,4 @@ If you find this project helpful, please consider:
 - 📖 Improving documentation
 - 🤝 Contributing code
 
-Built with ❤️ using Convex and React
+Built with ❤️ using Convex, React, and Clerk

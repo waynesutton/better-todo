@@ -37,7 +37,7 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 - [x] Add mobile-friendly add button ("+") for touch devices
 - [x] Implement archive date functionality
 - [x] Add multiple notes per date with drag-and-drop reordering
-- [x] Configure WorkOS AuthKit integration (ready to enable)
+- [x] Migrate from WorkOS AuthKit to Clerk authentication
 - [x] Add search indexes to schema for efficient full-text search
 - [x] Implement local state with debouncing for notes typing
 - [x] Add keyboard shortcuts for delete confirmations (Enter/Escape)
@@ -52,23 +52,28 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 
 ## Completed Tasks (Continued)
 
-- [x] User authentication with WorkOS AuthKit
+- [x] User authentication with Clerk
 - [x] User-specific data isolation
 - [x] Production deployment configuration for Netlify
-- [x] Environment variable setup for WorkOS AuthKit
-- [x] JWT token validation with proper aud/iss claims
+- [x] Environment variable setup for Clerk
+- [x] JWT token validation with Clerk token templates
 - [x] Authentication state management and error handling
 - [x] User data storage in Convex database
 - [x] Theme-aware login/logout UI components
 - [x] Conditional query execution based on authentication state
-- [x] Redirect handling from /callback to / after login
 - [x] "Sign In Required" modal for unauthenticated users
 - [x] Production deployment documentation and troubleshooting guide
-- [x] Enable WorkOS AuthKit authentication flow
+- [x] Enable Clerk authentication flow
 - [x] Add user profile management
 - [x] Implement logout functionality
 - [x] Add user-specific queries and mutations
 - [x] Update schema to include userId fields
+- [x] Ephemeral mode for unsigned users (local storage)
+- [x] Clerk button styling (white text in light mode, black in dark mode)
+- [x] OTP code field styling with blue accent border
+- [x] Authentication popup for "+ add note" button
+- [x] Custom confirmation dialogs for sign-in prompts
+- [x] Removed "Don't have an account?" links from Clerk modals
 
 ## In Progress Tasks
 
@@ -208,20 +213,22 @@ The application is built on a modern, real-time architecture:
 Current setup:
 
 - Convex deployment configured and deployed
-- WorkOS AuthKit fully implemented and working
+- Clerk authentication fully implemented and working
 - Local development with hot reload
 - Real-time sync across browsers
 - Production deployment on Netlify with environment variables configured
 - User authentication and data isolation working
+- Ephemeral mode for unsigned users
 
 Authentication features implemented:
 
-1. WorkOS environment variables configured for both development and production
+1. Clerk environment variables configured for both development and production
 2. All mutations include userId for user-specific data
 3. All queries include authentication checks
 4. UI shows user profile and login/logout functionality
-5. JWT token validation with proper aud/iss claims
+5. JWT token validation with Clerk token templates
 6. Automatic user data storage in Convex database
+7. Ephemeral mode with local storage for unsigned users
 
 ### Data Flow
 
@@ -249,10 +256,10 @@ Authentication features implemented:
 
 ### Authentication Implementation Complete
 
-Authentication is fully implemented with WorkOS AuthKit:
+Authentication is fully implemented with Clerk:
 
-1. **WorkOS Configuration:**
-   - JWT template configured with proper aud claim
+1. **Clerk Configuration:**
+   - JWT template configured with "convex" template
    - Environment variables set for development and production
    - Redirect URIs configured for both local and production domains
 
@@ -270,6 +277,8 @@ Authentication is fully implemented with WorkOS AuthKit:
 4. **UI updated** with user profile, login/logout, and authentication state management
 
 5. **Production deployment** configured with Netlify environment variables
+
+6. **Ephemeral mode** implemented for unsigned users with local storage
 
 ### Future Enhancements Priority
 

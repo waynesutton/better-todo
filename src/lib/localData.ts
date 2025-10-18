@@ -1,5 +1,3 @@
-import { Id } from "../../convex/_generated/dataModel";
-
 // In-memory storage for unsigned users (lost on reload)
 interface Todo {
   _id: string;
@@ -260,7 +258,7 @@ class LocalDataStore {
   }
 
   // Search (returns empty for local mode since we're gating search)
-  searchAll(searchQuery: string): Array<any> {
+  searchAll(_searchQuery: string): Array<any> {
     return [];
   }
 

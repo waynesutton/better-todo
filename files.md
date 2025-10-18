@@ -4,7 +4,7 @@ This document describes the structure and purpose of each file in the Better Tod
 
 ## Root Configuration
 
-- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Lucide icons, @dnd-kit)
+- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, @dnd-kit)
 - `tsconfig.json` - TypeScript configuration for React app
 - `tsconfig.node.json` - TypeScript configuration for Vite
 - `vite.config.ts` - Vite bundler configuration with React plugin
@@ -73,25 +73,24 @@ This document describes the structure and purpose of each file in the Better Tod
   - `archiveDate` - Archive a date (hides from main list)
   - `unarchiveDate` - Restore archived date to main list
 
-### Authentication (WorkOS AuthKit Integration)
+### Authentication (Clerk Integration)
 
-- `auth.config.ts` - WorkOS JWT authentication configuration with two providers:
-  - User Management JWT: `https://api.workos.com/user_management/${clientId}`
-  - Organization SAML/SSO JWT: `https://api.workos.com/`
-  - Uses RS256 algorithm with JWKS endpoint for token validation
+- `auth.config.ts` - Clerk JWT authentication configuration:
+  - Uses Clerk JWT tokens with "convex" template
   - Properly configured for production deployment with environment variables
+  - Token validation with Clerk's JWKS endpoint
 - `users.ts` - User management functions:
-  - `storeUser` - Store/update WorkOS user data in Convex database
+  - `storeUser` - Store/update Clerk user data in Convex database
   - `getCurrentUser` - Get authenticated user information
-- `http.ts` - HTTP routes for authentication callbacks (WorkOS AuthKit ready)
+- `http.ts` - HTTP routes for authentication callbacks (Clerk ready)
 
 ## React Frontend (`src/`)
 
 ### Main Files
 
-- `main.tsx` - Application entry point with WorkOS AuthKit and Convex providers:
-  - AuthKitProvider with WorkOS client ID and redirect URI from environment variables
-  - ConvexProviderWithAuthKit for WorkOS-Convex integration
+- `main.tsx` - Application entry point with Clerk and Convex providers:
+  - ClerkProvider with Clerk publishable key from environment variables
+  - ConvexProviderWithClerk for Clerk-Convex integration
   - ThemeProvider for dark/light mode management
   - Properly configured for both development and production environments
 - `App.tsx` - Main app component with:
@@ -104,11 +103,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - Pinned todos page handling with dedicated display
   - Search modal integration (Cmd/Ctrl+K keyboard shortcut)
   - Theme context provider
-  - WorkOS authentication integration:
+  - Clerk authentication integration:
     - Conditional query execution based on authentication state
     - "Sign In Required" modal for unauthenticated users
     - Automatic user data storage in Convex database
-    - Redirect handling from /callback to / after login
+    - Ephemeral mode for unsigned users (local storage)
+    - Theme-aware authentication modals
 
 ### Components (`src/components/`)
 
@@ -146,10 +146,11 @@ This document describes the structure and purpose of each file in the Better Tod
   - Confirmation dialogs for bulk actions with todo counts
   - Auto-collapses archive section when adding new todos
   - Integrates NotesSection above archive
-  - WorkOS authentication integration:
+  - Clerk authentication integration:
     - Checks authentication status before allowing todo/note creation
     - Shows "Sign In Required" modal for unauthenticated users
     - Proper error handling for authentication failures
+    - Ephemeral mode with local storage for unsigned users
 
 - `Sidebar.tsx` - Resizable and collapsible navigation sidebar with:
   - Pinned section at top (shows "Pinned" when todos are pinned, hidden when empty)
@@ -167,10 +168,11 @@ This document describes the structure and purpose of each file in the Better Tod
     - Archive the entire date
     - Delete the date and all its content
   - Archived dates section (collapsible)
-  - WorkOS authentication integration:
+  - Clerk authentication integration:
     - Login/logout button with theme-aware icons (user-dark.svg/user-light.svg, login-dark.svg/login-light.svg)
     - Shows user profile icon when authenticated with tooltip showing user name/email
     - Shows login icon when unauthenticated
+    - Opens Clerk SignIn modal when signed out, UserProfile modal when signed in
     - Proper sign out handling with page reload to clear state
   - Custom confirmation dialog for delete actions
   - Hover tooltips for all footer icons (positioned to the right, never clipped)
@@ -195,9 +197,10 @@ This document describes the structure and purpose of each file in the Better Tod
   - Delete button with custom confirmation dialog
   - Add Note button (+ icon) to create new notes
   - Clean, minimal design matching app aesthetic
-  - WorkOS authentication integration:
+  - Clerk authentication integration:
     - Only loads notes when user is authenticated
     - Skips queries when unauthenticated to prevent errors
+    - Ephemeral mode with local storage for unsigned users
 
 - `ArchiveSection.tsx` - Collapsible archive with:
   - Shows all completed/archived todos for selected date
@@ -225,9 +228,10 @@ This document describes the structure and purpose of each file in the Better Tod
   - Automatically navigates to and displays the selected result's date
   - Top 30 most relevant results displayed
   - Beautiful modal UI matching app theme (dark/light mode support)
-  - WorkOS authentication integration:
+  - Clerk authentication integration:
     - Only performs search when user is authenticated
     - Skips search queries when unauthenticated to prevent errors
+    - Shows "Sign In to Search" modal when unauthenticated
 
 ### Context (`src/context/`)
 
@@ -236,6 +240,14 @@ This document describes the structure and purpose of each file in the Better Tod
   - Persists preference to localStorage
   - Smooth color transitions
   - CSS variable-based theming
+
+### Library (`src/lib/`)
+
+- `localData.ts` - Ephemeral in-memory storage for unsigned users:
+  - Mirrors Convex CRUD operations for todos and notes
+  - Data lost on page refresh (ephemeral behavior)
+  - Activated when user is not authenticated
+  - Provides seamless experience for unsigned users
 
 ### Styles (`src/styles/`)
 
@@ -256,6 +268,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Line number styling for notes (non-copyable, monospace)
   - Custom scrollbar styling for sidebar dates
   - Search modal styles with backdrop and keyboard navigation highlighting
+  - Clerk authentication modal styling (theme-aware, custom appearance)
   - System font stack for native look and feel
 
 ## Documentation (`prds/`)
@@ -263,7 +276,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `QUICKSTART.md` - 2-minute setup guide for quick start
 - `GETTING_STARTED.md` - Detailed feature walkthrough and usage guide
 - `PROJECT_SUMMARY.md` - Complete project overview and architecture
-- `workos-authkit-integration.md` - WorkOS AuthKit setup and configuration guide
+- `cl.plan.md` - Clerk authentication implementation plan and notes
 
 ## Root Documentation
 
@@ -281,9 +294,42 @@ This document describes the structure and purpose of each file in the Better Tod
 - Convex logo files (black and white variants)
 - SVG favicon with checkmark design
 
-## Current Version: 1.9.1 (January 17, 2025)
+## Current Version: 2.0.0 (January 18, 2025)
 
-### Latest Features (v1.9.1)
+### Latest Features (v2.0.0)
+
+- **Clerk Authentication Integration** - Complete migration from WorkOS to Clerk
+  - User login/logout with Clerk authentication
+  - Private user data (each user sees only their own todos and notes)
+  - Theme-aware login/user icons (user-dark.svg/user-light.svg, login-dark.svg/login-light.svg)
+  - "Sign In Required" modal for unauthenticated users
+  - Automatic user data storage in Convex database
+  - Proper JWT token validation with Clerk token templates
+  - Ephemeral mode for unsigned users (local storage, data lost on refresh)
+
+- **UI Improvements** - Enhanced authentication experience
+  - Clerk button styling: white text in light mode, black text in dark mode
+  - OTP code field styling with blue accent border
+  - Authentication popup for "+ add note" button when not signed in
+  - Custom confirmation dialogs for sign-in prompts
+  - Removed "Don't have an account?" links from Clerk modals (sidebar has dedicated buttons)
+
+### Previous Features (v1.9.2)
+
+- **Production authentication with Netlify Functions** - Resolved WorkOS session authentication failure
+  - WorkOS OAuth succeeded but frontend couldn't access session cookies (SPA limitation)
+  - Implemented Netlify Functions for server-side OAuth callback handling
+  - Created `/api/auth/callback` endpoint to exchange OAuth code for tokens and set HTTP-only cookies
+  - Created `/api/auth/me` endpoint to retrieve current user from session cookies
+  - Created `/api/auth/logout` endpoint to clear authentication cookies
+  - Added `netlify.toml` configuration for function routing
+  - Installed `@workos-inc/node` package for server-side WorkOS SDK
+  - Updated WorkOS redirect URI from `/callback` to `/api/auth/callback`
+  - Fixed production Convex deployment URL configuration (was using dev URL)
+  - Set `WORKOS_CLIENT_ID` on production Convex deployment to match frontend
+  - Deployed Convex auth config to production with `npx convex deploy -y`
+
+### Previous Features (v1.9.1)
 
 - **Production Deployment Fixes** - Resolved Netlify build and deployment issues
   - Fixed TypeScript errors in WorkOS AuthKit integration
@@ -339,4 +385,4 @@ This document describes the structure and purpose of each file in the Better Tod
 - Resizable sidebar (200px - 500px)
 - Mobile-optimized with auto-hide and overlay
 - Keyboard shortcuts (Enter, Shift+Enter, Cmd/Ctrl+K, Escape)
-- WorkOS AuthKit integration (fully implemented, deployed, and working in production)
+- Clerk authentication integration (fully implemented, deployed, and working in production)

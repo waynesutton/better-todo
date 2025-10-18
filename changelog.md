@@ -31,6 +31,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Each signed-in user sees only their own data
   - Mutations throw "Not authenticated" error when called without auth
 
+- **UI improvements for authentication**
+  - Clerk button styling: white text in light mode, black text in dark mode
+  - OTP code field styling with blue accent border
+  - Authentication popup for "+ add note" button when not signed in
+  - Custom confirmation dialogs for sign-in prompts
+  - Removed "Don't have an account?" links from Clerk modals (sidebar has dedicated buttons)
+
 ### Changed
 
 - **Authentication flow completely redesigned**

@@ -41,6 +41,7 @@ function App() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSignInToSearchModal, setShowSignInToSearchModal] = useState(false);
   const [showSignInToCreateModal, setShowSignInToCreateModal] = useState(false);
+  const [showSignInToNoteModal, setShowSignInToNoteModal] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const todoInputRef = useRef<HTMLTextAreaElement>(null);
   const [focusedTodoIndex, setFocusedTodoIndex] = useState(-1);
@@ -468,6 +469,7 @@ function App() {
               focusedTodoIndex={focusedTodoIndex}
               onFocusFirstTodo={handleFocusFirstTodo}
               onRequireSignIn={() => setShowSignInToCreateModal(true)}
+              onRequireSignInForNote={() => setShowSignInToNoteModal(true)}
             />
           </div>
 
@@ -593,6 +595,21 @@ function App() {
           isDangerous={false}
         />
 
+        {/* Sign In To Note Modal */}
+        <ConfirmDialog
+          isOpen={showSignInToNoteModal}
+          title="Sign In to Create Notes"
+          message="Creating notes requires an account. Sign in to save your notes."
+          confirmText="Sign Up"
+          cancelText="Cancel"
+          onConfirm={() => {
+            setShowSignInToNoteModal(false);
+            setShowSignUpModal(true);
+          }}
+          onCancel={() => setShowSignInToNoteModal(false)}
+          isDangerous={false}
+        />
+
         {/* Clerk Sign In Modal */}
         {showSignInModal && (
           <div
@@ -606,8 +623,7 @@ function App() {
               <SignIn
                 appearance={clerkAppearance}
                 afterSignInUrl="/"
-                signUpUrl="#"
-                signUpForceRedirectUrl="/"
+                signUpUrl={null}
                 routing="hash"
               />
             </div>
@@ -628,8 +644,7 @@ function App() {
                 appearance={clerkAppearance}
                 afterSignInUrl="/"
                 afterSignUpUrl="/"
-                signInUrl="#"
-                signInForceRedirectUrl="/"
+                signInUrl={null}
                 routing="hash"
               />
             </div>
