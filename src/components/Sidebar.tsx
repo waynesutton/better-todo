@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { useMutation, useQuery, useConvexAuth } from "convex/react";
-import { useAuth } from "@workos-inc/authkit-react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { format, addDays, subDays } from "date-fns";
 import { PanelLeft, Pin } from "lucide-react";
+import { KeyboardIcon } from "@radix-ui/react-icons";
 import { ConfirmDialog } from "./ConfirmDialog";
 import {
   Tooltip,
@@ -19,6 +19,7 @@ interface SidebarProps {
   onSelectDate: (date: string) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  onShowKeyboardShortcuts?: () => void;
 }
 
 export function Sidebar({
@@ -27,13 +28,9 @@ export function Sidebar({
   onSelectDate,
   isCollapsed = false,
   onToggleCollapse,
+  onShowKeyboardShortcuts,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
-  const { isAuthenticated } = useConvexAuth();
-  const { user, signIn, signOut } = useAuth();
-
-  // Use WorkOS user state if Convex isn't detecting auth yet
-  const showAsAuthenticated = isAuthenticated || !!user;
   const [showMenuForDate, setShowMenuForDate] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState<string | null>(null);
   const [showRenameInput, setShowRenameInput] = useState<string | null>(null);
@@ -46,20 +43,10 @@ export function Sidebar({
     formattedDate: string;
   }>({ isOpen: false, date: "", formattedDate: "" });
 
-  // Only fetch data when authenticated
-  const archivedDates =
-    useQuery(
-      api.archivedDates.getArchivedDates,
-      isAuthenticated ? undefined : "skip",
-    ) || [];
-  const dateLabelsData =
-    useQuery(
-      api.dateLabels.getDateLabels,
-      isAuthenticated ? undefined : "skip",
-    ) || [];
-  const pinnedTodos =
-    useQuery(api.todos.getPinnedTodos, isAuthenticated ? undefined : "skip") ||
-    [];
+  // Fetch data
+  const archivedDates = useQuery(api.archivedDates.getArchivedDates) || [];
+  const dateLabelsData = useQuery(api.dateLabels.getDateLabels) || [];
+  const pinnedTodos = useQuery(api.todos.getPinnedTodos) || [];
   const copyTodosToDate = useMutation(api.todos.copyTodosToDate);
   const archiveDate = useMutation(api.archivedDates.archiveDate);
   const unarchiveDate = useMutation(api.archivedDates.unarchiveDate);
@@ -489,54 +476,23 @@ export function Sidebar({
 
       <div className="sidebar-footer">
         <div className="sidebar-footer-left">
-          {showAsAuthenticated && user ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  className="login-button"
-                  onClick={async () => {
-                    try {
-                      await signOut();
-                      // Reload the page after sign out to clear state
-                      window.location.href = "/";
-                    } catch (error) {
-                      console.error("Sign out error:", error);
-                    }
-                  }}
-                >
-                  <img
-                    src={
-                      theme === "dark" ? "/user-light.svg" : "/user-dark.svg"
-                    }
-                    alt="User profile"
-                    width="18"
-                    height="18"
-                  />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                {user.firstName || user.email} - Click to sign out
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="login-button" onClick={() => signIn()}>
-                  <img
-                    src={
-                      theme === "dark" ? "/login-light.svg" : "/login-dark.svg"
-                    }
-                    alt="Sign in"
-                    width="18"
-                    height="18"
-                  />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                Sign in to your account
-              </TooltipContent>
-            </Tooltip>
-          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="login-button">
+                <img
+                  src={
+                    theme === "dark" ? "/login-light.svg" : "/login-dark.svg"
+                  }
+                  alt="Sign in"
+                  width="18"
+                  height="18"
+                />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              Sign in to your account
+            </TooltipContent>
+          </Tooltip>
 
           <Tooltip>
             <TooltipTrigger asChild>
@@ -604,33 +560,18 @@ export function Sidebar({
             </TooltipContent>
           </Tooltip>
 
-          {showAsAuthenticated && user && (
+          {onShowKeyboardShortcuts && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <a
-                  href="https://dashboard.workos.com/user-profile"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="settings-link"
+                <button
+                  className="convex-link"
+                  onClick={onShowKeyboardShortcuts}
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M12 1v6m0 6v6m7.071-15.071l-4.243 4.243m-5.656 5.656l-4.243 4.243M23 12h-6m-6 0H1m15.071 7.071l-4.243-4.243m-5.656-5.656l-4.243-4.243" />
-                  </svg>
-                </a>
+                  <KeyboardIcon width="18" height="18" />
+                </button>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={8}>
-                Manage your profile
+                Keyboard shortcuts
               </TooltipContent>
             </Tooltip>
           )}

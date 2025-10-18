@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useConvexAuth } from "convex/react";
-import { useAuth } from "@workos-inc/authkit-react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Copy, Check, Plus, X } from "lucide-react";
 import {
@@ -238,10 +237,7 @@ export function NotesSection({
   expandedNoteId,
   onNoteExpanded,
 }: NotesSectionProps) {
-  const { isAuthenticated } = useConvexAuth();
-  const notes =
-    useQuery(api.notes.getNotesByDate, isAuthenticated ? { date } : "skip") ||
-    [];
+  const notes = useQuery(api.notes.getNotesByDate, { date }) || [];
   const updateNote = useMutation(api.notes.updateNote);
   const deleteNote = useMutation(api.notes.deleteNote);
   const reorderNotes = useMutation(api.notes.reorderNotes);
@@ -361,18 +357,6 @@ export function NotesSection({
 }
 
 export function AddNoteButton({ onAddNote }: NotesWithAddButtonProps) {
-  const { isAuthenticated } = useConvexAuth();
-  const { signIn } = useAuth();
-
-  if (!isAuthenticated) {
-    return (
-      <button className="add-note-button" onClick={() => signIn()}>
-        <Plus size={14} />
-        <span>Sign In to Add Note</span>
-      </button>
-    );
-  }
-
   return (
     <button className="add-note-button" onClick={onAddNote}>
       <Plus size={14} />

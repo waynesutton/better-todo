@@ -12,11 +12,11 @@ export const getDateLabels = query({
   ),
   handler: async (ctx) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
+      
     }
-    const userId = identity.subject;
+    const userId = "demo-user";
 
     const labels = await ctx.db
       .query("dateLabels")
@@ -39,11 +39,11 @@ export const setDateLabel = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
+      
     }
-    const userId = identity.subject;
+    const userId = "demo-user";
 
     // Check if label already exists
     const existing = await ctx.db
@@ -77,11 +77,11 @@ export const removeDateLabel = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
+      
     }
-    const userId = identity.subject;
+    const userId = "demo-user";
 
     const existing = await ctx.db
       .query("dateLabels")

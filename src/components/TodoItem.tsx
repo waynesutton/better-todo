@@ -58,6 +58,7 @@ export function TodoItem({
 
   const updateTodo = useMutation(api.todos.updateTodo);
   const deleteTodo = useMutation(api.todos.deleteTodo);
+  const createSubtask = useMutation(api.todos.createSubtask);
 
   const {
     attributes,
@@ -105,6 +106,18 @@ export function TodoItem({
   const handleDeleteClick = () => {
     setShowDeleteConfirm(true);
     setShowMenu(false);
+  };
+
+  const handleAddSubtask = async () => {
+    try {
+      await createSubtask({
+        parentId: id,
+        content: "New subtask",
+      });
+      setShowMenu(false);
+    } catch (error) {
+      console.error("Error creating subtask:", error);
+    }
   };
 
   const confirmDelete = async () => {
@@ -301,6 +314,11 @@ export function TodoItem({
               {!completed && (
                 <div className="menu-item" onClick={handleTogglePin}>
                   {pinned ? "Unpin" : "Pin"}
+                </div>
+              )}
+              {!completed && (
+                <div className="menu-item" onClick={handleAddSubtask}>
+                  Add subtask
                 </div>
               )}
               <div

@@ -1,25 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useQuery, useConvexAuth, useMutation } from "convex/react";
-import { useAuth } from "@workos-inc/authkit-react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Sidebar } from "./components/Sidebar";
 import { TodoList } from "./components/TodoList";
 import { SearchModal } from "./components/SearchModal";
+import { ArchiveSection } from "./components/ArchiveSection";
 import { ConfirmDialog } from "./components/ConfirmDialog";
+import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { format } from "date-fns";
 import { Search, Menu } from "lucide-react";
+import { Id } from "../convex/_generated/dataModel";
 import "./styles/global.css";
 
 function App() {
-  const { isAuthenticated, isLoading } = useConvexAuth();
-  const workOSAuth = useAuth();
-  const { user, signIn } = workOSAuth;
-  const [showAuthModal, setShowAuthModal] = useState(false);
-
-  // Debug WorkOS auth object
-  useEffect(() => {
-    console.log("WorkOS useAuth() full object:", workOSAuth);
-  }, [workOSAuth]);
   const [selectedDate, setSelectedDate] = useState<string>(
     format(new Date(), "yyyy-MM-dd"),
   );
@@ -31,78 +24,41 @@ function App() {
   const [isResizing, setIsResizing] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
+  const [archiveExpanded, setArchiveExpanded] = useState(false);
+  const [confirmArchiveAll, setConfirmArchiveAll] = useState(false);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const storeUser = useMutation(api.users.storeUser);
+  const todoInputRef = useRef<HTMLTextAreaElement>(null);
+  const [focusedTodoIndex, setFocusedTodoIndex] = useState(-1);
+  const [lastCompletedTodo, setLastCompletedTodo] =
+    useState<Id<"todos"> | null>(null);
+  const [focusFirstTodoCallback, setFocusFirstTodoCallback] = useState<
+    (() => void) | null
+  >(null);
 
-  // Debug auth state
-  useEffect(() => {
-    console.log("Auth state:", {
-      isLoading,
-      isAuthenticated,
-      hasWorkOSUser: !!user,
-      userEmail: user?.email,
-      currentPath: window.location.pathname,
-      currentSearch: window.location.search,
+  // Handle focus first todo callback
+  const handleFocusFirstTodo = (callback: () => void) => {
+    setFocusFirstTodoCallback(() => {
+      // Don't set focusedTodoIndex here - only set it when using arrow keys
+      callback();
     });
+  };
 
-    // Check for WorkOS session cookies
-    const cookies = document.cookie.split(";").map((c) => c.trim());
-    console.log("All cookies:", cookies);
-    const workOSCookies = cookies.filter(
-      (c) =>
-        c.toLowerCase().includes("workos") ||
-        c.toLowerCase().includes("session"),
-    );
-    console.log("WorkOS/Session cookies:", workOSCookies);
-  }, [isLoading, isAuthenticated, user]);
+  // Mutations for footer actions
+  const archiveAllTodos = useMutation(api.todos.archiveAllTodos);
+  const deleteAllTodos = useMutation(api.todos.deleteAllTodos);
+  const deleteAllArchivedTodos = useMutation(api.todos.deleteAllArchivedTodos);
+  const deleteTodo = useMutation(api.todos.deleteTodo);
+  const reorderTodos = useMutation(api.todos.reorderTodos);
+  const updateTodo = useMutation(api.todos.updateTodo);
 
-  // Redirect from callback to home when authenticated
-  useEffect(() => {
-    if (
-      isAuthenticated &&
-      !isLoading &&
-      window.location.pathname === "/callback"
-    ) {
-      window.location.href = "/";
-    }
-  }, [isAuthenticated, isLoading]);
-
-  // Debug - check if token is being sent
-  useEffect(() => {
-    const checkToken = async () => {
-      const token = localStorage.getItem("convex_token");
-      if (token) {
-        // Decode JWT to see claims
-        const parts = token.split(".");
-        if (parts.length === 3) {
-          try {
-            const decoded = JSON.parse(atob(parts[1]));
-            console.log("JWT Claims:", decoded);
-            console.log("Has aud claim:", !!decoded.aud);
-            console.log("aud value:", decoded.aud);
-          } catch (e) {
-            console.error("Failed to decode JWT:", e);
-          }
-        }
-      }
-    };
-    checkToken();
-  }, [isAuthenticated, user]);
-
-  // Fetch available dates and todos - only when authenticated
-  const availableDates = useQuery(
-    api.todos.getAvailableDates,
-    isAuthenticated ? undefined : "skip",
-  );
-  const pinnedTodos = useQuery(
-    api.todos.getPinnedTodos,
-    isAuthenticated ? undefined : "skip",
-  );
+  // Fetch available dates and todos
+  const availableDates = useQuery(api.todos.getAvailableDates);
+  const pinnedTodos = useQuery(api.todos.getPinnedTodos);
   const todos = useQuery(
     api.todos.getTodosByDate,
-    isAuthenticated && selectedDate !== "pinned"
-      ? { date: selectedDate }
-      : "skip",
+    selectedDate !== "pinned" ? { date: selectedDate } : "skip",
   );
 
   // Ensure current date is always available
@@ -166,18 +122,6 @@ function App() {
     };
   }, [isResizing]);
 
-  // Store user in Convex when they authenticate
-  useEffect(() => {
-    if (user && isAuthenticated) {
-      storeUser({
-        userId: user.id,
-        email: user.email,
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-      }).catch((err) => console.error("Failed to store user:", err));
-    }
-  }, [user, isAuthenticated, storeUser]);
-
   const formatCurrentDate = () => {
     if (selectedDate === "pinned") {
       return "Pinned";
@@ -206,17 +150,153 @@ function App() {
   const displayTodos =
     selectedDate === "pinned" ? pinnedTodos || [] : todos || [];
 
-  // Show loading spinner during initial auth check
-  if (isLoading) {
-    return (
-      <div className="auth-loading">
-        <div className="auth-loading-content">
-          <div className="auth-spinner"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // Separate archived and active todos
+  const activeTodos = displayTodos.filter((t) => !t.archived);
+  const archivedTodos = displayTodos.filter((t) => t.archived);
+
+  // Footer action handlers
+  const handleArchiveAllConfirm = async () => {
+    if (selectedDate !== "pinned") {
+      await archiveAllTodos({ date: selectedDate });
+    }
+    setConfirmArchiveAll(false);
+  };
+
+  const handleDeleteAllConfirm = async () => {
+    if (selectedDate !== "pinned") {
+      await deleteAllTodos({ date: selectedDate });
+    }
+    setConfirmDeleteAll(false);
+  };
+
+  const handleDeleteArchived = async (todoId: Id<"todos">) => {
+    await deleteTodo({ id: todoId });
+  };
+
+  const handleDeleteAllArchived = async () => {
+    if (selectedDate !== "pinned") {
+      await deleteAllArchivedTodos({ date: selectedDate });
+    }
+  };
+
+  const handleReorderArchived = async (
+    activeId: Id<"todos">,
+    overId: Id<"todos">,
+  ) => {
+    await reorderTodos({ activeId, overId });
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in inputs
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+
+      // Focus todo input with / or c
+      if (e.key === "/" || e.key === "c") {
+        e.preventDefault();
+        if (todoInputRef.current) {
+          todoInputRef.current.focus();
+          // Clear todo focus when focusing input
+          setFocusedTodoIndex(-1);
+        }
+      }
+
+      // Mark todo as done with spacebar or e
+      if (e.key === " " || e.key === "e") {
+        e.preventDefault();
+        if (activeTodos.length > 0 && focusedTodoIndex >= 0) {
+          const todo = activeTodos[focusedTodoIndex];
+          if (todo && !todo.completed) {
+            setLastCompletedTodo(todo._id);
+            updateTodo({ id: todo._id, completed: true });
+          }
+        }
+      }
+
+      // Navigate todos with up/down arrows
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedTodoIndex((prev) => {
+          if (prev === -1) {
+            // Start from last todo if no todo is focused
+            return activeTodos.length - 1;
+          }
+          return prev <= 0 ? activeTodos.length - 1 : prev - 1;
+        });
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedTodoIndex((prev) => {
+          if (prev === -1) {
+            // Start from first todo if no todo is focused
+            return 0;
+          }
+          return prev >= activeTodos.length - 1 ? 0 : prev + 1;
+        });
+      }
+
+      // Undo last completed todo with z
+      if (e.key === "z") {
+        e.preventDefault();
+        if (lastCompletedTodo) {
+          updateTodo({ id: lastCompletedTodo, completed: false });
+          setLastCompletedTodo(null);
+        }
+      }
+
+      // Scroll to top with cmd+up
+      if (e.key === "ArrowUp" && e.metaKey) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      // Scroll to bottom with cmd+down
+      if (e.key === "ArrowDown" && e.metaKey) {
+        e.preventDefault();
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+
+      // Show keyboard shortcuts modal with ?
+      if (e.key === "?") {
+        e.preventDefault();
+        setShowKeyboardShortcuts(true);
+      }
+
+      // Open search modal with cmd+k
+      if (e.key === "k" && e.metaKey) {
+        e.preventDefault();
+        setSearchModalOpen(true);
+      }
+
+      // Close modals with Escape
+      if (e.key === "Escape") {
+        setShowKeyboardShortcuts(false);
+        setSearchModalOpen(false);
+        // Clear todo focus when pressing Escape
+        setFocusedTodoIndex(-1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeTodos, focusedTodoIndex, lastCompletedTodo]);
+
+  // Reset focused index when todos change
+  useEffect(() => {
+    if (focusedTodoIndex >= activeTodos.length) {
+      setFocusedTodoIndex(Math.max(0, activeTodos.length - 1));
+    }
+  }, [activeTodos.length, focusedTodoIndex]);
 
   return (
     <>
@@ -237,6 +317,7 @@ function App() {
             onSelectDate={setSelectedDate}
             isCollapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onShowKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
           />
         </div>
         {!sidebarHidden && !sidebarCollapsed && (
@@ -269,14 +350,56 @@ function App() {
             </button>
           </div>
 
-          <TodoList
-            todos={displayTodos}
-            date={selectedDate}
-            expandedNoteId={expandedNoteId}
-            onNoteExpanded={() => setExpandedNoteId(null)}
-            isPinnedView={selectedDate === "pinned"}
-            onAuthRequired={() => setShowAuthModal(true)}
-          />
+          <div className="main-content-body">
+            <TodoList
+              todos={displayTodos}
+              date={selectedDate}
+              expandedNoteId={expandedNoteId}
+              onNoteExpanded={() => setExpandedNoteId(null)}
+              isPinnedView={selectedDate === "pinned"}
+              todoInputRef={todoInputRef}
+              focusedTodoIndex={focusedTodoIndex}
+              onFocusFirstTodo={handleFocusFirstTodo}
+            />
+          </div>
+
+          {/* Sticky footer with archive and bulk actions */}
+          <div className="main-content-footer">
+            {/* Archive section */}
+            {archivedTodos.length > 0 && (
+              <ArchiveSection
+                archivedTodos={archivedTodos}
+                onMoveToPreviousDay={() => {}}
+                onMoveToNextDay={() => {}}
+                onMoveToTomorrow={() => {}}
+                onDeleteArchived={handleDeleteArchived}
+                onDeleteAllArchived={handleDeleteAllArchived}
+                isExpanded={archiveExpanded}
+                onToggleExpanded={() => setArchiveExpanded(!archiveExpanded)}
+                onReorderArchived={handleReorderArchived}
+              />
+            )}
+
+            {/* Bulk action buttons */}
+            {activeTodos.length > 0 && selectedDate !== "pinned" && (
+              <div className="bulk-actions">
+                <button
+                  className="bulk-action-button"
+                  onClick={() => setConfirmArchiveAll(true)}
+                  title="Archive all active todos"
+                >
+                  Archive All (active todos)
+                </button>
+                <button
+                  className="bulk-action-button danger"
+                  onClick={() => setConfirmDeleteAll(true)}
+                  title="Delete all active todos"
+                >
+                  Delete All (active todos)
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         {/* Overlay for mobile - clicking closes sidebar */}
         {!sidebarHidden && (
@@ -302,22 +425,36 @@ function App() {
             }
           }}
         />
-      </div>
 
-      {/* Auth Modal - only show when user tries to interact */}
-      <ConfirmDialog
-        isOpen={showAuthModal}
-        title="Sign In Required"
-        message="Please sign in to use Better Todo. Your todos and notes will be private and synced across all your devices."
-        confirmText="Sign In"
-        cancelText="Not Now"
-        onConfirm={() => {
-          setShowAuthModal(false);
-          signIn();
-        }}
-        onCancel={() => setShowAuthModal(false)}
-        isDangerous={false}
-      />
+        {/* Keyboard Shortcuts Modal */}
+        <KeyboardShortcutsModal
+          isOpen={showKeyboardShortcuts}
+          onClose={() => setShowKeyboardShortcuts(false)}
+        />
+
+        {/* Confirmation dialogs */}
+        <ConfirmDialog
+          isOpen={confirmArchiveAll}
+          title="Archive All Todos"
+          message={`Are you sure you want to archive all ${activeTodos.length} active todo${activeTodos.length === 1 ? "" : "s"}? You can restore them later from the archive section.`}
+          confirmText="Archive All"
+          cancelText="Cancel"
+          onConfirm={handleArchiveAllConfirm}
+          onCancel={() => setConfirmArchiveAll(false)}
+          isDangerous={false}
+        />
+
+        <ConfirmDialog
+          isOpen={confirmDeleteAll}
+          title="Delete All Todos"
+          message={`Are you sure you want to permanently delete all ${activeTodos.length} active todo${activeTodos.length === 1 ? "" : "s"}? This action cannot be undone.`}
+          confirmText="Delete All"
+          cancelText="Cancel"
+          onConfirm={handleDeleteAllConfirm}
+          onCancel={() => setConfirmDeleteAll(false)}
+          isDangerous={true}
+        />
+      </div>
     </>
   );
 }

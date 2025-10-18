@@ -1,7 +1,10 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// Get all todos for a specific date and user
+// Simple user ID for demo purposes - in production, use proper auth
+const DEMO_USER_ID = "demo-user";
+
+// Get all todos for a specific date
 export const getTodosByDate = query({
   args: {
     date: v.string(),
@@ -28,12 +31,7 @@ export const getTodosByDate = query({
     }),
   ),
   handler: async (ctx, args) => {
-    // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     const todos = await ctx.db
       .query("todos")
@@ -73,11 +71,10 @@ export const getPinnedTodos = query({
   ),
   handler: async (ctx) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     const todos = await ctx.db
       .query("todos")
@@ -97,11 +94,10 @@ export const getAvailableDates = query({
   returns: v.array(v.string()),
   handler: async (ctx) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     const todos = await ctx.db
       .query("todos")
@@ -130,12 +126,11 @@ export const createTodo = mutation({
   returns: v.id("todos"),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    console.log("Create todo - auth identity:", identity);
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     // Get the highest order number for this date
     const existingTodos = await ctx.db
@@ -164,6 +159,50 @@ export const createTodo = mutation({
   },
 });
 
+// Create a subtask under a parent todo
+export const createSubtask = mutation({
+  args: {
+    parentId: v.id("todos"),
+    content: v.string(),
+  },
+  returns: v.id("todos"),
+  handler: async (ctx, args) => {
+    const userId = DEMO_USER_ID;
+
+    // Get the parent todo to inherit its date
+    const parent = await ctx.db.get(args.parentId);
+    if (!parent || parent.userId !== userId) {
+      throw new Error("Parent todo not found or unauthorized");
+    }
+
+    // Get existing subtasks to determine order
+    const existingSubtasks = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_date", (q) =>
+        q.eq("userId", userId).eq("date", parent.date),
+      )
+      .filter((q) => q.eq(q.field("parentId"), args.parentId))
+      .collect();
+
+    const maxOrder =
+      existingSubtasks.length > 0
+        ? Math.max(...existingSubtasks.map((t) => t.order))
+        : parent.order;
+
+    return await ctx.db.insert("todos", {
+      userId,
+      date: parent.date,
+      content: args.content,
+      type: "todo",
+      completed: false,
+      archived: false,
+      order: maxOrder + 1,
+      parentId: args.parentId,
+      collapsed: false,
+    });
+  },
+});
+
 // Update a todo item
 export const updateTodo = mutation({
   args: {
@@ -177,11 +216,10 @@ export const updateTodo = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     const todo = await ctx.db.get(args.id);
     if (!todo || todo.userId !== userId) {
@@ -221,11 +259,10 @@ export const deleteTodo = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     const todo = await ctx.db.get(args.id);
     if (!todo || todo.userId !== userId) {
@@ -246,11 +283,10 @@ export const reorderTodos = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     const todo = await ctx.db.get(args.todoId);
     if (!todo || todo.userId !== userId) {
@@ -293,11 +329,10 @@ export const moveTodoToDate = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     const todo = await ctx.db.get(args.todoId);
     if (!todo || todo.userId !== userId) {
@@ -335,11 +370,10 @@ export const copyTodosToDate = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     // Get all non-archived todos from source date
     const sourceTodos = await ctx.db
@@ -390,11 +424,10 @@ export const archiveAllTodos = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     // Get all active (non-archived) todos for this date
     const todos = await ctx.db
@@ -422,11 +455,10 @@ export const deleteAllTodos = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     // Get all active (non-archived) todos for this date
     const todos = await ctx.db
@@ -454,11 +486,10 @@ export const deleteAllArchivedTodos = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Get authenticated user ID from WorkOS
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+    // No auth required
+    if (false) {
     }
-    const userId = identity.subject;
+    const userId = DEMO_USER_ID;
 
     // Get all archived todos for this date
     const todos = await ctx.db

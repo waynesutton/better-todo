@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useQuery, useConvexAuth } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { X, Search, CheckSquare, FileText } from "lucide-react";
-import { ConfirmDialog } from "./ConfirmDialog";
-import { useAuth } from "@workos-inc/authkit-react";
 import { Id } from "../../convex/_generated/dataModel";
 
 interface SearchModalProps {
@@ -17,35 +15,26 @@ export function SearchModal({
   onClose,
   onSelectDate,
 }: SearchModalProps) {
-  const { isAuthenticated } = useConvexAuth();
-  const { signIn } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [showAuthRequired, setShowAuthRequired] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Get search results from Convex - only when authenticated
+  // Get search results from Convex
   const results = useQuery(
     api.search.searchAll,
-    isAuthenticated && searchQuery.trim() ? { searchQuery } : "skip",
+    searchQuery.trim() ? { searchQuery } : "skip",
   );
 
   // Focus input when modal opens
   useEffect(() => {
     if (isOpen) {
-      // Check if user is authenticated
-      if (!isAuthenticated) {
-        setShowAuthRequired(true);
-        return;
-      }
       inputRef.current?.focus();
       setSelectedIndex(0);
     } else {
       setSearchQuery("");
-      setShowAuthRequired(false);
     }
-  }, [isOpen, isAuthenticated]);
+  }, [isOpen]);
 
   // Reset selected index when results change
   useEffect(() => {
@@ -55,7 +44,7 @@ export function SearchModal({
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen || !isAuthenticated) return;
+      if (!isOpen) return;
 
       // ESC always closes the modal
       if (e.key === "Escape") {
@@ -86,7 +75,7 @@ export function SearchModal({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, results, selectedIndex, isAuthenticated]);
+  }, [isOpen, results, selectedIndex]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -150,30 +139,6 @@ export function SearchModal({
   };
 
   if (!isOpen) return null;
-
-  // Show auth required modal instead of search
-  if (showAuthRequired) {
-    return (
-      <ConfirmDialog
-        isOpen={showAuthRequired}
-        title="Sign In Required"
-        message="Please sign in to search your todos and notes."
-        confirmText="Sign In"
-        cancelText="Cancel"
-        onConfirm={() => {
-          setShowAuthRequired(false);
-          onClose();
-          // Trigger signin after closing modal to avoid conflicts
-          setTimeout(() => signIn(), 100);
-        }}
-        onCancel={() => {
-          setShowAuthRequired(false);
-          onClose();
-        }}
-        isDangerous={false}
-      />
-    );
-  }
 
   return (
     <div className="search-overlay" onClick={onClose}>

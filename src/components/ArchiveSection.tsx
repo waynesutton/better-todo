@@ -1,4 +1,18 @@
 import { useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { TodoItem } from "./TodoItem";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
@@ -27,6 +41,7 @@ interface ArchiveSectionProps {
   onDeleteAllArchived: () => void;
   isExpanded: boolean;
   onToggleExpanded: () => void;
+  onReorderArchived?: (activeId: Id<"todos">, overId: Id<"todos">) => void;
 }
 
 export function ArchiveSection({
@@ -38,6 +53,7 @@ export function ArchiveSection({
   onDeleteAllArchived,
   isExpanded,
   onToggleExpanded,
+  onReorderArchived,
 }: ArchiveSectionProps) {
   const [confirmDelete, setConfirmDelete] = useState<{
     isOpen: boolean;
@@ -45,6 +61,21 @@ export function ArchiveSection({
     todoContent: string;
   }>({ isOpen: false, todoId: null, todoContent: "" });
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id && onReorderArchived) {
+      onReorderArchived(active.id as Id<"todos">, over.id as Id<"todos">);
+    }
+  };
 
   if (archivedTodos.length === 0) {
     return null;
@@ -102,29 +133,40 @@ export function ArchiveSection({
 
       {isExpanded && (
         <div className="archive-content">
-          {archivedTodos.map((todo) => (
-            <div key={todo._id} className="archived-todo-wrapper">
-              <TodoItem
-                id={todo._id}
-                content={todo.content}
-                type={todo.type}
-                completed={todo.completed}
-                collapsed={todo.collapsed}
-                isArchived={true}
-                pinned={todo.pinned}
-                onMoveToPreviousDay={() => onMoveToPreviousDay(todo._id)}
-                onMoveToNextDay={() => onMoveToNextDay(todo._id)}
-                onMoveToTomorrow={() => onMoveToTomorrow(todo._id)}
-              />
-              <button
-                className="archived-delete-button"
-                onClick={() => handleDeleteClick(todo._id, todo.content)}
-                title="Delete archived todo"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={archivedTodos.map((t) => t._id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {archivedTodos.map((todo) => (
+                <div key={todo._id} className="archived-todo-wrapper">
+                  <TodoItem
+                    id={todo._id}
+                    content={todo.content}
+                    type={todo.type}
+                    completed={todo.completed}
+                    collapsed={todo.collapsed}
+                    isArchived={true}
+                    pinned={todo.pinned}
+                    onMoveToPreviousDay={() => onMoveToPreviousDay(todo._id)}
+                    onMoveToNextDay={() => onMoveToNextDay(todo._id)}
+                    onMoveToTomorrow={() => onMoveToTomorrow(todo._id)}
+                  />
+                  <button
+                    className="archived-delete-button"
+                    onClick={() => handleDeleteClick(todo._id, todo.content)}
+                    title="Delete archived todo"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
       )}
 

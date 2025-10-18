@@ -4,17 +4,6 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.9.3] - 2025-01-18
-
-### Added
-
-- **User profile settings link** - Added settings gear icon in sidebar footer
-  - Settings icon appears next to Convex logo
-  - Only visible when user is logged in
-  - Links to WorkOS user profile management page
-  - Adapts to light and dark mode themes
-  - Includes tooltip with "Manage your profile" description
-
 ## [1.9.2] - 2025-01-18
 
 ### Fixed

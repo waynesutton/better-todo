@@ -69,3 +69,31 @@ export const getCurrentUser = query({
     };
   },
 });
+
+// Debug auth state for WorkOS integration
+export const debugAuth = query({
+  args: {},
+  returns: v.object({
+    isAuthenticated: v.boolean(),
+    identity: v.optional(
+      v.object({
+        subject: v.string(),
+        issuer: v.optional(v.string()),
+      }),
+    ),
+  }),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { isAuthenticated: false };
+    }
+
+    return {
+      isAuthenticated: true,
+      identity: {
+        subject: identity.subject,
+        issuer: identity.issuer,
+      },
+    };
+  },
+});
