@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
+import { useAuth } from "@workos-inc/authkit-react";
 import { api } from "../../convex/_generated/api";
 import { format, addDays, subDays } from "date-fns";
-import { PanelLeft, LogIn, Pin } from "lucide-react";
-// Note: CircleUserRound will be used for logged-in user profile when auth is implemented
+import { PanelLeft, Pin } from "lucide-react";
 import { ConfirmDialog } from "./ConfirmDialog";
 import {
   Tooltip,
@@ -29,6 +29,11 @@ export function Sidebar({
   onToggleCollapse,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated } = useConvexAuth();
+  const { user, signIn, signOut } = useAuth();
+
+  // Use WorkOS user state if Convex isn't detecting auth yet
+  const showAsAuthenticated = isAuthenticated || !!user;
   const [showMenuForDate, setShowMenuForDate] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState<string | null>(null);
   const [showRenameInput, setShowRenameInput] = useState<string | null>(null);
@@ -41,9 +46,20 @@ export function Sidebar({
     formattedDate: string;
   }>({ isOpen: false, date: "", formattedDate: "" });
 
-  const archivedDates = useQuery(api.archivedDates.getArchivedDates) || [];
-  const dateLabelsData = useQuery(api.dateLabels.getDateLabels) || [];
-  const pinnedTodos = useQuery(api.todos.getPinnedTodos) || [];
+  // Only fetch data when authenticated
+  const archivedDates =
+    useQuery(
+      api.archivedDates.getArchivedDates,
+      isAuthenticated ? undefined : "skip",
+    ) || [];
+  const dateLabelsData =
+    useQuery(
+      api.dateLabels.getDateLabels,
+      isAuthenticated ? undefined : "skip",
+    ) || [];
+  const pinnedTodos =
+    useQuery(api.todos.getPinnedTodos, isAuthenticated ? undefined : "skip") ||
+    [];
   const copyTodosToDate = useMutation(api.todos.copyTodosToDate);
   const archiveDate = useMutation(api.archivedDates.archiveDate);
   const unarchiveDate = useMutation(api.archivedDates.unarchiveDate);
@@ -473,21 +489,54 @@ export function Sidebar({
 
       <div className="sidebar-footer">
         <div className="sidebar-footer-left">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                className="login-button"
-                onClick={() => {
-                  // TODO: Implement login when auth is set up
-                }}
-              >
-                <LogIn size={18} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8}>
-              Sign in to your account
-            </TooltipContent>
-          </Tooltip>
+          {showAsAuthenticated && user ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="login-button"
+                  onClick={async () => {
+                    try {
+                      await signOut();
+                      // Reload the page after sign out to clear state
+                      window.location.href = "/";
+                    } catch (error) {
+                      console.error("Sign out error:", error);
+                    }
+                  }}
+                >
+                  <img
+                    src={
+                      theme === "dark" ? "/user-light.svg" : "/user-dark.svg"
+                    }
+                    alt="User profile"
+                    width="18"
+                    height="18"
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                {user.firstName || user.email} - Click to sign out
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="login-button" onClick={() => signIn()}>
+                  <img
+                    src={
+                      theme === "dark" ? "/login-light.svg" : "/login-dark.svg"
+                    }
+                    alt="Sign in"
+                    width="18"
+                    height="18"
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                Sign in to your account
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           <Tooltip>
             <TooltipTrigger asChild>

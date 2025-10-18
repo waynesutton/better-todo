@@ -1,50 +1,81 @@
-# WorkOS AuthKit Integration Plan
+# WorkOS AuthKit Integration - Complete Implementation Guide
 
-## Current State Analysis
+## Overview
 
-Your app is already well-prepared for authentication:
+This document provides a comprehensive guide for implementing WorkOS AuthKit with Convex authentication in a React application. Based on our successful implementation, this guide covers what worked, what didn't, and the critical steps needed to get everything functioning properly.
 
-- Schema has `userId` fields in all tables (`todos`, `notes`, `archivedDates`, `dateLabels`)
-- Proper indexes exist (`by_user_and_date`, `by_user`)
-- All Convex functions use hardcoded `userId = "anonymous"`
-- Frontend has no authentication UI or providers
+## What We Built
 
-## Installation and Dependencies
+A complete authentication system that:
 
-**Install required packages:**
+- Enables user login/logout with WorkOS AuthKit
+- Provides private user data (each user sees only their own todos and notes)
+- Uses theme-aware login/user icons
+- Shows "Sign In Required" modal for unauthenticated users
+- Automatically stores user data in Convex database
+- Handles JWT token validation with proper configuration
+- Manages redirects and authentication state
 
-```bash
-npm install @workos-inc/authkit-react @convex-dev/workos
+## Critical Success Factors
+
+### 1. JWT Configuration is Everything
+
+The most critical aspect of the integration is the JWT token configuration in WorkOS Dashboard. Without proper `aud` (audience) claim, Convex will reject all authentication attempts.
+
+**Required JWT Template in WorkOS Dashboard:**
+
+```json
+{
+  "aud": "client_01XXXXXXXXXXXXXXXXXXXXXXXX",
+  "email": "{{ user.email }}",
+  "name": "{{ user.first_name }} {{ user.last_name }}"
+}
 ```
 
-**Remove unused dependency:**
+**Key Points:**
 
-```bash
-npm uninstall @convex-dev/auth
+- `aud` must match your WorkOS Client ID exactly
+- **Do NOT include `iss` claim** - WorkOS automatically sets this
+- **Do NOT include `sub` claim** - WorkOS automatically sets this
+- Replace `client_01XXXXXXXXXXXXXXXXXXXXXXXX` with your actual client ID
+- Use WorkOS template syntax: `{{ user.email }}` and `{{ user.first_name }} {{ user.last_name }}`
+- The `sub` field is automatically set by WorkOS and becomes the user ID in Convex (`identity.subject`)
+
+### 2. Environment Variables Setup
+
+**Frontend (.env.local):**
+
+```env
+# Convex
+VITE_CONVEX_URL=https://your-deployment.convex.cloud
+
+# WorkOS AuthKit
+VITE_WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
+VITE_WORKOS_REDIRECT_URI=http://localhost:5173/callback
 ```
 
-## Backend Configuration
+**Backend (Convex Dashboard):**
 
-### Create `convex/auth.config.ts`
+```env
+WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
+```
 
-This file configures Convex to validate WorkOS JWT tokens:
+**Important:** Use `VITE_` prefix for frontend variables, no prefix for backend variables.
+
+### 3. Convex Auth Configuration
+
+**convex/auth.config.ts:**
 
 ```typescript
 const clientId = process.env.WORKOS_CLIENT_ID;
 
 const authConfig = {
   providers: [
+    // WorkOS AuthKit JWT
     {
-      type: "customJwt",
+      type: "customJwt" as const,
       issuer: `https://api.workos.com/`,
-      algorithm: "RS256",
-      jwks: `https://api.workos.com/sso/jwks/${clientId}`,
-      applicationID: clientId,
-    },
-    {
-      type: "customJwt",
-      issuer: `https://api.workos.com/user_management/${clientId}`,
-      algorithm: "RS256",
+      algorithm: "RS256" as const,
       jwks: `https://api.workos.com/sso/jwks/${clientId}`,
       applicationID: clientId,
     },
@@ -54,178 +85,481 @@ const authConfig = {
 export default authConfig;
 ```
 
-### Update all Convex functions
+### 4. Frontend Provider Setup
 
-Replace hardcoded `const userId = "anonymous"` with actual user authentication:
-
-**In `convex/todos.ts` (16 functions):**
-
-- Replace `const userId = "anonymous"` with:
+**src/main.tsx:**
 
 ```typescript
-const identity = await ctx.auth.getUserIdentity();
-if (!identity) {
-  throw new Error("Unauthenticated");
-}
-const userId = identity.subject;
-```
-
-**In `convex/notes.ts` (5 functions):**
-
-- Same replacement pattern
-
-**In `convex/dates.ts` and `convex/archivedDates.ts` (if they exist):**
-
-- Same replacement pattern for any functions using userId
-
-## Frontend Configuration
-
-### Update `src/main.tsx`
-
-Replace `ConvexProvider` with WorkOS-enabled providers:
-
-```typescript
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import { AuthKitProvider, useAuth } from "@workos-inc/authkit-react";
+import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithAuthKit } from "@convex-dev/workos";
+import "./index.css";
+import App from "./App.tsx";
 
-// Wrap with AuthKitProvider and ConvexProviderWithAuthKit
-<AuthKitProvider
-  clientId={import.meta.env.VITE_WORKOS_CLIENT_ID}
-  redirectUri={import.meta.env.VITE_WORKOS_REDIRECT_URI}
->
-  <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
-  </ConvexProviderWithAuthKit>
-</AuthKitProvider>
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL);
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <AuthKitProvider
+      clientId={import.meta.env.VITE_WORKOS_CLIENT_ID}
+      redirectUri={import.meta.env.VITE_WORKOS_REDIRECT_URI}
+    >
+      <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
+        <App />
+      </ConvexProviderWithAuthKit>
+    </AuthKitProvider>
+  </StrictMode>,
+);
 ```
 
-### Update `src/App.tsx`
+### 5. User Data Storage
 
-Implement lazy authentication pattern:
+**convex/schema.ts:**
 
-1. Import auth components:
+```typescript
+users: defineTable({
+  userId: v.string(), // WorkOS user ID (from auth subject)
+  email: v.string(),
+  firstName: v.string(),
+  lastName: v.string(),
+})
+  .index("by_userId", ["userId"]),
+```
+
+**convex/users.ts:**
+
+```typescript
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+
+// Store or update user info from WorkOS
+export const storeUser = mutation({
+  args: {
+    userId: v.string(),
+    email: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Check if user already exists
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+
+    if (existing) {
+      // Update existing user
+      await ctx.db.patch(existing._id, {
+        email: args.email,
+        firstName: args.firstName,
+        lastName: args.lastName,
+      });
+    } else {
+      // Create new user
+      await ctx.db.insert("users", {
+        userId: args.userId,
+        email: args.email,
+        firstName: args.firstName,
+        lastName: args.lastName,
+      });
+    }
+    return null;
+  },
+});
+
+// Get current authenticated user info
+export const getCurrentUser = query({
+  args: {},
+  returns: v.object({
+    userId: v.string(),
+    email: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+  }),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found in database");
+    }
+
+    return {
+      userId: user.userId,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
+  },
+});
+```
+
+### 6. Authentication State Management
+
+**src/App.tsx:**
 
 ```typescript
 import { useConvexAuth } from "convex/react";
 import { useAuth } from "@workos-inc/authkit-react";
+import { useMutation } from "convex/react";
+import { api } from "../convex/_generated/api";
+
+export default function App() {
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { user } = useAuth();
+  const storeUser = useMutation(api.users.storeUser);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Store user data when authenticated
+  useEffect(() => {
+    if (user && isAuthenticated) {
+      storeUser({
+        userId: user.id,
+        email: user.email,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+      });
+    }
+  }, [user, isAuthenticated, storeUser]);
+
+  // Handle redirect from /callback
+  useEffect(() => {
+    if (window.location.pathname === "/callback" && isAuthenticated) {
+      window.location.href = "/";
+    }
+  }, [isAuthenticated]);
+
+  // Show auth modal for unauthenticated users
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && !hasShownModal) {
+      setShowAuthModal(true);
+      setHasShownModal(true);
+    }
+  }, [isLoading, isAuthenticated]);
+
+  // Conditional query execution
+  const availableDates = useQuery(
+    api.todos.getAvailableDates,
+    isAuthenticated ? undefined : "skip",
+  );
+
+  // ... rest of component
+}
 ```
 
-2. Keep the main app UI always visible (no `<Authenticated>` wrapper)
-3. Show empty state when unauthenticated (no todos/notes load)
-4. Add user profile button in sidebar header showing login status
-5. When authenticated, show logout button and user info
+### 7. Conditional Query Execution
 
-### Create authentication components
+All Convex queries must be conditionally executed based on authentication state:
 
-**New file:** `src/components/AuthButton.tsx`
+```typescript
+// ✅ Correct - Skip when unauthenticated
+const todos = useQuery(
+  api.todos.getTodosByDate,
+  isAuthenticated ? { date: selectedDate } : "skip",
+);
 
-- When unauthenticated: Show "Sign In" button
-- When authenticated: Show user profile with:
-  - User's first name from `useAuth().user.firstName`
-  - User avatar/profile picture if available from `useAuth().user.profilePictureUrl`
-  - Fallback to first letter of name in circle if no avatar
-  - Clicking opens dropdown menu with "Sign Out" option
-- Display user email as secondary text if showing full profile
-- Clean, minimal design matching app aesthetic
-
-**New file:** `src/components/LoginPrompt.tsx`
-
-- Modal/dialog that appears when unauthenticated user tries to create todo or note
-- Explains that login is required to save todos
-- Primary action: "Sign In to Continue" button
-- Secondary action: "Cancel" button
-- Clean, minimal design matching app aesthetic
-
-### Update todo and note creation components
-
-**In `src/components/TodoList.tsx` and `src/components/NotesSection.tsx`:**
-
-1. Import `useConvexAuth` to check authentication status
-2. Before calling `createTodo` or `createNote` mutations:
-   - Check if `isAuthenticated` is false
-   - If unauthenticated, show `LoginPrompt` modal instead
-   - If authenticated, proceed with creation
-3. Handle the modal state (open/close)
-
-## Environment Variables
-
-### Create `.env.local`
-
+// ❌ Wrong - Will cause "Not authenticated" errors
+const todos = useQuery(api.todos.getTodosByDate, { date: selectedDate });
 ```
-VITE_CONVEX_URL=<your-existing-convex-url>
+
+### 8. Authentication UI Components
+
+**Login/Logout Button in Sidebar:**
+
+```typescript
+import { useConvexAuth } from "convex/react";
+import { useAuth } from "@workos-inc/authkit-react";
+
+export function Sidebar() {
+  const { isAuthenticated } = useConvexAuth();
+  const { user, signIn, signOut } = useAuth();
+  const { theme } = useTheme();
+
+  const showAsAuthenticated = isAuthenticated || !!user;
+
+  return (
+    <div className="sidebar-footer">
+      {showAsAuthenticated && user ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              className="login-button"
+              onClick={async () => {
+                try {
+                  await signOut();
+                  window.location.href = "/"; // Reload to clear state
+                } catch (error) {
+                  console.error("Sign out error:", error);
+                }
+              }}
+            >
+              <img
+                src={theme === "dark" ? "/user-light.svg" : "/user-dark.svg"}
+                alt="User profile"
+                width="18"
+                height="18"
+              />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8}>
+            {user.firstName || user.email} - Click to sign out
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button className="login-button" onClick={() => signIn()}>
+              <img
+                src={theme === "dark" ? "/login-light.svg" : "/login-dark.svg"}
+                alt="Sign in"
+                width="18"
+                height="18"
+              />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8}>
+            Sign in to your account
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
+}
+```
+
+**Sign In Required Modal:**
+
+```typescript
+<ConfirmDialog
+  isOpen={showAuthModal}
+  title="Sign In Required"
+  message="Please sign in to create todos and notes. Your data will be private and secure."
+  confirmText="Sign In"
+  cancelText="Cancel"
+  onConfirm={() => {
+    setShowAuthModal(false);
+    signIn();
+  }}
+  onCancel={() => setShowAuthModal(false)}
+  isDangerous={false}
+/>
+```
+
+## Common Issues and Solutions
+
+### Issue 1: "Not authenticated" errors
+
+**Symptoms:** All Convex mutations/queries fail with "Not authenticated" error
+
+**Solutions:**
+
+1. Check JWT configuration in WorkOS Dashboard
+2. Verify `aud` claim matches your client ID exactly
+3. **Do NOT include `iss` or `sub` claims** - WorkOS sets these automatically
+4. Check environment variables are set correctly
+5. Use conditional query execution (`isAuthenticated ? args : "skip"`)
+
+### Issue 2: Token not being stored
+
+**Symptoms:** WorkOS login succeeds but Convex `isAuthenticated` remains false
+
+**Solutions:**
+
+1. Verify JWT template is saved in WorkOS Dashboard
+2. Check browser Network tab for failed token exchange requests
+3. Ensure CORS settings include your domain
+4. Verify redirect URI matches exactly
+
+### Issue 3: Redirect loop
+
+**Symptoms:** App redirects to `/callback` but never returns to `/`
+
+**Solutions:**
+
+1. Add redirect handling in App.tsx
+2. Check redirect URI configuration in WorkOS Dashboard
+3. Verify CORS settings
+
+### Issue 4: User data not persisting
+
+**Symptoms:** User data disappears after refresh
+
+**Solutions:**
+
+1. Implement `storeUser` mutation
+2. Call `storeUser` when user authenticates
+3. Check user table exists in schema
+4. Verify user ID mapping (`identity.subject` → `userId`)
+
+## Step-by-Step Setup Guide
+
+### 1. Install Dependencies
+
+```bash
+npm install @workos-inc/authkit-react @convex-dev/workos
+```
+
+### 2. Set up WorkOS Dashboard
+
+1. Sign up at [workos.com](https://workos.com/sign-up)
+2. Navigate to **Authentication** → **AuthKit**
+3. Click **Set up AuthKit**
+4. Select **Use AuthKit's customizable hosted UI**
+5. Add redirect URIs:
+   - Development: `http://localhost:5173/callback`
+   - Production: `https://your-domain.com/callback`
+6. Add CORS origins:
+   - Development: `http://localhost:5173`
+   - Production: `https://your-domain.com`
+7. Copy your Client ID
+
+### 3. Configure JWT Template
+
+In WorkOS Dashboard, go to **JWT Templates** and create:
+
+```json
+{
+  "aud": "YOUR_CLIENT_ID_HERE",
+  "email": "{{ user.email }}",
+  "name": "{{ user.first_name }} {{ user.last_name }}"
+}
+```
+
+**Critical:**
+
+- Replace `YOUR_CLIENT_ID_HERE` with your actual client ID
+- **Do NOT include `iss` or `sub` claims** - WorkOS automatically sets these
+- Use WorkOS template syntax with `{{ }}` for user data
+
+### 4. Set Environment Variables
+
+**Create `.env.local`:**
+
+```env
+VITE_CONVEX_URL=https://your-deployment.convex.cloud
 VITE_WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
 VITE_WORKOS_REDIRECT_URI=http://localhost:5173/callback
 ```
 
-### Convex Dashboard
+**Set in Convex Dashboard:**
 
-Set environment variable in your Convex deployment:
+```env
+WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX
+```
 
-- `WORKOS_CLIENT_ID=client_01XXXXXXXXXXXXXXXXXXXXXXXX`
+### 5. Create Convex Auth Configuration
 
-## WorkOS Dashboard Setup
+Create `convex/auth.config.ts` with the simplified configuration shown above (single provider with `https://api.workos.com/` issuer).
 
-1. Sign up at workos.com or use automatic provisioning via Convex CLI
-2. Set up AuthKit in the WorkOS Dashboard
-3. Configure redirect URI: `http://localhost:5173/callback`
-4. Configure CORS: Add `http://localhost:5173` to allowed origins
-5. Copy Client ID to environment variables
-6. For production: Add production domain to redirect URIs and CORS
+### 6. Update Frontend Providers
 
-## Deployment Steps
+Update `src/main.tsx` with the provider setup shown above.
 
-1. Create `convex/auth.config.ts`
-2. Run `npx convex dev` (will prompt for WORKOS_CLIENT_ID env var)
-3. Set WORKOS_CLIENT_ID in Convex dashboard via provided link
-4. Update all Convex functions to use `ctx.auth.getUserIdentity()`
-5. Install npm packages
-6. Update `src/main.tsx` with new providers
-7. Update `src/App.tsx` with auth guards
-8. Create `.env.local` with WorkOS credentials
-9. Test login/logout flow
-10. Update `.gitignore` to exclude `.env.local`
+### 7. Implement Authentication Logic
 
-## Files to Create
+Add authentication state management to `src/App.tsx` as shown above.
 
-- `convex/auth.config.ts`
-- `src/components/AuthButton.tsx`
-- `src/components/LoginPrompt.tsx`
-- `.env.local`
+### 8. Update All Convex Functions
 
-## Files to Modify
+Replace hardcoded `userId = "anonymous"` with:
 
-- `package.json` (dependencies)
-- `src/main.tsx` (providers)
-- `src/App.tsx` (auth guards)
-- `convex/todos.ts` (all 16 functions)
-- `convex/notes.ts` (all 5 functions)
-- `convex/dates.ts` (if exists)
-- `convex/archivedDates.ts` (if exists)
-- `.gitignore` (add `.env.local`)
+```typescript
+const identity = await ctx.auth.getUserIdentity();
+if (!identity) {
+  throw new Error("Not authenticated");
+}
+const userId = identity.subject;
+```
 
-## Testing Checklist
+### 9. Add User Data Storage
 
-- User can sign up with email
-- User can sign in
-- User can sign out
-- Todos are private to each user
-- Notes are private to each user
-- Dates are private to each user
-- Multiple users can use app simultaneously with separate data
-- Data persists after logout/login
-- Unauthenticated users can view empty app
-- Login prompt appears when trying to create first todo/note
-- User avatar and first name display after login
+Create `convex/users.ts` and `convex/schema.ts` updates as shown above.
 
-## Implementation Todos
+### 10. Test Authentication Flow
 
-- [ ] Install @workos-inc/authkit-react and @convex-dev/workos packages, remove unused @convex-dev/auth
-- [ ] Create convex/auth.config.ts with WorkOS JWT configuration
-- [ ] Update all Convex functions (todos.ts, notes.ts, dates.ts, archivedDates.ts) to use ctx.auth.getUserIdentity() instead of hardcoded anonymous userId
-- [ ] Create .env.local with WorkOS credentials and update .gitignore
-- [ ] Update src/main.tsx to use AuthKitProvider and ConvexProviderWithAuthKit
-- [ ] Update src/App.tsx with Authenticated/Unauthenticated guards and create AuthButton component for login/logout
-- [ ] Deploy auth.config.ts and set WORKOS_CLIENT_ID environment variable in Convex dashboard
-- [ ] Set up WorkOS account, configure AuthKit, redirect URIs, and CORS settings
+1. Start development server: `npm run dev`
+2. Click login button in sidebar
+3. Complete WorkOS authentication
+4. Verify user data is stored
+5. Test creating todos/notes
+6. Test logout/login cycle
+
+## Production Deployment
+
+### Netlify Configuration
+
+1. Set environment variables in Netlify dashboard:
+   - `VITE_CONVEX_URL`
+   - `VITE_WORKOS_CLIENT_ID`
+   - `VITE_WORKOS_REDIRECT_URI=https://your-domain.netlify.app/callback`
+
+2. Update WorkOS Dashboard:
+   - Add production redirect URI
+   - Add production CORS origin
+   - Update JWT template if needed
+
+3. Deploy Convex backend:
+
+   ```bash
+   npx convex deploy
+   ```
+
+4. Set production environment variables in Convex dashboard
+
+### Domain Configuration
+
+Update all references to `localhost:5173` with your production domain:
+
+- WorkOS redirect URIs
+- WorkOS CORS origins
+- Environment variables
+- JWT template (if using domain-specific claims)
+
+## Security Considerations
+
+1. **Never expose API keys** - Use environment variables
+2. **Validate JWT tokens** - Convex handles this automatically
+3. **Use HTTPS in production** - Required for WorkOS
+4. **Implement proper CORS** - Restrict to your domains only
+5. **Store user data securely** - Convex provides secure storage
+6. **Handle authentication errors** - Provide fallback UI
+
+## Troubleshooting Checklist
+
+- [ ] JWT template saved in WorkOS Dashboard
+- [ ] `aud` claim matches client ID exactly
+- [ ] **No `iss` or `sub` claims** in JWT template (WorkOS sets these automatically)
+- [ ] Environment variables set correctly
+- [ ] CORS origins include your domain
+- [ ] Redirect URIs match exactly
+- [ ] Convex auth.config.ts deployed with single provider
+- [ ] Frontend providers configured
+- [ ] Conditional query execution implemented
+- [ ] User data storage working
+- [ ] Authentication state management working
+
+## References
+
+- [WorkOS AuthKit Documentation](https://docs.convex.dev/auth/authkit/)
+- [Convex Authentication Guide](https://docs.convex.dev/auth/functions-auth)
+- [WorkOS Dashboard](https://dashboard.workos.com/)
+- [Convex Dashboard](https://dashboard.convex.dev/)
+- [WorkOS JWT Templates Documentation](https://workos.com/docs/authkit/jwt-templates)
+
+## Conclusion
+
+WorkOS AuthKit integration with Convex requires careful attention to JWT configuration, environment variables, and authentication state management. The most common issues stem from incorrect JWT claims or missing environment variables. Follow this guide step-by-step, and you'll have a working authentication system that provides secure, private user data.
+
+The key to success is understanding that WorkOS handles the authentication flow and automatically sets the `iss` and `sub` claims, but Convex needs properly configured JWT tokens with the correct `aud` claim to validate and authorize users. Once both systems are configured correctly, the integration provides a seamless, secure authentication experience.
+
+**Important:** According to the [WorkOS JWT Templates documentation](https://workos.com/docs/authkit/jwt-templates), the `iss`, `sub`, `exp`, `iat`, `nbf`, and `jti` keys are reserved and cannot be used in templates. WorkOS automatically sets these claims, so you should only include custom claims like `aud`, `email`, and `name` in your JWT template.

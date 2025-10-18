@@ -28,8 +28,12 @@ export const getTodosByDate = query({
     }),
   ),
   handler: async (ctx, args) => {
-    // Use fixed userId since auth is disabled
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     const todos = await ctx.db
       .query("todos")
@@ -68,8 +72,12 @@ export const getPinnedTodos = query({
     }),
   ),
   handler: async (ctx) => {
-    // Use fixed userId since auth is disabled
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     const todos = await ctx.db
       .query("todos")
@@ -88,8 +96,12 @@ export const getAvailableDates = query({
   args: {},
   returns: v.array(v.string()),
   handler: async (ctx) => {
-    // Use fixed userId since auth is disabled
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     const todos = await ctx.db
       .query("todos")
@@ -117,8 +129,13 @@ export const createTodo = mutation({
   },
   returns: v.id("todos"),
   handler: async (ctx, args) => {
-    // Use fixed userId since auth is disabled
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    console.log("Create todo - auth identity:", identity);
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     // Get the highest order number for this date
     const existingTodos = await ctx.db
@@ -159,8 +176,12 @@ export const updateTodo = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Use fixed userId since auth is disabled
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     const todo = await ctx.db.get(args.id);
     if (!todo || todo.userId !== userId) {
@@ -199,8 +220,12 @@ export const deleteTodo = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Use fixed userId since auth is disabled
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     const todo = await ctx.db.get(args.id);
     if (!todo || todo.userId !== userId) {
@@ -220,8 +245,12 @@ export const reorderTodos = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Use fixed userId since auth is disabled
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     const todo = await ctx.db.get(args.todoId);
     if (!todo || todo.userId !== userId) {
@@ -263,8 +292,12 @@ export const moveTodoToDate = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Use fixed userId since auth is disabled
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     const todo = await ctx.db.get(args.todoId);
     if (!todo || todo.userId !== userId) {
@@ -301,8 +334,12 @@ export const copyTodosToDate = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Use fixed userId since auth is disabled
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     // Get all non-archived todos from source date
     const sourceTodos = await ctx.db
@@ -352,7 +389,12 @@ export const archiveAllTodos = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     // Get all active (non-archived) todos for this date
     const todos = await ctx.db
@@ -379,7 +421,12 @@ export const deleteAllTodos = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     // Get all active (non-archived) todos for this date
     const todos = await ctx.db
@@ -406,7 +453,12 @@ export const deleteAllArchivedTodos = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     // Get all archived todos for this date
     const todos = await ctx.db

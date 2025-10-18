@@ -19,7 +19,12 @@ export const searchAll = query({
   },
   returns: v.array(searchResultValidator),
   handler: async (ctx, args) => {
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     // Don't search if query is empty
     if (!args.searchQuery.trim()) {

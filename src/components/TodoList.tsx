@@ -13,7 +13,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useMutation } from "convex/react";
+import { useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { TodoItem } from "./TodoItem";
 import { ArchiveSection } from "./ArchiveSection";
@@ -45,13 +45,19 @@ export interface TodoListProps {
   isPinnedView?: boolean;
 }
 
+export interface TodoListCallbacks {
+  onAuthRequired?: () => void;
+}
+
 export function TodoList({
   todos,
   date,
   expandedNoteId,
   onNoteExpanded,
   isPinnedView = false,
-}: TodoListProps) {
+  onAuthRequired,
+}: TodoListProps & TodoListCallbacks) {
+  const { isAuthenticated } = useConvexAuth();
   const [newTodoContent, setNewTodoContent] = useState("");
   const [focusedInput, setFocusedInput] = useState(false);
   const todoInputRef = React.useRef<HTMLTextAreaElement>(null);
@@ -121,6 +127,12 @@ export function TodoList({
   const handleAddTodo = async () => {
     if (!newTodoContent.trim()) return;
 
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      onAuthRequired?.();
+      return;
+    }
+
     // Detect type based on markdown syntax (only check first line for headers)
     const firstLine = newTodoContent.split("\n")[0];
     let type: "todo" | "h1" | "h2" | "h3" = "todo";
@@ -137,16 +149,21 @@ export function TodoList({
       content = content.substring(2);
     }
 
-    await createTodo({
-      date,
-      content: content,
-      type,
-    });
+    try {
+      await createTodo({
+        date,
+        content: content,
+        type,
+      });
 
-    setNewTodoContent("");
-    setFocusedInput(false);
-    // Close archive section when adding a new todo
-    setArchiveExpanded(false);
+      setNewTodoContent("");
+      setFocusedInput(false);
+      // Close archive section when adding a new todo
+      setArchiveExpanded(false);
+    } catch (error) {
+      console.error("Error creating todo:", error);
+      alert("Failed to create todo. Please make sure you're signed in.");
+    }
   };
 
   const handleMoveToPreviousDay = async (todoId: Id<"todos">) => {
@@ -180,7 +197,11 @@ export function TodoList({
   };
 
   const handleAddNote = async () => {
-    await createNote({ date, title: "Untitled" });
+    try {
+      await createNote({ date, title: "Untitled" });
+    } catch (error) {
+      console.error("Error creating note:", error);
+    }
   };
 
   const handleArchiveAllConfirm = async () => {
@@ -250,8 +271,8 @@ export function TodoList({
             className="notion-input"
             placeholder={
               isMobile
-                ? "Type to add a todo... (Use #, ##, ### for headers)"
-                : "Type to add a todo... (Use #, ##, ### for headers, Shift+Enter for new lines, Enter to create)"
+                ? "Sign in to Type to add a todo... (Use #, ##, ### for headers)"
+                : "Sign in to Type to add a todo... (Use #, ##, ### for headers, Shift+Enter for new lines, Enter to create)"
             }
             value={newTodoContent}
             onChange={(e) => {

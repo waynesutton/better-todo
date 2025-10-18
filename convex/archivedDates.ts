@@ -6,7 +6,12 @@ export const getArchivedDates = query({
   args: {},
   returns: v.array(v.string()),
   handler: async (ctx) => {
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     const archivedDates = await ctx.db
       .query("archivedDates")
@@ -27,7 +32,12 @@ export const archiveDate = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     // Check if already archived
     const existing = await ctx.db
@@ -55,7 +65,12 @@ export const unarchiveDate = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     const archivedDate = await ctx.db
       .query("archivedDates")

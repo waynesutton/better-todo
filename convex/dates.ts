@@ -8,7 +8,12 @@ export const deleteDate = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = "anonymous";
+    // Get authenticated user ID from WorkOS
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
 
     // Delete all todos for this date
     const todos = await ctx.db

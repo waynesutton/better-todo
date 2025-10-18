@@ -4,6 +4,34 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.9.0] - 2025-10-17
+
+### Added
+
+- **WorkOS AuthKit Integration** - Complete authentication system
+  - User login/logout with WorkOS AuthKit
+  - Private user data (each user sees only their own todos and notes)
+  - Theme-aware login/user icons (user-dark.svg/user-light.svg, login-dark.svg/login-light.svg)
+  - "Sign In Required" modal for unauthenticated users attempting to create todos/notes
+  - Automatic user data storage in Convex database upon first login
+  - Proper JWT token validation with correct aud/iss claims
+  - Redirect handling from /callback to / after successful login
+  - Conditional query execution based on authentication state
+  - Error handling for authentication failures
+
+### Changed
+
+- **Authentication flow** - App now requires login to create todos and notes
+- **User data isolation** - Each user has completely private data
+- **Login UI** - Theme-aware icons for login/logout buttons
+- **Query optimization** - Queries skip execution when unauthenticated
+
+### Fixed
+
+- **JWT token validation** - Corrected WorkOS JWT configuration with proper aud/iss claims
+- **Authentication state management** - Proper handling of login/logout states
+- **User data persistence** - Automatic storage of WorkOS user data in Convex
+
 ## [1.8.4] - 2025-10-17
 
 ### Added

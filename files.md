@@ -73,16 +73,25 @@ This document describes the structure and purpose of each file in the Better Tod
   - `archiveDate` - Archive a date (hides from main list)
   - `unarchiveDate` - Restore archived date to main list
 
-### Authentication (Ready to Enable)
+### Authentication (WorkOS AuthKit Integration)
 
+- `auth.config.ts` - WorkOS JWT authentication configuration with two providers:
+  - User Management JWT: `https://api.workos.com/user_management/${clientId}`
+  - Organization SAML/SSO JWT: `https://api.workos.com/`
+  - Uses RS256 algorithm with JWKS endpoint for token validation
+- `users.ts` - User management functions:
+  - `storeUser` - Store/update WorkOS user data in Convex database
+  - `getCurrentUser` - Get authenticated user information
 - `http.ts` - HTTP routes for authentication callbacks (WorkOS AuthKit ready)
-- Authentication is configured but not yet required for the app to function
 
 ## React Frontend (`src/`)
 
 ### Main Files
 
-- `main.tsx` - Application entry point with Convex and auth providers
+- `main.tsx` - Application entry point with WorkOS AuthKit and Convex providers:
+  - AuthKitProvider with WorkOS client ID and redirect URI
+  - ConvexProviderWithAuthKit for WorkOS-Convex integration
+  - ThemeProvider for dark/light mode management
 - `App.tsx` - Main app component with:
   - Layout management (sidebar + main content)
   - Sidebar resize functionality (200px - 500px)
@@ -93,6 +102,11 @@ This document describes the structure and purpose of each file in the Better Tod
   - Pinned todos page handling with dedicated display
   - Search modal integration (Cmd/Ctrl+K keyboard shortcut)
   - Theme context provider
+  - WorkOS authentication integration:
+    - Conditional query execution based on authentication state
+    - "Sign In Required" modal for unauthenticated users
+    - Automatic user data storage in Convex database
+    - Redirect handling from /callback to / after login
 
 ### Components (`src/components/`)
 
@@ -130,6 +144,10 @@ This document describes the structure and purpose of each file in the Better Tod
   - Confirmation dialogs for bulk actions with todo counts
   - Auto-collapses archive section when adding new todos
   - Integrates NotesSection above archive
+  - WorkOS authentication integration:
+    - Checks authentication status before allowing todo/note creation
+    - Shows "Sign In Required" modal for unauthenticated users
+    - Proper error handling for authentication failures
 
 - `Sidebar.tsx` - Resizable and collapsible navigation sidebar with:
   - Pinned section at top (shows "Pinned" when todos are pinned, hidden when empty)
@@ -147,7 +165,11 @@ This document describes the structure and purpose of each file in the Better Tod
     - Archive the entire date
     - Delete the date and all its content
   - Archived dates section (collapsible)
-  - Login link (authentication ready to enable)
+  - WorkOS authentication integration:
+    - Login/logout button with theme-aware icons (user-dark.svg/user-light.svg, login-dark.svg/login-light.svg)
+    - Shows user profile icon when authenticated with tooltip showing user name/email
+    - Shows login icon when unauthenticated
+    - Proper sign out handling with page reload to clear state
   - Custom confirmation dialog for delete actions
   - Hover tooltips for all footer icons (positioned to the right, never clipped)
 
@@ -171,6 +193,9 @@ This document describes the structure and purpose of each file in the Better Tod
   - Delete button with custom confirmation dialog
   - Add Note button (+ icon) to create new notes
   - Clean, minimal design matching app aesthetic
+  - WorkOS authentication integration:
+    - Only loads notes when user is authenticated
+    - Skips queries when unauthenticated to prevent errors
 
 - `ArchiveSection.tsx` - Collapsible archive with:
   - Shows all completed/archived todos for selected date
@@ -198,6 +223,9 @@ This document describes the structure and purpose of each file in the Better Tod
   - Automatically navigates to and displays the selected result's date
   - Top 30 most relevant results displayed
   - Beautiful modal UI matching app theme (dark/light mode support)
+  - WorkOS authentication integration:
+    - Only performs search when user is authenticated
+    - Skips search queries when unauthenticated to prevent errors
 
 ### Context (`src/context/`)
 
@@ -251,9 +279,20 @@ This document describes the structure and purpose of each file in the Better Tod
 - Convex logo files (black and white variants)
 - SVG favicon with checkmark design
 
-## Current Version: 1.8.4 (October 17, 2025)
+## Current Version: 1.9.0 (October 17, 2025)
 
-### Latest Features (v1.8.4)
+### Latest Features (v1.9.0)
+
+- **WorkOS AuthKit Integration** - Complete authentication system
+  - User login/logout with WorkOS AuthKit
+  - Private user data (each user sees only their own todos and notes)
+  - Theme-aware login/user icons (user-dark.svg/user-light.svg, login-dark.svg/login-light.svg)
+  - "Sign In Required" modal for unauthenticated users
+  - Automatic user data storage in Convex database
+  - Proper JWT token validation with correct aud/iss claims
+  - Redirect handling from /callback to / after successful login
+
+### Previous Features (v1.8.4)
 
 - **Pinned todos** for quick access to important tasks
   - Pin any active todo (excludes completed todos)
@@ -289,4 +328,4 @@ This document describes the structure and purpose of each file in the Better Tod
 - Resizable sidebar (200px - 500px)
 - Mobile-optimized with auto-hide and overlay
 - Keyboard shortcuts (Enter, Shift+Enter, Cmd/Ctrl+K, Escape)
-- WorkOS AuthKit integration (ready to enable)
+- WorkOS AuthKit integration (fully implemented and working)

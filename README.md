@@ -45,7 +45,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
 - **TypeScript** - Type-safe development
 - **Vite** - Lightning-fast build tool
 - **Convex** - Real-time database and backend
-- **WorkOS AuthKit** - Authentication (ready to enable)
+- **WorkOS AuthKit** - Authentication (fully implemented)
 - **@dnd-kit** - Smooth drag and drop
 - **date-fns** - Date manipulation and formatting
 - **lucide-react** - Clean, consistent icons
@@ -76,6 +76,7 @@ This will:
 - Create a new Convex project
 - Set up WorkOS AuthKit automatically (no manual configuration needed)
 - Generate environment variables in `.env.local`
+- Configure JWT authentication with proper aud/iss claims
 
 3. Start the development server:
 
@@ -93,10 +94,18 @@ When you run `npm run dev` for the first time, the Convex CLI will automatically
 - Set up AuthKit environments for your deployments
 - Configure redirect URIs and CORS settings
 - Store API keys securely
+- Set up JWT authentication with proper configuration
 
-You'll receive an email invitation to set up your WorkOS account.
+You'll receive an email invitation to set up your WorkOS account. Once authenticated, you'll have your own private todo and notes data.
 
 ## Usage
+
+### Authentication
+
+- **Sign in required** - Click the login icon in the sidebar to authenticate with WorkOS
+- **Private data** - Each user has their own private todos and notes
+- **Sign out** - Click your profile icon in the sidebar to sign out
+- **First-time users** - You'll see a "Sign In Required" modal when trying to create todos/notes
 
 ### Creating Todos
 
@@ -180,16 +189,18 @@ At the bottom of each date's todo list:
 
 ### Themes
 
-Toggle between dark and light modes using the **half-moon icon** at the bottom of the sidebar (above the login link).
+Toggle between dark and light modes using the **half-moon icon** at the bottom of the sidebar (above the login link). The login/user icons automatically switch between dark and light variants based on the current theme.
 
 ## Project Structure
 
 ```
 better-todo/
 ├── convex/                    # Backend functions and schema
-│   ├── schema.ts              # Database schema (todos + notes tables)
+│   ├── schema.ts              # Database schema (todos + notes + users tables)
+│   ├── auth.config.ts         # WorkOS JWT authentication configuration
 │   ├── todos.ts               # Todo queries and mutations
 │   ├── notes.ts               # Notes queries and mutations
+│   ├── users.ts               # User management functions
 │   ├── dates.ts               # Date operations and queries
 │   ├── dateLabels.ts          # Custom date labels
 │   ├── archivedDates.ts       # Archived dates

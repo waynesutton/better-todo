@@ -2,6 +2,14 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // Users table stores authenticated users from WorkOS
+  users: defineTable({
+    userId: v.string(), // WorkOS user ID (from auth subject)
+    email: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+  }).index("by_userId", ["userId"]),
+
   // Todos table stores all todo items with markdown support
   todos: defineTable({
     userId: v.string(), // From WorkOS auth
