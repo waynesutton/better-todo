@@ -1465,17 +1465,23 @@ body {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Touch-friendly sizing */
+  /* Mobile-specific todo item styling */
+  .todo-item-wrapper.focused,
+  .todo-item.focused {
+    width: 95%;
+  }
+
   .todo-item {
-    padding: 4px 2px;
+    padding: 1px 0;
+    margin-bottom: 1px;
     min-height: 24px;
     align-items: center;
     gap: 6px;
   }
 
   .todo-checkbox {
-    width: 20px;
-    height: 20px;
+    width: 14px;
+    height: 14px;
     margin-right: 0;
     margin-top: 0;
   }
@@ -1483,13 +1489,14 @@ body {
   .drag-handle {
     padding: 4px;
     margin-top: 0;
+    min-height: 25px;
   }
 
   .menu-button,
   .drag-handle,
   .date-menu-button {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 25px;
+    min-height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
