@@ -4,7 +4,7 @@ import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { useUser } from "@clerk/clerk-react";
 import { api } from "../../convex/_generated/api";
 import { format, addDays, subDays } from "date-fns";
-import { PanelLeft, Pin } from "lucide-react";
+import { PanelLeft, Pin, Menu } from "lucide-react";
 import { KeyboardIcon } from "@radix-ui/react-icons";
 import { ConfirmDialog } from "./ConfirmDialog";
 import {
@@ -46,6 +46,7 @@ export function Sidebar({
   const [customDate, setCustomDate] = useState("");
   const [customLabel, setCustomLabel] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     date: string;
@@ -204,12 +205,15 @@ export function Sidebar({
           setShowRenameInput(null);
           setCustomLabel("");
         }
+        if (showMobileMenu) {
+          setShowMobileMenu(false);
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showMenuForDate, showDatePicker, showRenameInput]);
+  }, [showMenuForDate, showDatePicker, showRenameInput, showMobileMenu]);
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -647,6 +651,58 @@ export function Sidebar({
               </TooltipContent>
             </Tooltip>
           )}
+        </div>
+
+        {/* Mobile hamburger menu */}
+        <div className="mobile-menu-container">
+          <button
+            className="mobile-menu-button"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+          >
+            <Menu size={18} />
+          </button>
+          {showMobileMenu && (
+            <div className="mobile-menu-dropdown">
+              <a
+                href="https://github.com/waynesutton/better-todo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mobile-menu-link"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Open-Source Project
+              </a>
+              <a
+                href="https://vibeapps.dev/#:~:text=Privacy%20Policy%20%7C%20Terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mobile-menu-link"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Privacy Policy | Terms
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop links */}
+        <div className="desktop-links">
+          <a
+            href="https://github.com/waynesutton/better-todo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-link"
+          >
+            Open-Source Project
+          </a>
+          <a
+            href="https://vibeapps.dev/#:~:text=Privacy%20Policy%20%7C%20Terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-link"
+          >
+            Privacy Policy | Terms
+          </a>
         </div>
       </div>
 

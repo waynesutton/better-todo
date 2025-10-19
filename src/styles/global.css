@@ -689,6 +689,76 @@ body {
   color: var(--text-primary);
 }
 
+/* Mobile menu styles */
+.mobile-menu-container {
+  position: relative;
+  display: none;
+}
+
+.mobile-menu-button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.mobile-menu-button:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.mobile-menu-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  z-index: 100;
+  margin-bottom: 8px;
+  padding: 8px 0;
+}
+
+.mobile-menu-link {
+  display: block;
+  padding: 8px 16px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 13px;
+  transition: background-color 0.15s ease;
+}
+
+.mobile-menu-link:hover {
+  background-color: var(--bg-hover);
+}
+
+/* Desktop links styles */
+.desktop-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.footer-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 11px;
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: var(--text-primary);
+}
+
 /* Collapsed sidebar styles */
 .app-container.sidebar-collapsed .sidebar {
   width: 60px !important;
@@ -1898,12 +1968,32 @@ body {
     /* Keep 16px to prevent iOS zoom */
     font-size: 16px;
   }
+
+  /* Show mobile menu on mobile */
+  .mobile-menu-container {
+    display: block;
+  }
+
+  /* Hide desktop links on mobile */
+  .desktop-links {
+    display: none;
+  }
 }
 
 /* Hide mobile overlay on desktop */
 @media (min-width: 769px) {
   .mobile-overlay {
     display: none !important;
+  }
+
+  /* Hide mobile menu on desktop */
+  .mobile-menu-container {
+    display: none;
+  }
+
+  /* Show desktop links on desktop */
+  .desktop-links {
+    display: flex;
   }
 }
 
