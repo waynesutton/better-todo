@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Added proper scrolling behavior for UserProfile content on mobile
   - Changed from full-screen to responsive modal layout on mobile (95vw width, max 500px)
   - Added X close button in top-right corner for better UX
+  - Applied same responsive layout and close button to SignIn and SignUp modals
+  - Added mobile-specific CSS for SignIn/SignUp forms to prevent text cutoff
 
 ## [2.0.0] - 2025-01-18
 

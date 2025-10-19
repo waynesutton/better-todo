@@ -218,6 +218,32 @@
   .clerk-modal-container .cl-cardHeaderTitle {
     font-size: 18px !important;
   }
+
+  /* SignIn/SignUp specific mobile fixes */
+  .clerk-modal-container .cl-signIn,
+  .clerk-modal-container .cl-signUp {
+    max-height: calc(100vh - 40px) !important;
+    overflow-y: auto !important;
+  }
+
+  /* Ensure SignIn/SignUp forms fit properly */
+  .clerk-modal-container .cl-signIn .cl-card,
+  .clerk-modal-container .cl-signUp .cl-card {
+    margin: 0 !important;
+    border-radius: 12px !important;
+  }
+
+  /* Fix form spacing in SignIn/SignUp */
+  .clerk-modal-container .cl-signIn .cl-formField,
+  .clerk-modal-container .cl-signUp .cl-formField {
+    margin-bottom: 20px !important;
+  }
+
+  /* Ensure social buttons are properly sized */
+  .clerk-modal-container .cl-socialButtonsBlockButton {
+    min-height: 44px !important;
+    font-size: 16px !important;
+  }
 }
 
 /* Clerk OTP code field styling */

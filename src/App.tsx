@@ -660,6 +660,15 @@ function App() {
               className="clerk-modal-container"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Close Button */}
+              <button
+                className="clerk-close-button"
+                onClick={() => setShowSignInModal(false)}
+                title="Close sign in"
+              >
+                <X size={20} />
+              </button>
+
               <SignIn
                 appearance={clerkAppearance}
                 afterSignInUrl="/"
@@ -679,6 +688,15 @@ function App() {
               className="clerk-modal-container"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Close Button */}
+              <button
+                className="clerk-close-button"
+                onClick={() => setShowSignUpModal(false)}
+                title="Close sign up"
+              >
+                <X size={20} />
+              </button>
+
               <SignUp
                 appearance={clerkAppearance}
                 afterSignInUrl="/"
