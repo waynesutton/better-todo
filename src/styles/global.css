@@ -759,6 +759,14 @@ body {
   color: var(--text-primary);
 }
 
+.auth-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+}
+
 /* Collapsed sidebar styles */
 .app-container.sidebar-collapsed .sidebar {
   width: 60px !important;

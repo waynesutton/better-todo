@@ -495,7 +495,40 @@ function App() {
                     : "rgba(0,0,0,0.7)",
               }}
             >
-              Sign in to save todos and notes.
+              <span>
+                <button
+                  onClick={() => setShowSignInModal(true)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "inherit",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    fontSize: "inherit",
+                    padding: 0,
+                  }}
+                >
+                  Sign in
+                </button>{" "}
+                or{" "}
+                <button
+                  onClick={() => setShowSignUpModal(true)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "inherit",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    fontSize: "inherit",
+                    padding: 0,
+                  }}
+                >
+                  sign up
+                </button>{" "}
+                so you can save your todos and notes.
+              </span>
             </div>
           )}
 
