@@ -4,6 +4,19 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.0.1] - 2025-01-18
+
+### Fixed
+
+- **Mobile UserProfile modal responsiveness** - Fixed text cutoff and signout button visibility issues on mobile devices
+  - Updated `.clerk-modal-container` to use flexbox layout for better mobile handling
+  - Added mobile-specific CSS for Clerk components to prevent text cutoff
+  - Fixed signout button positioning and visibility on mobile screens
+  - Improved touch targets and font sizes for better mobile usability
+  - Added proper scrolling behavior for UserProfile content on mobile
+  - Changed from full-screen to responsive modal layout on mobile (95vw width, max 500px)
+  - Added X close button in top-right corner for better UX
+
 ## [2.0.0] - 2025-01-18
 
 ### Added

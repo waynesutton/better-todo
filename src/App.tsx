@@ -10,7 +10,7 @@ import { ArchiveSection } from "./components/ArchiveSection";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { format } from "date-fns";
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, X } from "lucide-react";
 import { CopyIcon, CheckIcon } from "@radix-ui/react-icons";
 import { Id } from "../convex/_generated/dataModel";
 import { localData } from "./lib/localData";
@@ -699,6 +699,15 @@ function App() {
               className="clerk-modal-container"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Close Button */}
+              <button
+                className="clerk-close-button"
+                onClick={() => setShowProfileModal(false)}
+                title="Close profile"
+              >
+                <X size={20} />
+              </button>
+
               <UserProfile appearance={clerkAppearance} routing="hash" />
 
               {/* Sign Out Button */}
