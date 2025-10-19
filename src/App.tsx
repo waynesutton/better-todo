@@ -495,7 +495,7 @@ function App() {
                     : "rgba(0,0,0,0.7)",
               }}
             >
-              Sign in to save todos and notes. Data will be lost on refresh.
+              Sign in to save todos and notes.
             </div>
           )}
 
