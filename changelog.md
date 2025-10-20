@@ -38,6 +38,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed three-dot menu positioning for folders and month groups - now properly displays on the right side of headers like the Archive section
 - Fixed three-dot menu visibility on folders and month groups - now matches date items with proper colors in both dark and light modes
 - Fixed "Add Folder" input positioning - now appears inline next to the "+ Add Folder" button instead of at the bottom of sidebar
+- **Fixed subtasks not appearing on pinned page** - `getPinnedTodos` query now includes subtasks (children) of pinned todos, so you can now add and view subtasks for pinned todos on the pinned page
+- **Fixed three-dot menu alignment** - All three-dot menu buttons now have consistent width (30px min-width) and alignment across todo pages, sidebar dates, folders, and month groups
+- **Fixed subtask three-dot menu alignment** - Subtask menu buttons now align perfectly with parent todo menu buttons using negative margin compensation for the indentation
 
 ## [2.1.0] - 2025-01-20
 

@@ -482,6 +482,10 @@ body {
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 14px;
+  min-width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition:
     color 0.15s ease,
     background-color 0.15s ease;
@@ -1462,6 +1466,10 @@ body {
   opacity: 0.6;
 }
 
+.todo-item.nested .todo-menu {
+  margin-right: -20px;
+}
+
 .todo-item-wrapper.focused,
 .todo-item.focused {
   background-color: var(--bg-hover);
@@ -1560,6 +1568,7 @@ body {
 
 .todo-menu {
   position: relative;
+  padding: 6px 8px 6px 0;
 }
 
 .menu-button {
@@ -1570,6 +1579,10 @@ body {
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 14px;
+  min-width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition:
     color 0.15s ease,
     background-color 0.15s ease;

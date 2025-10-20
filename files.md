@@ -44,8 +44,9 @@ This document describes the structure and purpose of each file in the Better Tod
 - `todos.ts` - Queries and mutations for todo operations:
   - `getAvailableDates` - Get all dates with todos
   - `getTodosByDate` - Get todos for a specific date
-  - `getPinnedTodos` - Get all pinned todos for user
+  - `getPinnedTodos` - Get all pinned todos for user (including their subtasks)
   - `createTodo` - Create new todo with auto-ordering
+  - `createSubtask` - Create a subtask under a parent todo
   - `updateTodo` - Update todo (auto-archives on complete, auto-unarchives on uncheck, supports pin/unpin)
   - `deleteTodo` - Remove a todo
   - `reorderTodos` - Update order after drag-and-drop
@@ -362,6 +363,12 @@ This document describes the structure and purpose of each file in the Better Tod
 ## Current Version: 2.1.1 (January 20, 2025)
 
 ### Latest Features (v2.1.1)
+
+- **Subtasks on pinned page**
+  - Add subtasks to pinned todos via three-dot menu "Add subtask" option
+  - Subtasks are now properly displayed on the pinned page
+  - Subtasks inherit the parent todo's date
+  - Subtasks can be collapsed/expanded with parent todo
 
 - **Keyboard shortcut "p" to pin/unpin todos**
   - Press "p" key while hovering over any todo to toggle pin state

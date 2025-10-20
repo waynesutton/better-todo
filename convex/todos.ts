@@ -46,7 +46,7 @@ export const getTodosByDate = query({
   },
 });
 
-// Get all pinned todos for a user
+// Get all pinned todos for a user (including their subtasks)
 export const getPinnedTodos = query({
   args: {},
   returns: v.array(
@@ -77,15 +77,30 @@ export const getPinnedTodos = query({
     }
     const userId = identity.subject;
 
-    const todos = await ctx.db
+    // Get pinned todos
+    const pinnedTodos = await ctx.db
       .query("todos")
       .withIndex("by_user_and_pinned", (q) =>
         q.eq("userId", userId).eq("pinned", true),
       )
       .collect();
 
+    // Get subtasks (children) of pinned todos
+    const pinnedTodoIds = new Set(pinnedTodos.map((t) => t._id));
+    const allTodos = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    const subtasks = allTodos.filter(
+      (todo) => todo.parentId && pinnedTodoIds.has(todo.parentId),
+    );
+
+    // Combine pinned todos and their subtasks
+    const combined = [...pinnedTodos, ...subtasks];
+
     // Sort by order
-    return todos.sort((a, b) => a.order - b.order);
+    return combined.sort((a, b) => a.order - b.order);
   },
 });
 
