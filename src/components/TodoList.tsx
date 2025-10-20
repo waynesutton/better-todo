@@ -46,6 +46,7 @@ export interface TodoListProps {
   onFocusFirstTodo?: (callback: () => void) => void;
   onRequireSignIn?: () => void; // trigger styled auth modal instead of alert
   onRequireSignInForNote?: () => void; // trigger styled auth modal for notes
+  onTodoHover?: (id: Id<"todos"> | null) => void;
 }
 
 export function TodoList({
@@ -59,6 +60,7 @@ export function TodoList({
   onFocusFirstTodo,
   onRequireSignIn,
   onRequireSignInForNote,
+  onTodoHover,
 }: TodoListProps) {
   const [newTodoContent, setNewTodoContent] = useState("");
   const [focusedInput, setFocusedInput] = useState(false);
@@ -262,6 +264,7 @@ export function TodoList({
                   }
                   onMoveToNextDay={() => handleMoveToNextDay(parent._id)}
                   onMoveToTomorrow={() => handleMoveToTomorrow(parent._id)}
+                  onHoverChange={onTodoHover}
                 />
               </div>
               {!parent.collapsed &&
@@ -285,6 +288,7 @@ export function TodoList({
                         }
                         onMoveToNextDay={() => handleMoveToNextDay(child._id)}
                         onMoveToTomorrow={() => handleMoveToTomorrow(child._id)}
+                        onHoverChange={onTodoHover}
                       />
                     </div>
                   );

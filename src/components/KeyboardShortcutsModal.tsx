@@ -29,6 +29,7 @@ export function KeyboardShortcutsModal({
         { key: "/ or c", description: "Focus todo input" },
         { key: "Tab", description: "Focus first todo from input" },
         { key: "Space or e", description: "Mark focused todo as done" },
+        { key: "p", description: "Pin/unpin hovered todo" },
         { key: "z", description: "Undo last mark as done" },
       ],
     },

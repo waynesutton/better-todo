@@ -4,6 +4,92 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.1] - 2025-01-20
+
+### Added
+
+- **Keyboard shortcut "p" to pin/unpin todos**
+  - Press "p" key while hovering over any todo to toggle pin state
+  - Works on active, uncompleted todos
+  - Added to keyboard shortcuts modal (?-key menu)
+  - No need to click three-dot menu for quick pinning
+
+- **Smart todo selection for keyboard shortcuts**
+  - When not typing in a note or todo input, keyboard shortcuts automatically work
+  - Hovering over a todo auto-selects it for keyboard shortcuts
+  - Arrow keys (↑/↓) navigate todos even without explicit focus
+  - Spacebar/e marks todo as done even without clicking
+  - "p" key pins/unpins hovered todo
+  - Seamless keyboard-first workflow
+
+- **Auto-focus note content after naming**
+  - After naming a note, pressing Enter or Tab automatically focuses the note content area
+  - Automatically expands collapsed notes when focusing
+  - Smooth workflow for creating and writing notes without clicking
+
+### Changed
+
+- Keyboard shortcuts work more intelligently based on hover and typing state
+- Todo hover tracking enables seamless keyboard navigation
+
+### Fixed
+
+- Added "Rename Folder" option to archived folders menu (was only available for active folders)
+- Fixed three-dot menu positioning for folders and month groups - now properly displays on the right side of headers like the Archive section
+- Fixed three-dot menu visibility on folders and month groups - now matches date items with proper colors in both dark and light modes
+- Fixed "Add Folder" input positioning - now appears inline next to the "+ Add Folder" button instead of at the bottom of sidebar
+
+## [2.1.0] - 2025-01-20
+
+### Added
+
+- **Custom folders** for organizing dates
+  - Create unlimited folders with custom names via "+ Add Folder" button
+  - Collapsible folders with arrow icon and folder icon
+  - Dates within folders are not grayed out (active state)
+  - **Add dates to folders** via three-dot menu on any date
+    - "Add to Folder..." shows list of available folders
+    - Click folder to add date to it
+    - "Remove from Folder" option when date is already in a folder
+  - **Manage dates within folders** via three-dot menu
+    - Remove dates from folders
+    - Archive dates
+    - Delete dates
+    - Works for both active and archived folders
+  - Rename folders via three-dot menu
+  - Archive folders to hide from main view
+  - Unarchive folders when needed
+  - Delete folders and all associations
+  - Three-dot menu for each folder (Rename, Archive, Delete)
+  - Folders appear between active dates and archived section
+  - Archived folders appear within the archived section
+  - Mint green hover state on "Add Folder" button
+  - Folder selector modal with clean, minimal design
+
+- **Auto-group completed months** into collapsible toggles
+  - Automatically groups dates from completed months (not current month)
+  - Named by month and year (e.g., "January 2025")
+  - Collapsible with arrow icon like folders
+  - Archive month groups to hide from view
+  - Unarchive month groups when needed
+  - Delete month groups and all date associations
+  - Three-dot menu for each month (Archive Month, Delete Month)
+  - Only displays after a full month has passed
+  - Month groups appear between active dates and folders
+  - Archived month groups appear within the archived section
+
+- **Delete all archived dates** functionality
+  - Three-dot menu on archived section header
+  - Permanently deletes all archived dates at once
+  - Confirmation dialog shows count of archived dates
+  - Clean, danger-styled confirmation
+
+### Changed
+
+- Active dates now exclude dates in folders or month groups
+- Archived section now includes archived folders and month groups
+- ESC key now closes folder and month group menus and inputs
+
 ## [2.0.1] - 2025-01-18
 
 ### Fixed

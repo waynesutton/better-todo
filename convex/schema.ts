@@ -67,4 +67,39 @@ export default defineSchema({
     date: v.string(), // Format: YYYY-MM-DD
     label: v.string(), // Custom text label for the date
   }).index("by_user_and_date", ["userId", "date"]),
+
+  // Custom folders for organizing dates
+  folders: defineTable({
+    userId: v.string(),
+    name: v.string(),
+    order: v.number(),
+    archived: v.boolean(),
+  }).index("by_user", ["userId"]),
+
+  // Association between folders and dates
+  folderDates: defineTable({
+    userId: v.string(),
+    folderId: v.id("folders"),
+    date: v.string(), // Format: YYYY-MM-DD
+  })
+    .index("by_user_and_folder", ["userId", "folderId"])
+    .index("by_user_and_date", ["userId", "date"]),
+
+  // Month groups for auto-grouping completed months
+  monthGroups: defineTable({
+    userId: v.string(),
+    monthName: v.string(), // e.g., "January 2025"
+    year: v.number(),
+    month: v.number(), // 1-12
+    archived: v.boolean(),
+  }).index("by_user", ["userId"]),
+
+  // Association between month groups and dates
+  monthGroupDates: defineTable({
+    userId: v.string(),
+    monthGroupId: v.id("monthGroups"),
+    date: v.string(), // Format: YYYY-MM-DD
+  })
+    .index("by_user_and_month_group", ["userId", "monthGroupId"])
+    .index("by_user_and_date", ["userId", "date"]),
 });

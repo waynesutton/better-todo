@@ -30,6 +30,14 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user_and_date`
   - **dateLabels**: Stores custom text labels for dates with userId, date, and label text
     - Index: `by_user_and_date`
+  - **folders**: Stores custom folders for organizing dates with name, order, and archived status
+    - Index: `by_user`
+  - **folderDates**: Association table linking folders to dates
+    - Index: `by_user_and_folder`, `by_user_and_date`
+  - **monthGroups**: Auto-generated groups for completed months with monthName, year, month, and archived status
+    - Index: `by_user`
+  - **monthGroupDates**: Association table linking month groups to dates
+    - Index: `by_user_and_month_group`, `by_user_and_date`
 
 ### Functions
 
@@ -72,6 +80,28 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getArchivedDates` - Get list of archived dates
   - `archiveDate` - Archive a date (hides from main list)
   - `unarchiveDate` - Restore archived date to main list
+  - `deleteAllArchivedDates` - Permanently delete all archived dates at once
+
+- `folders.ts` - Custom folder management for organizing dates:
+  - `getFolders` - Get all folders with their associated dates
+  - `getFolderDates` - Get dates for a specific folder
+  - `getFolderForDate` - Check if a date belongs to a folder
+  - `createFolder` - Create new folder with custom name
+  - `renameFolder` - Update folder name
+  - `archiveFolder` - Archive a folder
+  - `unarchiveFolder` - Restore archived folder
+  - `deleteFolder` - Delete folder and all associations
+  - `addDateToFolder` - Associate a date with a folder
+  - `removeDateFromFolder` - Remove date from folder
+
+- `monthGroups.ts` - Auto-grouping for completed months:
+  - `getMonthGroups` - Get all month groups with their associated dates
+  - `getMonthGroupDates` - Get dates for a specific month group
+  - `getMonthGroupForDate` - Check if a date belongs to a month group
+  - `autoCreateMonthGroups` - Automatically create month groups for completed months
+  - `archiveMonthGroup` - Archive a month group
+  - `unarchiveMonthGroup` - Restore archived month group
+  - `deleteMonthGroup` - Delete month group and all associations
 
 ### Authentication (Clerk Integration)
 
@@ -80,6 +110,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Properly configured for production deployment with environment variables
   - Token validation with Clerk's JWKS endpoint
 - `users.ts` - User management functions:
+  - `getUserId` - Helper function to get current user's ID from authentication context
   - `storeUser` - Store/update Clerk user data in Convex database
   - `getCurrentUser` - Get authenticated user information
 - `http.ts` - HTTP routes for authentication callbacks (Clerk ready)
@@ -103,6 +134,15 @@ This document describes the structure and purpose of each file in the Better Tod
   - Pinned todos page handling with dedicated display
   - Search modal integration (Cmd/Ctrl+K keyboard shortcut)
   - Theme context provider
+  - Keyboard shortcuts:
+    - p key to pin/unpin hovered todo
+    - Arrow keys to navigate todos
+    - Space/e to mark todo as done
+    - z to undo last completion
+    - / or c to focus input
+    - ? to show keyboard shortcuts modal
+  - Hovered todo tracking for keyboard shortcuts
+  - Auto-select hovered todo when not explicitly navigating
   - Clerk authentication integration:
     - Conditional query execution based on authentication state
     - "Sign In Required" modal for unauthenticated users
@@ -126,6 +166,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Checkbox for completion (auto-archives when checked)
   - Three-dot menu for pinning, moving to tomorrow, previous/next day, or deleting
   - Pin/unpin option (only for active, non-completed todos)
+  - Keyboard shortcut "p" to pin/unpin when hovered
   - Blue border (#56B5DB) around pinned todos on original page (not on pinned view)
   - Portal-rendered menu (prevents clipping in archive section)
   - Unarchive option for unchecked archived todos
@@ -133,6 +174,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Inline editing with Enter for new lines, Shift+Enter to save
   - Custom confirmation dialog for delete actions
   - Auto-textarea expansion for multi-line content
+  - Hover tracking for keyboard shortcuts
 
 - `TodoList.tsx` - Todo list container with:
   - Drag-and-drop functionality using @dnd-kit
@@ -146,6 +188,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Confirmation dialogs for bulk actions with todo counts
   - Auto-collapses archive section when adding new todos
   - Integrates NotesSection above archive
+  - Tracks hovered todo for keyboard shortcuts
   - Clerk authentication integration:
     - Checks authentication status before allowing todo/note creation
     - Shows "Sign In Required" modal for unauthenticated users
@@ -160,14 +203,34 @@ This document describes the structure and purpose of each file in the Better Tod
   - Collapse button next to "better todo" title (PanelLeft icon)
   - Smooth animated transitions between full (260px) and collapsed (60px) states
   - Custom date labels (rename dates with any text while preserving chronological order)
+  - **Custom folders** for organizing dates (collapsible, renameable, archivable, deletable)
+  - **Auto-grouped month sections** for completed months (collapsible, archivable, deletable)
+  - "+ Add Folder" button at bottom (only shows when authenticated)
   - Active date highlighting (#56B5DB accent color)
   - Theme toggle (half-moon icon) at bottom of sidebar above login link
   - Three-dot menu per date with options:
     - Add/edit/remove custom date label
+    - Add to Folder (shows folder selector modal when folders exist)
+    - Remove from Folder (when date is in a folder)
     - Copy all non-archived todos to tomorrow, previous/next day, or custom date
     - Archive the entire date
     - Delete the date and all its content
-  - Archived dates section (collapsible)
+  - Three-dot menu for dates inside folders with options:
+    - Remove from Folder
+    - Archive Date
+    - Delete Date
+  - Three-dot menu per folder with options:
+    - Rename folder
+    - Archive folder
+    - Delete folder
+  - Three-dot menu per month group with options:
+    - Archive month
+    - Delete month
+  - Archived section (collapsible) includes:
+    - Archived dates
+    - Archived folders with their dates
+    - Archived month groups with their dates
+    - Delete All button to permanently remove all archived dates
   - Clerk authentication integration:
     - Login/logout button with theme-aware icons (user-dark.svg/user-light.svg, login-dark.svg/login-light.svg)
     - Shows user profile icon when authenticated with tooltip showing user name/email
@@ -190,6 +253,8 @@ This document describes the structure and purpose of each file in the Better Tod
 - `NotesSection.tsx` - Daily notes feature with:
   - Multiple notes per date with drag-and-drop reordering using @dnd-kit
   - Each note has editable title (click to edit, auto-save on blur)
+  - Auto-focus content area after naming note (Enter or Tab)
+  - Automatically expands collapsed notes when focusing content
   - Collapsible notes (expand/collapse individual notes)
   - Line numbers on the left (not copyable when copying text, code editor style)
   - Auto-expanding textarea with debounced auto-save (500ms delay)
@@ -294,9 +359,56 @@ This document describes the structure and purpose of each file in the Better Tod
 - Convex logo files (black and white variants)
 - SVG favicon with checkmark design
 
-## Current Version: 2.0.0 (January 18, 2025)
+## Current Version: 2.1.1 (January 20, 2025)
 
-### Latest Features (v2.0.0)
+### Latest Features (v2.1.1)
+
+- **Keyboard shortcut "p" to pin/unpin todos**
+  - Press "p" key while hovering over any todo to toggle pin state
+  - Works on active, uncompleted todos
+  - Added to keyboard shortcuts modal (?-key menu)
+  - No need to click three-dot menu for quick pinning
+
+- **Smart todo selection for keyboard shortcuts**
+  - When not typing in a note or todo input, keyboard shortcuts automatically work
+  - Hovering over a todo auto-selects it for keyboard shortcuts
+  - Arrow keys (↑/↓) navigate todos even without explicit focus
+  - Spacebar/e marks todo as done even without clicking
+  - "p" key pins/unpins hovered todo
+  - Seamless keyboard-first workflow
+
+- **Auto-focus note content after naming**
+  - After naming a note, pressing Enter or Tab automatically focuses the note content area
+  - Automatically expands collapsed notes when focusing
+  - Smooth workflow for creating and writing notes without clicking
+
+### Previous Features (v2.1.0)
+
+- **Custom folders for organizing dates**
+  - Create unlimited folders via "+ Add Folder" button
+  - Add any date to a folder via three-dot menu
+  - Folder selector modal shows list of available folders
+  - Remove dates from folders anytime
+  - Collapsible folders with folder icon
+  - Three-dot menu on dates within folders
+  - Rename, archive, unarchive, and delete folders
+  - Three-dot menu for folder management
+  - Archived folders appear within archived section
+  - Mint green styling matches app design
+
+- **Auto-group completed months**
+  - Automatically creates month groups (e.g., "January 2025")
+  - Only displays after a full month has passed
+  - Archive, unarchive, and delete month groups
+  - Three-dot menu for month management
+  - Archived month groups appear within archived section
+
+- **Delete all archived dates**
+  - Three-dot menu on archived section header
+  - Permanently deletes all archived dates
+  - Confirmation dialog with archived count
+
+### Previous Features (v2.0.0)
 
 - **Clerk Authentication Integration** - Complete migration from WorkOS to Clerk
   - User login/logout with Clerk authentication

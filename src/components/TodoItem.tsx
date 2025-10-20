@@ -19,6 +19,7 @@ interface TodoItemProps {
   onMoveToPreviousDay: () => void;
   onMoveToNextDay: () => void;
   onMoveToTomorrow: () => void;
+  onHoverChange?: (id: Id<"todos"> | null) => void;
 }
 
 export function TodoItem({
@@ -32,6 +33,7 @@ export function TodoItem({
   onMoveToPreviousDay,
   onMoveToNextDay,
   onMoveToTomorrow,
+  onHoverChange,
 }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
@@ -198,6 +200,8 @@ export function TodoItem({
       ref={setNodeRef}
       style={style}
       className={`todo-item ${pinned && !isPinnedView ? "pinned" : ""}`}
+      onMouseEnter={() => onHoverChange?.(id)}
+      onMouseLeave={() => onHoverChange?.(null)}
     >
       {/* Drag handle */}
       <div {...attributes} {...listeners} className="drag-handle">

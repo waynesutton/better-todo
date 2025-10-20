@@ -49,6 +49,7 @@ function App() {
   const [lastCompletedTodo, setLastCompletedTodo] =
     useState<Id<"todos"> | null>(null);
   const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
+  const [hoveredTodoId, setHoveredTodoId] = useState<Id<"todos"> | null>(null);
 
   // Local ephemeral data for unsigned users
   const [localTodos, setLocalTodos] = useState<any[]>([]);
@@ -212,6 +213,16 @@ function App() {
   const activeTodos = displayTodos.filter((t) => !t.archived);
   const archivedTodos = displayTodos.filter((t) => t.archived);
 
+  // Auto-select hovered todo for keyboard shortcuts when not explicitly navigated
+  useEffect(() => {
+    if (hoveredTodoId && focusedTodoIndex === -1) {
+      const index = activeTodos.findIndex((t) => t._id === hoveredTodoId);
+      if (index !== -1) {
+        setFocusedTodoIndex(index);
+      }
+    }
+  }, [hoveredTodoId, focusedTodoIndex, activeTodos]);
+
   // Footer action handlers
   const handleArchiveAllConfirm = async () => {
     if (selectedDate !== "pinned") {
@@ -289,6 +300,17 @@ function App() {
           if (todo && !todo.completed) {
             setLastCompletedTodo(todo._id);
             updateTodo({ id: todo._id, completed: true });
+          }
+        }
+      }
+
+      // Pin/unpin todo with p key
+      if (e.key === "p") {
+        e.preventDefault();
+        if (activeTodos.length > 0 && focusedTodoIndex >= 0) {
+          const todo = activeTodos[focusedTodoIndex];
+          if (todo && !todo.completed && !todo.archived) {
+            updateTodo({ id: todo._id, pinned: !todo.pinned });
           }
         }
       }
@@ -543,6 +565,7 @@ function App() {
               focusedTodoIndex={focusedTodoIndex}
               onRequireSignIn={() => setShowSignInToCreateModal(true)}
               onRequireSignInForNote={() => setShowSignInToNoteModal(true)}
+              onTodoHover={setHoveredTodoId}
             />
           </div>
 

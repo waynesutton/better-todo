@@ -4,9 +4,10 @@ import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { useUser } from "@clerk/clerk-react";
 import { api } from "../../convex/_generated/api";
 import { format, addDays, subDays } from "date-fns";
-import { PanelLeft, Pin, Menu } from "lucide-react";
+import { PanelLeft, Pin, Menu, Folder, Plus } from "lucide-react";
 import { KeyboardIcon } from "@radix-ui/react-icons";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { Id } from "../../convex/_generated/dataModel";
 import {
   Tooltip,
   TooltipContent,
@@ -47,22 +48,68 @@ export function Sidebar({
   const [customLabel, setCustomLabel] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set(),
+  );
+  const [expandedMonthGroups, setExpandedMonthGroups] = useState<Set<string>>(
+    new Set(),
+  );
+  const [showFolderMenu, setShowFolderMenu] = useState<string | null>(null);
+  const [showMonthGroupMenu, setShowMonthGroupMenu] = useState<string | null>(
+    null,
+  );
+  const [showRenameFolderInput, setShowRenameFolderInput] = useState<
+    string | null
+  >(null);
+  const [folderNameInput, setFolderNameInput] = useState("");
+  const [showAddFolder, setShowAddFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [showFolderSelector, setShowFolderSelector] = useState<string | null>(
+    null,
+  );
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     date: string;
     formattedDate: string;
   }>({ isOpen: false, date: "", formattedDate: "" });
+  const [confirmDeleteArchived, setConfirmDeleteArchived] = useState(false);
 
   // Fetch data
   const archivedDates = useQuery(api.archivedDates.getArchivedDates) || [];
   const dateLabelsData = useQuery(api.dateLabels.getDateLabels) || [];
   const pinnedTodos = useQuery(api.todos.getPinnedTodos) || [];
+  const folders =
+    useQuery(api.folders.getFolders, isAuthenticated ? undefined : "skip") ||
+    [];
+  const monthGroups =
+    useQuery(
+      api.monthGroups.getMonthGroups,
+      isAuthenticated ? undefined : "skip",
+    ) || [];
+
+  // Mutations
   const copyTodosToDate = useMutation(api.todos.copyTodosToDate);
   const archiveDate = useMutation(api.archivedDates.archiveDate);
   const unarchiveDate = useMutation(api.archivedDates.unarchiveDate);
   const deleteDate = useMutation(api.dates.deleteDate);
   const setDateLabel = useMutation(api.dateLabels.setDateLabel);
   const removeDateLabel = useMutation(api.dateLabels.removeDateLabel);
+  const createFolder = useMutation(api.folders.createFolder);
+  const renameFolder = useMutation(api.folders.renameFolder);
+  const archiveFolder = useMutation(api.folders.archiveFolder);
+  const unarchiveFolder = useMutation(api.folders.unarchiveFolder);
+  const deleteFolder = useMutation(api.folders.deleteFolder);
+  const addDateToFolder = useMutation(api.folders.addDateToFolder);
+  const removeDateFromFolder = useMutation(api.folders.removeDateFromFolder);
+  const archiveMonthGroup = useMutation(api.monthGroups.archiveMonthGroup);
+  const unarchiveMonthGroup = useMutation(api.monthGroups.unarchiveMonthGroup);
+  const deleteMonthGroup = useMutation(api.monthGroups.deleteMonthGroup);
+  const autoCreateMonthGroups = useMutation(
+    api.monthGroups.autoCreateMonthGroups,
+  );
+  const deleteAllArchivedDates = useMutation(
+    api.archivedDates.deleteAllArchivedDates,
+  );
 
   // Create a map of date to label for quick lookup
   const dateLabels = new Map(
@@ -183,7 +230,150 @@ export function Sidebar({
     setConfirmDialog({ isOpen: false, date: "", formattedDate: "" });
   };
 
-  const activeDates = dates.filter((date) => !archivedDates.includes(date));
+  // Handler for creating a new folder
+  const handleCreateFolder = async () => {
+    if (newFolderName.trim()) {
+      await createFolder({ name: newFolderName.trim() });
+      setNewFolderName("");
+      setShowAddFolder(false);
+    }
+  };
+
+  // Handler for renaming a folder
+  const handleRenameFolder = async (folderId: Id<"folders">) => {
+    if (folderNameInput.trim()) {
+      await renameFolder({ folderId, name: folderNameInput.trim() });
+      setShowRenameFolderInput(null);
+      setFolderNameInput("");
+      setShowFolderMenu(null);
+    }
+  };
+
+  // Handler for archiving a folder
+  const handleArchiveFolder = async (folderId: Id<"folders">) => {
+    await archiveFolder({ folderId });
+    setShowFolderMenu(null);
+  };
+
+  // Handler for unarchiving a folder
+  const handleUnarchiveFolder = async (folderId: Id<"folders">) => {
+    await unarchiveFolder({ folderId });
+    setShowFolderMenu(null);
+  };
+
+  // Handler for deleting a folder
+  const handleDeleteFolder = async (folderId: Id<"folders">) => {
+    await deleteFolder({ folderId });
+    setShowFolderMenu(null);
+  };
+
+  // Handler for archiving a month group
+  const handleArchiveMonthGroup = async (monthGroupId: Id<"monthGroups">) => {
+    await archiveMonthGroup({ monthGroupId });
+    setShowMonthGroupMenu(null);
+  };
+
+  // Handler for unarchiving a month group
+  const handleUnarchiveMonthGroup = async (monthGroupId: Id<"monthGroups">) => {
+    await unarchiveMonthGroup({ monthGroupId });
+    setShowMonthGroupMenu(null);
+  };
+
+  // Handler for deleting a month group
+  const handleDeleteMonthGroup = async (monthGroupId: Id<"monthGroups">) => {
+    await deleteMonthGroup({ monthGroupId });
+    setShowMonthGroupMenu(null);
+  };
+
+  // Handler for deleting all archived dates
+  const handleDeleteAllArchived = async () => {
+    if (isAuthenticated) {
+      await deleteAllArchivedDates({});
+      setConfirmDeleteArchived(false);
+    }
+  };
+
+  // Handler for adding date to folder
+  const handleAddDateToFolder = async (
+    date: string,
+    folderId: Id<"folders">,
+  ) => {
+    await addDateToFolder({ folderId, date });
+    setShowFolderSelector(null);
+    setShowMenuForDate(null);
+  };
+
+  // Handler for removing date from folder
+  const handleRemoveDateFromFolder = async (date: string) => {
+    await removeDateFromFolder({ date });
+    setShowMenuForDate(null);
+  };
+
+  // Get folder for a date
+  const getFolderForDate = (date: string): Id<"folders"> | null => {
+    for (const folder of folders) {
+      if (folder.dates.includes(date)) {
+        return folder._id;
+      }
+    }
+    return null;
+  };
+
+  // Toggle folder expansion
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  };
+
+  // Toggle month group expansion
+  const toggleMonthGroup = (monthGroupId: string) => {
+    setExpandedMonthGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(monthGroupId)) {
+        next.delete(monthGroupId);
+      } else {
+        next.add(monthGroupId);
+      }
+      return next;
+    });
+  };
+
+  // Auto-create month groups on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      autoCreateMonthGroups({});
+    }
+  }, [isAuthenticated, autoCreateMonthGroups]);
+
+  // Calculate dates that are in folders or month groups
+  const datesInFoldersOrGroups = new Set<string>();
+  folders.forEach((folder) =>
+    folder.dates.forEach((d) => datesInFoldersOrGroups.add(d)),
+  );
+  monthGroups.forEach((monthGroup) =>
+    monthGroup.dates.forEach((d) => datesInFoldersOrGroups.add(d)),
+  );
+
+  // Filter active dates to exclude archived and those in folders/groups
+  const activeDates = dates.filter(
+    (date) =>
+      !archivedDates.includes(date) && !datesInFoldersOrGroups.has(date),
+  );
+
+  // Separate active and archived folders
+  const activeFolders = folders.filter((f) => !f.archived);
+  const archivedFolders = folders.filter((f) => f.archived);
+
+  // Separate active and archived month groups
+  const activeMonthGroups = monthGroups.filter((mg) => !mg.archived);
+  const archivedMonthGroups = monthGroups.filter((mg) => mg.archived);
 
   // Handle ESC key to close menus and modals
   useEffect(() => {
@@ -208,12 +398,39 @@ export function Sidebar({
         if (showMobileMenu) {
           setShowMobileMenu(false);
         }
+        if (showFolderMenu) {
+          setShowFolderMenu(null);
+        }
+        if (showMonthGroupMenu) {
+          setShowMonthGroupMenu(null);
+        }
+        if (showRenameFolderInput) {
+          setShowRenameFolderInput(null);
+          setFolderNameInput("");
+        }
+        if (showAddFolder) {
+          setShowAddFolder(false);
+          setNewFolderName("");
+        }
+        if (showFolderSelector) {
+          setShowFolderSelector(null);
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showMenuForDate, showDatePicker, showRenameInput, showMobileMenu]);
+  }, [
+    showMenuForDate,
+    showDatePicker,
+    showRenameInput,
+    showMobileMenu,
+    showFolderMenu,
+    showMonthGroupMenu,
+    showRenameFolderInput,
+    showAddFolder,
+    showFolderSelector,
+  ]);
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -295,6 +512,29 @@ export function Sidebar({
                       >
                         Remove Label
                       </div>
+                    )}
+                    {isAuthenticated && activeFolders.length > 0 && (
+                      <>
+                        {getFolderForDate(date) ? (
+                          <div
+                            className="menu-item"
+                            onClick={() => handleRemoveDateFromFolder(date)}
+                          >
+                            Remove from Folder
+                          </div>
+                        ) : (
+                          <div
+                            className="menu-item"
+                            onClick={() => {
+                              setShowFolderSelector(date);
+                              setShowDatePicker(null);
+                              setShowRenameInput(null);
+                            }}
+                          >
+                            Add to Folder...
+                          </div>
+                        )}
+                      </>
                     )}
                     <div
                       className="menu-item"
@@ -399,9 +639,295 @@ export function Sidebar({
                     </button>
                   </div>
                 )}
+                {showFolderSelector === date && (
+                  <div className="date-picker-modal folder-selector">
+                    <div className="folder-selector-title">Select Folder</div>
+                    <div className="folder-selector-list">
+                      {activeFolders.map((folder) => (
+                        <div
+                          key={folder._id}
+                          className="folder-selector-item"
+                          onClick={() =>
+                            handleAddDateToFolder(date, folder._id)
+                          }
+                        >
+                          <Folder size={14} />
+                          <span>{folder.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      className="date-picker-button cancel"
+                      onClick={() => setShowFolderSelector(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
+
+          {/* Month Groups section */}
+          {activeMonthGroups.map((monthGroup) => (
+            <div key={monthGroup._id} className="sidebar-archive-section">
+              <div
+                className="sidebar-archive-header"
+                onClick={() => toggleMonthGroup(monthGroup._id)}
+              >
+                <span
+                  className={`collapse-icon ${expandedMonthGroups.has(monthGroup._id) ? "" : "collapsed"}`}
+                >
+                  ▼
+                </span>
+                <span>{monthGroup.monthName}</span>
+              </div>
+              <div className="date-menu">
+                <button
+                  className="date-menu-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMonthGroupMenu(
+                      showMonthGroupMenu === monthGroup._id
+                        ? null
+                        : monthGroup._id,
+                    );
+                  }}
+                >
+                  ⋯
+                </button>
+                {showMonthGroupMenu === monthGroup._id && (
+                  <div className="date-menu-dropdown">
+                    <div
+                      className="menu-item"
+                      onClick={() => handleArchiveMonthGroup(monthGroup._id)}
+                    >
+                      Archive Month
+                    </div>
+                    <div
+                      className="menu-item danger"
+                      onClick={() => handleDeleteMonthGroup(monthGroup._id)}
+                    >
+                      Delete Month
+                    </div>
+                  </div>
+                )}
+              </div>
+              {expandedMonthGroups.has(monthGroup._id) && (
+                <div className="sidebar-archive-dates">
+                  {monthGroup.dates.map((date) => (
+                    <div
+                      key={date}
+                      className={`date-item-container ${date === selectedDate ? "active" : ""}`}
+                    >
+                      <div
+                        className="date-item"
+                        onClick={() => onSelectDate(date)}
+                      >
+                        {formatDate(date)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Folders section */}
+          {activeFolders.map((folder) => (
+            <div key={folder._id} className="sidebar-archive-section">
+              <div
+                className="sidebar-archive-header"
+                onClick={() => toggleFolder(folder._id)}
+              >
+                <span
+                  className={`collapse-icon ${expandedFolders.has(folder._id) ? "" : "collapsed"}`}
+                >
+                  ▼
+                </span>
+                <Folder size={14} style={{ marginRight: "4px" }} />
+                <span>{folder.name}</span>
+              </div>
+              <div className="date-menu">
+                <button
+                  className="date-menu-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowFolderMenu(
+                      showFolderMenu === folder._id ? null : folder._id,
+                    );
+                  }}
+                >
+                  ⋯
+                </button>
+                {showFolderMenu === folder._id && (
+                  <div className="date-menu-dropdown">
+                    <div
+                      className="menu-item"
+                      onClick={() => {
+                        setShowRenameFolderInput(folder._id);
+                        setFolderNameInput(folder.name);
+                      }}
+                    >
+                      Rename Folder
+                    </div>
+                    <div
+                      className="menu-item"
+                      onClick={() => handleArchiveFolder(folder._id)}
+                    >
+                      Archive Folder
+                    </div>
+                    <div
+                      className="menu-item danger"
+                      onClick={() => handleDeleteFolder(folder._id)}
+                    >
+                      Delete Folder
+                    </div>
+                  </div>
+                )}
+              </div>
+              {showRenameFolderInput === folder._id && (
+                <div className="date-picker-modal">
+                  <input
+                    type="text"
+                    value={folderNameInput}
+                    onChange={(e) => setFolderNameInput(e.target.value)}
+                    placeholder="Enter folder name..."
+                    className="date-picker-input"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && folderNameInput.trim()) {
+                        handleRenameFolder(folder._id);
+                      } else if (e.key === "Escape") {
+                        setShowRenameFolderInput(null);
+                        setFolderNameInput("");
+                      }
+                    }}
+                  />
+                  <button
+                    className="date-picker-button"
+                    onClick={() => handleRenameFolder(folder._id)}
+                    disabled={!folderNameInput.trim()}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="date-picker-button cancel"
+                    onClick={() => {
+                      setShowRenameFolderInput(null);
+                      setFolderNameInput("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+              {expandedFolders.has(folder._id) && (
+                <div className="sidebar-archive-dates">
+                  {folder.dates.map((date) => (
+                    <div
+                      key={date}
+                      className={`date-item-container ${date === selectedDate ? "active" : ""}`}
+                    >
+                      <div
+                        className="date-item"
+                        onClick={() => onSelectDate(date)}
+                      >
+                        {formatDate(date)}
+                      </div>
+                      <div className="date-menu">
+                        <button
+                          className="date-menu-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMenuForDate(
+                              showMenuForDate === date ? null : date,
+                            );
+                          }}
+                        >
+                          ⋯
+                        </button>
+                        {showMenuForDate === date && (
+                          <div className="date-menu-dropdown">
+                            <div
+                              className="menu-item"
+                              onClick={() => handleRemoveDateFromFolder(date)}
+                            >
+                              Remove from Folder
+                            </div>
+                            <div
+                              className="menu-item"
+                              onClick={() => handleArchiveDate(date)}
+                            >
+                              Archive Date
+                            </div>
+                            <div
+                              className="menu-item danger"
+                              onClick={() => handleDeleteDate(date)}
+                            >
+                              Delete Date
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Add Folder button */}
+          {isAuthenticated && (
+            <div className="sidebar-add-folder">
+              {!showAddFolder ? (
+                <button
+                  className="add-folder-button"
+                  onClick={() => setShowAddFolder(true)}
+                >
+                  <Plus size={14} />
+                  <span>Add Folder</span>
+                </button>
+              ) : (
+                <div className="add-folder-input-container">
+                  <input
+                    type="text"
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    placeholder="Enter folder name..."
+                    className="add-folder-input"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newFolderName.trim()) {
+                        handleCreateFolder();
+                      } else if (e.key === "Escape") {
+                        setShowAddFolder(false);
+                        setNewFolderName("");
+                      }
+                    }}
+                  />
+                  <div className="add-folder-buttons">
+                    <button
+                      className="add-folder-save-button"
+                      onClick={handleCreateFolder}
+                      disabled={!newFolderName.trim()}
+                    >
+                      Create
+                    </button>
+                    <button
+                      className="add-folder-cancel-button"
+                      onClick={() => {
+                        setShowAddFolder(false);
+                        setNewFolderName("");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Archived section */}
           {archivedDates.length > 0 && (
@@ -416,6 +942,17 @@ export function Sidebar({
                   ▼
                 </span>
                 <span>Archived ({archivedDates.length})</span>
+              </div>
+              <div className="date-menu">
+                <button
+                  className="date-menu-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDeleteArchived(true);
+                  }}
+                >
+                  ⋯
+                </button>
               </div>
               {showArchived && (
                 <div className="sidebar-archive-dates">
@@ -459,6 +996,188 @@ export function Sidebar({
                           </div>
                         )}
                       </div>
+                    </div>
+                  ))}
+
+                  {/* Archived Folders */}
+                  {archivedFolders.map((folder) => (
+                    <div key={folder._id} className="sidebar-archive-section">
+                      <div
+                        className="sidebar-archive-header"
+                        onClick={() => toggleFolder(folder._id)}
+                      >
+                        <span
+                          className={`collapse-icon ${expandedFolders.has(folder._id) ? "" : "collapsed"}`}
+                        >
+                          ▼
+                        </span>
+                        <Folder size={14} style={{ marginRight: "4px" }} />
+                        <span>{folder.name}</span>
+                      </div>
+                      <div className="date-menu">
+                        <button
+                          className="date-menu-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowFolderMenu(
+                              showFolderMenu === folder._id ? null : folder._id,
+                            );
+                          }}
+                        >
+                          ⋯
+                        </button>
+                        {showFolderMenu === folder._id && (
+                          <div className="date-menu-dropdown">
+                            <div
+                              className="menu-item"
+                              onClick={() => {
+                                setShowRenameFolderInput(folder._id);
+                                setFolderNameInput(folder.name);
+                              }}
+                            >
+                              Rename Folder
+                            </div>
+                            <div
+                              className="menu-item"
+                              onClick={() => handleUnarchiveFolder(folder._id)}
+                            >
+                              Unarchive Folder
+                            </div>
+                            <div
+                              className="menu-item danger"
+                              onClick={() => handleDeleteFolder(folder._id)}
+                            >
+                              Delete Folder
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {expandedFolders.has(folder._id) && (
+                        <div className="sidebar-archive-dates">
+                          {folder.dates.map((date) => (
+                            <div
+                              key={date}
+                              className={`date-item-container archived ${date === selectedDate ? "active" : ""}`}
+                            >
+                              <div
+                                className="date-item"
+                                onClick={() => onSelectDate(date)}
+                              >
+                                {formatDate(date)}
+                              </div>
+                              <div className="date-menu">
+                                <button
+                                  className="date-menu-button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowMenuForDate(
+                                      showMenuForDate === date ? null : date,
+                                    );
+                                  }}
+                                >
+                                  ⋯
+                                </button>
+                                {showMenuForDate === date && (
+                                  <div className="date-menu-dropdown">
+                                    <div
+                                      className="menu-item"
+                                      onClick={() =>
+                                        handleRemoveDateFromFolder(date)
+                                      }
+                                    >
+                                      Remove from Folder
+                                    </div>
+                                    <div
+                                      className="menu-item"
+                                      onClick={() => handleUnarchiveDate(date)}
+                                    >
+                                      Unarchive Date
+                                    </div>
+                                    <div
+                                      className="menu-item danger"
+                                      onClick={() => handleDeleteDate(date)}
+                                    >
+                                      Delete Date
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Archived Month Groups */}
+                  {archivedMonthGroups.map((monthGroup) => (
+                    <div
+                      key={monthGroup._id}
+                      className="sidebar-archive-section"
+                    >
+                      <div
+                        className="sidebar-archive-header"
+                        onClick={() => toggleMonthGroup(monthGroup._id)}
+                      >
+                        <span
+                          className={`collapse-icon ${expandedMonthGroups.has(monthGroup._id) ? "" : "collapsed"}`}
+                        >
+                          ▼
+                        </span>
+                        <span>{monthGroup.monthName}</span>
+                      </div>
+                      <div className="date-menu">
+                        <button
+                          className="date-menu-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMonthGroupMenu(
+                              showMonthGroupMenu === monthGroup._id
+                                ? null
+                                : monthGroup._id,
+                            );
+                          }}
+                        >
+                          ⋯
+                        </button>
+                        {showMonthGroupMenu === monthGroup._id && (
+                          <div className="date-menu-dropdown">
+                            <div
+                              className="menu-item"
+                              onClick={() =>
+                                handleUnarchiveMonthGroup(monthGroup._id)
+                              }
+                            >
+                              Unarchive Month
+                            </div>
+                            <div
+                              className="menu-item danger"
+                              onClick={() =>
+                                handleDeleteMonthGroup(monthGroup._id)
+                              }
+                            >
+                              Delete Month
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {expandedMonthGroups.has(monthGroup._id) && (
+                        <div className="sidebar-archive-dates">
+                          {monthGroup.dates.map((date) => (
+                            <div
+                              key={date}
+                              className={`date-item-container ${date === selectedDate ? "active" : ""}`}
+                            >
+                              <div
+                                className="date-item"
+                                onClick={() => onSelectDate(date)}
+                              >
+                                {formatDate(date)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -714,6 +1433,17 @@ export function Sidebar({
         cancelText="Cancel"
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+        isDangerous={true}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDeleteArchived}
+        title="Delete All Archived"
+        message={`Are you sure you want to permanently delete all ${archivedDates.length} archived date${archivedDates.length === 1 ? "" : "s"}? This cannot be undone.`}
+        confirmText="Delete All"
+        cancelText="Cancel"
+        onConfirm={handleDeleteAllArchived}
+        onCancel={() => setConfirmDeleteArchived(false)}
         isDangerous={true}
       />
     </TooltipProvider>

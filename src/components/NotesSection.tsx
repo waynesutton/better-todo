@@ -60,6 +60,7 @@ function NoteItem({
   const [contentInput, setContentInput] = useState(note.content);
   const contentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Update local state when note prop changes (from external updates)
   useEffect(() => {
@@ -99,9 +100,17 @@ function NoteItem({
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" || e.key === "Tab") {
       e.preventDefault();
       handleTitleBlur();
+      // Expand note if collapsed and focus content textarea
+      if (note.collapsed) {
+        onToggleCollapse(note._id, false);
+      }
+      // Use setTimeout to ensure the textarea is rendered and available
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
     } else if (e.key === "Escape") {
       e.preventDefault();
       // Remove focus from input
@@ -161,6 +170,7 @@ function NoteItem({
           </span>
           {isEditingTitle ? (
             <input
+              ref={titleInputRef}
               type="text"
               className="note-title-input"
               value={titleInput}

@@ -496,12 +496,24 @@ body {
   opacity: 0.8;
 }
 
+/* Show three dots on folder/month group headers on hover */
+.sidebar-archive-section:hover > .date-menu .date-menu-button {
+  color: var(--text-secondary);
+}
+
 .date-menu-button:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
 /* Light mode - darker three dots for better visibility */
 :root[data-theme="light"] .date-item-container:hover .date-menu-button {
+  color: #3d3d3d;
+}
+
+:root[data-theme="light"]
+  .sidebar-archive-section:hover
+  > .date-menu
+  .date-menu-button {
   color: #3d3d3d;
 }
 
@@ -582,6 +594,23 @@ body {
 .sidebar-archive-section {
   margin-top: 12px;
   padding-top: 12px;
+  position: relative;
+}
+
+/* Container for archive/folder header and menu button */
+.sidebar-archive-section > .sidebar-archive-header,
+.sidebar-archive-section > .date-menu {
+  display: inline-block;
+}
+
+.sidebar-archive-section > .sidebar-archive-header {
+  width: calc(100% - 40px);
+}
+
+.sidebar-archive-section > .date-menu {
+  position: absolute;
+  right: 0;
+  top: 12px;
 }
 
 .sidebar-archive-header {
@@ -614,6 +643,136 @@ body {
   bottom: 100%;
   margin-top: 0;
   margin-bottom: 4px;
+}
+
+/* Add Folder Button */
+.sidebar-add-folder {
+  margin-top: 8px;
+  padding: 0 16px;
+}
+
+.add-folder-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-sidebar);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.add-folder-button:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Add Folder Input */
+.add-folder-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.add-folder-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--font-sidebar);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.add-folder-input:focus {
+  border-color: #56b5db;
+}
+
+.add-folder-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.add-folder-save-button,
+.add-folder-cancel-button {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.add-folder-save-button {
+  background-color: #56b5db;
+  color: white;
+}
+
+.add-folder-save-button:hover:not(:disabled) {
+  background-color: #4a9ec4;
+}
+
+.add-folder-save-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.add-folder-cancel-button {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.add-folder-cancel-button:hover {
+  background-color: var(--bg-hover);
+}
+
+/* Folder Selector Modal */
+.date-picker-modal.folder-selector {
+  min-width: 200px;
+  max-width: 250px;
+}
+
+.folder-selector-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.folder-selector-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+
+.folder-selector-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+  font-size: var(--font-sidebar);
+  color: var(--text-primary);
+}
+
+.folder-selector-item:hover {
+  background-color: var(--bg-hover);
 }
 
 .sidebar-footer {

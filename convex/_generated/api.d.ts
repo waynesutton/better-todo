@@ -11,7 +11,9 @@
 import type * as archivedDates from "../archivedDates.js";
 import type * as dateLabels from "../dateLabels.js";
 import type * as dates from "../dates.js";
+import type * as folders from "../folders.js";
 import type * as http from "../http.js";
+import type * as monthGroups from "../monthGroups.js";
 import type * as notes from "../notes.js";
 import type * as search from "../search.js";
 import type * as todos from "../todos.js";
@@ -35,7 +37,9 @@ declare const fullApi: ApiFromModules<{
   archivedDates: typeof archivedDates;
   dateLabels: typeof dateLabels;
   dates: typeof dates;
+  folders: typeof folders;
   http: typeof http;
+  monthGroups: typeof monthGroups;
   notes: typeof notes;
   search: typeof search;
   todos: typeof todos;

@@ -1,5 +1,13 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
+
+// Helper function to get the current user's ID
+export async function getUserId(
+  ctx: QueryCtx | MutationCtx,
+): Promise<string | null> {
+  const identity = await ctx.auth.getUserIdentity();
+  return identity?.subject ?? null;
+}
 
 // Store or update user info from WorkOS
 export const storeUser = mutation({
