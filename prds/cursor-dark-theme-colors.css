@@ -1,0 +1,329 @@
+/* Cursor Dark Theme CSS Colors */
+/* Based on VS Code's "Dark+" theme used by Cursor editor */
+
+:root[data-theme="dark"] {
+  /* Background Colors */
+  --cursor-bg-editor: #1e1e1e;
+  --cursor-bg-sidebar: #252526;
+  --cursor-bg-panel: #1e1e1e;
+  --cursor-bg-hover: #2a2d2e;
+  --cursor-bg-selection: #264f78;
+  --cursor-bg-line-highlight: #2d2d30;
+
+  /* Text Colors */
+  --cursor-text-foreground: #d4d4d4;
+  --cursor-text-comments: #6a9955;
+  --cursor-text-keywords: #569cd6;
+  --cursor-text-strings: #ce9178;
+  --cursor-text-numbers: #b5cea8;
+  --cursor-text-functions: #dcdcaa;
+  --cursor-text-variables: #9cdcfe;
+  --cursor-text-types: #4ec9b0;
+  --cursor-text-operators: #d4d4d4;
+
+  /* UI Colors */
+  --cursor-ui-bracket-matching: #ffd700;
+  --cursor-ui-error: #f44747;
+  --cursor-ui-warning: #ffcc02;
+  --cursor-ui-info: #3794ff;
+  --cursor-ui-border: #3c3c3c;
+  --cursor-ui-scrollbar: #424242;
+  --cursor-ui-scrollbar-hover: #4f4f4f;
+
+  /* Syntax Highlighting */
+  --cursor-syntax-keyword: #569cd6;
+  --cursor-syntax-string: #ce9178;
+  --cursor-syntax-comment: #6a9955;
+  --cursor-syntax-function: #dcdcaa;
+  --cursor-syntax-variable: #9cdcfe;
+  --cursor-syntax-type: #4ec9b0;
+  --cursor-syntax-number: #b5cea8;
+  --cursor-syntax-operator: #d4d4d4;
+  --cursor-syntax-punctuation: #d4d4d4;
+  --cursor-syntax-constant: #4fc1ff;
+  --cursor-syntax-attribute: #92c5f6;
+  --cursor-syntax-tag: #569cd6;
+  --cursor-syntax-class: #4ec9b0;
+  --cursor-syntax-interface: #4ec9b0;
+  --cursor-syntax-namespace: #4ec9b0;
+  --cursor-syntax-module: #4ec9b0;
+  --cursor-syntax-property: #9cdcfe;
+  --cursor-syntax-parameter: #9cdcfe;
+  --cursor-syntax-decorator: #dcdcaa;
+  --cursor-syntax-macro: #569cd6;
+  --cursor-syntax-builtin: #569cd6;
+  --cursor-syntax-regex: #d16969;
+  --cursor-syntax-escape: #d7ba7d;
+  --cursor-syntax-format: #ce9178;
+  --cursor-syntax-heading: #569cd6;
+  --cursor-syntax-strong: #d4d4d4;
+  --cursor-syntax-emphasis: #d4d4d4;
+  --cursor-syntax-markup: #ce9178;
+  --cursor-syntax-underline: #d4d4d4;
+  --cursor-syntax-strikethrough: #d4d4d4;
+  --cursor-syntax-link: #3794ff;
+  --cursor-syntax-quote: #6a9955;
+  --cursor-syntax-raw: #ce9178;
+  --cursor-syntax-hr: #d4d4d4;
+  --cursor-syntax-code: #d4d4d4;
+  --cursor-syntax-table: #d4d4d4;
+  --cursor-syntax-variable-2: #9cdcfe;
+  --cursor-syntax-variable-3: #9cdcfe;
+  --cursor-syntax-definition: #dcdcaa;
+  --cursor-syntax-name: #9cdcfe;
+  --cursor-syntax-name-attribute: #92c5f6;
+  --cursor-syntax-name-class: #4ec9b0;
+  --cursor-syntax-name-constant: #4fc1ff;
+  --cursor-syntax-name-decorator: #dcdcaa;
+  --cursor-syntax-name-function: #dcdcaa;
+  --cursor-syntax-name-method: #dcdcaa;
+  --cursor-syntax-name-namespace: #4ec9b0;
+  --cursor-syntax-name-other: #9cdcfe;
+  --cursor-syntax-name-package: #4ec9b0;
+  --cursor-syntax-name-property: #9cdcfe;
+  --cursor-syntax-name-tag: #569cd6;
+  --cursor-syntax-name-type: #4ec9b0;
+  --cursor-syntax-name-variable: #9cdcfe;
+  --cursor-syntax-name-variable-2: #9cdcfe;
+  --cursor-syntax-name-variable-3: #9cdcfe;
+  --cursor-syntax-literal: #b5cea8;
+  --cursor-syntax-literal-boolean: #569cd6;
+  --cursor-syntax-literal-number: #b5cea8;
+  --cursor-syntax-literal-string: #ce9178;
+  --cursor-syntax-literal-string-2: #ce9178;
+  --cursor-syntax-literal-string-3: #ce9178;
+  --cursor-syntax-literal-string-4: #ce9178;
+  --cursor-syntax-literal-string-5: #ce9178;
+  --cursor-syntax-literal-string-6: #ce9178;
+  --cursor-syntax-literal-string-7: #ce9178;
+  --cursor-syntax-literal-string-8: #ce9178;
+  --cursor-syntax-literal-string-9: #ce9178;
+  --cursor-syntax-literal-string-10: #ce9178;
+  --cursor-syntax-literal-string-11: #ce9178;
+  --cursor-syntax-literal-string-12: #ce9178;
+  --cursor-syntax-literal-string-13: #ce9178;
+  --cursor-syntax-literal-string-14: #ce9178;
+  --cursor-syntax-literal-string-15: #ce9178;
+  --cursor-syntax-literal-string-16: #ce9178;
+  --cursor-syntax-literal-string-17: #ce9178;
+  --cursor-syntax-literal-string-18: #ce9178;
+  --cursor-syntax-literal-string-19: #ce9178;
+  --cursor-syntax-literal-string-20: #ce9178;
+  --cursor-syntax-literal-string-21: #ce9178;
+  --cursor-syntax-literal-string-22: #ce9178;
+  --cursor-syntax-literal-string-23: #ce9178;
+  --cursor-syntax-literal-string-24: #ce9178;
+  --cursor-syntax-literal-string-25: #ce9178;
+  --cursor-syntax-literal-string-26: #ce9178;
+  --cursor-syntax-literal-string-27: #ce9178;
+  --cursor-syntax-literal-string-28: #ce9178;
+  --cursor-syntax-literal-string-29: #ce9178;
+  --cursor-syntax-literal-string-30: #ce9178;
+}
+
+:root[data-theme="light"] {
+  /* Light mode versions of Cursor colors */
+  --cursor-bg-editor: #ffffff;
+  --cursor-bg-sidebar: #f3f3f3;
+  --cursor-bg-panel: #ffffff;
+  --cursor-bg-hover: #e8e8e8;
+  --cursor-bg-selection: #add6ff;
+  --cursor-bg-line-highlight: #f0f0f0;
+
+  /* Text Colors */
+  --cursor-text-foreground: #000000;
+  --cursor-text-comments: #008000;
+  --cursor-text-keywords: #0000ff;
+  --cursor-text-strings: #a31515;
+  --cursor-text-numbers: #098658;
+  --cursor-text-functions: #795e26;
+  --cursor-text-variables: #001080;
+  --cursor-text-types: #267f99;
+  --cursor-text-operators: #000000;
+
+  /* UI Colors */
+  --cursor-ui-bracket-matching: #ffd700;
+  --cursor-ui-error: #e51400;
+  --cursor-ui-warning: #ff8c00;
+  --cursor-ui-info: #0078d4;
+  --cursor-ui-border: #d3d3d3;
+  --cursor-ui-scrollbar: #c1c1c1;
+  --cursor-ui-scrollbar-hover: #a8a8a8;
+
+  /* Syntax Highlighting - Light mode */
+  --cursor-syntax-keyword: #0000ff;
+  --cursor-syntax-string: #a31515;
+  --cursor-syntax-comment: #008000;
+  --cursor-syntax-function: #795e26;
+  --cursor-syntax-variable: #001080;
+  --cursor-syntax-type: #267f99;
+  --cursor-syntax-number: #098658;
+  --cursor-syntax-operator: #000000;
+  --cursor-syntax-punctuation: #000000;
+  --cursor-syntax-constant: #0070c1;
+  --cursor-syntax-attribute: #0451a5;
+  --cursor-syntax-tag: #0000ff;
+  --cursor-syntax-class: #267f99;
+  --cursor-syntax-interface: #267f99;
+  --cursor-syntax-namespace: #267f99;
+  --cursor-syntax-module: #267f99;
+  --cursor-syntax-property: #001080;
+  --cursor-syntax-parameter: #001080;
+  --cursor-syntax-decorator: #795e26;
+  --cursor-syntax-macro: #0000ff;
+  --cursor-syntax-builtin: #0000ff;
+  --cursor-syntax-regex: #811f3f;
+  --cursor-syntax-escape: #ff0000;
+  --cursor-syntax-format: #a31515;
+  --cursor-syntax-heading: #0000ff;
+  --cursor-syntax-strong: #000000;
+  --cursor-syntax-emphasis: #000000;
+  --cursor-syntax-markup: #a31515;
+  --cursor-syntax-underline: #000000;
+  --cursor-syntax-strikethrough: #000000;
+  --cursor-syntax-link: #0078d4;
+  --cursor-syntax-quote: #008000;
+  --cursor-syntax-raw: #a31515;
+  --cursor-syntax-hr: #000000;
+  --cursor-syntax-code: #000000;
+  --cursor-syntax-table: #000000;
+  --cursor-syntax-variable-2: #001080;
+  --cursor-syntax-variable-3: #001080;
+  --cursor-syntax-definition: #795e26;
+  --cursor-syntax-name: #001080;
+  --cursor-syntax-name-attribute: #0451a5;
+  --cursor-syntax-name-class: #267f99;
+  --cursor-syntax-name-constant: #0070c1;
+  --cursor-syntax-name-decorator: #795e26;
+  --cursor-syntax-name-function: #795e26;
+  --cursor-syntax-name-method: #795e26;
+  --cursor-syntax-name-namespace: #267f99;
+  --cursor-syntax-name-other: #001080;
+  --cursor-syntax-name-package: #267f99;
+  --cursor-syntax-name-property: #001080;
+  --cursor-syntax-name-tag: #0000ff;
+  --cursor-syntax-name-type: #267f99;
+  --cursor-syntax-name-variable: #001080;
+  --cursor-syntax-name-variable-2: #001080;
+  --cursor-syntax-name-variable-3: #001080;
+  --cursor-syntax-literal: #098658;
+  --cursor-syntax-literal-boolean: #0000ff;
+  --cursor-syntax-literal-number: #098658;
+  --cursor-syntax-literal-string: #a31515;
+  --cursor-syntax-literal-string-2: #a31515;
+  --cursor-syntax-literal-string-3: #a31515;
+  --cursor-syntax-literal-string-4: #a31515;
+  --cursor-syntax-literal-string-5: #a31515;
+  --cursor-syntax-literal-string-6: #a31515;
+  --cursor-syntax-literal-string-7: #a31515;
+  --cursor-syntax-literal-string-8: #a31515;
+  --cursor-syntax-literal-string-9: #a31515;
+  --cursor-syntax-literal-string-10: #a31515;
+  --cursor-syntax-literal-string-11: #a31515;
+  --cursor-syntax-literal-string-12: #a31515;
+  --cursor-syntax-literal-string-13: #a31515;
+  --cursor-syntax-literal-string-14: #a31515;
+  --cursor-syntax-literal-string-15: #a31515;
+  --cursor-syntax-literal-string-16: #a31515;
+  --cursor-syntax-literal-string-17: #a31515;
+  --cursor-syntax-literal-string-18: #a31515;
+  --cursor-syntax-literal-string-19: #a31515;
+  --cursor-syntax-literal-string-20: #a31515;
+  --cursor-syntax-literal-string-21: #a31515;
+  --cursor-syntax-literal-string-22: #a31515;
+  --cursor-syntax-literal-string-23: #a31515;
+  --cursor-syntax-literal-string-24: #a31515;
+  --cursor-syntax-literal-string-25: #a31515;
+  --cursor-syntax-literal-string-26: #a31515;
+  --cursor-syntax-literal-string-27: #a31515;
+  --cursor-syntax-literal-string-28: #a31515;
+  --cursor-syntax-literal-string-29: #a31515;
+  --cursor-syntax-literal-string-30: #a31515;
+}
+
+/* Utility classes for applying Cursor colors */
+.cursor-bg-editor {
+  background-color: var(--cursor-bg-editor);
+}
+.cursor-bg-sidebar {
+  background-color: var(--cursor-bg-sidebar);
+}
+.cursor-bg-panel {
+  background-color: var(--cursor-bg-panel);
+}
+.cursor-bg-hover {
+  background-color: var(--cursor-bg-hover);
+}
+.cursor-bg-selection {
+  background-color: var(--cursor-bg-selection);
+}
+.cursor-bg-line-highlight {
+  background-color: var(--cursor-bg-line-highlight);
+}
+
+.cursor-text-foreground {
+  color: var(--cursor-text-foreground);
+}
+.cursor-text-comments {
+  color: var(--cursor-text-comments);
+}
+.cursor-text-keywords {
+  color: var(--cursor-text-keywords);
+}
+.cursor-text-strings {
+  color: var(--cursor-text-strings);
+}
+.cursor-text-numbers {
+  color: var(--cursor-text-numbers);
+}
+.cursor-text-functions {
+  color: var(--cursor-text-functions);
+}
+.cursor-text-variables {
+  color: var(--cursor-text-variables);
+}
+.cursor-text-types {
+  color: var(--cursor-text-types);
+}
+.cursor-text-operators {
+  color: var(--cursor-text-operators);
+}
+
+.cursor-ui-bracket-matching {
+  color: var(--cursor-ui-bracket-matching);
+}
+.cursor-ui-error {
+  color: var(--cursor-ui-error);
+}
+.cursor-ui-warning {
+  color: var(--cursor-ui-warning);
+}
+.cursor-ui-info {
+  color: var(--cursor-ui-info);
+}
+.cursor-ui-border {
+  border-color: var(--cursor-ui-border);
+}
+
+/* Additional syntax highlighting classes */
+.punctuation {
+  color: var(--cursor-syntax-punctuation);
+}
+.url {
+  color: var(--cursor-syntax-variable);
+}
+.tag {
+  color: var(--cursor-syntax-tag);
+}
+.attribute {
+  color: var(--cursor-syntax-attribute);
+}
+.property {
+  color: var(--cursor-syntax-property);
+}
+.value {
+  color: var(--cursor-syntax-string);
+}
+.boolean {
+  color: var(--cursor-syntax-literal-boolean);
+}

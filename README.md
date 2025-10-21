@@ -13,7 +13,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
 - **User authentication** with Clerk - secure login/logout with private user data
 - **Real-time synchronization** across browsers using Convex
 - **Notion-style inline input** - type directly to add todos (no button needed)
-- **Daily notes section** with line numbers, Edit/Preview tabs, and code block support
+- **Daily notes section** with line numbers, Edit/Preview tabs, and syntax-highlighted code blocks
 - **Smart keyboard shortcuts**: Enter for new lines, Shift+Enter to create/save
 - **Drag and drop** todo reordering with intuitive handles
 - **Daily organization** with date-based views
@@ -22,6 +22,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
 - **Bulk actions** - archive or delete all active todos at once with confirmation
 - **Copy todos between dates** - move tasks to tomorrow, previous day, next day, or custom dates
 - **Full-text search** - search across all todos and notes with keyboard shortcuts (Cmd/Ctrl+K)
+- **Code block syntax highlighting** - Cursor Dark Theme colors for JavaScript, TypeScript, CSS, HTML, JSON, Python, Go, Rust, and more
 - **Multiple notes per date** with drag-and-drop reordering and individual titles
 - **Archive dates** - hide completed days while preserving data
 - **Todo count badges** - see uncompleted todo counts next to each date in sidebar
@@ -146,6 +147,8 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
 - **Copy button** - copy note content to clipboard
 - **Delete button** - remove notes with confirmation
 - **Auto-saves** when you type (debounced for smooth experience)
+- **Syntax highlighting** - Use ```language for code blocks with Cursor Dark Theme colors
+- **Supported languages** - CSS, JavaScript, TypeScript, HTML, JSON, Python, Go, Rust, and more
 
 ### Organizing by Date
 
@@ -354,6 +357,7 @@ The app supports continuous deployment, so every push to your main branch will t
 - **Arrow keys** - Navigate search results
 - **Click away** - Auto-save changes
 - **Tab** - Navigate between elements
+- **?** - Show keyboard shortcuts modal with code block syntax reference
 
 ## Tips & Tricks
 
@@ -369,6 +373,8 @@ The app supports continuous deployment, so every push to your main branch will t
 10. **Archive dates**: Hide completed days to keep sidebar clean while preserving data
 11. **Mobile**: Sidebar auto-hides on mobile - tap the panel icon to show/hide, use + button to add todos
 12. **Theme switching**: Login/user icons automatically adapt to your current theme (dark/light)
+13. **Code blocks**: Press ? to see all supported language syntax for code highlighting
+14. **Syntax highlighting**: Use `css, `js, `ts, `html, `json, `py, `go, `rust for proper colorization
 
 ## Contributing
 

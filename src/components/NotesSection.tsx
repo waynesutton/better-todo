@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Copy, Check, Plus, X } from "lucide-react";
+import { Copy, Check, Plus, X, Edit3 } from "lucide-react";
 import { DrawingPinIcon, DrawingPinFilledIcon } from "@radix-ui/react-icons";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
   DndContext,
   closestCenter,
@@ -12,6 +13,150 @@ import {
   useSensors,
   DragEndEvent,
 } from "@dnd-kit/core";
+
+// Cursor Dark Theme colors for syntax highlighting
+const cursorDarkTheme: { [key: string]: React.CSSProperties } = {
+  'code[class*="language-"]': {
+    color: "#d4d4d4",
+    background: "#1e1e1e",
+    fontFamily:
+      "SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New, monospace",
+    fontSize: "13px",
+    textAlign: "left" as const,
+    whiteSpace: "pre" as const,
+    wordSpacing: "normal",
+    wordBreak: "normal" as const,
+    wordWrap: "normal" as const,
+    lineHeight: "1.5",
+    tabSize: 4,
+    hyphens: "none" as const,
+  },
+  'pre[class*="language-"]': {
+    color: "#d4d4d4",
+    background: "#1e1e1e",
+    fontFamily:
+      "SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New, monospace",
+    fontSize: "13px",
+    textAlign: "left" as const,
+    whiteSpace: "pre" as const,
+    wordSpacing: "normal",
+    wordBreak: "normal" as const,
+    wordWrap: "normal" as const,
+    lineHeight: "1.5",
+    tabSize: 4,
+    hyphens: "none" as const,
+    padding: "1em",
+    margin: "0",
+    overflow: "auto" as const,
+  },
+  comment: { color: "#6a9955", fontStyle: "italic" },
+  prolog: { color: "#6a9955" },
+  doctype: { color: "#6a9955" },
+  cdata: { color: "#6a9955" },
+  punctuation: { color: "#d4d4d4" },
+  property: { color: "#9cdcfe" },
+  tag: { color: "#569cd6" },
+  boolean: { color: "#569cd6" },
+  number: { color: "#b5cea8" },
+  constant: { color: "#4fc1ff" },
+  symbol: { color: "#4fc1ff" },
+  deleted: { color: "#f44747" },
+  selector: { color: "#d7ba7d" },
+  "attr-name": { color: "#92c5f6" },
+  string: { color: "#ce9178" },
+  char: { color: "#ce9178" },
+  builtin: { color: "#569cd6" },
+  inserted: { color: "#6a9955" },
+  operator: { color: "#d4d4d4" },
+  entity: { color: "#dcdcaa" },
+  url: { color: "#9cdcfe", textDecoration: "underline" },
+  variable: { color: "#9cdcfe" },
+  atrule: { color: "#569cd6" },
+  "attr-value": { color: "#ce9178" },
+  function: { color: "#dcdcaa" },
+  "function-variable": { color: "#dcdcaa" },
+  keyword: { color: "#569cd6" },
+  regex: { color: "#d16969" },
+  important: { color: "#569cd6", fontWeight: "bold" },
+  bold: { fontWeight: "bold" },
+  italic: { fontStyle: "italic" },
+  namespace: { opacity: 0.7 },
+  "class-name": { color: "#4ec9b0" },
+  parameter: { color: "#9cdcfe" },
+  decorator: { color: "#dcdcaa" },
+};
+
+// Cursor Light Theme colors for syntax highlighting
+const cursorLightTheme: { [key: string]: React.CSSProperties } = {
+  'code[class*="language-"]': {
+    color: "#000000",
+    background: "#ffffff",
+    fontFamily:
+      "SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New, monospace",
+    fontSize: "13px",
+    textAlign: "left" as const,
+    whiteSpace: "pre" as const,
+    wordSpacing: "normal",
+    wordBreak: "normal" as const,
+    wordWrap: "normal" as const,
+    lineHeight: "1.5",
+    tabSize: 4,
+    hyphens: "none" as const,
+  },
+  'pre[class*="language-"]': {
+    color: "#000000",
+    background: "#ffffff",
+    fontFamily:
+      "SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New, monospace",
+    fontSize: "13px",
+    textAlign: "left" as const,
+    whiteSpace: "pre" as const,
+    wordSpacing: "normal",
+    wordBreak: "normal" as const,
+    wordWrap: "normal" as const,
+    lineHeight: "1.5",
+    tabSize: 4,
+    hyphens: "none" as const,
+    padding: "1em",
+    margin: "0",
+    overflow: "auto" as const,
+  },
+  comment: { color: "#008000", fontStyle: "italic" },
+  prolog: { color: "#008000" },
+  doctype: { color: "#008000" },
+  cdata: { color: "#008000" },
+  punctuation: { color: "#000000" },
+  property: { color: "#001080" },
+  tag: { color: "#0000ff" },
+  boolean: { color: "#0000ff" },
+  number: { color: "#098658" },
+  constant: { color: "#0070c1" },
+  symbol: { color: "#0070c1" },
+  deleted: { color: "#e51400" },
+  selector: { color: "#a31515" },
+  "attr-name": { color: "#0451a5" },
+  string: { color: "#a31515" },
+  char: { color: "#a31515" },
+  builtin: { color: "#0000ff" },
+  inserted: { color: "#008000" },
+  operator: { color: "#000000" },
+  entity: { color: "#795e26" },
+  url: { color: "#001080", textDecoration: "underline" },
+  variable: { color: "#001080" },
+  atrule: { color: "#0000ff" },
+  "attr-value": { color: "#a31515" },
+  function: { color: "#795e26" },
+  "function-variable": { color: "#795e26" },
+  keyword: { color: "#0000ff" },
+  regex: { color: "#811f3f" },
+  important: { color: "#0000ff", fontWeight: "bold" },
+  bold: { fontWeight: "bold" },
+  italic: { fontStyle: "italic" },
+  namespace: { opacity: 0.7 },
+  "class-name": { color: "#267f99" },
+  parameter: { color: "#001080" },
+  decorator: { color: "#795e26" },
+};
 import {
   arrayMove,
   SortableContext,
@@ -22,6 +167,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Id } from "../../convex/_generated/dataModel";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { useTheme } from "../context/ThemeContext";
 
 interface NotesSectionProps {
   date: string;
@@ -52,6 +198,51 @@ interface NoteItemProps {
   shouldFocus?: boolean;
 }
 
+// Types for parsed content blocks
+type ContentBlock =
+  | { type: "text"; content: string }
+  | { type: "code"; content: string; language: string };
+
+// Parse markdown-style code blocks from plain text
+function parseContentBlocks(content: string): Array<ContentBlock> {
+  const blocks: Array<ContentBlock> = [];
+  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = codeBlockRegex.exec(content)) !== null) {
+    // Add text before code block
+    if (match.index > lastIndex) {
+      const textContent = content.slice(lastIndex, match.index);
+      if (textContent.trim()) {
+        blocks.push({ type: "text", content: textContent });
+      }
+    }
+
+    // Add code block
+    const language = match[1] || "text";
+    const codeContent = match[2];
+    blocks.push({ type: "code", content: codeContent, language });
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining text after last code block
+  if (lastIndex < content.length) {
+    const textContent = content.slice(lastIndex);
+    if (textContent.trim()) {
+      blocks.push({ type: "text", content: textContent });
+    }
+  }
+
+  // If no code blocks found, return entire content as text
+  if (blocks.length === 0 && content.trim()) {
+    blocks.push({ type: "text", content });
+  }
+
+  return blocks;
+}
+
 function NoteItem({
   note,
   onUpdateTitle,
@@ -61,10 +252,13 @@ function NoteItem({
   onTogglePin,
   shouldFocus = false,
 }: NoteItemProps) {
+  const { theme } = useTheme();
   const [copied, setCopied] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState(note.title || "Untitled");
   const [contentInput, setContentInput] = useState(note.content);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [copiedBlockIndex, setCopiedBlockIndex] = useState<number | null>(null);
   const contentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -78,6 +272,7 @@ function NoteItem({
   useEffect(() => {
     if (shouldFocus) {
       setIsEditingTitle(true);
+      setIsEditMode(true);
       setTimeout(() => {
         titleInputRef.current?.focus();
         titleInputRef.current?.select();
@@ -107,6 +302,16 @@ function NoteItem({
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy:", err);
+    }
+  };
+
+  const handleCopyCodeBlock = async (content: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedBlockIndex(index);
+      setTimeout(() => setCopiedBlockIndex(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy code block:", err);
     }
   };
 
@@ -160,6 +365,10 @@ function NoteItem({
       clearTimeout(contentTimeoutRef.current);
     }
     onUpdateContent(note._id, contentInput);
+    // Exit edit mode after saving
+    setTimeout(() => {
+      setIsEditMode(false);
+    }, 100);
   };
 
   // Cleanup timeout on unmount
@@ -204,13 +413,22 @@ function NoteItem({
           )}
         </div>
         <div className="note-actions">
-          {!(note.collapsed ?? false) && note.content && (
+          {!(note.collapsed ?? false) && note.content && !isEditMode && (
             <button
               className="note-action-button"
               onClick={handleCopy}
               title="Copy note"
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
+            </button>
+          )}
+          {!(note.collapsed ?? false) && !isEditMode && note.content && (
+            <button
+              className="note-action-button"
+              onClick={() => setIsEditMode(true)}
+              title="Edit note"
+            >
+              <Edit3 size={14} />
             </button>
           )}
           <button
@@ -236,31 +454,83 @@ function NoteItem({
 
       {!(note.collapsed ?? false) && (
         <div className="note-content-wrapper">
-          <div className="note-editor-container">
-            <div className="note-line-numbers" aria-hidden="true">
-              {contentInput.split("\n").map((_, index) => (
-                <div key={index} className="line-number">
-                  {index + 1}
+          {isEditMode ? (
+            <div className="note-editor-container">
+              <div className="note-line-numbers" aria-hidden="true">
+                {contentInput.split("\n").map((_, index) => (
+                  <div key={index} className="line-number">
+                    {index + 1}
+                  </div>
+                ))}
+              </div>
+              <textarea
+                ref={textareaRef}
+                className="note-textarea"
+                placeholder="Write your note here... Use ```language for code blocks. Supported: css, js, javascript, typescript, ts, html, json, python, py, go, rust, and more."
+                value={contentInput}
+                onChange={(e) => {
+                  handleContentChange(e.target.value);
+                  e.target.style.height = "auto";
+                  e.target.style.height = e.target.scrollHeight + "px";
+                }}
+                onBlur={handleContentBlur}
+                spellCheck={true}
+                data-gramm="false"
+                data-gramm_editor="false"
+                data-enable-grammarly="false"
+              />
+            </div>
+          ) : (
+            <div
+              className="note-display-mode"
+              onClick={() => setIsEditMode(true)}
+            >
+              {parseContentBlocks(contentInput).map((block, index) => (
+                <div key={index} className="note-content-block">
+                  {block.type === "text" ? (
+                    <pre className="note-text-block">{block.content}</pre>
+                  ) : (
+                    <div className="note-code-block-wrapper">
+                      <div className="note-code-block-header">
+                        <span className="note-code-language">
+                          {block.language}
+                        </span>
+                        <button
+                          className="note-code-copy-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyCodeBlock(block.content, index);
+                          }}
+                          title="Copy code"
+                        >
+                          {copiedBlockIndex === index ? (
+                            <Check size={14} />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                        </button>
+                      </div>
+                      <SyntaxHighlighter
+                        language={block.language}
+                        style={
+                          theme === "dark" ? cursorDarkTheme : cursorLightTheme
+                        }
+                        customStyle={{
+                          margin: 0,
+                          borderRadius: "0 0 4px 4px",
+                          fontSize: "13px",
+                        }}
+                        showLineNumbers={true}
+                        wrapLines={true}
+                      >
+                        {block.content}
+                      </SyntaxHighlighter>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-            <textarea
-              ref={textareaRef}
-              className="note-textarea"
-              placeholder="Write your note here... (plain text only)"
-              value={contentInput}
-              onChange={(e) => {
-                handleContentChange(e.target.value);
-                e.target.style.height = "auto";
-                e.target.style.height = e.target.scrollHeight + "px";
-              }}
-              onBlur={handleContentBlur}
-              spellCheck={true}
-              data-gramm="false"
-              data-gramm_editor="false"
-              data-enable-grammarly="false"
-            />
-          </div>
+          )}
         </div>
       )}
     </div>

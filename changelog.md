@@ -4,6 +4,49 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.2.1] - 2025-01-21
+
+### Added
+
+- **Cursor Dark Theme syntax highlighting** for code blocks in notes
+  - Exact color matching with Cursor editor's Dark+ theme
+  - Custom CSS rules with `!important` to override default styles
+  - Theme-aware colors for both dark and light modes
+  - Comprehensive token support (comments, keywords, strings, functions, variables, types, etc.)
+  - Enhanced placeholder text showing all supported languages
+  - **Code Blocks section in Keyboard Shortcuts modal**:
+    - Copyable language syntax buttons for CSS, JavaScript, TypeScript, HTML, JSON, Python, Go, Rust
+    - Alternative syntax options (e.g., `js vs `javascript)
+    - Click-to-copy functionality with visual feedback
+    - Mobile-responsive grid layout
+    - Accessible via ? key or keyboard shortcuts button
+
+### Changed
+
+- **Updated syntax highlighting implementation**:
+  - Replaced oneDark/oneLight themes with custom Cursor Dark Theme colors
+  - Added comprehensive CSS token styling for accurate color reproduction
+  - Improved language detection and tokenization
+  - Enhanced user experience with better color contrast and readability
+
+## [2.2.0] - 2025-01-21
+
+### Added
+
+- **Code syntax highlighting in notes** with markdown-style code blocks
+  - Write code blocks using triple backticks with language identifiers (e.g., ````js`)
+  - Supports JavaScript, TypeScript, CSS, HTML, JSON, Python, Go, and Rust
+  - Display mode shows syntax-highlighted code with proper theme support
+  - Edit mode provides plain textarea for writing markdown-style code blocks
+  - Individual copy buttons for each code block
+  - Copy all button copies entire note content as plain text
+  - Click anywhere in display mode to enter edit mode
+  - Edit button in note header for quick access
+  - Line numbers in code blocks for easy reference
+  - Theme-aware syntax highlighting (oneDark for dark mode, oneLight for light mode)
+  - Clean code block headers showing language name
+  - Security-first approach with plain text storage and client-side rendering only
+
 ## [2.1.3] - 2025-01-21
 
 ### Added

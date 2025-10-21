@@ -152,7 +152,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Space/e to mark todo as done
     - z to undo last completion
     - / or c to focus input
-    - ? to show keyboard shortcuts modal
+    - ? to show keyboard shortcuts modal with code block syntax reference
   - Hovered todo tracking for keyboard shortcuts
   - Auto-select hovered todo when not explicitly navigating
   - Clerk authentication integration:
@@ -265,16 +265,43 @@ This document describes the structure and purpose of each file in the Better Tod
   - Replaces browser default confirm/alert dialogs
   - Responsive width for mobile compatibility
 
-- `NotesSection.tsx` - Daily notes feature with:
+- `KeyboardShortcutsModal.tsx` - Keyboard shortcuts reference modal with:
+  - Comprehensive keyboard shortcuts documentation
+  - **Code Blocks section** with copyable language syntax:
+    - CSS, JavaScript, TypeScript, HTML, JSON, Python, Go, Rust
+    - Click-to-copy buttons for each language syntax
+    - Alternative syntax options (e.g., `js vs `javascript)
+    - Visual feedback with copy/check icons
+    - Mobile-responsive grid layout
+  - Organized by categories (Navigation, Todo Management, Search, Pomodoro Timer)
+  - Accessible via ? key or keyboard shortcuts button
+  - Theme-aware styling matching app design
+
+- `NotesSection.tsx` - Daily notes feature with Cursor Dark Theme syntax highlighting:
   - Multiple notes per date with drag-and-drop reordering using @dnd-kit
   - Each note has editable title (click to edit, auto-save on blur)
+  - **Code syntax highlighting** with Cursor Dark Theme colors:
+    - Write code blocks using triple backticks with language identifiers (e.g., ``css`, ``js`, ````ts`)
+    - Supports JavaScript, TypeScript, CSS, HTML, JSON, Python, Go, Rust, and more
+    - Uses exact Cursor Dark Theme colors for accurate editor-like appearance
+    - Theme-aware (dark/light mode) with proper color switching
+    - Display mode shows syntax-highlighted code with proper theme support
+    - Edit mode provides plain textarea for writing markdown-style code blocks
+    - Individual copy buttons for each code block with confirmation
+    - Custom Cursor Dark Theme syntax highlighting with exact color matching
+    - Clean code block headers showing language name
+    - Line numbers in code blocks for easy reference
+    - Security-first with plain text storage and client-side rendering only
+  - Dual-mode rendering (edit/display) with click-to-edit functionality
+  - Edit button in note header for quick access to edit mode
   - Auto-focus content area after naming note (Enter or Tab)
   - Automatically expands collapsed notes when focusing content
   - Collapsible notes (expand/collapse individual notes)
-  - Line numbers on the left (not copyable when copying text, code editor style)
+  - Line numbers on the left in edit mode (not copyable, code editor style)
   - Auto-expanding textarea with debounced auto-save (500ms delay)
-  - Copy button per note to copy content to clipboard
+  - Copy all button to copy entire note content as plain text
   - Delete button with custom confirmation dialog
+  - Pin to top functionality for important notes
   - Add Note button (+ icon) to create new notes
   - Clean, minimal design matching app aesthetic
   - Clerk authentication integration:

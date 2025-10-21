@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cursor Dark Theme Colors</title>
+    <link rel="stylesheet" href="cursor-dark-theme-colors.css" />
+    <style>
+      /* Import the site's theme system */
+      :root[data-theme="dark"] {
+        --bg-primary: #2e3842;
+        --bg-secondary: #252a32;
+        --bg-hover: #3a4350;
+        --text-primary: #ffffff;
+        --text-secondary: #b8bcc2;
+        --border-color: #3a4350;
+        --accent: #4a9eff;
+      }
+
+      :root[data-theme="light"] {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f7f7f7;
+        --bg-hover: #e8e8e8;
+        --text-primary: #000000;
+        --text-secondary: #666666;
+        --border-color: #d1d1d6;
+        --accent: #007aff;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+          "Ubuntu", "Cantarell", sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.6;
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .theme-toggle {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+
+      .theme-toggle:hover {
+        background: var(--bg-hover);
+      }
+
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+      }
+
+      .section {
+        margin-bottom: 3rem;
+      }
+
+      .section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: var(--accent);
+      }
+
+      .color-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .color-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      .color-card:hover {
+        background: var(--bg-hover);
+        transform: translateY(-2px);
+      }
+
+      .color-preview {
+        width: 100%;
+        height: 60px;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+        border: 1px solid var(--border-color);
+      }
+
+      .color-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+      }
+
+      .color-value {
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        background: var(--bg-primary);
+        padding: 0.25rem 0.5rem;
+        border-radius: 3px;
+        display: inline-block;
+      }
+
+      .syntax-demo {
+        background: var(--cursor-bg-editor);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 14px;
+        line-height: 1.5;
+        overflow-x: auto;
+      }
+
+      .syntax-line {
+        margin-bottom: 0.5rem;
+      }
+
+      .keyword {
+        color: var(--cursor-syntax-keyword);
+      }
+      .string {
+        color: var(--cursor-syntax-string);
+      }
+      .comment {
+        color: var(--cursor-syntax-comment);
+      }
+      .function {
+        color: var(--cursor-syntax-function);
+      }
+      .variable {
+        color: var(--cursor-syntax-variable);
+      }
+      .type {
+        color: var(--cursor-syntax-type);
+      }
+      .number {
+        color: var(--cursor-syntax-number);
+      }
+      .operator {
+        color: var(--cursor-syntax-operator);
+      }
+      .constant {
+        color: var(--cursor-syntax-constant);
+      }
+      .attribute {
+        color: var(--cursor-syntax-attribute);
+      }
+      .tag {
+        color: var(--cursor-syntax-tag);
+      }
+      .class {
+        color: var(--cursor-syntax-class);
+      }
+      .property {
+        color: var(--cursor-syntax-property);
+      }
+      .parameter {
+        color: var(--cursor-syntax-parameter);
+      }
+      .decorator {
+        color: var(--cursor-syntax-decorator);
+      }
+      .builtin {
+        color: var(--cursor-syntax-builtin);
+      }
+      .regex {
+        color: var(--cursor-syntax-regex);
+      }
+      .escape {
+        color: var(--cursor-syntax-escape);
+      }
+      .format {
+        color: var(--cursor-syntax-format);
+      }
+      .heading {
+        color: var(--cursor-syntax-heading);
+      }
+      .strong {
+        color: var(--cursor-syntax-strong);
+        font-weight: bold;
+      }
+      .emphasis {
+        color: var(--cursor-syntax-emphasis);
+        font-style: italic;
+      }
+      .markup {
+        color: var(--cursor-syntax-markup);
+      }
+      .link {
+        color: var(--cursor-syntax-link);
+      }
+      .quote {
+        color: var(--cursor-syntax-quote);
+      }
+      .raw {
+        color: var(--cursor-syntax-raw);
+      }
+      .code {
+        color: var(--cursor-syntax-code);
+      }
+      .table {
+        color: var(--cursor-syntax-table);
+      }
+      .definition {
+        color: var(--cursor-syntax-definition);
+      }
+      .name {
+        color: var(--cursor-syntax-name);
+      }
+      .literal {
+        color: var(--cursor-syntax-literal);
+      }
+      .boolean {
+        color: var(--cursor-syntax-literal-boolean);
+      }
+
+      .usage-example {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+      }
+
+      .usage-example h3 {
+        margin-bottom: 1rem;
+        color: var(--accent);
+      }
+
+      .usage-example code {
+        background: var(--bg-primary);
+        padding: 0.25rem 0.5rem;
+        border-radius: 3px;
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 0.9rem;
+      }
+
+      .usage-example pre {
+        background: var(--cursor-bg-editor);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 1rem;
+        overflow-x: auto;
+        margin: 1rem 0;
+      }
+
+      .usage-example pre code {
+        background: none;
+        padding: 0;
+      }
+
+      .footer {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-color);
+        text-align: center;
+        color: var(--text-secondary);
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem;
+        }
+
+        .color-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .header {
+          flex-direction: column;
+          gap: 1rem;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div>
+          <h1>Cursor Dark Theme Colors</h1>
+          <p class="subtitle">
+            Complete color palette for Cursor editor's Dark+ theme
+          </p>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">
+          <span id="theme-icon">🌙</span> Toggle Theme
+        </button>
+      </div>
+
+      <div class="section">
+        <h2>Background Colors</h2>
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-preview cursor-bg-editor"></div>
+            <div class="color-name">Editor Background</div>
+            <div class="color-value">#1e1e1e</div>
+          </div>
+          <div class="color-card">
+            <div class="color-preview cursor-bg-sidebar"></div>
+            <div class="color-name">Sidebar Background</div>
+            <div class="color-value">#252526</div>
+          </div>
+          <div class="color-card">
+            <div class="color-preview cursor-bg-panel"></div>
+            <div class="color-name">Panel Background</div>
+            <div class="color-value">#1e1e1e</div>
+          </div>
+          <div class="color-card">
+            <div class="color-preview cursor-bg-hover"></div>
+            <div class="color-name">Hover Background</div>
+            <div class="color-value">#2a2d2e</div>
+          </div>
+          <div class="color-card">
+            <div class="color-preview cursor-bg-selection"></div>
+            <div class="color-name">Selection Background</div>
+            <div class="color-value">#264f78</div>
+          </div>
+          <div class="color-card">
+            <div class="color-preview cursor-bg-line-highlight"></div>
+            <div class="color-name">Line Highlight</div>
+            <div class="color-value">#2d2d30</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Text Colors</h2>
+        <div class="color-grid">
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-text-foreground)"
+            ></div>
+            <div class="color-name">Foreground Text</div>
+            <div class="color-value">#d4d4d4</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-text-comments)"
+            ></div>
+            <div class="color-name">Comments</div>
+            <div class="color-value">#6a9955</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-text-keywords)"
+            ></div>
+            <div class="color-name">Keywords</div>
+            <div class="color-value">#569cd6</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-text-strings)"
+            ></div>
+            <div class="color-name">Strings</div>
+            <div class="color-value">#ce9178</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-text-numbers)"
+            ></div>
+            <div class="color-name">Numbers</div>
+            <div class="color-value">#b5cea8</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-text-functions)"
+            ></div>
+            <div class="color-name">Functions</div>
+            <div class="color-value">#dcdcaa</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-text-variables)"
+            ></div>
+            <div class="color-name">Variables</div>
+            <div class="color-value">#9cdcfe</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-text-types)"
+            ></div>
+            <div class="color-name">Types</div>
+            <div class="color-value">#4ec9b0</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-text-operators)"
+            ></div>
+            <div class="color-name">Operators</div>
+            <div class="color-value">#d4d4d4</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>UI Colors</h2>
+        <div class="color-grid">
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-ui-bracket-matching)"
+            ></div>
+            <div class="color-name">Bracket Matching</div>
+            <div class="color-value">#ffd700</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-ui-error)"
+            ></div>
+            <div class="color-name">Error</div>
+            <div class="color-value">#f44747</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-ui-warning)"
+            ></div>
+            <div class="color-name">Warning</div>
+            <div class="color-value">#ffcc02</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-ui-info)"
+            ></div>
+            <div class="color-name">Info</div>
+            <div class="color-value">#3794ff</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-ui-border)"
+            ></div>
+            <div class="color-name">Border</div>
+            <div class="color-value">#3c3c3c</div>
+          </div>
+          <div class="color-card">
+            <div
+              class="color-preview"
+              style="background: var(--cursor-ui-scrollbar)"
+            ></div>
+            <div class="color-name">Scrollbar</div>
+            <div class="color-value">#424242</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Syntax Highlighting Demo</h2>
+        <p>
+          This section demonstrates how different programming languages are
+          highlighted in the Cursor Dark Theme.
+        </p>
+
+        <h3>JavaScript</h3>
+        <div class="syntax-demo">
+          <div class="syntax-line">
+            <span class="comment"
+              >// JavaScript function with syntax highlighting</span
+            >
+          </div>
+          <div class="syntax-line">
+            <span class="keyword">const</span>
+            <span class="variable">message</span>
+            <span class="operator">=</span>
+            <span class="string">"Hello, World!"</span
+            ><span class="punctuation">;</span>
+          </div>
+          <div class="syntax-line">
+            <span class="function">console</span
+            ><span class="punctuation">.</span><span class="function">log</span
+            ><span class="punctuation">(</span
+            ><span class="variable">message</span
+            ><span class="punctuation">);</span>
+          </div>
+          <div class="syntax-line">
+            <span class="keyword">function</span>
+            <span class="function">greet</span><span class="punctuation">(</span
+            ><span class="variable">name</span
+            ><span class="punctuation">:</span> <span class="type">string</span
+            ><span class="punctuation">)</span>
+            <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="keyword">return</span>
+            <span class="string"
+              >`Hello, <span class="variable">${name}</span>!`</span
+            ><span class="punctuation">;</span>
+          </div>
+          <div class="syntax-line">
+            <span class="punctuation">}</span>
+          </div>
+        </div>
+
+        <h3>TypeScript</h3>
+        <div class="syntax-demo">
+          <div class="syntax-line">
+            <span class="keyword">interface</span>
+            <span class="class">User</span> <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">id</span
+            ><span class="punctuation">:</span> <span class="type">number</span
+            ><span class="punctuation">;</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">name</span
+            ><span class="punctuation">:</span> <span class="type">string</span
+            ><span class="punctuation">;</span>
+          </div>
+          <div class="syntax-line">
+            <span class="punctuation">}</span>
+          </div>
+          <div class="syntax-line">
+            <span class="keyword">const</span> <span class="variable">user</span
+            ><span class="punctuation">:</span> <span class="type">User</span>
+            <span class="operator">=</span> <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">id</span
+            ><span class="punctuation">:</span> <span class="number">1</span
+            ><span class="punctuation">,</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">name</span
+            ><span class="punctuation">:</span>
+            <span class="string">"Alice"</span
+            ><span class="punctuation">,</span>
+          </div>
+          <div class="syntax-line">
+            <span class="punctuation">}</span><span class="punctuation">;</span>
+          </div>
+        </div>
+
+        <h3>CSS</h3>
+        <div class="syntax-demo">
+          <div class="syntax-line">
+            <span class="tag">body</span> <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">font-family</span
+            ><span class="punctuation">:</span>
+            <span class="string">'Arial'</span
+            ><span class="punctuation">,</span>
+            <span class="string">sans-serif</span
+            ><span class="punctuation">;</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">background-color</span
+            ><span class="punctuation">:</span>
+            <span class="variable">var(--cursor-bg-editor)</span
+            ><span class="punctuation">;</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="comment">/* This is a comment */</span>
+          </div>
+          <div class="syntax-line">
+            <span class="punctuation">}</span>
+          </div>
+          <div class="syntax-line">
+            <span class="tag">.container</span>
+            <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">margin</span
+            ><span class="punctuation">:</span>
+            <span class="number">20px</span> <span class="keyword">auto</span
+            ><span class="punctuation">;</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">padding</span
+            ><span class="punctuation">:</span> <span class="number">15px</span
+            ><span class="punctuation">;</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">border</span
+            ><span class="punctuation">:</span> <span class="number">1px</span>
+            <span class="keyword">solid</span>
+            <span class="variable">var(--cursor-ui-border)</span
+            ><span class="punctuation">;</span>
+          </div>
+          <div class="syntax-line">
+            <span class="punctuation">}</span>
+          </div>
+        </div>
+
+        <h3>HTML</h3>
+        <div class="syntax-demo">
+          <div class="syntax-line">
+            <span class="tag"
+              >&lt;!DOCTYPE <span class="keyword">html</span>&gt;</span
+            >
+          </div>
+          <div class="syntax-line">
+            <span class="tag"
+              >&lt;<span class="keyword">html</span>
+              <span class="attribute">lang</span>=<span class="string"
+                >"en"</span
+              >&gt;</span
+            >
+          </div>
+          <div class="syntax-line">
+            <span class="tag">&lt;<span class="keyword">head</span>&gt;</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="tag"
+              >&lt;<span class="keyword">meta</span>
+              <span class="attribute">charset</span>=<span class="string"
+                >"UTF-8"</span
+              >&gt;</span
+            >
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="tag"
+              >&lt;<span class="keyword">title</span>&gt;</span
+            ><span class="string">Page Title</span
+            ><span class="tag"
+              >&lt;/<span class="keyword">title</span>&gt;</span
+            >
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="comment"
+              >&lt;!-- This is an HTML comment --&gt;</span
+            >
+          </div>
+          <div class="syntax-line">
+            <span class="tag">&lt;/<span class="keyword">head</span>&gt;</span>
+          </div>
+          <div class="syntax-line">
+            <span class="tag">&lt;<span class="keyword">body</span>&gt;</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="tag"
+              >&lt;<span class="keyword">h1</span>&gt;</span
+            ><span class="string">Welcome</span
+            ><span class="tag">&lt;/<span class="keyword">h1</span>&gt;</span>
+          </div>
+          <div class="syntax-line">
+            <span class="tag">&lt;/<span class="keyword">body</span>&gt;</span>
+          </div>
+          <div class="syntax-line">
+            <span class="tag">&lt;/<span class="keyword">html</span>&gt;</span>
+          </div>
+        </div>
+
+        <h3>JSON</h3>
+        <div class="syntax-demo">
+          <div class="syntax-line">
+            <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">"name"</span
+            ><span class="punctuation">:</span>
+            <span class="string">"example-project"</span
+            ><span class="punctuation">,</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">"version"</span
+            ><span class="punctuation">:</span>
+            <span class="string">"1.0.0"</span
+            ><span class="punctuation">,</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">"private"</span
+            ><span class="punctuation">:</span> <span class="boolean">true</span
+            ><span class="punctuation">,</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">"scripts"</span
+            ><span class="punctuation">:</span>
+            <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="property">"start"</span
+            ><span class="punctuation">:</span>
+            <span class="string">"node index.js"</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="punctuation">}</span
+            ><span class="punctuation">,</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="comment"
+              >// This is a JSON comment (non-standard but often
+              supported)</span
+            >
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="property">"dependencies"</span
+            ><span class="punctuation">:</span>
+            <span class="punctuation">[</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"express"</span
+            ><span class="punctuation">,</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"lodash"</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;<span class="punctuation">]</span>
+          </div>
+          <div class="syntax-line">
+            <span class="punctuation">}</span>
+          </div>
+        </div>
+
+        <h3>Python</h3>
+        <div class="syntax-demo">
+          <div class="syntax-line">
+            <span class="comment"># This is a Python comment</span>
+          </div>
+          <div class="syntax-line">
+            <span class="keyword">def</span>
+            <span class="function">factorial</span
+            ><span class="punctuation">(</span><span class="variable">n</span
+            ><span class="punctuation">:</span> <span class="type">int</span
+            ><span class="punctuation">)</span>
+            <span class="punctuation">-&gt;</span> <span class="type">int</span
+            ><span class="punctuation">:</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span>
+            <span class="variable">n</span> <span class="operator">==</span>
+            <span class="number">0</span><span class="punctuation">:</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+              class="keyword"
+              >return</span
+            >
+            <span class="number">1</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span
+            ><span class="punctuation">:</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+              class="keyword"
+              >return</span
+            >
+            <span class="variable">n</span> <span class="operator">*</span>
+            <span class="function">factorial</span
+            ><span class="punctuation">(</span><span class="variable">n</span>
+            <span class="operator">-</span> <span class="number">1</span
+            ><span class="punctuation">)</span>
+          </div>
+          <div class="syntax-line">
+            <span class="variable">result</span>
+            <span class="operator">=</span>
+            <span class="function">factorial</span
+            ><span class="punctuation">(</span><span class="number">5</span
+            ><span class="punctuation">)</span>
+          </div>
+          <div class="syntax-line">
+            <span class="function">print</span><span class="punctuation">(</span
+            ><span class="string"
+              >f"The factorial of 5 is
+              <span class="variable">{result}</span>"</span
+            ><span class="punctuation">)</span>
+          </div>
+        </div>
+
+        <h3>Go</h3>
+        <div class="syntax-demo">
+          <div class="syntax-line">
+            <span class="keyword">package</span>
+            <span class="variable">main</span>
+          </div>
+          <div class="syntax-line">
+            <span class="keyword">import</span>
+            <span class="string">"fmt"</span>
+          </div>
+          <div class="syntax-line">
+            <span class="comment">// main function is the entry point</span>
+          </div>
+          <div class="syntax-line">
+            <span class="keyword">func</span> <span class="function">main</span
+            ><span class="punctuation">()</span>
+            <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="variable">name</span>
+            <span class="operator">:=</span>
+            <span class="string">"Gopher"</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">fmt</span
+            ><span class="punctuation">.</span
+            ><span class="function">Println</span
+            ><span class="punctuation">(</span
+            ><span class="string">"Hello,"</span
+            ><span class="punctuation">,</span>
+            <span class="variable">name</span><span class="punctuation">)</span>
+          </div>
+          <div class="syntax-line">
+            <span class="punctuation">}</span>
+          </div>
+        </div>
+
+        <h3>Rust</h3>
+        <div class="syntax-demo">
+          <div class="syntax-line">
+            <span class="comment">// This is a Rust comment</span>
+          </div>
+          <div class="syntax-line">
+            <span class="keyword">fn</span> <span class="function">main</span
+            ><span class="punctuation">()</span>
+            <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>
+            <span class="variable">number</span>
+            <span class="operator">=</span> <span class="number">10</span
+            ><span class="punctuation">;</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span>
+            <span class="variable">number</span>
+            <span class="operator">&lt;</span> <span class="number">5</span>
+            <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+              class="function"
+              >println!</span
+            ><span class="punctuation">(</span
+            ><span class="string">"Condition was true"</span
+            ><span class="punctuation">);</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="punctuation">}</span>
+            <span class="keyword">else</span> <span class="punctuation">{</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+              class="function"
+              >println!</span
+            ><span class="punctuation">(</span
+            ><span class="string">"Condition was false"</span
+            ><span class="punctuation">);</span>
+          </div>
+          <div class="syntax-line">
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="punctuation">}</span>
+          </div>
+          <div class="syntax-line">
+            <span class="punctuation">}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Usage Examples</h2>
+        <div class="usage-example">
+          <h3>CSS Custom Properties</h3>
+          <p>Use these CSS custom properties in your stylesheets:</p>
+          <pre><code>/* Background colors */
+background-color: var(--cursor-bg-editor);
+background-color: var(--cursor-bg-sidebar);
+
+/* Text colors */
+color: var(--cursor-text-foreground);
+color: var(--cursor-text-keywords);
+
+/* Syntax highlighting */
+.keyword { color: var(--cursor-syntax-keyword); }
+.string { color: var(--cursor-syntax-string); }
+.comment { color: var(--cursor-syntax-comment); }</code></pre>
+        </div>
+
+        <div class="usage-example">
+          <h3>JavaScript/TypeScript</h3>
+          <p>Access colors programmatically:</p>
+          <pre><code>// Get computed style values
+const root = document.documentElement;
+const editorBg = getComputedStyle(root)
+  .getPropertyValue('--cursor-bg-editor');
+
+// Set colors dynamically
+root.style.setProperty('--cursor-bg-editor', '#1a1a1a');</code></pre>
+        </div>
+
+        <div class="usage-example">
+          <h3>VS Code Theme Integration</h3>
+          <p>These colors match VS Code's "Dark+" theme used by Cursor:</p>
+          <pre><code>// In your VS Code theme JSON
+{
+  "colors": {
+    "editor.background": "#1e1e1e",
+    "editor.foreground": "#d4d4d4",
+    "editor.selectionBackground": "#264f78"
+  },
+  "tokenColors": [
+    {
+      "scope": ["keyword"],
+      "settings": { "foreground": "#569cd6" }
+    },
+    {
+      "scope": ["string"],
+      "settings": { "foreground": "#ce9178" }
+    }
+  ]
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>Cursor Dark Theme Colors - Based on VS Code's "Dark+" theme</p>
+        <p>Use these colors to create consistent editor experiences</p>
+      </div>
+    </div>
+
+    <script>
+      function toggleTheme() {
+        const root = document.documentElement;
+        const currentTheme = root.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+        root.setAttribute("data-theme", newTheme);
+
+        const themeIcon = document.getElementById("theme-icon");
+        themeIcon.textContent = newTheme === "dark" ? "🌙" : "☀️";
+
+        // Store preference
+        localStorage.setItem("theme", newTheme);
+      }
+
+      // Initialize theme from localStorage
+      function initTheme() {
+        const savedTheme = localStorage.getItem("theme") || "dark";
+        const root = document.documentElement;
+        root.setAttribute("data-theme", savedTheme);
+
+        const themeIcon = document.getElementById("theme-icon");
+        themeIcon.textContent = savedTheme === "dark" ? "🌙" : "☀️";
+      }
+
+      // Initialize on load
+      initTheme();
+    </script>
+  </body>
+</html>

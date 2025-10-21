@@ -1,5 +1,7 @@
 import { createPortal } from "react-dom";
 import { Cross2Icon } from "@radix-ui/react-icons";
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -10,7 +12,30 @@ export function KeyboardShortcutsModal({
   isOpen,
   onClose,
 }: KeyboardShortcutsModalProps) {
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
   if (!isOpen) return null;
+
+  const handleCopyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  const codeLanguages = [
+    { code: "```css", label: "CSS" },
+    { code: "```js", label: "JavaScript", alt: "```javascript" },
+    { code: "```ts", label: "TypeScript", alt: "```typescript" },
+    { code: "```html", label: "HTML" },
+    { code: "```json", label: "JSON" },
+    { code: "```py", label: "Python", alt: "```python" },
+    { code: "```go", label: "Go" },
+    { code: "```rust", label: "Rust" },
+  ];
 
   const shortcuts = [
     {
@@ -50,6 +75,12 @@ export function KeyboardShortcutsModal({
       ],
     },
   ];
+
+  const codeBlocksInfo = {
+    category: "Code Blocks in Notes",
+    description:
+      "Use ```language to create syntax-highlighted code blocks. Click to copy:",
+  };
 
   return createPortal(
     <div className="keyboard-shortcuts-overlay" onClick={onClose}>
@@ -94,6 +125,54 @@ export function KeyboardShortcutsModal({
               </div>
             </div>
           ))}
+
+          {/* Code Blocks Section */}
+          <div className="keyboard-shortcuts-category">
+            <h3>{codeBlocksInfo.category}</h3>
+            <p className="keyboard-shortcuts-code-info">
+              {codeBlocksInfo.description}
+            </p>
+            <div className="keyboard-shortcuts-code-grid">
+              {codeLanguages.map((lang) => (
+                <div key={lang.code} className="keyboard-shortcuts-code-item">
+                  <div className="keyboard-shortcuts-code-label">
+                    {lang.label}
+                  </div>
+                  <div className="keyboard-shortcuts-code-options">
+                    <button
+                      className="keyboard-shortcuts-code-button"
+                      onClick={() => handleCopyCode(lang.code)}
+                      title={`Copy ${lang.code}`}
+                    >
+                      <code>{lang.code}</code>
+                      {copiedCode === lang.code ? (
+                        <Check size={14} />
+                      ) : (
+                        <Copy size={14} />
+                      )}
+                    </button>
+                    {lang.alt && (
+                      <>
+                        <span className="keyboard-shortcuts-code-or">or</span>
+                        <button
+                          className="keyboard-shortcuts-code-button"
+                          onClick={() => handleCopyCode(lang.alt)}
+                          title={`Copy ${lang.alt}`}
+                        >
+                          <code>{lang.alt}</code>
+                          {copiedCode === lang.alt ? (
+                            <Check size={14} />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>,
