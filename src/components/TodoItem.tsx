@@ -22,6 +22,7 @@ interface TodoItemProps {
   onMoveToTomorrow: () => void;
   onMoveToCustomDate: (date: string) => void;
   onHoverChange?: (id: Id<"todos"> | null) => void;
+  openMenuTrigger?: number;
 }
 
 export function TodoItem({
@@ -37,6 +38,7 @@ export function TodoItem({
   onMoveToTomorrow,
   onMoveToCustomDate,
   onHoverChange,
+  openMenuTrigger,
 }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
@@ -62,6 +64,25 @@ export function TodoItem({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Auto-focus empty subtasks on creation
+  useEffect(() => {
+    if (content === "" && !isEditing) {
+      setIsEditing(true);
+    }
+  }, [content, isEditing]);
+
+  // Open menu when triggered by keyboard shortcut
+  useEffect(() => {
+    if (openMenuTrigger && menuButtonRef.current) {
+      const rect = menuButtonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+      });
+      setShowMenu(true);
+    }
+  }, [openMenuTrigger]);
 
   const updateTodo = useMutation(api.todos.updateTodo);
   const deleteTodo = useMutation(api.todos.deleteTodo);
@@ -119,7 +140,7 @@ export function TodoItem({
     try {
       await createSubtask({
         parentId: id,
-        content: "New subtask",
+        content: "",
       });
       setShowMenu(false);
     } catch (error) {

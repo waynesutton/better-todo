@@ -30,12 +30,24 @@ export function KeyboardShortcutsModal({
         { key: "Tab", description: "Focus first todo from input" },
         { key: "Space or e", description: "Mark focused todo as done" },
         { key: "p", description: "Pin/unpin hovered todo" },
+        { key: "s", description: "Add subtask to focused todo" },
+        { key: "m", description: "Open menu for focused todo" },
         { key: "z", description: "Undo last mark as done" },
       ],
     },
     {
       category: "Search",
       items: [{ key: "⌘ + K", description: "Open search modal" }],
+    },
+    {
+      category: "Pomodoro Timer",
+      items: [
+        {
+          key: "f",
+          description: "Enter full screen (when timer modal is open)",
+        },
+        { key: "Esc", description: "Exit full screen / Close timer modal" },
+      ],
     },
   ];
 

@@ -26,6 +26,9 @@ An open source, real-time to-do list that never falls out of sync — built on C
 - **Archive dates** - hide completed days while preserving data
 - **Todo count badges** - see uncompleted todo counts next to each date in sidebar
 - **Pin todos** - pin important todos with visual pin icons and sort them to the top
+- **Custom folders** - organize dates into collapsible folders with custom names
+- **Auto-grouped months** - completed months automatically group into collapsible sections
+- **Pomodoro timer** - built-in productivity timer with customizable work/break intervals
 
 ### UI/UX
 
@@ -151,8 +154,20 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
 - **Custom labels** - add text labels to dates (e.g., "Sprint Planning", "Weekly Review")
   - Labels display instead of dates but preserve chronological order
   - Add, edit, or remove labels via the three-dot menu
+- **Custom folders** - organize dates into collapsible folders with custom names
+  - Create folders via "+ Add Folder" button (authenticated users only)
+  - Add dates to folders via three-dot menu "Add to Folder..." option
+  - Folders with dates appear between active dates and archived section
+  - "Manage Folders" section below archived list shows all folders (including empty ones)
+  - Rename, archive, and delete folders via three-dot menu in each section
+  - Empty folders can be deleted from "Manage Folders" section
+- **Auto-grouped months** - completed months automatically group into collapsible sections
+  - Named by month and year (e.g., "January 2025")
+  - Only displays after a full month has passed
+  - Archive, unarchive, and delete month groups
 - **Three-dot menu** next to dates with options to:
   - Add/edit/remove custom date label
+  - Add to Folder (when folders exist) or Remove from Folder
   - Copy all non-archived todos to tomorrow, previous/next day, or custom date
   - Archive the entire date
   - Delete the date and all its content (with confirmation)
@@ -196,6 +211,15 @@ At the bottom of each date's todo list:
 - **Click overlay** on mobile to close sidebar
 - **Scrollable dates** with custom styled scrollbar
 
+### Pomodoro Timer
+
+- **Built-in productivity timer** accessible from the sidebar footer
+- **Customizable intervals** - set work and break durations
+- **Visual timer display** with progress indication
+- **Sound notifications** for work/break transitions
+- **Session tracking** - see completed pomodoro sessions
+- **Focus mode** - minimize distractions during work sessions
+
 ### Themes
 
 Toggle between dark and light modes using the **half-moon icon** at the bottom of the sidebar (above the login link). The login/user icons automatically switch between dark and light variants based on the current theme.
@@ -205,7 +229,7 @@ Toggle between dark and light modes using the **half-moon icon** at the bottom o
 ```
 better-todo/
 ├── convex/                    # Backend functions and schema
-│   ├── schema.ts              # Database schema (todos + notes + users tables)
+│   ├── schema.ts              # Database schema (todos + notes + users + folders + monthGroups tables)
 │   ├── auth.config.ts         # Clerk JWT authentication configuration
 │   ├── todos.ts               # Todo queries and mutations
 │   ├── notes.ts               # Notes queries and mutations
@@ -213,17 +237,23 @@ better-todo/
 │   ├── dates.ts               # Date operations and queries
 │   ├── dateLabels.ts          # Custom date labels
 │   ├── archivedDates.ts       # Archived dates
+│   ├── folders.ts             # Custom folder management
+│   ├── monthGroups.ts         # Auto-grouped month management
+│   ├── pomodoro.ts            # Pomodoro timer functionality
 │   ├── search.ts              # Search functionality
 │   └── http.ts                # HTTP routes for auth
 ├── src/
 │   ├── components/            # React components
 │   │   ├── TodoItem.tsx       # Individual todo component
 │   │   ├── TodoList.tsx       # Todo list with drag and drop
-│   │   ├── Sidebar.tsx        # Resizable sidebar with dates
+│   │   ├── Sidebar.tsx        # Resizable sidebar with dates, folders, and month groups
 │   │   ├── NotesSection.tsx   # Notes with line numbers
 │   │   ├── ArchiveSection.tsx # Archived todos
 │   │   ├── SearchModal.tsx    # Search modal
-│   │   └── ConfirmDialog.tsx  # Confirmation dialogs
+│   │   ├── PomodoroTimer.tsx  # Pomodoro productivity timer
+│   │   ├── ConfirmDialog.tsx  # Confirmation dialogs
+│   │   └── ui/
+│   │       └── tooltip.tsx    # Reusable tooltip component
 │   ├── context/
 │   │   └── ThemeContext.tsx   # Theme management
 │   ├── styles/

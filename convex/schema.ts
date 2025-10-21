@@ -103,4 +103,19 @@ export default defineSchema({
   })
     .index("by_user_and_month_group", ["userId", "monthGroupId"])
     .index("by_user_and_date", ["userId", "date"]),
+
+  // Pomodoro timer sessions
+  pomodoroSessions: defineTable({
+    userId: v.optional(v.string()), // Optional for guest users
+    startTime: v.number(), // Timestamp when timer started
+    duration: v.number(), // Timer duration in milliseconds (default 1500000 for 25 min)
+    remainingTime: v.number(), // Milliseconds remaining
+    status: v.union(
+      v.literal("idle"),
+      v.literal("running"),
+      v.literal("paused"),
+      v.literal("completed"),
+    ),
+    lastUpdated: v.number(), // Last update timestamp
+  }).index("by_user", ["userId"]),
 });

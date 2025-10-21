@@ -67,6 +67,7 @@ export function Sidebar({
   const [showFolderSelector, setShowFolderSelector] = useState<string | null>(
     null,
   );
+  const [showManageFolders, setShowManageFolders] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     date: string;
@@ -193,6 +194,11 @@ export function Sidebar({
   };
 
   const handleUnarchiveDate = async (date: string) => {
+    // Check if date is in a folder and remove it
+    const folderForDate = getFolderForDate(date);
+    if (folderForDate) {
+      await removeDateFromFolder({ date });
+    }
     await unarchiveDate({ date });
     setShowMenuForDate(null);
   };
@@ -369,7 +375,10 @@ export function Sidebar({
   );
 
   // Separate active and archived folders
-  const activeFolders = folders.filter((f) => !f.archived);
+  // Only show active folders that have dates
+  const activeFolders = folders.filter(
+    (f) => !f.archived && f.dates.length > 0,
+  );
   const archivedFolders = folders.filter((f) => f.archived);
 
   // Separate active and archived month groups
@@ -560,29 +569,30 @@ export function Sidebar({
                         Remove Label
                       </div>
                     )}
-                    {isAuthenticated && activeFolders.length > 0 && (
-                      <>
-                        {getFolderForDate(date) ? (
-                          <div
-                            className="menu-item"
-                            onClick={() => handleRemoveDateFromFolder(date)}
-                          >
-                            Remove from Folder
-                          </div>
-                        ) : (
-                          <div
-                            className="menu-item"
-                            onClick={() => {
-                              setShowFolderSelector(date);
-                              setShowDatePicker(null);
-                              setShowRenameInput(null);
-                            }}
-                          >
-                            Add to Folder...
-                          </div>
-                        )}
-                      </>
-                    )}
+                    {isAuthenticated &&
+                      folders.filter((f) => !f.archived).length > 0 && (
+                        <>
+                          {getFolderForDate(date) ? (
+                            <div
+                              className="menu-item"
+                              onClick={() => handleRemoveDateFromFolder(date)}
+                            >
+                              Remove from Folder
+                            </div>
+                          ) : (
+                            <div
+                              className="menu-item"
+                              onClick={() => {
+                                setShowFolderSelector(date);
+                                setShowDatePicker(null);
+                                setShowRenameInput(null);
+                              }}
+                            >
+                              Add to Folder...
+                            </div>
+                          )}
+                        </>
+                      )}
                     <div
                       className="menu-item"
                       onClick={() => handleCopyToTomorrow(date)}
@@ -690,18 +700,20 @@ export function Sidebar({
                   <div className="date-picker-modal folder-selector">
                     <div className="folder-selector-title">Select Folder</div>
                     <div className="folder-selector-list">
-                      {activeFolders.map((folder) => (
-                        <div
-                          key={folder._id}
-                          className="folder-selector-item"
-                          onClick={() =>
-                            handleAddDateToFolder(date, folder._id)
-                          }
-                        >
-                          <Folder size={14} />
-                          <span>{folder.name}</span>
-                        </div>
-                      ))}
+                      {folders
+                        .filter((f) => !f.archived)
+                        .map((folder) => (
+                          <div
+                            key={folder._id}
+                            className="folder-selector-item"
+                            onClick={() =>
+                              handleAddDateToFolder(date, folder._id)
+                            }
+                          >
+                            <Folder size={14} />
+                            <span>{folder.name}</span>
+                          </div>
+                        ))}
                     </div>
                     <button
                       className="date-picker-button cancel"
@@ -818,6 +830,7 @@ export function Sidebar({
                       onClick={() => {
                         setShowRenameFolderInput(folder._id);
                         setFolderNameInput(folder.name);
+                        setShowFolderMenu(null);
                       }}
                     >
                       Rename Folder
@@ -986,7 +999,9 @@ export function Sidebar({
           )}
 
           {/* Archived section */}
-          {archivedDates.length > 0 && (
+          {(archivedDates.length > 0 ||
+            archivedFolders.length > 0 ||
+            archivedMonthGroups.length > 0) && (
             <div className="sidebar-archive-section">
               <div
                 className="sidebar-archive-header"
@@ -997,7 +1012,13 @@ export function Sidebar({
                 >
                   ▼
                 </span>
-                <span>Archived ({archivedDates.length})</span>
+                <span>
+                  Archived (
+                  {archivedDates.length +
+                    archivedFolders.length +
+                    archivedMonthGroups.length}
+                  )
+                </span>
               </div>
               <div className="date-menu">
                 <button
@@ -1088,6 +1109,7 @@ export function Sidebar({
                               onClick={() => {
                                 setShowRenameFolderInput(folder._id);
                                 setFolderNameInput(folder.name);
+                                setShowFolderMenu(null);
                               }}
                             >
                               Rename Folder
@@ -1235,6 +1257,125 @@ export function Sidebar({
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Manage Folders section - shows all folders including empty ones */}
+          {isAuthenticated && folders.length > 0 && (
+            <div className="sidebar-archive-section">
+              <div
+                className="sidebar-archive-header"
+                onClick={() => setShowManageFolders(!showManageFolders)}
+              >
+                <span
+                  className={`collapse-icon ${showManageFolders ? "" : "collapsed"}`}
+                >
+                  ▼
+                </span>
+                <span>
+                  Manage Folders ({folders.filter((f) => !f.archived).length})
+                </span>
+              </div>
+              {showManageFolders && (
+                <div className="sidebar-archive-dates">
+                  {folders
+                    .filter((f) => !f.archived)
+                    .map((folder) => (
+                      <div key={folder._id} className="sidebar-archive-section">
+                        <div className="sidebar-archive-header">
+                          <span>{folder.name}</span>
+                          {folder.dates.length > 0 && (
+                            <span className="folder-date-count">
+                              ({folder.dates.length})
+                            </span>
+                          )}
+                        </div>
+                        <div className="date-menu">
+                          <button
+                            className="date-menu-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowFolderMenu(
+                                showFolderMenu === folder._id
+                                  ? null
+                                  : folder._id,
+                              );
+                            }}
+                          >
+                            ⋯
+                          </button>
+                          {showFolderMenu === folder._id && (
+                            <div className="date-menu-dropdown">
+                              <div
+                                className="menu-item"
+                                onClick={() => {
+                                  setShowRenameFolderInput(folder._id);
+                                  setFolderNameInput(folder.name);
+                                  setShowFolderMenu(null);
+                                }}
+                              >
+                                Rename Folder
+                              </div>
+                              <div
+                                className="menu-item"
+                                onClick={() => handleArchiveFolder(folder._id)}
+                              >
+                                Archive Folder
+                              </div>
+                              <div
+                                className="menu-item danger"
+                                onClick={() => handleDeleteFolder(folder._id)}
+                              >
+                                Delete Folder
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        {showRenameFolderInput === folder._id && (
+                          <div className="date-picker-modal">
+                            <input
+                              type="text"
+                              value={folderNameInput}
+                              onChange={(e) =>
+                                setFolderNameInput(e.target.value)
+                              }
+                              placeholder="Enter folder name..."
+                              className="date-picker-input"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (
+                                  e.key === "Enter" &&
+                                  folderNameInput.trim()
+                                ) {
+                                  handleRenameFolder(folder._id);
+                                } else if (e.key === "Escape") {
+                                  setShowRenameFolderInput(null);
+                                  setFolderNameInput("");
+                                }
+                              }}
+                            />
+                            <button
+                              className="date-picker-button"
+                              onClick={() => handleRenameFolder(folder._id)}
+                              disabled={!folderNameInput.trim()}
+                            >
+                              Save
+                            </button>
+                            <button
+                              className="date-picker-button cancel"
+                              onClick={() => {
+                                setShowRenameFolderInput(null);
+                                setFolderNameInput("");
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                 </div>
               )}
             </div>

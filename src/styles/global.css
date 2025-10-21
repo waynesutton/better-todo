@@ -440,7 +440,12 @@ body {
 }
 
 .date-item-container:hover {
-  background-color: var(--bg-hover);
+  background-color: rgba(86, 181, 219, 0.15);
+}
+
+/* Light mode date hover */
+:root[data-theme="light"] .date-item-container:hover {
+  background-color: rgba(86, 181, 219, 0.1);
 }
 
 .date-item-container.active {
@@ -540,24 +545,25 @@ body {
   position: absolute;
   right: 0;
   top: 100%;
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   min-width: 180px;
   z-index: 100;
   margin-top: 4px;
   font-size: var(--font-sidebar);
+  padding: 4px 0;
 }
 
 .date-picker-modal {
   position: absolute;
   right: 0;
   top: 100%;
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   padding: 12px;
   z-index: 101;
   margin-top: 4px;
@@ -624,8 +630,11 @@ body {
 
 .sidebar-archive-section > .date-menu {
   position: absolute;
-  right: 0;
-  top: 12px;
+  right: 6px;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
 
 .sidebar-archive-header {
@@ -640,15 +649,43 @@ body {
 }
 
 .sidebar-archive-header:hover {
-  background-color: var(--bg-hover);
+  background-color: rgba(86, 181, 219, 0.15);
 }
 
-.sidebar-archive-dates {
+/* Light mode folder hover */
+:root[data-theme="light"] .sidebar-archive-header:hover {
+  background-color: rgba(86, 181, 219, 0.1);
+}
+
+/* Apply reduced opacity to folder dates for visual hierarchy */
+/* Don't apply opacity to container - it affects dropdowns */
+
+.sidebar-archive-dates .date-item {
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-archive-dates .date-item-container:hover .date-item {
+  opacity: 0.9;
+}
+
+.sidebar-archive-dates .date-menu-button {
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-archive-dates .date-menu-button:hover {
+  opacity: 1;
+}
+
+/* Don't apply opacity to archived container - apply to children instead */
+
+.date-item-container.archived .date-item {
   opacity: 0.7;
 }
 
-.date-item-container.archived {
-  opacity: 0.8;
+.date-item-container.archived:hover .date-item {
+  opacity: 0.9;
 }
 
 /* Position dropdown above button for archived dates */
@@ -658,6 +695,22 @@ body {
   bottom: 100%;
   margin-top: 0;
   margin-bottom: 4px;
+}
+
+/* Position rename modal above folder section */
+.sidebar-archive-section .date-picker-modal {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+/* Folder date count badge */
+.folder-date-count {
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  opacity: 0.7;
 }
 
 /* Add Folder Button */
@@ -788,6 +841,10 @@ body {
 
 .folder-selector-item:hover {
   background-color: var(--bg-hover);
+}
+
+:root[data-theme="light"] .folder-selector-item:hover {
+  background-color: #f0f0f0;
 }
 
 .sidebar-footer {
@@ -1497,8 +1554,8 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 4px;
-  padding: 2px 0;
-  margin-bottom: 2px;
+  padding: 1px 0;
+  margin-bottom: 1px;
   transition: background-color 0.15s ease;
   width: 90%;
   max-width: 90%;
@@ -1631,7 +1688,8 @@ body {
 
 .todo-menu {
   position: relative;
-  padding: 6px 8px 6px 0;
+  padding: 1px 1px 1px 0;
+  /* padding: 6px 8px 6px 0; */
 }
 
 .menu-button {
@@ -1679,6 +1737,7 @@ body {
   cursor: pointer;
   border-bottom: 0px solid var(--border-color);
   color: var(--text-primary);
+  transition: background-color 0.15s ease;
 }
 
 .menu-item:last-child {
@@ -1693,6 +1752,10 @@ body {
   color: #e16d76;
 }
 
+.menu-item.danger:hover {
+  background-color: rgba(225, 109, 118, 0.1);
+}
+
 /* Light mode specific - darker text for better readability */
 :root[data-theme="light"] .menu-item {
   color: #1d1d1f;
@@ -1700,6 +1763,14 @@ body {
 
 :root[data-theme="light"] .menu-item.danger {
   color: #d5495d;
+}
+
+:root[data-theme="light"] .menu-item.danger:hover {
+  background-color: rgba(213, 73, 93, 0.08);
+}
+
+:root[data-theme="light"] .menu-item:hover {
+  background-color: #f0f0f0;
 }
 
 /* Markdown rendering */
@@ -2827,5 +2898,362 @@ body {
 
   .keyboard-shortcuts-key {
     margin-right: 0;
+  }
+}
+
+/* Pomodoro Timer Styles */
+.pomodoro-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+}
+
+.pomodoro-countdown {
+  font-family:
+    "SF Mono", "Monaco", "Inconsolata", "Fira Code", "Fira Mono", "Roboto Mono",
+    monospace;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.pomodoro-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90vw;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.pomodoro-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.pomodoro-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.pomodoro-modal-close:active {
+  background: var(--bg-hover);
+}
+
+.pomodoro-timer-display {
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    "Helvetica",
+    sans-serif;
+  font-size: 64px;
+  font-weight: 300;
+  text-align: center;
+  margin-bottom: 32px;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+}
+
+.pomodoro-controls {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+}
+
+.pomodoro-control-button {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 56px;
+  min-height: 56px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.pomodoro-control-button:hover {
+  background: var(--bg-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.pomodoro-control-button:active {
+  transform: translateY(0);
+  background: var(--bg-hover);
+}
+
+.pomodoro-control-button.danger {
+  color: #ef4444;
+}
+
+.pomodoro-control-button.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Full-screen completion modal */
+.pomodoro-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-secondary);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pomodoro-fullscreen-content {
+  text-align: center;
+  padding: 40px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.pomodoro-fullscreen-message {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 48px;
+  color: var(--text-primary);
+  animation: slideDown 0.5s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pomodoro-timer-display-large {
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    "Helvetica",
+    sans-serif;
+  font-size: 120px;
+  font-weight: 300;
+  text-align: center;
+  margin-bottom: 64px;
+  letter-spacing: 4px;
+  color: var(--text-primary);
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.pomodoro-controls-large {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  align-items: center;
+}
+
+.pomodoro-control-button-large {
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 80px;
+  min-height: 80px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.pomodoro-control-button-large:hover {
+  background: var(--bg-hover);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.pomodoro-control-button-large:active {
+  transform: translateY(0);
+  background: var(--bg-hover);
+}
+
+.pomodoro-control-button-large.danger {
+  color: #ef4444;
+}
+
+.pomodoro-control-button-large.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+/* Responsive styles for mobile */
+@media (max-width: 768px) {
+  .pomodoro-button {
+    min-width: 70px;
+  }
+
+  .pomodoro-countdown {
+    font-size: 13px;
+  }
+
+  .pomodoro-modal {
+    padding: 20px;
+    max-width: 90vw;
+    margin: 0 16px;
+  }
+
+  .pomodoro-timer-display {
+    font-size: 56px;
+    margin-bottom: 24px;
+  }
+
+  .pomodoro-controls {
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pomodoro-control-button {
+    padding: 14px;
+    min-width: 52px;
+    min-height: 52px;
+  }
+
+  .pomodoro-fullscreen {
+    padding: 20px;
+  }
+
+  .pomodoro-fullscreen-content {
+    padding: 20px;
+  }
+
+  .pomodoro-fullscreen-message {
+    font-size: 28px;
+    margin-bottom: 40px;
+  }
+
+  .pomodoro-timer-display-large {
+    font-size: 80px;
+    margin-bottom: 48px;
+    letter-spacing: 2px;
+  }
+
+  .pomodoro-controls-large {
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pomodoro-control-button-large {
+    padding: 18px;
+    min-width: 68px;
+    min-height: 68px;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .pomodoro-button {
+    min-width: 65px;
+  }
+
+  .pomodoro-countdown {
+    font-size: 12px;
+  }
+
+  .pomodoro-modal {
+    padding: 16px;
+    margin: 0 12px;
+  }
+
+  .pomodoro-timer-display {
+    font-size: 48px;
+    margin-bottom: 20px;
+  }
+
+  .pomodoro-controls {
+    gap: 10px;
+  }
+
+  .pomodoro-control-button {
+    padding: 12px;
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  .pomodoro-fullscreen-message {
+    font-size: 24px;
+    margin-bottom: 32px;
+  }
+
+  .pomodoro-timer-display-large {
+    font-size: 64px;
+    margin-bottom: 40px;
+    letter-spacing: 1px;
+  }
+
+  .pomodoro-controls-large {
+    gap: 12px;
+  }
+
+  .pomodoro-control-button-large {
+    padding: 16px;
+    min-width: 60px;
+    min-height: 60px;
   }
 }

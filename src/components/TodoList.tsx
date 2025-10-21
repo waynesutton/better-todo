@@ -51,6 +51,8 @@ export interface TodoListProps {
   onRequireSignIn?: () => void; // trigger styled auth modal instead of alert
   onRequireSignInForNote?: () => void; // trigger styled auth modal for notes
   onTodoHover?: (id: Id<"todos"> | null) => void;
+  openMenuForTodoId?: Id<"todos"> | null;
+  openMenuTrigger?: number;
 }
 
 export function TodoList({
@@ -65,6 +67,8 @@ export function TodoList({
   onRequireSignIn,
   onRequireSignInForNote,
   onTodoHover,
+  openMenuForTodoId,
+  openMenuTrigger,
 }: TodoListProps) {
   const [newTodoContent, setNewTodoContent] = useState("");
   const [focusedInput, setFocusedInput] = useState(false);
@@ -310,6 +314,11 @@ export function TodoList({
                       handleMoveToCustomDate(parent._id, date)
                     }
                     onHoverChange={onTodoHover}
+                    openMenuTrigger={
+                      openMenuForTodoId === parent._id
+                        ? openMenuTrigger
+                        : undefined
+                    }
                   />
                 </div>
                 {!parent.collapsed &&
@@ -342,6 +351,11 @@ export function TodoList({
                             handleMoveToCustomDate(child._id, date)
                           }
                           onHoverChange={onTodoHover}
+                          openMenuTrigger={
+                            openMenuForTodoId === child._id
+                              ? openMenuTrigger
+                              : undefined
+                          }
                         />
                       </div>
                     );

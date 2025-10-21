@@ -15,6 +15,7 @@ import type * as folders from "../folders.js";
 import type * as http from "../http.js";
 import type * as monthGroups from "../monthGroups.js";
 import type * as notes from "../notes.js";
+import type * as pomodoro from "../pomodoro.js";
 import type * as search from "../search.js";
 import type * as todos from "../todos.js";
 import type * as users from "../users.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   monthGroups: typeof monthGroups;
   notes: typeof notes;
+  pomodoro: typeof pomodoro;
   search: typeof search;
   todos: typeof todos;
   users: typeof users;

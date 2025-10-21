@@ -9,6 +9,7 @@ import { SearchModal } from "./components/SearchModal";
 import { ArchiveSection } from "./components/ArchiveSection";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
+import { PomodoroTimer } from "./components/PomodoroTimer";
 import { format } from "date-fns";
 import { Search, Menu, X } from "lucide-react";
 import { CopyIcon, CheckIcon } from "@radix-ui/react-icons";
@@ -50,6 +51,9 @@ function App() {
     useState<Id<"todos"> | null>(null);
   const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
   const [hoveredTodoId, setHoveredTodoId] = useState<Id<"todos"> | null>(null);
+  const [openMenuForTodoId, setOpenMenuForTodoId] =
+    useState<Id<"todos"> | null>(null);
+  const [openMenuTrigger, setOpenMenuTrigger] = useState<number>(0);
 
   // Pull to refresh state
   const [pullStartY, setPullStartY] = useState(0);
@@ -70,6 +74,7 @@ function App() {
   const reorderTodos = useMutation(api.todos.reorderTodos);
   const updateTodo = useMutation(api.todos.updateTodo);
   const moveTodoToDate = useMutation(api.todos.moveTodoToDate);
+  const createSubtask = useMutation(api.todos.createSubtask);
 
   // Fetch available dates and todos (skip if not authenticated)
   const availableDates = useQuery(
@@ -338,6 +343,33 @@ function App() {
         }
       }
 
+      // Create subtask with s key
+      if (e.key === "s") {
+        e.preventDefault();
+        if (
+          activeTodos.length > 0 &&
+          focusedTodoIndex >= 0 &&
+          isAuthenticated
+        ) {
+          const todo = activeTodos[focusedTodoIndex];
+          if (todo && !todo.completed && !todo.archived) {
+            createSubtask({ parentId: todo._id, content: "" });
+          }
+        }
+      }
+
+      // Open menu with m key
+      if (e.key === "m") {
+        e.preventDefault();
+        if (activeTodos.length > 0 && focusedTodoIndex >= 0) {
+          const todo = activeTodos[focusedTodoIndex];
+          if (todo) {
+            setOpenMenuForTodoId(todo._id);
+            setOpenMenuTrigger(Date.now());
+          }
+        }
+      }
+
       // Navigate todos with up/down arrows
       if (e.key === "ArrowUp") {
         e.preventDefault();
@@ -407,7 +439,7 @@ function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeTodos, focusedTodoIndex, lastCompletedTodo]);
+  }, [activeTodos, focusedTodoIndex, lastCompletedTodo, isAuthenticated]);
 
   // Reset focused index when todos change
   useEffect(() => {
@@ -593,6 +625,7 @@ function App() {
                   <CopyIcon style={{ width: 18, height: 18 }} />
                 )}
               </button>
+              <PomodoroTimer />
               <button
                 className="search-button"
                 onClick={() => {
@@ -675,6 +708,8 @@ function App() {
               onRequireSignIn={() => setShowSignInToCreateModal(true)}
               onRequireSignInForNote={() => setShowSignInToNoteModal(true)}
               onTodoHover={setHoveredTodoId}
+              openMenuForTodoId={openMenuForTodoId}
+              openMenuTrigger={openMenuTrigger}
             />
           </div>
 

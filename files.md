@@ -38,6 +38,8 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user`
   - **monthGroupDates**: Association table linking month groups to dates
     - Index: `by_user_and_month_group`, `by_user_and_date`
+  - **pomodoroSessions**: Stores pomodoro timer sessions with work/break intervals, completed sessions, and user preferences
+    - Index: `by_user`
 
 ### Functions
 
@@ -104,6 +106,14 @@ This document describes the structure and purpose of each file in the Better Tod
   - `archiveMonthGroup` - Archive a month group
   - `unarchiveMonthGroup` - Restore archived month group
   - `deleteMonthGroup` - Delete month group and all associations
+
+- `pomodoro.ts` - Pomodoro timer functionality:
+  - `getPomodoroSession` - Get current pomodoro session for user
+  - `createPomodoroSession` - Create new pomodoro session with custom intervals
+  - `updatePomodoroSession` - Update session settings (work/break durations)
+  - `completePomodoroSession` - Mark session as completed and track statistics
+  - `resetPomodoroSession` - Reset current session to start
+  - `getPomodoroStats` - Get user's pomodoro statistics and completed sessions
 
 ### Authentication (Clerk Integration)
 
@@ -303,6 +313,18 @@ This document describes the structure and purpose of each file in the Better Tod
     - Skips search queries when unauthenticated to prevent errors
     - Shows "Sign In to Search" modal when unauthenticated
 
+- `PomodoroTimer.tsx` - Built-in productivity timer with:
+  - Customizable work and break intervals (default 25min work, 5min break)
+  - Visual timer display with circular progress indicator
+  - Sound notifications for work/break transitions
+  - Session tracking and statistics
+  - Start/pause/reset functionality
+  - Settings modal for customizing intervals
+  - Session history and completion tracking
+  - Integration with Convex backend for persistent settings
+  - Clean, minimal UI matching app design system
+  - Accessible from sidebar footer
+
 ### Context (`src/context/`)
 
 - `ThemeContext.tsx` - Theme management:
@@ -377,6 +399,13 @@ This document describes the structure and purpose of each file in the Better Tod
 - **Pin icon for pinned todos**
   - Drawing pin filled icon from Radix UI appears before checkbox for pinned todos
   - Only shows on date pages (not in pinned section)
+
+- **Manage Folders section**
+  - New collapsible section below archived items shows all folders
+  - Displays empty folders that don't appear in main sidebar
+  - Shows folder date count badge when folder contains dates
+  - Full access to rename, archive, and delete operations
+  - Perfect alignment of three-dot menu buttons with folder names
   - Uses theme-aware colors that adapt to light/dark mode
   - Clean visual indicator without borders or background
 
@@ -390,6 +419,23 @@ This document describes the structure and purpose of each file in the Better Tod
   - Fixed index mismatch between keyboard navigation and rendered todos
   - Arrow key navigation properly highlights the correct todo
   - Space/e and p key shortcuts work on any highlighted todo
+
+- **Fixed three-dot menu contrast and alignment**
+  - Menu dropdowns now have better contrast and visibility in folders and archive sections
+  - Changed dropdown background from secondary to primary for better separation
+  - Increased shadow opacity for more depth
+  - Improved hover states with clearer backgrounds
+  - Fixed opacity inheritance issue so dropdowns render at full opacity
+  - Three-dot buttons for folders now perfectly centered vertically
+  - Updated folder hover highlight to match light blue color used throughout sidebar
+
+- **Pomodoro timer integration**
+  - Built-in productivity timer accessible from sidebar footer
+  - Customizable work and break intervals with persistent settings
+  - Visual timer display with circular progress indicator
+  - Sound notifications for work/break transitions
+  - Session tracking and completion statistics
+  - Clean, minimal UI matching app design system
 
 ### Previous Features (v2.1.1)
 

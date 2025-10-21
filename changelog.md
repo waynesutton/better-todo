@@ -4,6 +4,25 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.3] - 2025-01-21
+
+### Added
+
+- **Improved subtask creation workflow**
+  - New subtasks now start empty instead of pre-filled with "New subtask" text
+  - Empty subtasks automatically enter edit mode for immediate typing
+  - Keyboard shortcut "s" creates a subtask for the currently focused/selected todo
+  - Auto-focus on new empty subtasks for faster workflow
+
+- **Keyboard shortcut to open todo menu**
+  - Keyboard shortcut "m" opens the context menu for the currently focused/selected todo
+  - Provides quick access to all todo actions without using mouse
+  - Menu opens at the proper position for the selected todo
+
+### Changed
+
+- Updated keyboard shortcuts help modal to include "s" and "m" shortcuts
+
 ## [2.1.2] - 2025-01-21
 
 ### Added
@@ -32,6 +51,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Arrow key navigation properly highlights the correct todo
 - Space/e and p key shortcuts work on any highlighted todo
 - Removed borders from pinned todos for cleaner appearance
+- **Fixed archive section visibility** - Archive section now shows when folders or month groups are archived, not just dates
+- **Fixed empty folders appearing in sidebar** - Folders without dates now hide from active view until dates are added
+- **Fixed "Add to Folder..." menu option** - Menu option now appears even for newly created empty folders, allowing you to add dates to them
+- **Fixed three-dot menu contrast in folders and archive** - Menu dropdowns now have better contrast and visibility when appearing over folders or archived sections in both light and dark modes
+  - Changed dropdown background from secondary to primary background for better separation
+  - Increased shadow from 0.15 to 0.25 opacity for more depth
+  - Improved hover states with clearer backgrounds (#f0f0f0 in light mode)
+  - Added specific danger item hover styling with subtle red tint
+  - Applied same improvements to folder selector modals
+  - Fixed opacity inheritance issue - removed opacity from parent containers so dropdowns render at full opacity
+  - Date items now brighten on hover (0.7 to 0.9 opacity) for better interactivity
+  - Three-dot buttons in folders now have proper opacity (0.6 normal, 1.0 on hover)
+- **Fixed three-dot menu alignment for folders** - Menu buttons for folder headers now perfectly centered vertically using CSS transform, matching date menu button alignment
+- **Updated folder hover highlight** - Folders now use light blue hover color (rgba(86, 181, 219, 0.15)) instead of grey to match date hover styling
+  - Creates consistent visual language across all sidebar items
+  - Light mode uses slightly lighter blue (0.1 opacity) for better contrast
+  - Applied same light blue hover to regular date items for perfect consistency
+- **Fixed folder rename modal positioning** - Rename folder input now appears above the folder section instead of below, preventing it from being clipped or appearing off-screen
+- **Fixed folder menu behavior** - Three-dot menu now properly closes when clicking "Rename Folder" option, preventing menu from staying open during rename operation
+- **Fixed three-dot menu alignment for folders** - Three-dot buttons now perfectly align with folder names by using full height alignment instead of transform-based centering
+- **Added Manage Folders section** - New collapsible section below archived items shows all folders (including empty ones) for easy management
+  - Shows folder name with date count badge (if folder has dates)
+  - Provides access to rename, archive, and delete options for all folders
+  - Allows users to delete empty folders that don't appear in main sidebar
+  - Count badge shows number of non-archived folders
+- **Improved unarchive date behavior** - When unarchiving a date that's inside a folder, the date is automatically removed from the folder and moved to active dates list
+  - Matches the existing "Remove from Folder" behavior
+  - Provides cleaner UX by eliminating extra step to remove from folder first
+  - Date appears in main active dates section after unarchiving
 
 ## [2.1.1] - 2025-01-20
 
