@@ -51,6 +51,13 @@ function App() {
   const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
   const [hoveredTodoId, setHoveredTodoId] = useState<Id<"todos"> | null>(null);
 
+  // Pull to refresh state
+  const [pullStartY, setPullStartY] = useState(0);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
   // Local ephemeral data for unsigned users
   const [localTodos, setLocalTodos] = useState<any[]>([]);
   const [localDates, setLocalDates] = useState<string[]>([]);
@@ -210,8 +217,16 @@ function App() {
         : todos || []
       : localTodos;
 
-  // Separate archived and active todos
-  const activeTodos = displayTodos.filter((t) => !t.archived);
+  // Separate archived and active todos, sort pinned to the top
+  const activeTodos = displayTodos
+    .filter((t) => !t.archived)
+    .sort((a, b) => {
+      // Sort pinned todos to the top
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      // Keep original order for same pinned status
+      return a.order - b.order;
+    });
   const archivedTodos = displayTodos.filter((t) => t.archived);
 
   // Auto-select hovered todo for keyboard shortcuts when not explicitly navigated
@@ -401,6 +416,76 @@ function App() {
     }
   }, [activeTodos.length, focusedTodoIndex]);
 
+  // Pull to refresh functionality for mobile
+  useEffect(() => {
+    const mainContent = mainContentRef.current;
+    if (!mainContent) return;
+
+    // Check if device is mobile
+    const isMobileDevice =
+      window.innerWidth <= 768 ||
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isMobileDevice) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // Only trigger if at the top of the scroll
+      if (mainContent.scrollTop === 0) {
+        setPullStartY(e.touches[0].clientY);
+        setIsPulling(true);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isPulling || isRefreshing) return;
+
+      const currentY = e.touches[0].clientY;
+      const distance = currentY - pullStartY;
+
+      // Only allow pulling down
+      if (distance > 0 && mainContent.scrollTop === 0) {
+        setPullDistance(Math.min(distance, 120)); // Max pull distance of 120px
+
+        // Prevent default scroll behavior when pulling
+        if (distance > 10) {
+          e.preventDefault();
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (!isPulling) return;
+
+      setIsPulling(false);
+
+      // Trigger refresh if pulled more than 80px
+      if (pullDistance > 80 && !isRefreshing) {
+        setIsRefreshing(true);
+
+        // Show refreshing state for 800ms (visual feedback even though data is realtime)
+        setTimeout(() => {
+          setIsRefreshing(false);
+          setPullDistance(0);
+        }, 800);
+      } else {
+        setPullDistance(0);
+      }
+    };
+
+    mainContent.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+    mainContent.addEventListener("touchmove", handleTouchMove, {
+      passive: false,
+    });
+    mainContent.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      mainContent.removeEventListener("touchstart", handleTouchStart);
+      mainContent.removeEventListener("touchmove", handleTouchMove);
+      mainContent.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [isPulling, pullStartY, pullDistance, isRefreshing]);
+
   // Clerk appearance customization
   const clerkAppearance = {
     variables: {
@@ -443,7 +528,23 @@ function App() {
           />
         )}
 
-        <div className="main-content">
+        <div className="main-content" ref={mainContentRef}>
+          {/* Pull to refresh indicator */}
+          {(pullDistance > 0 || isRefreshing) && (
+            <div
+              className="pull-to-refresh-indicator"
+              style={{
+                transform: `translateY(${isRefreshing ? 60 : pullDistance}px)`,
+                opacity: isRefreshing ? 1 : Math.min(pullDistance / 80, 1),
+              }}
+            >
+              <div
+                className={`refresh-spinner ${isRefreshing ? "spinning" : ""}`}
+              >
+                {isRefreshing ? "↻" : "↓"}
+              </div>
+            </div>
+          )}
           <div className="main-header">
             <div className="main-header-left">
               {sidebarHidden && (

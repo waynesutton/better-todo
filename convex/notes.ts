@@ -16,6 +16,7 @@ export const getNotesByDate = query({
       content: v.string(),
       order: v.optional(v.number()),
       collapsed: v.optional(v.boolean()),
+      pinnedToTop: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -82,6 +83,7 @@ export const updateNote = mutation({
     title: v.optional(v.string()),
     content: v.optional(v.string()),
     collapsed: v.optional(v.boolean()),
+    pinnedToTop: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -90,6 +92,7 @@ export const updateNote = mutation({
     if (args.title !== undefined) updates.title = args.title;
     if (args.content !== undefined) updates.content = args.content;
     if (args.collapsed !== undefined) updates.collapsed = args.collapsed;
+    if (args.pinnedToTop !== undefined) updates.pinnedToTop = args.pinnedToTop;
 
     // Patch directly without reading first to avoid write conflicts
     // ctx.db.patch will throw if the document doesn't exist

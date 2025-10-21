@@ -78,6 +78,7 @@ export function Sidebar({
   const archivedDates = useQuery(api.archivedDates.getArchivedDates) || [];
   const dateLabelsData = useQuery(api.dateLabels.getDateLabels) || [];
   const pinnedTodos = useQuery(api.todos.getPinnedTodos) || [];
+  const uncompletedCounts = useQuery(api.todos.getUncompletedCounts) || {};
   const folders =
     useQuery(api.folders.getFolders, isAuthenticated ? undefined : "skip") ||
     [];
@@ -375,7 +376,7 @@ export function Sidebar({
   const activeMonthGroups = monthGroups.filter((mg) => !mg.archived);
   const archivedMonthGroups = monthGroups.filter((mg) => mg.archived);
 
-  // Handle ESC key to close menus and modals
+  // Handle ESC key and click outside to close menus and modals
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -418,8 +419,51 @@ export function Sidebar({
       }
     };
 
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // Check if click is outside menu dropdowns
+      const isInsideMenuDropdown = target.closest(".date-menu-dropdown");
+      const isInsideMenuButton = target.closest(".date-menu-button");
+      const isInsideDatePicker = target.closest(".date-picker-modal");
+      const isInsideFolderSelector = target.closest(".folder-selector");
+
+      // Close menus if clicking outside
+      if (
+        !isInsideMenuDropdown &&
+        !isInsideMenuButton &&
+        !isInsideDatePicker &&
+        !isInsideFolderSelector
+      ) {
+        if (showMenuForDate) {
+          setShowMenuForDate(null);
+        }
+        if (showFolderMenu) {
+          setShowFolderMenu(null);
+        }
+        if (showMonthGroupMenu) {
+          setShowMonthGroupMenu(null);
+        }
+      }
+
+      // Close date picker if clicking outside
+      if (!isInsideDatePicker && showDatePicker) {
+        setShowDatePicker(null);
+        setCustomDate("");
+      }
+
+      // Close folder selector if clicking outside
+      if (!isInsideFolderSelector && showFolderSelector) {
+        setShowFolderSelector(null);
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [
     showMenuForDate,
     showDatePicker,
@@ -480,6 +524,9 @@ export function Sidebar({
             >
               <div className="date-item" onClick={() => onSelectDate(date)}>
                 {formatDate(date)}
+                {uncompletedCounts[date] > 0 && (
+                  <span className="todo-count">{uncompletedCounts[date]}</span>
+                )}
               </div>
               <div className="date-menu">
                 <button
@@ -725,6 +772,11 @@ export function Sidebar({
                         onClick={() => onSelectDate(date)}
                       >
                         {formatDate(date)}
+                        {uncompletedCounts[date] > 0 && (
+                          <span className="todo-count">
+                            {uncompletedCounts[date]}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -745,7 +797,6 @@ export function Sidebar({
                 >
                   ▼
                 </span>
-                <Folder size={14} style={{ marginRight: "4px" }} />
                 <span>{folder.name}</span>
               </div>
               <div className="date-menu">
@@ -834,6 +885,11 @@ export function Sidebar({
                         onClick={() => onSelectDate(date)}
                       >
                         {formatDate(date)}
+                        {uncompletedCounts[date] > 0 && (
+                          <span className="todo-count">
+                            {uncompletedCounts[date]}
+                          </span>
+                        )}
                       </div>
                       <div className="date-menu">
                         <button
@@ -1011,7 +1067,6 @@ export function Sidebar({
                         >
                           ▼
                         </span>
-                        <Folder size={14} style={{ marginRight: "4px" }} />
                         <span>{folder.name}</span>
                       </div>
                       <div className="date-menu">

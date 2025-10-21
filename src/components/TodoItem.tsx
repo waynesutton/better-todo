@@ -6,6 +6,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { DrawingPinFilledIcon } from "@radix-ui/react-icons";
 
 interface TodoItemProps {
   id: Id<"todos">;
@@ -225,6 +226,13 @@ export function TodoItem({
         <div {...attributes} {...listeners} className="drag-handle">
           ⋮⋮
         </div>
+
+        {/* Pin icon for pinned todos (only on date pages, not in pinned section) */}
+        {pinned && !isPinnedView && (
+          <div className="pin-icon">
+            <DrawingPinFilledIcon width={14} height={14} />
+          </div>
+        )}
 
         {/* Checkbox for all items */}
         <div

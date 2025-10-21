@@ -467,6 +467,17 @@ body {
   cursor: pointer;
   font-size: var(--font-sidebar);
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.todo-count {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
 .date-menu {
@@ -596,8 +607,8 @@ body {
 }
 
 .sidebar-archive-section {
-  margin-top: 12px;
-  padding-top: 12px;
+  /* margin-top: 12px; */
+  /* padding-top: 12px; */
   position: relative;
 }
 
@@ -951,6 +962,47 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+}
+
+/* Pull to refresh indicator */
+.pull-to-refresh-indicator {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.refresh-spinner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--text-primary);
+  transition: transform 0.3s ease;
+}
+
+.refresh-spinner.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .main-content-body {
@@ -1021,6 +1073,12 @@ body {
 .notes-section-multi {
   margin-bottom: 32px;
   padding-bottom: 24px;
+}
+
+.pinned-notes-section {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .note-item {
@@ -1443,13 +1501,10 @@ body {
   margin-bottom: 2px;
   transition: background-color 0.15s ease;
   width: 90%;
-  max-width: 100%;
+  max-width: 90%;
 }
 
 .todo-item.pinned {
-  border: 2px solid #56b5db;
-  border-radius: 4px;
-  padding: 4px;
   margin-bottom: 4px;
 }
 
@@ -1503,6 +1558,14 @@ body {
 
 .drag-handle:active {
   cursor: grabbing;
+}
+
+.pin-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  padding: 2px;
+  flex-shrink: 0;
 }
 
 .todo-checkbox {

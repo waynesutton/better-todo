@@ -527,3 +527,36 @@ export const deleteAllArchivedTodos = mutation({
     return null;
   },
 });
+
+// Get count of uncompleted todos for each date
+export const getUncompletedCounts = query({
+  args: {},
+  returns: v.record(v.string(), v.number()),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return {};
+    }
+    const userId = identity.subject;
+
+    // Get all uncompleted todos
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("completed"), false),
+          q.eq(q.field("archived"), false),
+        ),
+      )
+      .collect();
+
+    // Count by date
+    const counts: Record<string, number> = {};
+    for (const todo of todos) {
+      counts[todo.date] = (counts[todo.date] || 0) + 1;
+    }
+
+    return counts;
+  },
+});

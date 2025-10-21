@@ -44,6 +44,7 @@ export default defineSchema({
     content: v.string(), // Markdown content
     order: v.optional(v.number()), // Order for drag-and-drop
     collapsed: v.optional(v.boolean()), // Whether note is collapsed
+    pinnedToTop: v.optional(v.boolean()), // Whether note is pinned to top of page
   })
     .index("by_user_and_date", ["userId", "date"])
     .searchIndex("search_content", {

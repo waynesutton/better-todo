@@ -7,6 +7,8 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverlay,
+  useDroppable,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -16,7 +18,11 @@ import {
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { TodoItem } from "./TodoItem";
-import { NotesSection, AddNoteButton } from "./NotesSection";
+import {
+  NotesSection,
+  AddNoteButton,
+  PinnedNotesSection,
+} from "./NotesSection";
 import { Id } from "../../convex/_generated/dataModel";
 import { format, addDays, subDays } from "date-fns";
 
@@ -85,6 +91,7 @@ export function TodoList({
   const reorderTodos = useMutation(api.todos.reorderTodos);
   const moveTodoToDate = useMutation(api.todos.moveTodoToDate);
   const createNote = useMutation(api.notes.createNote);
+  const updateNote = useMutation(api.notes.updateNote);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -93,8 +100,16 @@ export function TodoList({
     }),
   );
 
-  // Separate archived and active todos
-  const activeTodos = todos.filter((t) => !t.archived);
+  // Separate archived and active todos, and sort pinned to the top
+  const activeTodos = todos
+    .filter((t) => !t.archived)
+    .sort((a, b) => {
+      // Sort pinned todos to the top
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      // Keep original order for same pinned status
+      return a.order - b.order;
+    });
 
   // Register focus first todo callback
   React.useEffect(() => {
@@ -220,9 +235,14 @@ export function TodoList({
     });
   };
 
+  const [newNoteId, setNewNoteId] = useState<Id<"notes"> | null>(null);
+
   const handleAddNote = async () => {
     try {
-      await createNote({ date, title: "Untitled" });
+      const noteId = await createNote({ date, title: "Untitled" });
+      setNewNoteId(noteId);
+      // Clear the newNoteId after a short delay to allow the focus to happen
+      setTimeout(() => setNewNoteId(null), 100);
     } catch (error) {
       console.error("Error creating note:", error);
       if (onRequireSignInForNote) {
@@ -246,6 +266,16 @@ export function TodoList({
         }
       }}
     >
+      {/* Pinned notes section - rendered at top above todos */}
+      {!isPinnedView && (
+        <PinnedNotesSection
+          date={date}
+          expandedNoteId={expandedNoteId}
+          onNoteExpanded={onNoteExpanded}
+          focusNoteId={newNoteId}
+        />
+      )}
+
       {/* Active todos with drag and drop */}
       <DndContext
         sensors={sensors}
@@ -256,61 +286,72 @@ export function TodoList({
           items={activeTodos.map((t) => t._id)}
           strategy={verticalListSortingStrategy}
         >
-          {groupedTodos.root?.map((parent, parentIndex) => (
-            <div key={parent._id}>
-              <div
-                className={`todo-item-wrapper ${focusedTodoIndex === parentIndex ? "focused" : ""}`}
-              >
-                <TodoItem
-                  id={parent._id}
-                  content={parent.content}
-                  type={parent.type}
-                  completed={parent.completed}
-                  collapsed={parent.collapsed}
-                  pinned={parent.pinned}
-                  isPinnedView={isPinnedView}
-                  onMoveToPreviousDay={() =>
-                    handleMoveToPreviousDay(parent._id)
-                  }
-                  onMoveToNextDay={() => handleMoveToNextDay(parent._id)}
-                  onMoveToTomorrow={() => handleMoveToTomorrow(parent._id)}
-                  onMoveToCustomDate={(date) =>
-                    handleMoveToCustomDate(parent._id, date)
-                  }
-                  onHoverChange={onTodoHover}
-                />
+          {groupedTodos.root?.map((parent) => {
+            // Find actual index in activeTodos array
+            const parentActualIndex = activeTodos.findIndex(
+              (t) => t._id === parent._id,
+            );
+            return (
+              <div key={parent._id}>
+                <div
+                  className={`todo-item-wrapper ${focusedTodoIndex === parentActualIndex ? "focused" : ""}`}
+                >
+                  <TodoItem
+                    id={parent._id}
+                    content={parent.content}
+                    type={parent.type}
+                    completed={parent.completed}
+                    collapsed={parent.collapsed}
+                    pinned={parent.pinned}
+                    isPinnedView={isPinnedView}
+                    onMoveToPreviousDay={() =>
+                      handleMoveToPreviousDay(parent._id)
+                    }
+                    onMoveToNextDay={() => handleMoveToNextDay(parent._id)}
+                    onMoveToTomorrow={() => handleMoveToTomorrow(parent._id)}
+                    onMoveToCustomDate={(date) =>
+                      handleMoveToCustomDate(parent._id, date)
+                    }
+                    onHoverChange={onTodoHover}
+                  />
+                </div>
+                {!parent.collapsed &&
+                  groupedTodos[parent._id]?.map((child) => {
+                    // Find actual index in activeTodos array for child
+                    const childActualIndex = activeTodos.findIndex(
+                      (t) => t._id === child._id,
+                    );
+                    return (
+                      <div
+                        key={child._id}
+                        className={`todo-item nested ${focusedTodoIndex === childActualIndex ? "focused" : ""}`}
+                      >
+                        <TodoItem
+                          id={child._id}
+                          content={child.content}
+                          type={child.type}
+                          completed={child.completed}
+                          collapsed={child.collapsed}
+                          pinned={child.pinned}
+                          isPinnedView={isPinnedView}
+                          onMoveToPreviousDay={() =>
+                            handleMoveToPreviousDay(child._id)
+                          }
+                          onMoveToNextDay={() => handleMoveToNextDay(child._id)}
+                          onMoveToTomorrow={() =>
+                            handleMoveToTomorrow(child._id)
+                          }
+                          onMoveToCustomDate={(date) =>
+                            handleMoveToCustomDate(child._id, date)
+                          }
+                          onHoverChange={onTodoHover}
+                        />
+                      </div>
+                    );
+                  })}
               </div>
-              {!parent.collapsed &&
-                groupedTodos[parent._id]?.map((child, childIndex) => {
-                  const childGlobalIndex = parentIndex + childIndex + 1;
-                  return (
-                    <div
-                      key={child._id}
-                      className={`todo-item nested ${focusedTodoIndex === childGlobalIndex ? "focused" : ""}`}
-                    >
-                      <TodoItem
-                        id={child._id}
-                        content={child.content}
-                        type={child.type}
-                        completed={child.completed}
-                        collapsed={child.collapsed}
-                        pinned={child.pinned}
-                        isPinnedView={isPinnedView}
-                        onMoveToPreviousDay={() =>
-                          handleMoveToPreviousDay(child._id)
-                        }
-                        onMoveToNextDay={() => handleMoveToNextDay(child._id)}
-                        onMoveToTomorrow={() => handleMoveToTomorrow(child._id)}
-                        onMoveToCustomDate={(date) =>
-                          handleMoveToCustomDate(child._id, date)
-                        }
-                        onHoverChange={onTodoHover}
-                      />
-                    </div>
-                  );
-                })}
-            </div>
-          ))}
+            );
+          })}
         </SortableContext>
       </DndContext>
 
@@ -445,6 +486,7 @@ export function TodoList({
           date={date}
           expandedNoteId={expandedNoteId}
           onNoteExpanded={onNoteExpanded}
+          focusNoteId={newNoteId}
         />
       )}
     </div>

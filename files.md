@@ -45,6 +45,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getAvailableDates` - Get all dates with todos
   - `getTodosByDate` - Get todos for a specific date
   - `getPinnedTodos` - Get all pinned todos for user (including their subtasks)
+  - `getUncompletedCounts` - Get count of uncompleted todos for each date (for sidebar badges)
   - `createTodo` - Create new todo with auto-ordering
   - `createSubtask` - Create a subtask under a parent todo
   - `updateTodo` - Update todo (auto-archives on complete, auto-unarchives on uncheck, supports pin/unpin)
@@ -164,11 +165,11 @@ This document describes the structure and purpose of each file in the Better Tod
 - `TodoItem.tsx` - Individual todo item with:
   - Plain text display (no markdown rendering in todos)
   - Drag handle for reordering (⋮⋮) - visible on hover
+  - **Pin icon** - Drawing pin filled icon from Radix UI for pinned todos (only on date pages, not in pinned section)
   - Checkbox for completion (auto-archives when checked)
   - Three-dot menu for pinning, moving to tomorrow, previous/next day, or deleting
   - Pin/unpin option (only for active, non-completed todos)
   - Keyboard shortcut "p" to pin/unpin when hovered
-  - Blue border (#56B5DB) around pinned todos on original page (not on pinned view)
   - Portal-rendered menu (prevents clipping in archive section)
   - Unarchive option for unchecked archived todos
   - Click outside or ESC to close menu
@@ -179,6 +180,7 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `TodoList.tsx` - Todo list container with:
   - Drag-and-drop functionality using @dnd-kit
+  - **Pinned todos sorted to top** - Automatically displays pinned todos first on each date page
   - Notion-style inline input (type directly, no button)
   - Mobile-friendly: visible "+" button appears when typing on mobile devices
   - Desktop: Shift+Enter to create, Mobile: tap "+" button
@@ -190,6 +192,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Auto-collapses archive section when adding new todos
   - Integrates NotesSection above archive
   - Tracks hovered todo for keyboard shortcuts
+  - **Fixed keyboard navigation** - Proper index matching between keyboard shortcuts and rendered todos
   - Clerk authentication integration:
     - Checks authentication status before allowing todo/note creation
     - Shows "Sign In Required" modal for unauthenticated users
@@ -200,6 +203,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Pinned section at top (shows "Pinned" when todos are pinned, hidden when empty)
   - Collapsed view shows pin emoji (📌) for pinned section
   - Date list showing all days with todos (scrollable with custom scrollbar)
+  - **Todo count badges** - Shows count of uncompleted todos next to each date
   - Collapsible view with compact date format (MM/DD) via panel icon in header
   - Collapse button next to "better todo" title (PanelLeft icon)
   - Smooth animated transitions between full (260px) and collapsed (60px) states
@@ -360,9 +364,34 @@ This document describes the structure and purpose of each file in the Better Tod
 - Convex logo files (black and white variants)
 - SVG favicon with checkmark design
 
-## Current Version: 2.1.1 (January 20, 2025)
+## Current Version: 2.1.2 (January 21, 2025)
 
-### Latest Features (v2.1.1)
+### Latest Features (v2.1.2)
+
+- **Todo count badges in sidebar**
+  - Shows count of uncompleted todos next to each date in sidebar
+  - Real-time sync - counts update automatically when todos are completed/uncompleted
+  - Displays in all sections: active dates, folders, and month groups
+  - Simple number display with theme-aware colors (no background box)
+
+- **Pin icon for pinned todos**
+  - Drawing pin filled icon from Radix UI appears before checkbox for pinned todos
+  - Only shows on date pages (not in pinned section)
+  - Uses theme-aware colors that adapt to light/dark mode
+  - Clean visual indicator without borders or background
+
+- **Pinned todos sorted to top**
+  - Pinned todos automatically appear at the top of each date page
+  - Maintains original order within pinned and unpinned groups
+  - Consistent sorting across App.tsx and TodoList.tsx
+
+- **Fixed keyboard shortcuts for all todos**
+  - Keyboard shortcuts now work correctly for all todos, not just pinned ones
+  - Fixed index mismatch between keyboard navigation and rendered todos
+  - Arrow key navigation properly highlights the correct todo
+  - Space/e and p key shortcuts work on any highlighted todo
+
+### Previous Features (v2.1.1)
 
 - **Subtasks on pinned page**
   - Add subtasks to pinned todos via three-dot menu "Add subtask" option

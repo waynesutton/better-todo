@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Copy, Check, Plus, X } from "lucide-react";
+import { DrawingPinIcon, DrawingPinFilledIcon } from "@radix-ui/react-icons";
 import {
   DndContext,
   closestCenter,
@@ -26,6 +27,7 @@ interface NotesSectionProps {
   date: string;
   expandedNoteId: string | null;
   onNoteExpanded: () => void;
+  focusNoteId?: Id<"notes"> | null;
 }
 
 interface Note {
@@ -37,6 +39,7 @@ interface Note {
   content: string;
   order?: number;
   collapsed?: boolean;
+  pinnedToTop?: boolean;
 }
 
 interface NoteItemProps {
@@ -45,6 +48,8 @@ interface NoteItemProps {
   onUpdateContent: (id: Id<"notes">, content: string) => void;
   onToggleCollapse: (id: Id<"notes">, collapsed: boolean) => void;
   onDeleteClick: (id: Id<"notes">) => void;
+  onTogglePin: (id: Id<"notes">, pinned: boolean) => void;
+  shouldFocus?: boolean;
 }
 
 function NoteItem({
@@ -53,6 +58,8 @@ function NoteItem({
   onUpdateContent,
   onToggleCollapse,
   onDeleteClick,
+  onTogglePin,
+  shouldFocus = false,
 }: NoteItemProps) {
   const [copied, setCopied] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -66,6 +73,17 @@ function NoteItem({
   useEffect(() => {
     setContentInput(note.content);
   }, [note.content]);
+
+  // Auto-focus title input when note is newly created
+  useEffect(() => {
+    if (shouldFocus) {
+      setIsEditingTitle(true);
+      setTimeout(() => {
+        titleInputRef.current?.focus();
+        titleInputRef.current?.select();
+      }, 50);
+    }
+  }, [shouldFocus]);
 
   const {
     attributes,
@@ -197,6 +215,17 @@ function NoteItem({
           )}
           <button
             className="note-action-button"
+            onClick={() => onTogglePin(note._id, !(note.pinnedToTop ?? false))}
+            title={note.pinnedToTop ? "Unpin from top" : "Pin to top"}
+          >
+            {note.pinnedToTop ? (
+              <DrawingPinFilledIcon style={{ width: 14, height: 14 }} />
+            ) : (
+              <DrawingPinIcon style={{ width: 14, height: 14 }} />
+            )}
+          </button>
+          <button
+            className="note-action-button"
             onClick={() => onDeleteClick(note._id)}
             title="Delete note"
           >
@@ -246,8 +275,11 @@ export function NotesSection({
   date,
   expandedNoteId,
   onNoteExpanded,
+  focusNoteId,
 }: NotesSectionProps) {
-  const notes = useQuery(api.notes.getNotesByDate, { date }) || [];
+  const allNotes = useQuery(api.notes.getNotesByDate, { date }) || [];
+  // Filter to only show unpinned notes in this section
+  const notes = allNotes.filter((note) => !note.pinnedToTop);
   const updateNote = useMutation(api.notes.updateNote);
   const deleteNote = useMutation(api.notes.deleteNote);
   const reorderNotes = useMutation(api.notes.reorderNotes);
@@ -304,6 +336,16 @@ export function NotesSection({
     await updateNote({ id, collapsed });
   };
 
+  const handleTogglePin = async (id: Id<"notes">, pinned: boolean) => {
+    await updateNote({ id, pinnedToTop: pinned });
+    // Scroll to top when pinning a note (with delay to allow UI to update)
+    if (pinned) {
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 150);
+    }
+  };
+
   const handleDeleteClick = (id: Id<"notes">) => {
     const note = notes.find((n) => n._id === id);
     setDeleteConfirm({
@@ -347,6 +389,8 @@ export function NotesSection({
               onUpdateContent={handleUpdateContent}
               onToggleCollapse={handleToggleCollapse}
               onDeleteClick={handleDeleteClick}
+              onTogglePin={handleTogglePin}
+              shouldFocus={focusNoteId === note._id}
             />
           ))}
         </SortableContext>
@@ -372,5 +416,150 @@ export function AddNoteButton({ onAddNote }: NotesWithAddButtonProps) {
       <Plus size={14} />
       <span>Add Note</span>
     </button>
+  );
+}
+
+// Pinned Notes Section - renders at top of page
+interface PinnedNotesSectionProps {
+  date: string;
+  expandedNoteId: string | null;
+  onNoteExpanded: () => void;
+  focusNoteId?: Id<"notes"> | null;
+}
+
+export function PinnedNotesSection({
+  date,
+  expandedNoteId,
+  onNoteExpanded,
+  focusNoteId,
+}: PinnedNotesSectionProps) {
+  const allNotes = useQuery(api.notes.getNotesByDate, { date }) || [];
+  // Filter to only show pinned notes
+  const notes = allNotes.filter((note) => note.pinnedToTop);
+  const updateNote = useMutation(api.notes.updateNote);
+  const deleteNote = useMutation(api.notes.deleteNote);
+  const reorderNotes = useMutation(api.notes.reorderNotes);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    noteId: Id<"notes"> | null;
+    noteTitle: string;
+  }>({ isOpen: false, noteId: null, noteTitle: "" });
+
+  // Expand note when expandedNoteId changes
+  useEffect(() => {
+    if (expandedNoteId) {
+      const note = notes.find((n) => n._id === expandedNoteId);
+      if (note && (note.collapsed ?? false)) {
+        updateNote({ id: expandedNoteId as Id<"notes">, collapsed: false });
+      }
+      onNoteExpanded();
+    }
+  }, [expandedNoteId, notes, updateNote, onNoteExpanded]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = notes.findIndex((n) => n._id === active.id);
+      const newIndex = notes.findIndex((n) => n._id === over.id);
+
+      const reorderedNotes = arrayMove(notes, oldIndex, newIndex);
+      reorderNotes({
+        date,
+        noteIds: reorderedNotes.map((n) => n._id),
+      });
+    }
+  };
+
+  const handleUpdateTitle = async (id: Id<"notes">, title: string) => {
+    await updateNote({ id, title });
+  };
+
+  const handleUpdateContent = async (id: Id<"notes">, content: string) => {
+    await updateNote({ id, content });
+  };
+
+  const handleToggleCollapse = async (id: Id<"notes">, collapsed: boolean) => {
+    await updateNote({ id, collapsed });
+  };
+
+  const handleTogglePin = async (id: Id<"notes">, pinned: boolean) => {
+    await updateNote({ id, pinnedToTop: pinned });
+    // Scroll to top when pinning a note (with delay to allow UI to update)
+    if (pinned) {
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 150);
+    }
+  };
+
+  const handleDeleteClick = (id: Id<"notes">) => {
+    const note = notes.find((n) => n._id === id);
+    setDeleteConfirm({
+      isOpen: true,
+      noteId: id,
+      noteTitle: note?.title || "Untitled",
+    });
+  };
+
+  const confirmDeleteNote = async () => {
+    if (deleteConfirm.noteId) {
+      await deleteNote({ id: deleteConfirm.noteId });
+    }
+    setDeleteConfirm({ isOpen: false, noteId: null, noteTitle: "" });
+  };
+
+  const cancelDeleteNote = () => {
+    setDeleteConfirm({ isOpen: false, noteId: null, noteTitle: "" });
+  };
+
+  if (notes.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="pinned-notes-section">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={notes.map((n) => n._id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {notes.map((note) => (
+            <NoteItem
+              key={note._id}
+              note={note}
+              onUpdateTitle={handleUpdateTitle}
+              onUpdateContent={handleUpdateContent}
+              onToggleCollapse={handleToggleCollapse}
+              onDeleteClick={handleDeleteClick}
+              onTogglePin={handleTogglePin}
+              shouldFocus={focusNoteId === note._id}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Note"
+        message={`Are you sure you want to delete "${deleteConfirm.noteTitle}"? This cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteNote}
+        onCancel={cancelDeleteNote}
+        isDangerous={true}
+      />
+    </div>
   );
 }

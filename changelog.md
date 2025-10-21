@@ -4,6 +4,35 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.2] - 2025-01-21
+
+### Added
+
+- **Todo count badges in sidebar**
+  - Shows count of uncompleted todos next to each date in sidebar
+  - Real-time sync - counts update automatically when todos are completed/uncompleted
+  - Displays in all sections: active dates, folders, and month groups
+  - Simple number display with theme-aware colors (no background box)
+
+- **Pin icon for pinned todos**
+  - Drawing pin filled icon from Radix UI appears before checkbox for pinned todos
+  - Only shows on date pages (not in pinned section)
+  - Uses theme-aware colors that adapt to light/dark mode
+  - Clean visual indicator without borders or background
+
+- **Pinned todos sorted to top**
+  - Pinned todos automatically appear at the top of each date page
+  - Maintains original order within pinned and unpinned groups
+  - Consistent sorting across App.tsx and TodoList.tsx
+
+### Fixed
+
+- **Fixed keyboard shortcuts for all todos** - Keyboard shortcuts now work correctly for all todos, not just pinned ones
+- Fixed index mismatch between keyboard navigation and rendered todos
+- Arrow key navigation properly highlights the correct todo
+- Space/e and p key shortcuts work on any highlighted todo
+- Removed borders from pinned todos for cleaner appearance
+
 ## [2.1.1] - 2025-01-20
 
 ### Added

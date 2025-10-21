@@ -24,6 +24,8 @@ An open source, real-time to-do list that never falls out of sync — built on C
 - **Full-text search** - search across all todos and notes with keyboard shortcuts (Cmd/Ctrl+K)
 - **Multiple notes per date** with drag-and-drop reordering and individual titles
 - **Archive dates** - hide completed days while preserving data
+- **Todo count badges** - see uncompleted todo counts next to each date in sidebar
+- **Pin todos** - pin important todos with visual pin icons and sort them to the top
 
 ### UI/UX
 
