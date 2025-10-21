@@ -37,6 +37,7 @@ interface ArchiveSectionProps {
   onMoveToPreviousDay: (id: Id<"todos">) => void;
   onMoveToNextDay: (id: Id<"todos">) => void;
   onMoveToTomorrow: (id: Id<"todos">) => void;
+  onMoveToCustomDate: (id: Id<"todos">, date: string) => void;
   onDeleteArchived: (id: Id<"todos">) => void;
   onDeleteAllArchived: () => void;
   isExpanded: boolean;
@@ -49,6 +50,7 @@ export function ArchiveSection({
   onMoveToPreviousDay,
   onMoveToNextDay,
   onMoveToTomorrow,
+  onMoveToCustomDate,
   onDeleteArchived,
   onDeleteAllArchived,
   isExpanded,
@@ -155,6 +157,9 @@ export function ArchiveSection({
                     onMoveToPreviousDay={() => onMoveToPreviousDay(todo._id)}
                     onMoveToNextDay={() => onMoveToNextDay(todo._id)}
                     onMoveToTomorrow={() => onMoveToTomorrow(todo._id)}
+                    onMoveToCustomDate={(date) =>
+                      onMoveToCustomDate(todo._id, date)
+                    }
                   />
                   <button
                     className="archived-delete-button"

@@ -210,6 +210,16 @@ export function TodoList({
     });
   };
 
+  const handleMoveToCustomDate = async (
+    todoId: Id<"todos">,
+    newDate: string,
+  ) => {
+    await moveTodoToDate({
+      todoId,
+      newDate,
+    });
+  };
+
   const handleAddNote = async () => {
     try {
       await createNote({ date, title: "Untitled" });
@@ -264,6 +274,9 @@ export function TodoList({
                   }
                   onMoveToNextDay={() => handleMoveToNextDay(parent._id)}
                   onMoveToTomorrow={() => handleMoveToTomorrow(parent._id)}
+                  onMoveToCustomDate={(date) =>
+                    handleMoveToCustomDate(parent._id, date)
+                  }
                   onHoverChange={onTodoHover}
                 />
               </div>
@@ -288,6 +301,9 @@ export function TodoList({
                         }
                         onMoveToNextDay={() => handleMoveToNextDay(child._id)}
                         onMoveToTomorrow={() => handleMoveToTomorrow(child._id)}
+                        onMoveToCustomDate={(date) =>
+                          handleMoveToCustomDate(child._id, date)
+                        }
                         onHoverChange={onTodoHover}
                       />
                     </div>

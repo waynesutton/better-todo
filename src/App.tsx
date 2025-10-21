@@ -62,6 +62,7 @@ function App() {
   const deleteTodo = useMutation(api.todos.deleteTodo);
   const reorderTodos = useMutation(api.todos.reorderTodos);
   const updateTodo = useMutation(api.todos.updateTodo);
+  const moveTodoToDate = useMutation(api.todos.moveTodoToDate);
 
   // Fetch available dates and todos (skip if not authenticated)
   const availableDates = useQuery(
@@ -257,6 +258,13 @@ function App() {
     if (overIndex !== -1) {
       await reorderTodos({ todoId: activeId, newOrder: overIndex });
     }
+  };
+
+  const handleMoveArchivedToCustomDate = async (
+    todoId: Id<"todos">,
+    newDate: string,
+  ) => {
+    await moveTodoToDate({ todoId, newDate });
   };
 
   // Keyboard shortcuts
@@ -578,6 +586,7 @@ function App() {
                 onMoveToPreviousDay={() => {}}
                 onMoveToNextDay={() => {}}
                 onMoveToTomorrow={() => {}}
+                onMoveToCustomDate={handleMoveArchivedToCustomDate}
                 onDeleteArchived={handleDeleteArchived}
                 onDeleteAllArchived={handleDeleteAllArchived}
                 isExpanded={archiveExpanded}

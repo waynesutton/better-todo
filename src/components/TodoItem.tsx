@@ -19,6 +19,7 @@ interface TodoItemProps {
   onMoveToPreviousDay: () => void;
   onMoveToNextDay: () => void;
   onMoveToTomorrow: () => void;
+  onMoveToCustomDate: (date: string) => void;
   onHoverChange?: (id: Id<"todos"> | null) => void;
 }
 
@@ -33,12 +34,15 @@ export function TodoItem({
   onMoveToPreviousDay,
   onMoveToNextDay,
   onMoveToTomorrow,
+  onMoveToCustomDate,
   onHoverChange,
 }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [customDate, setCustomDate] = useState("");
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const menuDropdownRef = useRef<HTMLDivElement>(null);
@@ -148,6 +152,15 @@ export function TodoItem({
     setShowMenu(false);
   };
 
+  const handleMoveToCustomDate = () => {
+    if (customDate) {
+      onMoveToCustomDate(customDate);
+      setShowMenu(false);
+      setShowDatePicker(false);
+      setCustomDate("");
+    }
+  };
+
   const handleMenuToggle = () => {
     if (!showMenu && menuButtonRef.current) {
       const rect = menuButtonRef.current.getBoundingClientRect();
@@ -171,6 +184,10 @@ export function TodoItem({
         if (showMenu) {
           setShowMenu(false);
         }
+        if (showDatePicker) {
+          setShowDatePicker(false);
+          setCustomDate("");
+        }
       }
     };
 
@@ -193,170 +210,218 @@ export function TodoItem({
       window.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showMenu]);
+  }, [showMenu, showDatePicker]);
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`todo-item ${pinned && !isPinnedView ? "pinned" : ""}`}
-      onMouseEnter={() => onHoverChange?.(id)}
-      onMouseLeave={() => onHoverChange?.(null)}
-    >
-      {/* Drag handle */}
-      <div {...attributes} {...listeners} className="drag-handle">
-        ⋮⋮
-      </div>
-
-      {/* Checkbox for all items */}
+    <>
       <div
-        className={`todo-checkbox ${completed ? "checked" : ""}`}
-        onClick={handleCheckboxToggle}
+        ref={setNodeRef}
+        style={style}
+        className={`todo-item ${pinned && !isPinnedView ? "pinned" : ""}`}
+        onMouseEnter={() => onHoverChange?.(id)}
+        onMouseLeave={() => onHoverChange?.(null)}
       >
-        {completed && "✓"}
-      </div>
+        {/* Drag handle */}
+        <div {...attributes} {...listeners} className="drag-handle">
+          ⋮⋮
+        </div>
 
-      {/* Content */}
-      <div className="todo-content">
-        {isEditing ? (
-          <textarea
-            className={`todo-input ${
-              type === "h1"
-                ? "todo-header-h1"
-                : type === "h2"
-                  ? "todo-header-h2"
-                  : type === "h3"
-                    ? "todo-header-h3"
-                    : ""
-            }`}
-            value={editContent}
-            onChange={handleContentChange}
-            onBlur={handleBlur}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && !isMobile) {
-                // On desktop: Enter saves the todo
-                e.preventDefault();
-                handleBlur();
-              } else if (e.key === "Enter" && e.shiftKey && isMobile) {
-                // On mobile: Shift+Enter saves the todo
-                e.preventDefault();
-                handleBlur();
-              } else if (e.key === "Escape") {
-                // ESC cancels editing
-                e.preventDefault();
-                if (document.activeElement instanceof HTMLElement) {
-                  document.activeElement.blur();
-                }
-                setEditContent(content);
-                setIsEditing(false);
-              }
-              // Shift+Enter on desktop or Enter on mobile allows new lines
-            }}
-            autoFocus
-            rows={3}
-            spellCheck={true}
-            data-gramm="false"
-            data-gramm_editor="false"
-            data-enable-grammarly="false"
-          />
-        ) : (
-          <div
-            className={`todo-text ${
-              type === "h1"
-                ? "todo-header-h1"
-                : type === "h2"
-                  ? "todo-header-h2"
-                  : type === "h3"
-                    ? "todo-header-h3"
-                    : ""
-            }`}
-            onClick={() => setIsEditing(true)}
-          >
-            {content}
-          </div>
-        )}
-      </div>
-
-      {/* Three dots menu */}
-      <div className="todo-menu">
-        <button
-          ref={menuButtonRef}
-          className="menu-button"
-          onClick={handleMenuToggle}
+        {/* Checkbox for all items */}
+        <div
+          className={`todo-checkbox ${completed ? "checked" : ""}`}
+          onClick={handleCheckboxToggle}
         >
-          ⋯
-        </button>
+          {completed && "✓"}
+        </div>
 
-        {showMenu &&
-          (isArchived ? (
-            createPortal(
-              <div
-                ref={archivedMenuRef}
-                className="menu-dropdown"
-                style={{
-                  position: "absolute",
-                  top: `${menuPosition.top}px`,
-                  left: `${menuPosition.left}px`,
-                  zIndex: 10000,
-                  minWidth: "160px",
-                  maxWidth: "180px",
-                }}
-              >
+        {/* Content */}
+        <div className="todo-content">
+          {isEditing ? (
+            <textarea
+              className={`todo-input ${
+                type === "h1"
+                  ? "todo-header-h1"
+                  : type === "h2"
+                    ? "todo-header-h2"
+                    : type === "h3"
+                      ? "todo-header-h3"
+                      : ""
+              }`}
+              value={editContent}
+              onChange={handleContentChange}
+              onBlur={handleBlur}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && !isMobile) {
+                  // On desktop: Enter saves the todo
+                  e.preventDefault();
+                  handleBlur();
+                } else if (e.key === "Enter" && e.shiftKey && isMobile) {
+                  // On mobile: Shift+Enter saves the todo
+                  e.preventDefault();
+                  handleBlur();
+                } else if (e.key === "Escape") {
+                  // ESC cancels editing
+                  e.preventDefault();
+                  if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
+                  setEditContent(content);
+                  setIsEditing(false);
+                }
+                // Shift+Enter on desktop or Enter on mobile allows new lines
+              }}
+              autoFocus
+              rows={3}
+              spellCheck={true}
+              data-gramm="false"
+              data-gramm_editor="false"
+              data-enable-grammarly="false"
+            />
+          ) : (
+            <div
+              className={`todo-text ${
+                type === "h1"
+                  ? "todo-header-h1"
+                  : type === "h2"
+                    ? "todo-header-h2"
+                    : type === "h3"
+                      ? "todo-header-h3"
+                      : ""
+              }`}
+              onClick={() => setIsEditing(true)}
+            >
+              {content}
+            </div>
+          )}
+        </div>
+
+        {/* Three dots menu */}
+        <div className="todo-menu">
+          <button
+            ref={menuButtonRef}
+            className="menu-button"
+            onClick={handleMenuToggle}
+          >
+            ⋯
+          </button>
+
+          {showMenu &&
+            (isArchived ? (
+              createPortal(
+                <div
+                  ref={archivedMenuRef}
+                  className="menu-dropdown"
+                  style={{
+                    position: "absolute",
+                    top: `${menuPosition.top}px`,
+                    left: `${menuPosition.left}px`,
+                    zIndex: 10000,
+                    minWidth: "160px",
+                    maxWidth: "180px",
+                  }}
+                >
+                  {!completed && (
+                    <div className="menu-item" onClick={handleUnarchive}>
+                      Unarchive
+                    </div>
+                  )}
+                  <div className="menu-item danger" onClick={handleDeleteClick}>
+                    Delete
+                  </div>
+                </div>,
+                document.body,
+              )
+            ) : (
+              <div className="menu-dropdown" ref={menuDropdownRef}>
                 {!completed && (
-                  <div className="menu-item" onClick={handleUnarchive}>
-                    Unarchive
+                  <div className="menu-item" onClick={handleTogglePin}>
+                    {pinned ? "Unpin" : "Pin"}
                   </div>
                 )}
+                {!completed && (
+                  <div className="menu-item" onClick={handleAddSubtask}>
+                    Add subtask
+                  </div>
+                )}
+                <div
+                  className="menu-item"
+                  onClick={() => {
+                    onMoveToTomorrow();
+                    setShowMenu(false);
+                  }}
+                >
+                  Move to Tomorrow
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() => {
+                    onMoveToPreviousDay();
+                    setShowMenu(false);
+                  }}
+                >
+                  Move to Previous Day
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() => {
+                    onMoveToNextDay();
+                    setShowMenu(false);
+                  }}
+                >
+                  Move to Next Day
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() => {
+                    setShowDatePicker(true);
+                    setShowMenu(false);
+                  }}
+                >
+                  Move to Date...
+                </div>
                 <div className="menu-item danger" onClick={handleDeleteClick}>
                   Delete
                 </div>
-              </div>,
-              document.body,
-            )
-          ) : (
-            <div className="menu-dropdown" ref={menuDropdownRef}>
-              {!completed && (
-                <div className="menu-item" onClick={handleTogglePin}>
-                  {pinned ? "Unpin" : "Pin"}
-                </div>
-              )}
-              {!completed && (
-                <div className="menu-item" onClick={handleAddSubtask}>
-                  Add subtask
-                </div>
-              )}
-              <div
-                className="menu-item"
-                onClick={() => {
-                  onMoveToTomorrow();
-                  setShowMenu(false);
-                }}
-              >
-                Move to Tomorrow
               </div>
-              <div
-                className="menu-item"
-                onClick={() => {
-                  onMoveToPreviousDay();
-                  setShowMenu(false);
-                }}
-              >
-                Move to Previous Day
-              </div>
-              <div
-                className="menu-item"
-                onClick={() => {
-                  onMoveToNextDay();
-                  setShowMenu(false);
-                }}
-              >
-                Move to Next Day
-              </div>
-              <div className="menu-item danger" onClick={handleDeleteClick}>
-                Delete
-              </div>
-            </div>
-          ))}
+            ))}
+        </div>
+
+        {/* Date picker modal */}
+        {showDatePicker && (
+          <div
+            className="date-picker-modal"
+            style={{
+              position: "fixed",
+              top: `${menuPosition.top}px`,
+              left: `${menuPosition.left}px`,
+              zIndex: 10000,
+            }}
+          >
+            <input
+              type="date"
+              value={customDate}
+              onChange={(e) => setCustomDate(e.target.value)}
+              className="date-picker-input"
+              autoFocus
+            />
+            <button
+              className="date-picker-button"
+              onClick={handleMoveToCustomDate}
+              disabled={!customDate}
+            >
+              Move
+            </button>
+            <button
+              className="date-picker-button cancel"
+              onClick={() => {
+                setShowDatePicker(false);
+                setCustomDate("");
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
 
       <ConfirmDialog
@@ -369,6 +434,6 @@ export function TodoItem({
         onCancel={cancelDelete}
         isDangerous={true}
       />
-    </div>
+    </>
   );
 }
