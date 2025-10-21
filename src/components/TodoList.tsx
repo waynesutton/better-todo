@@ -7,8 +7,6 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-  DragOverlay,
-  useDroppable,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -91,7 +89,6 @@ export function TodoList({
   const reorderTodos = useMutation(api.todos.reorderTodos);
   const moveTodoToDate = useMutation(api.todos.moveTodoToDate);
   const createNote = useMutation(api.notes.createNote);
-  const updateNote = useMutation(api.notes.updateNote);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
