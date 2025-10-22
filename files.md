@@ -341,16 +341,21 @@ This document describes the structure and purpose of each file in the Better Tod
     - Shows "Sign In to Search" modal when unauthenticated
 
 - `PomodoroTimer.tsx` - Built-in productivity timer with:
-  - Customizable work and break intervals (default 25min work, 5min break)
-  - Visual timer display with circular progress indicator
-  - Sound notifications for work/break transitions
-  - Session tracking and statistics
-  - Start/pause/reset functionality
-  - Settings modal for customizing intervals
-  - Session history and completion tracking
-  - Integration with Convex backend for persistent settings
-  - Clean, minimal UI matching app design system
-  - Accessible from sidebar footer
+  - 25-minute Pomodoro timer with visual countdown display (MM:SS format)
+  - **MP3-based audio notifications** for timer events:
+    - Start sound (`timer-start.mp3`) plays once when timer begins
+    - 5-second countdown sound (`5-second-coutdown.mp3`) plays at 5 seconds remaining
+    - Completion sounds rotate through 11 MP3 files (synth, epicboom, epci, deep, horns, computer, flute, pause, whoa, waves, done)
+    - Pause sound (`pause.mp3`) plays when user pauses timer
+    - All sounds at 70% volume
+  - **Modal and full-screen modes** with play/pause/reset/stop controls
+  - Full-screen "keep cooking!" message on completion
+  - Timer button in header shows countdown when running
+  - Web Worker for accurate background timing
+  - Session persistence via Convex (syncs across tabs)
+  - Keyboard shortcuts (ESC to close full-screen, f to enter full-screen)
+  - Sound state tracking with refs (`hasPlayedStartSound`, `hasPlayedCountdownSound`, `lastEndSoundIndex`)
+  - Accessible from timer icon in header
 
 ### Context (`src/context/`)
 
@@ -412,10 +417,27 @@ This document describes the structure and purpose of each file in the Better Tod
 - Microsoft tile icons for Windows
 - Convex logo files (black and white variants)
 - SVG favicon with checkmark design
+- **Pomodoro timer audio files** (13 MP3 files):
+  - `timer-start.mp3` - Start sound (plays once when timer begins)
+  - `5-second-coutdown.mp3` - Countdown alert (plays at 5 seconds remaining)
+  - `pause.mp3` - Pause sound (plays when timer is paused)
+  - **Completion sounds** (rotate through): `end-synth.mp3`, `end-epicboom.mp3`, `end-epci.mp3`, `end-deep.mp3`, `end-horns.mp3`, `end-computer.mp3`, `end-flute.mp3`, `end-whoa.mp3`, `end-waves.mp3`, `done.mp3`
+- `timer-worker.js` - Web Worker for background timer execution
 
-## Current Version: 2.1.2 (January 21, 2025)
+## Current Version: 2.2.2 (January 22, 2025)
 
-### Latest Features (v2.1.2)
+### Latest Features (v2.2.2)
+
+- **Pomodoro timer audio notifications** with MP3 file-based sounds
+  - Start sound plays once when timer begins at full 25 minutes
+  - 5-second countdown sound plays when 5 seconds remain
+  - Completion sounds rotate through 11 different MP3 files
+  - Pause sound plays when user clicks pause button
+  - All sounds play at 70% volume for comfortable listening
+  - Replaced Web Audio API oscillators with simple MP3 file loading
+  - Cleaner, more maintainable audio implementation
+
+### Previous Features (v2.1.2)
 
 - **Todo count badges in sidebar**
   - Shows count of uncompleted todos next to each date in sidebar

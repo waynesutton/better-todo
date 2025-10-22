@@ -29,7 +29,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
 - **Pin todos** - pin important todos with visual pin icons and sort them to the top
 - **Custom folders** - organize dates into collapsible folders with custom names
 - **Auto-grouped months** - completed months automatically group into collapsible sections
-- **Pomodoro timer** - built-in productivity timer with customizable work/break intervals
+- **Pomodoro timer** - built-in productivity timer with sound notifications and rotating completion sounds
 
 ### UI/UX
 
@@ -216,12 +216,17 @@ At the bottom of each date's todo list:
 
 ### Pomodoro Timer
 
-- **Built-in productivity timer** accessible from the sidebar footer
-- **Customizable intervals** - set work and break durations
-- **Visual timer display** with progress indication
-- **Sound notifications** for work/break transitions
-- **Session tracking** - see completed pomodoro sessions
-- **Focus mode** - minimize distractions during work sessions
+- **Built-in productivity timer** accessible from the timer icon in header
+- **Sound notifications** for timer events:
+  - Start sound plays when timer begins
+  - 5-second countdown sound plays when 5 seconds remain
+  - Completion sounds rotate through 11 different sounds (synth, epicboom, epci, deep, horns, computer, flute, pause, whoa, waves, done)
+  - Pause sound plays when timer is paused
+- **Full-screen completion mode** with "keep cooking!" message
+- **Modal and full-screen controls** - start, pause, resume, reset, and stop
+- **Visual countdown** displays time remaining in MM:SS format
+- **Keyboard shortcuts** - ESC to close full-screen, f to enter full-screen
+- **Session persistence** - timer state syncs across tabs via Convex
 
 ### Themes
 

@@ -4,6 +4,30 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.2.2] - 2025-01-22
+
+### Added
+
+- **Pomodoro timer audio notifications** with MP3 file-based sounds
+  - Start sound (`timer-start.mp3`) plays once when timer begins at full 25 minutes
+  - 5-second countdown sound (`5-second-coutdown.mp3`) plays when 5 seconds remain
+  - Completion sounds rotate through 11 different MP3 files:
+    - end-synth.mp3, end-epicboom.mp3, end-epci.mp3, end-deep.mp3, end-horns.mp3
+    - end-computer.mp3, end-flute.mp3, pause.mp3, end-whoa.mp3, end-waves.mp3, done.mp3
+  - Pause sound (`pause.mp3`) plays when user clicks pause button in modal or full-screen mode
+  - All sounds play at 70% volume for comfortable listening
+  - Replaced Web Audio API oscillators with simple MP3 file loading
+  - Sound state properly resets on timer stop/reset
+  - Each sound plays only once per trigger event
+
+### Changed
+
+- **Audio system replaced** - Switched from Web Audio API to MP3 files
+  - Removed `audioContextRef` and oscillator-based sound generation
+  - Added refs for tracking sound playback state (`hasPlayedStartSound`, `hasPlayedCountdownSound`)
+  - Cleaner, more maintainable audio implementation
+  - Better quality sounds with actual audio files
+
 ## [2.2.1] - 2025-01-21
 
 ### Added

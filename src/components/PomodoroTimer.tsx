@@ -17,7 +17,9 @@ export function PomodoroTimer() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [displayTime, setDisplayTime] = useState(25 * 60 * 1000); // 25 minutes in ms
   const workerRef = useRef<Worker | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const hasPlayedStartSound = useRef(false);
+  const hasPlayedCountdownSound = useRef(false);
+  const lastEndSoundIndex = useRef(0);
 
   // Fetch current session from Convex
   const session = useQuery(api.pomodoro.getPomodoroSession);
@@ -38,9 +40,15 @@ export function PomodoroTimer() {
 
       if (type === "tick") {
         setDisplayTime(time);
+
+        // Play 5-second countdown sound when 5 seconds remain
+        if (time <= 5000 && time > 4000 && !hasPlayedCountdownSound.current) {
+          playCountdownSound();
+          hasPlayedCountdownSound.current = true;
+        }
       } else if (type === "complete") {
         setDisplayTime(0);
-        playNotificationSound();
+        playCompletionSound();
         setIsFullScreen(true);
         if (session) {
           completePomodoro({ sessionId: session._id });
@@ -59,6 +67,8 @@ export function PomodoroTimer() {
   useEffect(() => {
     if (!session) {
       setDisplayTime(25 * 60 * 1000);
+      hasPlayedStartSound.current = false;
+      hasPlayedCountdownSound.current = false;
       if (workerRef.current) {
         workerRef.current.postMessage({ type: "stop" });
       }
@@ -74,6 +84,15 @@ export function PomodoroTimer() {
           time: session.remainingTime,
         });
       }
+
+      // Play start sound only once when timer starts
+      if (
+        !hasPlayedStartSound.current &&
+        session.remainingTime === 25 * 60 * 1000
+      ) {
+        playStartSound();
+        hasPlayedStartSound.current = true;
+      }
     } else if (session.status === "paused") {
       if (workerRef.current) {
         workerRef.current.postMessage({ type: "pause" });
@@ -84,46 +103,52 @@ export function PomodoroTimer() {
     }
   }, [session]);
 
-  // Play notification sound using Web Audio API
-  const playNotificationSound = () => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
-    }
+  // List of end sounds to rotate through
+  const endSounds = [
+    "/end-synth.mp3",
+    "/end-epicboom.mp3",
+    "/end-epci.mp3",
+    "/end-deep.mp3",
+    "/end-horns.mp3",
+    "/end-computer.mp3",
+    "/end-flute.mp3",
+    "/pause.mp3",
+    "/end-whoa.mp3",
+    "/end-waves.mp3",
+    "/done.mp3",
+  ];
 
-    const ctx = audioContextRef.current;
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+  // Play start sound
+  const playStartSound = () => {
+    const audio = new Audio("/timer-start.mp3");
+    audio.volume = 0.7;
+    audio.play().catch(console.error);
+  };
 
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
+  // Play 5-second countdown sound
+  const playCountdownSound = () => {
+    const audio = new Audio("/5-second-coutdown.mp3");
+    audio.volume = 0.7;
+    audio.play().catch(console.error);
+  };
 
-    oscillator.frequency.value = 800;
-    oscillator.type = "sine";
+  // Play pause sound
+  const playPauseSound = () => {
+    const audio = new Audio("/pause.mp3");
+    audio.volume = 0.7;
+    audio.play().catch(console.error);
+  };
 
-    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+  // Play completion sound (rotates through list)
+  const playCompletionSound = () => {
+    const soundUrl = endSounds[lastEndSoundIndex.current];
+    const audio = new Audio(soundUrl);
+    audio.volume = 0.7;
+    audio.play().catch(console.error);
 
-    oscillator.start(ctx.currentTime);
-    oscillator.stop(ctx.currentTime + 0.5);
-
-    // Play a second beep
-    setTimeout(() => {
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-
-      osc2.frequency.value = 800;
-      osc2.type = "sine";
-
-      gain2.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-
-      osc2.start(ctx.currentTime);
-      osc2.stop(ctx.currentTime + 0.5);
-    }, 200);
+    // Move to next sound in rotation
+    lastEndSoundIndex.current =
+      (lastEndSoundIndex.current + 1) % endSounds.length;
   };
 
   // Format time as MM:SS
@@ -135,11 +160,14 @@ export function PomodoroTimer() {
   };
 
   const handleStart = async () => {
+    hasPlayedStartSound.current = false;
+    hasPlayedCountdownSound.current = false;
     await startPomodoro();
   };
 
   const handlePause = async () => {
     if (session && workerRef.current) {
+      playPauseSound();
       await pausePomodoro({
         sessionId: session._id,
         remainingTime: displayTime,
@@ -165,6 +193,8 @@ export function PomodoroTimer() {
     if (session) {
       await stopPomodoro({ sessionId: session._id });
     }
+    hasPlayedStartSound.current = false;
+    hasPlayedCountdownSound.current = false;
     await startPomodoro();
     setIsFullScreen(false);
   };

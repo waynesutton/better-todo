@@ -1,6 +1,6 @@
 {
   "name": "better-todo",
-  "version": "1.0.0",
+  "version": "2.2.2",
   "description": "Real-time markdown todo app with Convex and Clerk",
   "type": "module",
   "scripts": {
