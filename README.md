@@ -1,6 +1,6 @@
 # better todo - The modern todo app for developers and busy people with convex and no ai assistants
 
-An open source, real-time to-do list that never falls out of sync — built on Convex. Features beautiful dark mode (Sublime Text style) and light mode (Apple Notes style).
+An open source, real-time to-do list that never falls out of sync — built on Convex. 
 
 **Live Demo**: [betterdone.netlify.app](https://betterdone.netlify.app)
 

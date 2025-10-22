@@ -262,11 +262,18 @@ function NoteItem({
   const contentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const isTypingRef = useRef(false);
+  const cursorPositionRef = useRef<number | null>(null);
+  const [textareaHeight, setTextareaHeight] = useState<number>(200);
+  const isResizingRef = useRef(false);
 
   // Update local state when note prop changes (from external updates)
+  // BUT only if user is not actively typing to prevent cursor jumping
   useEffect(() => {
-    setContentInput(note.content);
-  }, [note.content]);
+    if (!isTypingRef.current && !isEditMode) {
+      setContentInput(note.content);
+    }
+  }, [note.content, isEditMode]);
 
   // Auto-focus title input when note is newly created
   useEffect(() => {
@@ -279,6 +286,14 @@ function NoteItem({
       }, 50);
     }
   }, [shouldFocus]);
+
+  // Reset typing flag when entering/exiting edit mode
+  useEffect(() => {
+    if (!isEditMode) {
+      isTypingRef.current = false;
+      cursorPositionRef.current = null;
+    }
+  }, [isEditMode]);
 
   const {
     attributes,
@@ -346,6 +361,14 @@ function NoteItem({
   };
 
   const handleContentChange = (value: string) => {
+    // Mark that user is actively typing
+    isTypingRef.current = true;
+
+    // Save cursor position before updating
+    if (textareaRef.current) {
+      cursorPositionRef.current = textareaRef.current.selectionStart;
+    }
+
     setContentInput(value);
 
     // Clear existing timeout
@@ -356,6 +379,10 @@ function NoteItem({
     // Set new timeout to update database after 500ms of no typing
     contentTimeoutRef.current = setTimeout(() => {
       onUpdateContent(note._id, value);
+      // Mark typing as done after save
+      setTimeout(() => {
+        isTypingRef.current = false;
+      }, 100);
     }, 500);
   };
 
@@ -364,11 +391,37 @@ function NoteItem({
     if (contentTimeoutRef.current) {
       clearTimeout(contentTimeoutRef.current);
     }
+    // Mark typing as done
+    isTypingRef.current = false;
     onUpdateContent(note._id, contentInput);
     // Exit edit mode after saving
     setTimeout(() => {
       setIsEditMode(false);
     }, 100);
+  };
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isResizingRef.current = true;
+    const startY = e.clientY;
+    const startHeight = textareaHeight;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizingRef.current) return;
+      const deltaY = moveEvent.clientY - startY;
+      const newHeight = Math.max(100, startHeight + deltaY);
+      setTextareaHeight(newHeight);
+    };
+
+    const handleMouseUp = () => {
+      isResizingRef.current = false;
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
   };
 
   // Cleanup timeout on unmount
@@ -379,6 +432,19 @@ function NoteItem({
       }
     };
   }, []);
+
+  // Restore cursor position after updates to prevent jumping
+  useEffect(() => {
+    if (
+      isEditMode &&
+      textareaRef.current &&
+      cursorPositionRef.current !== null &&
+      isTypingRef.current
+    ) {
+      const position = cursorPositionRef.current;
+      textareaRef.current.setSelectionRange(position, position);
+    }
+  }, [contentInput, isEditMode]);
 
   return (
     <div ref={setNodeRef} style={style} className="note-item">
@@ -456,7 +522,11 @@ function NoteItem({
         <div className="note-content-wrapper">
           {isEditMode ? (
             <div className="note-editor-container">
-              <div className="note-line-numbers" aria-hidden="true">
+              <div
+                className="note-line-numbers"
+                aria-hidden="true"
+                style={{ height: `${textareaHeight}px` }}
+              >
                 {contentInput.split("\n").map((_, index) => (
                   <div key={index} className="line-number">
                     {index + 1}
@@ -470,14 +540,18 @@ function NoteItem({
                 value={contentInput}
                 onChange={(e) => {
                   handleContentChange(e.target.value);
-                  e.target.style.height = "auto";
-                  e.target.style.height = e.target.scrollHeight + "px";
                 }}
                 onBlur={handleContentBlur}
                 spellCheck={true}
                 data-gramm="false"
                 data-gramm_editor="false"
                 data-enable-grammarly="false"
+                style={{ height: `${textareaHeight}px` }}
+              />
+              <div
+                className="note-resize-handle"
+                onMouseDown={handleResizeMouseDown}
+                title="Drag to resize"
               />
             </div>
           ) : (

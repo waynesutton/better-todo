@@ -697,6 +697,14 @@ function App() {
           )}
 
           <div className="main-content-body">
+            {!authIsLoading && !isAuthenticated && (
+              <div className="logged-out-demo-section">
+                <p className="logged-out-demo-text">
+                  Try it out below — your todos and notes are saved locally
+                  until you sign up
+                </p>
+              </div>
+            )}
             <TodoList
               todos={displayTodos}
               date={selectedDate}
@@ -711,6 +719,45 @@ function App() {
               openMenuForTodoId={openMenuForTodoId}
               openMenuTrigger={openMenuTrigger}
             />
+            {!authIsLoading && !isAuthenticated && (
+              <div className="feature-showcase">
+                <div className="feature-showcase-box">
+                  <h2 className="feature-showcase-title">better todo</h2>
+                  <p className="feature-showcase-description">
+                    An open source, real-time to-do list that never falls out of
+                    sync — built on Convex.
+                  </p>
+                  <ul className="feature-showcase-list">
+                    <li>No AI assistants - just your todos and focus</li>
+                    <li>Real-time synchronization across all your devices</li>
+                    <li>
+                      Notion-style inline input - type directly to add todos
+                    </li>
+                    <li>Daily notes with syntax-highlighted code blocks</li>
+                    <li>Drag and drop reordering with intuitive handles</li>
+                    <li>Full-text search across all todos and notes</li>
+                    <li>Dark and light themes with smooth transitions</li>
+                    <li>Mobile-optimized with touch-friendly interface</li>
+                    <li>Archive and bulk actions for easy management</li>
+                    <li>Built-in Pomodoro timer for productivity</li>
+                  </ul>
+                  <div className="feature-showcase-buttons">
+                    <button
+                      onClick={() => setShowSignUpModal(true)}
+                      className="feature-showcase-button feature-showcase-button-primary"
+                    >
+                      Sign Up
+                    </button>
+                    <button
+                      onClick={() => setShowSignInModal(true)}
+                      className="feature-showcase-button feature-showcase-button-secondary"
+                    >
+                      Sign In
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sticky footer with archive and bulk actions */}
