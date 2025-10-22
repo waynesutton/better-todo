@@ -61,6 +61,10 @@ export function KeyboardShortcutsModal({
       ],
     },
     {
+      category: "Notes",
+      items: [{ key: "Shift + +", description: "Add new note" }],
+    },
+    {
       category: "Search",
       items: [{ key: "⌘ + K", description: "Open search modal" }],
     },

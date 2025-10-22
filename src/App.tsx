@@ -4,7 +4,7 @@ import { useUser } from "@clerk/clerk-react";
 import { SignIn, SignUp, UserProfile, SignOutButton } from "@clerk/clerk-react";
 import { api } from "../convex/_generated/api";
 import { Sidebar } from "./components/Sidebar";
-import { TodoList } from "./components/TodoList";
+import { TodoList, TodoListRef } from "./components/TodoList";
 import { SearchModal } from "./components/SearchModal";
 import { ArchiveSection } from "./components/ArchiveSection";
 import { ConfirmDialog } from "./components/ConfirmDialog";
@@ -46,6 +46,7 @@ function App() {
   const [showSignInToNoteModal, setShowSignInToNoteModal] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const todoInputRef = useRef<HTMLTextAreaElement>(null);
+  const todoListRef = useRef<TodoListRef>(null);
   const [focusedTodoIndex, setFocusedTodoIndex] = useState(-1);
   const [lastCompletedTodo, setLastCompletedTodo] =
     useState<Id<"todos"> | null>(null);
@@ -355,6 +356,14 @@ function App() {
           if (todo && !todo.completed && !todo.archived) {
             createSubtask({ parentId: todo._id, content: "" });
           }
+        }
+      }
+
+      // Add new note with Shift + +
+      if (e.key === "+" && e.shiftKey) {
+        e.preventDefault();
+        if (todoListRef.current) {
+          todoListRef.current.addNote();
         }
       }
 
@@ -706,6 +715,7 @@ function App() {
               </div>
             )}
             <TodoList
+              ref={todoListRef}
               todos={displayTodos}
               date={selectedDate}
               expandedNoteId={expandedNoteId}
