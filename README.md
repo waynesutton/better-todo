@@ -1,8 +1,8 @@
 # better todo - The modern todo app for developers and busy people with convex and no ai assistants
 
-An open source, real-time to-do list that never falls out of sync — built on Convex. 
+An open source, real-time to-do list that never falls out of sync — built on Convex.
 
-**Live Demo**: [betterdone.netlify.app](https://betterdone.netlify.app)
+**Live Demo**: [better-todo.co](https://better-todo.co)
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/853e020c-ce69-4cac-9099-05bcad891445/deploy-status)](https://app.netlify.com/projects/betterdone/deploys)
 
@@ -30,6 +30,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
 - **Custom folders** - organize dates into collapsible folders with custom names
 - **Auto-grouped months** - completed months automatically group into collapsible sections
 - **Pomodoro timer** - built-in productivity timer with sound notifications and rotating completion sounds
+- **Unsplash background images** - Optional beautiful nature images in Pomodoro full-screen mode with glass morphism overlay
 
 ### UI/UX
 
@@ -227,6 +228,11 @@ At the bottom of each date's todo list:
 - **Visual countdown** displays time remaining in MM:SS format
 - **Keyboard shortcuts** - ESC to close full-screen, f to enter full-screen
 - **Session persistence** - timer state syncs across tabs via Convex
+- **Unsplash background images** - Optional beautiful nature images in full-screen mode
+  - Random search queries: "landscape nature", "cities", "ocean", "sky"
+  - Apple-style glass morphism overlay when background is enabled
+  - Toggle button to show/hide background images
+  - New image fetches each time full-screen mode opens
 
 ### Themes
 
@@ -248,6 +254,7 @@ better-todo/
 │   ├── folders.ts             # Custom folder management
 │   ├── monthGroups.ts         # Auto-grouped month management
 │   ├── pomodoro.ts            # Pomodoro timer functionality
+│   ├── unsplash.ts            # Unsplash background image fetching
 │   ├── search.ts              # Search functionality
 │   └── http.ts                # HTTP routes for auth
 ├── src/
@@ -340,6 +347,10 @@ npx convex deploy
      VITE_CONVEX_URL=https://your-deployment.convex.cloud
      VITE_CLERK_PUBLISHABLE_KEY=pk_test_XXXXXXXXXXXXXXXXXXXXXXXX
      ```
+   - For Unsplash background images in Pomodoro timer (optional):
+     - Add `UNSPLASH_ACCESS_KEY` to your Convex deployment environment variables
+     - Get your free access key from [Unsplash Developers](https://unsplash.com/developers)
+     - This enables beautiful nature backgrounds in Pomodoro full-screen mode
 
 5. Configure Clerk Dashboard:
    - Add production redirect URI: `https://your-domain.netlify.app`
@@ -352,6 +363,8 @@ npx convex deploy
 The app supports continuous deployment, so every push to your main branch will trigger a new deployment.
 
 **Note:** All environment variables prefixed with `VITE_` are exposed to the frontend during build time. Never include sensitive information like API keys in these variables.
+
+**Unsplash Integration:** The `UNSPLASH_ACCESS_KEY` is stored securely in your Convex deployment environment variables (not exposed to frontend) and is only used server-side for fetching background images.
 
 ## Keyboard Shortcuts
 

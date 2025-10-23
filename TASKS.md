@@ -79,7 +79,52 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 
 - None currently
 
-## Future Tasks To be determined
+## Completed Tasks (v1.0 Final)
+
+- [x] **Unsplash background images in Pomodoro full-screen mode** (v2.2.6)
+  - Optional beautiful nature images from Unsplash as full-screen backgrounds
+  - Random search queries: "landscape nature", "cities", "ocean", "sky"
+  - New image fetches each time full-screen mode opens for variety
+  - Toggle button with ImageIcon to show/hide background
+  - Apple-style glass morphism overlay when background is enabled
+  - Secure API key management via Convex environment variables
+  - Images hotlinked from Unsplash CDN following API guidelines
+
+## v1.0 Complete - Ready for Production
+
+**Better Todo v1.0 is now feature-complete and ready for production use!**
+
+### Core Features Delivered:
+
+- ✅ Real-time synchronization with Convex
+- ✅ Clerk authentication with private user data
+- ✅ Notion-style inline input and editing
+- ✅ Drag-and-drop reordering for todos and notes
+- ✅ Daily organization with custom date labels
+- ✅ Archive system with auto-archiving
+- ✅ Full-text search across todos and notes
+- ✅ Pomodoro timer with audio notifications
+- ✅ Unsplash background images in timer full-screen mode
+- ✅ Custom folders and auto-grouped months
+- ✅ Pinned todos for quick access
+- ✅ Multiple notes per date with syntax highlighting
+- ✅ Mobile-optimized responsive design
+- ✅ Dark/light theme support
+- ✅ Keyboard shortcuts and accessibility
+- ✅ Production deployment on Netlify
+
+### Technical Stack:
+
+- **Frontend**: React 18, TypeScript, Vite
+- **Backend**: Convex real-time database
+- **Authentication**: Clerk with JWT tokens
+- **Styling**: CSS variables with custom theming
+- **Icons**: Lucide React
+- **Drag & Drop**: @dnd-kit
+- **Audio**: MP3 files for timer notifications
+- **Images**: Unsplash API integration
+
+## Future Tasks (v2.0+)
 
 ### Collaboration Features
 

@@ -43,6 +43,7 @@ function App() {
   const [showSignInToSearchModal, setShowSignInToSearchModal] = useState(false);
   const [showSignInToCreateModal, setShowSignInToCreateModal] = useState(false);
   const [showSignInToNoteModal, setShowSignInToNoteModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const todoInputRef = useRef<HTMLTextAreaElement>(null);
   const todoListRef = useRef<TodoListRef>(null);
@@ -435,6 +436,7 @@ function App() {
       if (e.key === "Escape") {
         setShowKeyboardShortcuts(false);
         setSearchModalOpen(false);
+        setShowInfoModal(false);
         // Clear todo focus when pressing Escape
         setFocusedTodoIndex(-1);
       }
@@ -554,6 +556,7 @@ function App() {
             onOpenSignIn={() => setShowSignInModal(true)}
             onOpenSignUp={() => setShowSignUpModal(true)}
             onOpenProfile={() => setShowProfileModal(true)}
+            onShowInfo={() => setShowInfoModal(true)}
           />
         </div>
         {!sidebarHidden && !sidebarCollapsed && (
@@ -991,6 +994,57 @@ function App() {
                 <SignOutButton>
                   <button className="clerk-signout-button">Sign Out</button>
                 </SignOutButton>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Info Modal */}
+        {showInfoModal && (
+          <div
+            className="search-overlay"
+            onClick={() => setShowInfoModal(false)}
+          >
+            <div
+              className="clerk-modal-container"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: "600px", position: "relative" }}
+            >
+              {/* Close Button */}
+              <button
+                className="clerk-close-button"
+                onClick={() => setShowInfoModal(false)}
+                title="Close"
+                style={{
+                  position: "absolute",
+                  top: "16px",
+                  right: "16px",
+                  zIndex: 10,
+                }}
+              >
+                <X size={20} />
+              </button>
+
+              <div style={{ padding: "32px" }}>
+                <h2 className="feature-showcase-title">better todo</h2>
+                <p className="feature-showcase-description">
+                  An open source, real-time to-do list that never falls out of
+                  sync — built on Convex.
+                </p>
+                <ul className="feature-showcase-list">
+                  <li>No AI assistants - just your todos and focus</li>
+                  <li>Real-time synchronization across all your devices</li>
+                  <li>
+                    Notion-style inline input - type directly to add todos
+                  </li>
+                  <li>Daily notes with syntax-highlighted code blocks</li>
+                  <li>Drag and drop reordering with intuitive handles</li>
+                  <li>Full-text search across all todos and notes</li>
+                  <li>Dark and light themes with smooth transitions</li>
+                  <li>Mobile-optimized with touch-friendly interface</li>
+                  <li>Archive and bulk actions for easy management</li>
+                  <li>Built-in Pomodoro timer for productivity</li>
+                </ul>
               </div>
             </div>
           </div>

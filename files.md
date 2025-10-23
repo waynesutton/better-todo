@@ -129,6 +129,14 @@ This document describes the structure and purpose of each file in the Better Tod
   - `completePomodoroSession` - Mark session as completed and track statistics
   - `resetPomodoroSession` - Reset current session to start
   - `getPomodoroStats` - Get user's pomodoro statistics and completed sessions
+  - `updateBackgroundImage` - Update session with Unsplash background image URL
+
+- `unsplash.ts` - Unsplash background image fetching:
+  - `fetchBackgroundImage` - Fetches random images from Unsplash API
+  - Uses Node.js action with "use node" directive
+  - Secure access to UNSPLASH_ACCESS_KEY environment variable
+  - Random search queries: "landscape nature", "cities", "ocean", "sky"
+  - Updates pomodoro session with image URL for full-screen backgrounds
 
 ### Authentication (Clerk Integration)
 
@@ -440,9 +448,26 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Completion sounds** (rotate through): `end-synth.mp3`, `end-epicboom.mp3`, `end-epci.mp3`, `end-deep.mp3`, `end-horns.mp3`, `end-computer.mp3`, `end-flute.mp3`, `end-whoa.mp3`, `end-waves.mp3`, `done.mp3`
 - `timer-worker.js` - Web Worker for background timer execution
 
-## Current Version: 2.2.5 (October 23, 2025)
+## Current Version: 2.2.6 (January 23, 2025) - v1.0 FINAL RELEASE
 
-### Latest Features (v2.2.5)
+### Latest Features (v2.2.6) - v1.0 FINAL RELEASE
+
+- **Unsplash background images in Pomodoro full-screen mode**
+  - Optional beautiful nature images from Unsplash as full-screen backgrounds
+  - Random search queries: "landscape nature", "cities", "ocean", "sky"
+  - New image fetches each time full-screen mode opens for variety
+  - Toggle button with ImageIcon to show/hide background
+  - Apple-style glass morphism overlay when background is enabled
+  - Semi-transparent background with backdrop blur
+  - White glass effect in light mode, dark glass in dark mode
+  - Readable text with subtle shadows over images
+  - Glassmorphic control buttons with hover effects
+  - Responsive design with adjusted padding and border-radius for mobile
+  - Image toggle state resets to OFF on each full-screen open
+  - Secure API key management via Convex environment variables
+  - Images hotlinked from Unsplash CDN following API guidelines
+
+### Previous Features (v2.2.5)
 
 - **Menu button alignment consistency** - Fixed three-dot menu button alignment across all todo states
   - Menu buttons now properly align to the right edge of todos in all states (default, hover, focused)
@@ -659,3 +684,4 @@ This document describes the structure and purpose of each file in the Better Tod
 - Mobile-optimized with auto-hide and overlay
 - Keyboard shortcuts (Enter, Shift+Enter, Cmd/Ctrl+K, Escape)
 - Clerk authentication integration (fully implemented, deployed, and working in production)
+- **v1.0 COMPLETE** - Feature-rich, production-ready todo application with all core functionality

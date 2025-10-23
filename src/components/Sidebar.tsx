@@ -5,7 +5,7 @@ import { useUser } from "@clerk/clerk-react";
 import { api } from "../../convex/_generated/api";
 import { format, addDays, subDays } from "date-fns";
 import { PanelLeft, Pin, Menu, Folder, Plus } from "lucide-react";
-import { KeyboardIcon } from "@radix-ui/react-icons";
+import { KeyboardIcon, InfoCircledIcon } from "@radix-ui/react-icons";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
 import {
@@ -25,6 +25,7 @@ interface SidebarProps {
   onOpenSignIn?: () => void;
   onOpenSignUp?: () => void;
   onOpenProfile?: () => void;
+  onShowInfo?: () => void;
 }
 
 export function Sidebar({
@@ -37,6 +38,7 @@ export function Sidebar({
   onOpenSignIn,
   onOpenSignUp,
   onOpenProfile,
+  onShowInfo,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
   const { isLoading: authIsLoading, isAuthenticated } = useConvexAuth();
@@ -1664,6 +1666,17 @@ export function Sidebar({
               </TooltipContent>
             </Tooltip>
           )}
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="convex-link" onClick={() => onShowInfo?.()}>
+                <InfoCircledIcon width="18" height="18" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              About better todo
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Mobile hamburger menu */}
