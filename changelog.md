@@ -4,6 +4,75 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.2.6] - 2025-01-23
+
+### Added
+
+- **Unsplash background images in Pomodoro full-screen mode**
+  - Optional beautiful nature images from Unsplash as full-screen backgrounds
+  - Random search queries: "landscape nature", "cities", "ocean", "sky"
+  - New image fetches each time full-screen mode opens for variety
+  - Toggle button with ImageIcon to show/hide background
+  - Apple-style glass morphism overlay when background is enabled
+    - Semi-transparent background with backdrop blur
+    - White glass effect in light mode, dark glass in dark mode
+    - Readable text with subtle shadows over images
+    - Glassmorphic control buttons with hover effects
+  - Responsive design with adjusted padding and border-radius for mobile
+  - Image toggle state resets to OFF on each full-screen open
+  - Secure API key management via Convex environment variables
+  - Images hotlinked from Unsplash CDN following API guidelines
+
+### Backend Changes
+
+- **Schema update** (`convex/schema.ts`)
+  - Added `backgroundImageUrl` optional field to `pomodoroSessions` table
+- **New Convex file** (`convex/unsplash.ts`)
+  - `fetchBackgroundImage` action: fetches random images from Unsplash API
+  - Separated into its own file with `"use node"` directive (actions only)
+  - Secure access to `UNSPLASH_ACCESS_KEY` environment variable
+- **Updated Convex functions** (`convex/pomodoro.ts`)
+  - `updateBackgroundImage` mutation: updates session with image URL
+  - Removed `"use node"` directive (mutations/queries run in V8, not Node.js)
+
+### Frontend Changes
+
+- **PomodoroTimer component** (`src/components/PomodoroTimer.tsx`)
+  - Added `showBackgroundImage` state (defaults to false)
+  - Added `hasFetchedImage` ref to prevent duplicate fetches
+  - Imported `ImageIcon` from `@radix-ui/react-icons`
+  - Added `useAction` hook for `fetchBackgroundImage`
+  - Image fetches when entering full-screen mode
+  - Toggle handler for showing/hiding background
+  - Conditional rendering of background image container
+  - Dynamic className for glass effect styling
+  - Image button only shows when image URL is available
+
+### Styling Changes
+
+- **Global CSS** (`src/styles/global.css`)
+  - `.pomodoro-fullscreen-background`: full-screen image container with cover fit
+  - `.pomodoro-fullscreen-content.with-glass-effect`: glass morphism overlay
+  - Dark mode specific glass styling with adjusted transparency
+  - Text shadows on message and timer for readability over images
+  - Glassmorphic button styling with backdrop blur
+  - Responsive adjustments for tablets (768px) and mobile (480px)
+    - Smaller border-radius and adjusted padding on smaller screens
+
+### Configuration Changes
+
+- **TypeScript config** (`tsconfig.json`, `convex/tsconfig.json`)
+  - Added `"node"` to types in root tsconfig for Node.js type support
+  - Added `"convex"` to exclude list in root tsconfig
+  - Added `"types": ["node"]` to Convex tsconfig for action support
+
+### Notes
+
+- To change background image categories, update the `queries` array in `convex/unsplash.ts` line 15
+- Requires `UNSPLASH_ACCESS_KEY` environment variable in Convex dashboard
+- Uses Unsplash `urls.regular` (1080px) for optimal quality and performance
+- Node.js actions must be in separate files from V8 queries/mutations
+
 ## [2.2.5] - 2025-10-23
 
 ### Fixed

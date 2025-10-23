@@ -119,6 +119,7 @@ export default defineSchema({
       v.literal("completed"),
     ),
     lastUpdated: v.number(), // Last update timestamp
+    backgroundImageUrl: v.optional(v.string()), // Unsplash image URL for full-screen background
   }).index("by_user", ["userId"]),
 
   // Custom backlog label - allows renaming the backlog section

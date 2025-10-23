@@ -19,6 +19,7 @@ import type * as notes from "../notes.js";
 import type * as pomodoro from "../pomodoro.js";
 import type * as search from "../search.js";
 import type * as todos from "../todos.js";
+import type * as unsplash from "../unsplash.js";
 import type * as users from "../users.js";
 
 import type {
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   pomodoro: typeof pomodoro;
   search: typeof search;
   todos: typeof todos;
+  unsplash: typeof unsplash;
   users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

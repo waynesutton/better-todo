@@ -19,6 +19,7 @@ export const getPomodoroSession = query({
         v.literal("completed"),
       ),
       lastUpdated: v.number(),
+      backgroundImageUrl: v.optional(v.string()),
     }),
     v.null(),
   ),
@@ -152,6 +153,24 @@ export const completePomodoro = mutation({
       status: "completed",
       remainingTime: 0,
       lastUpdated: Date.now(),
+    });
+
+    return null;
+  },
+});
+
+// Update session with background image URL
+export const updateBackgroundImage = mutation({
+  args: { sessionId: v.id("pomodoroSessions"), imageUrl: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) {
+      return null;
+    }
+
+    await ctx.db.patch(args.sessionId, {
+      backgroundImageUrl: args.imageUrl,
     });
 
     return null;

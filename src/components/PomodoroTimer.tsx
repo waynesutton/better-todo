@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
   StopwatchIcon,
@@ -10,27 +10,31 @@ import {
   Cross2Icon,
   ExitFullScreenIcon,
   EnterFullScreenIcon,
+  ImageIcon,
 } from "@radix-ui/react-icons";
 
 export function PomodoroTimer() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [displayTime, setDisplayTime] = useState(25 * 60 * 1000); // 25 minutes in ms
+  const [showBackgroundImage, setShowBackgroundImage] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const hasPlayedStartSound = useRef(false);
   const hasPlayedCountdownSound = useRef(false);
   const lastEndSoundIndex = useRef(0);
   const hasCalledComplete = useRef(false);
+  const hasFetchedImage = useRef(false);
 
   // Fetch current session from Convex
   const session = useQuery(api.pomodoro.getPomodoroSession);
 
-  // Mutations
+  // Mutations and Actions
   const startPomodoro = useMutation(api.pomodoro.startPomodoro);
   const pausePomodoro = useMutation(api.pomodoro.pausePomodoro);
   const resumePomodoro = useMutation(api.pomodoro.resumePomodoro);
   const stopPomodoro = useMutation(api.pomodoro.stopPomodoro);
   const completePomodoro = useMutation(api.pomodoro.completePomodoro);
+  const fetchBackgroundImage = useAction(api.unsplash.fetchBackgroundImage);
 
   // Initialize Web Worker
   useEffect(() => {
@@ -73,6 +77,7 @@ export function PomodoroTimer() {
       hasPlayedStartSound.current = false;
       hasPlayedCountdownSound.current = false;
       hasCalledComplete.current = false;
+      hasFetchedImage.current = false;
       if (workerRef.current) {
         workerRef.current.postMessage({ type: "stop" });
       }
@@ -219,6 +224,17 @@ export function PomodoroTimer() {
   const handleEnterFullScreen = () => {
     setIsModalOpen(false);
     setIsFullScreen(true);
+    // Reset image state to off when entering full-screen
+    setShowBackgroundImage(false);
+    // Fetch new image when entering full-screen
+    if (session && !hasFetchedImage.current) {
+      hasFetchedImage.current = true;
+      fetchBackgroundImage({ sessionId: session._id });
+    }
+  };
+
+  const handleToggleBackground = () => {
+    setShowBackgroundImage(!showBackgroundImage);
   };
 
   const handleClickTimer = () => {
@@ -359,7 +375,15 @@ export function PomodoroTimer() {
       {isFullScreen &&
         createPortal(
           <div className="pomodoro-fullscreen">
-            <div className="pomodoro-fullscreen-content">
+            {showBackgroundImage && session?.backgroundImageUrl && (
+              <div className="pomodoro-fullscreen-background">
+                <img src={session.backgroundImageUrl} alt="Nature background" />
+              </div>
+            )}
+
+            <div
+              className={`pomodoro-fullscreen-content${showBackgroundImage ? " with-glass-effect" : ""}`}
+            >
               <div className="pomodoro-fullscreen-message">keep cooking!</div>
 
               <div className="pomodoro-timer-display-large">
@@ -367,6 +391,20 @@ export function PomodoroTimer() {
               </div>
 
               <div className="pomodoro-controls-large">
+                {session?.backgroundImageUrl && (
+                  <button
+                    className="pomodoro-control-button-large"
+                    onClick={handleToggleBackground}
+                    title={
+                      showBackgroundImage
+                        ? "Hide background"
+                        : "Show background"
+                    }
+                  >
+                    <ImageIcon width={24} height={24} />
+                  </button>
+                )}
+
                 {isRunning && (
                   <button
                     className="pomodoro-control-button-large"

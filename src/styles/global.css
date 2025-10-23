@@ -3591,6 +3591,25 @@ body {
   overflow: hidden;
 }
 
+.pomodoro-fullscreen-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.pomodoro-fullscreen-background img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -3603,8 +3622,45 @@ body {
 .pomodoro-fullscreen-content {
   text-align: center;
   padding: 40px;
-  width: 100%;
+  /*width: 100%;*/
   max-width: 1200px;
+  position: relative;
+  z-index: 2;
+}
+
+.pomodoro-fullscreen-content.with-glass-effect {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  padding: 60px 40px;
+}
+
+[data-theme="dark"] .pomodoro-fullscreen-content.with-glass-effect {
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.pomodoro-fullscreen-content.with-glass-effect .pomodoro-fullscreen-message,
+.pomodoro-fullscreen-content.with-glass-effect .pomodoro-timer-display-large {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+}
+
+.pomodoro-fullscreen-content.with-glass-effect .pomodoro-control-button-large {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.pomodoro-fullscreen-content.with-glass-effect
+  .pomodoro-control-button-large:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .pomodoro-fullscreen-message {
@@ -3738,6 +3794,11 @@ body {
     padding: 20px;
   }
 
+  .pomodoro-fullscreen-content.with-glass-effect {
+    padding: 40px 20px;
+    border-radius: 16px;
+  }
+
   .pomodoro-fullscreen-message {
     font-size: 28px;
     margin-bottom: 40px;
@@ -3790,6 +3851,11 @@ body {
     padding: 12px;
     min-width: 48px;
     min-height: 48px;
+  }
+
+  .pomodoro-fullscreen-content.with-glass-effect {
+    padding: 32px 16px;
+    border-radius: 12px;
   }
 
   .pomodoro-fullscreen-message {
