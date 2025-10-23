@@ -135,11 +135,19 @@ export const completePomodoro = mutation({
   args: { sessionId: v.id("pomodoroSessions") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // Check if session exists and is not already completed
     const session = await ctx.db.get(args.sessionId);
     if (!session) {
-      throw new Error("Session not found");
+      // Session already deleted, no-op
+      return null;
     }
 
+    // If already completed, don't update again
+    if (session.status === "completed") {
+      return null;
+    }
+
+    // Only patch if session is still running or paused
     await ctx.db.patch(args.sessionId, {
       status: "completed",
       remainingTime: 0,

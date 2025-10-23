@@ -9,6 +9,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -275,25 +276,34 @@ function NoteItem({
     }
   }, [note.content, isEditMode]);
 
-  // Auto-focus title input when note is newly created
+  // Auto-focus content textarea when note is newly created
   useEffect(() => {
     if (shouldFocus) {
-      setIsEditingTitle(true);
       setIsEditMode(true);
+      // Expand note if collapsed
+      if (note.collapsed) {
+        onToggleCollapse(note._id, false);
+      }
       setTimeout(() => {
-        titleInputRef.current?.focus();
-        titleInputRef.current?.select();
+        textareaRef.current?.focus();
       }, 50);
     }
-  }, [shouldFocus]);
+  }, [shouldFocus, note.collapsed, note._id, onToggleCollapse]);
 
   // Reset typing flag when entering/exiting edit mode
   useEffect(() => {
     if (!isEditMode) {
       isTypingRef.current = false;
       cursorPositionRef.current = null;
+    } else {
+      // Set initial height based on content when entering edit mode
+      if (contentInput) {
+        const lineCount = contentInput.split("\n").length;
+        const newHeight = Math.max(200, Math.min(600, lineCount * 24 + 20));
+        setTextareaHeight(newHeight);
+      }
     }
-  }, [isEditMode]);
+  }, [isEditMode, contentInput]);
 
   const {
     attributes,
@@ -370,6 +380,13 @@ function NoteItem({
     }
 
     setContentInput(value);
+
+    // Auto-expand textarea based on content
+    if (textareaRef.current && !isResizingRef.current) {
+      const lineCount = value.split("\n").length;
+      const newHeight = Math.max(200, Math.min(600, lineCount * 24 + 20));
+      setTextareaHeight(newHeight);
+    }
 
     // Clear existing timeout
     if (contentTimeoutRef.current) {
@@ -450,7 +467,12 @@ function NoteItem({
     <div ref={setNodeRef} style={style} className="note-item">
       <div className="note-header">
         <div className="note-left">
-          <div {...attributes} {...listeners} className="drag-handle">
+          <div
+            {...attributes}
+            {...listeners}
+            className="drag-handle"
+            style={{ touchAction: "none" }}
+          >
             ⋮⋮
           </div>
           <span
@@ -647,7 +669,17 @@ export function NotesSection({
   }, [expandedNoteId, notes, updateNote, onNoteExpanded]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
@@ -801,7 +833,17 @@ export function PinnedNotesSection({
   }, [expandedNoteId, notes, updateNote, onNoteExpanded]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),

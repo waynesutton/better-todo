@@ -74,11 +74,23 @@ export function Sidebar({
     formattedDate: string;
   }>({ isOpen: false, date: "", formattedDate: "" });
   const [confirmDeleteArchived, setConfirmDeleteArchived] = useState(false);
+  const [showRenameBacklog, setShowRenameBacklog] = useState(false);
+  const [backlogLabelInput, setBacklogLabelInput] = useState("");
 
   // Fetch data
   const archivedDates = useQuery(api.archivedDates.getArchivedDates) || [];
   const dateLabelsData = useQuery(api.dateLabels.getDateLabels) || [];
-  const pinnedTodos = useQuery(api.todos.getPinnedTodos) || [];
+  const pinnedTodos =
+    useQuery(api.todos.getPinnedTodos, isAuthenticated ? undefined : "skip") ||
+    [];
+  const backlogTodos =
+    useQuery(api.todos.getBacklogTodos, isAuthenticated ? undefined : "skip") ||
+    [];
+  const backlogLabel =
+    useQuery(
+      api.backlogLabel.getBacklogLabel,
+      isAuthenticated ? undefined : "skip",
+    ) || "Backlog";
   const uncompletedCounts = useQuery(api.todos.getUncompletedCounts) || {};
   const folders =
     useQuery(api.folders.getFolders, isAuthenticated ? undefined : "skip") ||
@@ -112,6 +124,7 @@ export function Sidebar({
   const deleteAllArchivedDates = useMutation(
     api.archivedDates.deleteAllArchivedDates,
   );
+  const setBacklogLabel = useMutation(api.backlogLabel.setBacklogLabel);
 
   // Create a map of date to label for quick lookup
   const dateLabels = new Map(
@@ -300,6 +313,15 @@ export function Sidebar({
     }
   };
 
+  // Handler for renaming backlog
+  const handleRenameBacklog = async () => {
+    if (backlogLabelInput.trim() && isAuthenticated) {
+      await setBacklogLabel({ label: backlogLabelInput.trim() });
+      setShowRenameBacklog(false);
+      setBacklogLabelInput("");
+    }
+  };
+
   // Handler for adding date to folder
   const handleAddDateToFolder = async (
     date: string,
@@ -368,10 +390,12 @@ export function Sidebar({
     monthGroup.dates.forEach((d) => datesInFoldersOrGroups.add(d)),
   );
 
-  // Filter active dates to exclude archived and those in folders/groups
+  // Filter active dates to exclude archived, those in folders/groups, and those with no uncompleted todos
   const activeDates = dates.filter(
     (date) =>
-      !archivedDates.includes(date) && !datesInFoldersOrGroups.has(date),
+      !archivedDates.includes(date) &&
+      !datesInFoldersOrGroups.has(date) &&
+      (uncompletedCounts[date] || 0) > 0,
   );
 
   // Separate active and archived folders
@@ -384,6 +408,12 @@ export function Sidebar({
   // Separate active and archived month groups
   const activeMonthGroups = monthGroups.filter((mg) => !mg.archived);
   const archivedMonthGroups = monthGroups.filter((mg) => mg.archived);
+
+  // Filter pinned and backlog todos to only show uncompleted ones
+  const uncompletedPinnedTodos = pinnedTodos.filter((todo) => !todo.completed);
+  const uncompletedBacklogTodos = backlogTodos.filter(
+    (todo) => !todo.completed,
+  );
 
   // Handle ESC key and click outside to close menus and modals
   useEffect(() => {
@@ -424,6 +454,10 @@ export function Sidebar({
         }
         if (showFolderSelector) {
           setShowFolderSelector(null);
+        }
+        if (showRenameBacklog) {
+          setShowRenameBacklog(false);
+          setBacklogLabelInput("");
         }
       }
     };
@@ -483,6 +517,7 @@ export function Sidebar({
     showRenameFolderInput,
     showAddFolder,
     showFolderSelector,
+    showRenameBacklog,
   ]);
 
   return (
@@ -515,13 +550,76 @@ export function Sidebar({
       {!isCollapsed ? (
         <div className="sidebar-dates">
           {/* Pinned section */}
-          {pinnedTodos.length > 0 && (
+          {uncompletedPinnedTodos.length > 0 && (
             <div
               key="pinned"
               className={`date-item-container pinned-section ${"pinned" === selectedDate ? "active" : ""}`}
             >
               <div className="date-item" onClick={() => onSelectDate("pinned")}>
                 Pinned
+              </div>
+            </div>
+          )}
+
+          {/* Backlog section */}
+          {uncompletedBacklogTodos.length > 0 && (
+            <div
+              key="backlog"
+              className={`date-item-container backlog-section ${"backlog" === selectedDate ? "active" : ""}`}
+            >
+              <div
+                className="date-item"
+                onClick={() => onSelectDate("backlog")}
+              >
+                {backlogLabel}
+              </div>
+              <div className="date-menu">
+                <button
+                  className="date-menu-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowRenameBacklog(!showRenameBacklog);
+                    setBacklogLabelInput(backlogLabel);
+                  }}
+                >
+                  ⋯
+                </button>
+                {showRenameBacklog && (
+                  <div className="date-picker-modal">
+                    <input
+                      type="text"
+                      value={backlogLabelInput}
+                      onChange={(e) => setBacklogLabelInput(e.target.value)}
+                      placeholder="Enter backlog label..."
+                      className="date-picker-input"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && backlogLabelInput.trim()) {
+                          handleRenameBacklog();
+                        } else if (e.key === "Escape") {
+                          setShowRenameBacklog(false);
+                          setBacklogLabelInput("");
+                        }
+                      }}
+                    />
+                    <button
+                      className="date-picker-button"
+                      onClick={handleRenameBacklog}
+                      disabled={!backlogLabelInput.trim()}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="date-picker-button cancel"
+                      onClick={() => {
+                        setShowRenameBacklog(false);
+                        setBacklogLabelInput("");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1384,7 +1482,7 @@ export function Sidebar({
       ) : (
         <div className="sidebar-dates collapsed">
           {/* Pinned section in collapsed view */}
-          {pinnedTodos.length > 0 && (
+          {uncompletedPinnedTodos.length > 0 && (
             <div
               key="pinned"
               className={`date-item-collapsed ${"pinned" === selectedDate ? "active" : ""}`}

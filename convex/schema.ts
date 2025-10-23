@@ -27,10 +27,12 @@ export default defineSchema({
     parentId: v.optional(v.id("todos")), // For nested items under collapsible headers
     collapsed: v.boolean(), // For header sections
     pinned: v.optional(v.boolean()), // For pinned todos
+    backlog: v.optional(v.boolean()), // For backlog todos
   })
     .index("by_user_and_date", ["userId", "date"])
     .index("by_user", ["userId"])
     .index("by_user_and_pinned", ["userId", "pinned"])
+    .index("by_user_and_backlog", ["userId", "backlog"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],
@@ -117,5 +119,11 @@ export default defineSchema({
       v.literal("completed"),
     ),
     lastUpdated: v.number(), // Last update timestamp
+  }).index("by_user", ["userId"]),
+
+  // Custom backlog label - allows renaming the backlog section
+  backlogLabel: defineTable({
+    userId: v.string(),
+    label: v.string(), // Custom text label for backlog section (default: "Backlog")
   }).index("by_user", ["userId"]),
 });

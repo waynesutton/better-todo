@@ -37,6 +37,7 @@ interface Todo {
   parentId?: Id<"todos">;
   collapsed: boolean;
   pinned?: boolean;
+  backlog?: boolean;
 }
 
 export interface TodoListProps {
@@ -45,6 +46,7 @@ export interface TodoListProps {
   expandedNoteId: string | null;
   onNoteExpanded: () => void;
   isPinnedView?: boolean;
+  isBacklogView?: boolean;
   todoInputRef?: React.RefObject<HTMLTextAreaElement>;
   focusedTodoIndex?: number;
   onFocusFirstTodo?: (callback: () => void) => void;
@@ -53,6 +55,9 @@ export interface TodoListProps {
   onTodoHover?: (id: Id<"todos"> | null) => void;
   openMenuForTodoId?: Id<"todos"> | null;
   openMenuTrigger?: number;
+  isDemoMode?: boolean; // for logged out users with 3 todo limit
+  demoTodos?: any[];
+  setDemoTodos?: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 export interface TodoListRef {
@@ -67,6 +72,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       expandedNoteId,
       onNoteExpanded,
       isPinnedView = false,
+      isBacklogView = false,
       todoInputRef: externalTodoInputRef,
       focusedTodoIndex = -1,
       onFocusFirstTodo,
@@ -75,6 +81,9 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       onTodoHover,
       openMenuForTodoId,
       openMenuTrigger,
+      isDemoMode = false,
+      demoTodos = [],
+      setDemoTodos,
     },
     ref,
   ) => {
@@ -169,6 +178,48 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
     const handleAddTodo = async () => {
       if (!newTodoContent.trim()) return;
 
+      // Demo mode: enforce 3 todo limit
+      if (isDemoMode) {
+        const activeDemoTodos = demoTodos.filter((t: any) => !t.archived);
+        if (activeDemoTodos.length >= 3) {
+          // Show sign in modal when limit reached
+          if (onRequireSignIn) {
+            onRequireSignIn();
+          }
+          return;
+        }
+
+        // Create demo todo
+        const newDemoTodo = {
+          _id: `demo-${Date.now()}` as Id<"todos">,
+          _creationTime: Date.now(),
+          userId: "demo",
+          date,
+          content: newTodoContent,
+          type: "todo" as "todo" | "h1" | "h2" | "h3",
+          completed: false,
+          archived: false,
+          order: demoTodos.length,
+          collapsed: false,
+        };
+
+        if (setDemoTodos) {
+          setDemoTodos([...demoTodos, newDemoTodo]);
+        }
+
+        setNewTodoContent("");
+        setFocusedInput(false);
+
+        // Show sign in modal after creating the 3rd todo
+        if (activeDemoTodos.length === 2 && onRequireSignIn) {
+          setTimeout(() => {
+            onRequireSignIn();
+          }, 100);
+        }
+
+        return;
+      }
+
       // Detect type based on markdown syntax (only check first line for headers)
       const firstLine = newTodoContent.split("\n")[0];
       let type: "todo" | "h1" | "h2" | "h3" = "todo";
@@ -262,6 +313,15 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       }
     };
 
+    // Handle demo mode toggle (archives todo when checked)
+    const handleDemoToggle = (todoId: Id<"todos">) => {
+      if (setDemoTodos) {
+        setDemoTodos((prev) =>
+          prev.map((t) => (t._id === todoId ? { ...t, archived: true } : t)),
+        );
+      }
+    };
+
     // Expose addNote method through ref
     useImperativeHandle(ref, () => ({
       addNote: handleAddNote,
@@ -281,7 +341,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
         }}
       >
         {/* Pinned notes section - rendered at top above todos */}
-        {!isPinnedView && (
+        {!isPinnedView && !isBacklogView && (
           <PinnedNotesSection
             date={date}
             expandedNoteId={expandedNoteId}
@@ -317,7 +377,9 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                       completed={parent.completed}
                       collapsed={parent.collapsed}
                       pinned={parent.pinned}
+                      backlog={parent.backlog}
                       isPinnedView={isPinnedView}
+                      isBacklogView={isBacklogView}
                       onMoveToPreviousDay={() =>
                         handleMoveToPreviousDay(parent._id)
                       }
@@ -332,6 +394,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                           ? openMenuTrigger
                           : undefined
                       }
+                      isDemoMode={isDemoMode}
+                      onDemoToggle={handleDemoToggle}
                     />
                   </div>
                   {!parent.collapsed &&
@@ -352,7 +416,9 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                             completed={child.completed}
                             collapsed={child.collapsed}
                             pinned={child.pinned}
+                            backlog={child.backlog}
                             isPinnedView={isPinnedView}
+                            isBacklogView={isBacklogView}
                             onMoveToPreviousDay={() =>
                               handleMoveToPreviousDay(child._id)
                             }
@@ -371,6 +437,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                                 ? openMenuTrigger
                                 : undefined
                             }
+                            isDemoMode={isDemoMode}
+                            onDemoToggle={handleDemoToggle}
                           />
                         </div>
                       );
@@ -381,8 +449,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
           </SortableContext>
         </DndContext>
 
-        {/* Notion-like inline input - hide on pinned view */}
-        {!isPinnedView && (
+        {/* Notion-like inline input - hide on pinned view and backlog view */}
+        {!isPinnedView && !isBacklogView && (
           <div className="inline-todo-input">
             <textarea
               ref={todoInputRef}
@@ -503,11 +571,13 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
           </div>
         )}
 
-        {/* Add note button - hide on pinned view */}
-        {!isPinnedView && <AddNoteButton onAddNote={handleAddNote} />}
+        {/* Add note button - hide on pinned view and backlog view */}
+        {!isPinnedView && !isBacklogView && (
+          <AddNoteButton onAddNote={handleAddNote} />
+        )}
 
-        {/* Notes section below add note button - hide on pinned view */}
-        {!isPinnedView && (
+        {/* Notes section below add note button - hide on pinned view and backlog view */}
+        {!isPinnedView && !isBacklogView && (
           <NotesSection
             date={date}
             expandedNoteId={expandedNoteId}

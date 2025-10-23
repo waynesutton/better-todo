@@ -15,6 +15,21 @@ This document describes the structure and purpose of each file in the Better Tod
 - `files.md` - This file, project structure documentation
 - `TASKS.md` - Project tasks and development tracking
 
+## Cursor Rules (`.cursor/rules/`)
+
+- `convex-write-conflicts.mdc` - Comprehensive guide for preventing write conflicts when using React, useEffect, and Convex
+  - Backend patterns: idempotent mutations, early returns, minimal data reads, indexed queries
+  - Frontend patterns: refs for tracking calls, debouncing, mutation status checks, avoiding loops
+  - Schema design best practices to minimize conflicts
+  - Complete checklists for backend and frontend development
+  - Applies to all Convex projects
+- `dev2.mdc` - Full-stack AI Convex developer guidelines
+- `help.mdc` - Core development guidelines and reflection process
+- `clerk-auth-check.mdc` - Clerk authentication guidelines for React components
+- `task.mdc` - Guidelines for creating and managing task lists
+- `convex2.mdc` - Additional Convex guidelines
+- `rulesforconvex.mdc` - Convex-specific rules
+
 ## Convex Backend (`convex/`)
 
 ### Database Schema
@@ -401,6 +416,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `GETTING_STARTED.md` - Detailed feature walkthrough and usage guide
 - `PROJECT_SUMMARY.md` - Complete project overview and architecture
 - `cl.plan.md` - Clerk authentication implementation plan and notes
+- `menu-button-alignment-fix.md` - Documentation of menu button alignment fix using pseudo-element approach
 
 ## Root Documentation
 
@@ -424,9 +440,23 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Completion sounds** (rotate through): `end-synth.mp3`, `end-epicboom.mp3`, `end-epci.mp3`, `end-deep.mp3`, `end-horns.mp3`, `end-computer.mp3`, `end-flute.mp3`, `end-whoa.mp3`, `end-waves.mp3`, `done.mp3`
 - `timer-worker.js` - Web Worker for background timer execution
 
-## Current Version: 2.2.2 (January 22, 2025)
+## Current Version: 2.2.5 (October 23, 2025)
 
-### Latest Features (v2.2.2)
+### Latest Features (v2.2.5)
+
+- **Menu button alignment consistency** - Fixed three-dot menu button alignment across all todo states
+  - Menu buttons now properly align to the right edge of todos in all states (default, hover, focused)
+  - Used pseudo-element approach to constrain focused background to 90% width while keeping menu button aligned
+  - Added `margin-left: auto` to `.todo-menu` to ensure right-edge alignment
+  - Prevents menu button from shifting left when todo item is focused or hovered
+  - Documentation added in `prds/menu-button-alignment-fix.md` explaining the solution
+
+- **Menu button hover styling** - Updated hover background colors to match app theme
+  - Light mode: `var(--bg-secondary)` (matches menu dropdown items)
+  - Dark mode: `var(--bg-secondary)` (matches menu dropdown items)
+  - Consistent visual feedback across all interactive elements
+
+### Previous Features (v2.2.2)
 
 - **Pomodoro timer audio notifications** with MP3 file-based sounds
   - Start sound plays once when timer begins at full 25 minutes

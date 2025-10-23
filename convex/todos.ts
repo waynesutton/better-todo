@@ -25,6 +25,7 @@ export const getTodosByDate = query({
       parentId: v.optional(v.id("todos")),
       collapsed: v.boolean(),
       pinned: v.optional(v.boolean()),
+      backlog: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -41,8 +42,11 @@ export const getTodosByDate = query({
       )
       .collect();
 
+    // Filter out backlog todos - they should only appear in backlog view
+    const filteredTodos = todos.filter((todo) => !todo.backlog);
+
     // Sort by order
-    return todos.sort((a, b) => a.order - b.order);
+    return filteredTodos.sort((a, b) => a.order - b.order);
   },
 });
 
@@ -68,6 +72,7 @@ export const getPinnedTodos = query({
       parentId: v.optional(v.id("todos")),
       collapsed: v.boolean(),
       pinned: v.optional(v.boolean()),
+      backlog: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx) => {
@@ -98,6 +103,65 @@ export const getPinnedTodos = query({
 
     // Combine pinned todos and their subtasks
     const combined = [...pinnedTodos, ...subtasks];
+
+    // Sort by order
+    return combined.sort((a, b) => a.order - b.order);
+  },
+});
+
+// Get all backlog todos for a user (including their subtasks)
+export const getBacklogTodos = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("todos"),
+      _creationTime: v.number(),
+      userId: v.string(),
+      date: v.string(),
+      content: v.string(),
+      type: v.union(
+        v.literal("todo"),
+        v.literal("h1"),
+        v.literal("h2"),
+        v.literal("h3"),
+      ),
+      completed: v.boolean(),
+      archived: v.boolean(),
+      order: v.number(),
+      parentId: v.optional(v.id("todos")),
+      collapsed: v.boolean(),
+      pinned: v.optional(v.boolean()),
+      backlog: v.optional(v.boolean()),
+    }),
+  ),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+    const userId = identity.subject;
+
+    // Get backlog todos
+    const backlogTodos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_backlog", (q) =>
+        q.eq("userId", userId).eq("backlog", true),
+      )
+      .collect();
+
+    // Get subtasks (children) of backlog todos
+    const backlogTodoIds = new Set(backlogTodos.map((t) => t._id));
+    const allTodos = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    const subtasks = allTodos.filter(
+      (todo) => todo.parentId && backlogTodoIds.has(todo.parentId),
+    );
+
+    // Combine backlog todos and their subtasks
+    const combined = [...backlogTodos, ...subtasks];
 
     // Sort by order
     return combined.sort((a, b) => a.order - b.order);
@@ -231,6 +295,7 @@ export const updateTodo = mutation({
     collapsed: v.optional(v.boolean()),
     archived: v.optional(v.boolean()),
     pinned: v.optional(v.boolean()),
+    backlog: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -249,6 +314,7 @@ export const updateTodo = mutation({
     if (args.content !== undefined) updates.content = args.content;
     if (args.collapsed !== undefined) updates.collapsed = args.collapsed;
     if (args.pinned !== undefined) updates.pinned = args.pinned;
+    if (args.backlog !== undefined) updates.backlog = args.backlog;
 
     // If completing a todo, automatically archive it
     // If uncompleting a todo, automatically unarchive it
@@ -551,9 +617,12 @@ export const getUncompletedCounts = query({
       )
       .collect();
 
+    // Filter out backlog todos - they should only appear in backlog view
+    const filteredTodos = todos.filter((todo) => !todo.backlog);
+
     // Count by date
     const counts: Record<string, number> = {};
-    for (const todo of todos) {
+    for (const todo of filteredTodos) {
       counts[todo.date] = (counts[todo.date] || 0) + 1;
     }
 

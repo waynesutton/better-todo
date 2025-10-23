@@ -4,6 +4,68 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.2.5] - 2025-10-23
+
+### Fixed
+
+- **Menu button alignment consistency** - Fixed three-dot menu button alignment across all todo states
+  - Menu buttons now properly align to the right edge of todos in all states (default, hover, focused)
+  - Used pseudo-element approach to constrain focused background to 90% width while keeping menu button aligned
+  - Added `margin-left: auto` to `.todo-menu` to ensure right-edge alignment
+  - Prevents menu button from shifting left when todo item is focused or hovered
+  - Documentation added in `prds/menu-button-alignment-fix.md` explaining the solution
+
+### Changed
+
+- **Menu button hover styling** - Updated hover background colors to match app theme
+  - Light mode: `var(--bg-secondary)` (matches menu dropdown items)
+  - Dark mode: `var(--bg-secondary)` (matches menu dropdown items)
+  - Consistent visual feedback across all interactive elements
+
+## [2.2.4] - 2025-01-23
+
+### Added
+
+- **Cursor rule for preventing write conflicts** in Convex with React
+  - Comprehensive guide located at `.cursor/rules/convex-write-conflicts.mdc`
+  - **Backend patterns:**
+    - Idempotent mutations with early returns
+    - Patch directly without reading first (most common fix)
+    - Minimal data reads with indexed queries
+    - Parallel updates with Promise.all
+    - Event records pattern for high-frequency counters
+    - Authorization patterns (user-scoped queries and internal mutations)
+  - **Frontend patterns:**
+    - Refs for tracking one-time calls
+    - Debouncing rapid inputs (300-500ms recommended)
+    - Mutation status checks before calling
+    - Avoiding loops and batching updates
+  - Schema design best practices to minimize conflicts
+  - Monitoring section for dashboard insights
+  - Complete checklists for both backend and frontend
+  - Priority actions summary with key takeaways
+  - References Convex documentation on optimistic concurrency control
+  - Applicable to this app and all future Convex projects
+
+### Changed
+
+- **Note creation focus behavior** - Cursor now placed in content textarea instead of title input
+  - When using Shift+ keyboard shortcut or clicking "Add Note" button, cursor focuses content area
+  - Note automatically enters edit mode and expands if collapsed
+  - Title remains "Untitled" by default, allowing immediate content entry
+  - Improved workflow for quick note-taking
+
+## [2.2.3] - 2025-01-23
+
+### Fixed
+
+- **Pomodoro timer write conflict issue** resolved
+  - Added idempotency check in `completePomodoro` mutation to prevent duplicate updates
+  - Mutation now exits early if session is already completed or doesn't exist
+  - Added `hasCalledComplete` ref in component to track completion calls per session
+  - Prevents multiple concurrent calls to `completePomodoro` that were causing database write conflicts
+  - Improved reliability when timer completes or during rapid state changes
+
 ## [2.2.2] - 2025-01-22
 
 ### Added

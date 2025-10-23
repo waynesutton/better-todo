@@ -20,6 +20,7 @@ export function PomodoroTimer() {
   const hasPlayedStartSound = useRef(false);
   const hasPlayedCountdownSound = useRef(false);
   const lastEndSoundIndex = useRef(0);
+  const hasCalledComplete = useRef(false);
 
   // Fetch current session from Convex
   const session = useQuery(api.pomodoro.getPomodoroSession);
@@ -50,7 +51,9 @@ export function PomodoroTimer() {
         setDisplayTime(0);
         playCompletionSound();
         setIsFullScreen(true);
-        if (session) {
+        // Only call completePomodoro once per session
+        if (session && !hasCalledComplete.current) {
+          hasCalledComplete.current = true;
           completePomodoro({ sessionId: session._id });
         }
       }
@@ -69,6 +72,7 @@ export function PomodoroTimer() {
       setDisplayTime(25 * 60 * 1000);
       hasPlayedStartSound.current = false;
       hasPlayedCountdownSound.current = false;
+      hasCalledComplete.current = false;
       if (workerRef.current) {
         workerRef.current.postMessage({ type: "stop" });
       }
@@ -162,6 +166,7 @@ export function PomodoroTimer() {
   const handleStart = async () => {
     hasPlayedStartSound.current = false;
     hasPlayedCountdownSound.current = false;
+    hasCalledComplete.current = false;
     await startPomodoro();
   };
 
@@ -195,8 +200,8 @@ export function PomodoroTimer() {
     }
     hasPlayedStartSound.current = false;
     hasPlayedCountdownSound.current = false;
+    hasCalledComplete.current = false;
     await startPomodoro();
-    setIsFullScreen(false);
   };
 
   const handleCloseFullScreen = async () => {
@@ -362,12 +367,32 @@ export function PomodoroTimer() {
               </div>
 
               <div className="pomodoro-controls-large">
+                {isRunning && (
+                  <button
+                    className="pomodoro-control-button-large"
+                    onClick={handlePause}
+                    title="Pause"
+                  >
+                    <PauseIcon width={24} height={24} />
+                  </button>
+                )}
+
+                {isPaused && (
+                  <button
+                    className="pomodoro-control-button-large"
+                    onClick={handleResume}
+                    title="Resume"
+                  >
+                    <PlayIcon width={24} height={24} />
+                  </button>
+                )}
+
                 <button
                   className="pomodoro-control-button-large"
                   onClick={handleReset}
                   title="Restart"
                 >
-                  <ResetIcon width={32} height={32} />
+                  <ResetIcon width={24} height={24} />
                 </button>
 
                 <button
@@ -375,7 +400,7 @@ export function PomodoroTimer() {
                   onClick={handleMinimizeFullScreen}
                   title="Minimize"
                 >
-                  <ExitFullScreenIcon width={32} height={32} />
+                  <ExitFullScreenIcon width={24} height={24} />
                 </button>
 
                 <button
@@ -383,7 +408,7 @@ export function PomodoroTimer() {
                   onClick={handleCloseFullScreen}
                   title="Close"
                 >
-                  <Cross2Icon width={32} height={32} />
+                  <Cross2Icon width={24} height={24} />
                 </button>
               </div>
             </div>

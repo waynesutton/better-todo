@@ -16,13 +16,17 @@ interface TodoItemProps {
   collapsed: boolean;
   isArchived?: boolean;
   pinned?: boolean;
+  backlog?: boolean;
   isPinnedView?: boolean;
+  isBacklogView?: boolean;
   onMoveToPreviousDay: () => void;
   onMoveToNextDay: () => void;
   onMoveToTomorrow: () => void;
   onMoveToCustomDate: (date: string) => void;
   onHoverChange?: (id: Id<"todos"> | null) => void;
   openMenuTrigger?: number;
+  isDemoMode?: boolean;
+  onDemoToggle?: (id: Id<"todos">) => void;
 }
 
 export function TodoItem({
@@ -32,13 +36,17 @@ export function TodoItem({
   completed,
   isArchived = false,
   pinned = false,
+  backlog = false,
   isPinnedView = false,
+  isBacklogView = false,
   onMoveToPreviousDay,
   onMoveToNextDay,
   onMoveToTomorrow,
   onMoveToCustomDate,
   onHoverChange,
   openMenuTrigger,
+  isDemoMode = false,
+  onDemoToggle,
 }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
@@ -104,6 +112,11 @@ export function TodoItem({
   };
 
   const handleCheckboxToggle = async () => {
+    if (isDemoMode && onDemoToggle) {
+      onDemoToggle(id);
+      return;
+    }
+
     await updateTodo({
       id,
       completed: !completed,
@@ -170,6 +183,14 @@ export function TodoItem({
     await updateTodo({
       id,
       pinned: !pinned,
+    });
+    setShowMenu(false);
+  };
+
+  const handleToggleBacklog = async () => {
+    await updateTodo({
+      id,
+      backlog: !backlog,
     });
     setShowMenu(false);
   };
@@ -362,52 +383,63 @@ export function TodoItem({
               )
             ) : (
               <div className="menu-dropdown" ref={menuDropdownRef}>
-                {!completed && (
+                {!completed && !isBacklogView && (
                   <div className="menu-item" onClick={handleTogglePin}>
                     {pinned ? "Unpin" : "Pin"}
                   </div>
                 )}
-                {!completed && (
+                {!completed && !isPinnedView && (
+                  <div className="menu-item" onClick={handleToggleBacklog}>
+                    {backlog || isBacklogView
+                      ? "Remove from Backlog"
+                      : "Add to Backlog"}
+                  </div>
+                )}
+                {!completed && !isBacklogView && (
                   <div className="menu-item" onClick={handleAddSubtask}>
                     Add subtask
                   </div>
                 )}
-                <div
-                  className="menu-item"
-                  onClick={() => {
-                    onMoveToTomorrow();
-                    setShowMenu(false);
-                  }}
-                >
-                  Move to Tomorrow
-                </div>
-                <div
-                  className="menu-item"
-                  onClick={() => {
-                    onMoveToPreviousDay();
-                    setShowMenu(false);
-                  }}
-                >
-                  Move to Previous Day
-                </div>
-                <div
-                  className="menu-item"
-                  onClick={() => {
-                    onMoveToNextDay();
-                    setShowMenu(false);
-                  }}
-                >
-                  Move to Next Day
-                </div>
-                <div
-                  className="menu-item"
-                  onClick={() => {
-                    setShowDatePicker(true);
-                    setShowMenu(false);
-                  }}
-                >
-                  Move to Date...
-                </div>
+                {!isBacklogView && (
+                  <>
+                    <div
+                      className="menu-item"
+                      onClick={() => {
+                        onMoveToTomorrow();
+                        setShowMenu(false);
+                      }}
+                    >
+                      Move to Tomorrow
+                    </div>
+                    <div
+                      className="menu-item"
+                      onClick={() => {
+                        onMoveToPreviousDay();
+                        setShowMenu(false);
+                      }}
+                    >
+                      Move to Previous Day
+                    </div>
+                    <div
+                      className="menu-item"
+                      onClick={() => {
+                        onMoveToNextDay();
+                        setShowMenu(false);
+                      }}
+                    >
+                      Move to Next Day
+                    </div>
+                    <div
+                      className="menu-item"
+                      onClick={() => {
+                        setShowDatePicker(true);
+                        setShowMenu(false);
+                      }}
+                    >
+                      Move to Date...
+                    </div>
+                  </>
+                )}
                 <div className="menu-item danger" onClick={handleDeleteClick}>
                   Delete
                 </div>

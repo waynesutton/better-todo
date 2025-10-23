@@ -14,7 +14,6 @@ import { format } from "date-fns";
 import { Search, Menu, X } from "lucide-react";
 import { CopyIcon, CheckIcon } from "@radix-ui/react-icons";
 import { Id } from "../convex/_generated/dataModel";
-import { localData } from "./lib/localData";
 import { useTheme } from "./context/ThemeContext";
 import "./styles/global.css";
 
@@ -63,9 +62,8 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const mainContentRef = useRef<HTMLDivElement>(null);
 
-  // Local ephemeral data for unsigned users
-  const [localTodos, setLocalTodos] = useState<any[]>([]);
-  const [localDates, setLocalDates] = useState<string[]>([]);
+  // Demo mode for logged out users (max 3 todos, no persistence)
+  const [demoTodos, setDemoTodos] = useState<any[]>([]);
 
   // Mutations for footer actions
   const archiveAllTodos = useMutation(api.todos.archiveAllTodos);
@@ -86,25 +84,16 @@ function App() {
     api.todos.getPinnedTodos,
     isAuthenticated ? undefined : "skip",
   );
+  const backlogTodos = useQuery(
+    api.todos.getBacklogTodos,
+    isAuthenticated ? undefined : "skip",
+  );
   const todos = useQuery(
     api.todos.getTodosByDate,
-    isAuthenticated && selectedDate !== "pinned"
+    isAuthenticated && selectedDate !== "pinned" && selectedDate !== "backlog"
       ? { date: selectedDate }
       : "skip",
   );
-
-  // Refresh local data when needed
-  useEffect(() => {
-    if (!authIsLoading && !isAuthenticated) {
-      setLocalTodos(localData.getTodosByDate(selectedDate));
-      setLocalDates(localData.getAvailableDates());
-    } else if (isAuthenticated) {
-      // Clear local data when authenticated
-      localData.clear();
-      setLocalTodos([]);
-      setLocalDates([]);
-    }
-  }, [selectedDate, authIsLoading, isAuthenticated]);
 
   // Ensure current date is always available
   useEffect(() => {
@@ -121,14 +110,13 @@ function App() {
   // Show all dates including today if not in list
   const allDates = React.useMemo(() => {
     const today = format(new Date(), "yyyy-MM-dd");
-    const dates =
-      !authIsLoading && isAuthenticated ? availableDates || [] : localDates;
+    const dates = !authIsLoading && isAuthenticated ? availableDates || [] : [];
 
     if (!dates.includes(today)) {
       return [today, ...dates];
     }
     return dates;
-  }, [availableDates, localDates, authIsLoading, isAuthenticated]);
+  }, [availableDates, authIsLoading, isAuthenticated]);
 
   // Handle keyboard shortcut for search (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -196,6 +184,10 @@ function App() {
       return "Pinned";
     }
 
+    if (selectedDate === "backlog") {
+      return "Backlog";
+    }
+
     const date = new Date(selectedDate + "T00:00:00");
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -220,8 +212,10 @@ function App() {
     !authIsLoading && isAuthenticated
       ? selectedDate === "pinned"
         ? pinnedTodos || []
-        : todos || []
-      : localTodos;
+        : selectedDate === "backlog"
+          ? backlogTodos || []
+          : todos || []
+      : demoTodos;
 
   // Separate archived and active todos, sort pinned to the top
   const activeTodos = displayTodos
@@ -247,14 +241,14 @@ function App() {
 
   // Footer action handlers
   const handleArchiveAllConfirm = async () => {
-    if (selectedDate !== "pinned") {
+    if (selectedDate !== "pinned" && selectedDate !== "backlog") {
       await archiveAllTodos({ date: selectedDate });
     }
     setConfirmArchiveAll(false);
   };
 
   const handleDeleteAllConfirm = async () => {
-    if (selectedDate !== "pinned") {
+    if (selectedDate !== "pinned" && selectedDate !== "backlog") {
       await deleteAllTodos({ date: selectedDate });
     }
     setConfirmDeleteAll(false);
@@ -265,7 +259,7 @@ function App() {
   };
 
   const handleDeleteAllArchived = async () => {
-    if (selectedDate !== "pinned") {
+    if (selectedDate !== "pinned" && selectedDate !== "backlog") {
       await deleteAllArchivedTodos({ date: selectedDate });
     }
   };
@@ -709,8 +703,8 @@ function App() {
             {!authIsLoading && !isAuthenticated && (
               <div className="logged-out-demo-section">
                 <p className="logged-out-demo-text">
-                  Try it out below — your todos and notes are saved locally
-                  until you sign up
+                  Try it out below — your todos are saved locally until you sign
+                  up
                 </p>
               </div>
             )}
@@ -721,6 +715,7 @@ function App() {
               expandedNoteId={expandedNoteId}
               onNoteExpanded={() => setExpandedNoteId(null)}
               isPinnedView={selectedDate === "pinned"}
+              isBacklogView={selectedDate === "backlog"}
               todoInputRef={todoInputRef}
               focusedTodoIndex={focusedTodoIndex}
               onRequireSignIn={() => setShowSignInToCreateModal(true)}
@@ -728,6 +723,9 @@ function App() {
               onTodoHover={setHoveredTodoId}
               openMenuForTodoId={openMenuForTodoId}
               openMenuTrigger={openMenuTrigger}
+              isDemoMode={!authIsLoading && !isAuthenticated}
+              demoTodos={demoTodos}
+              setDemoTodos={setDemoTodos}
             />
             {!authIsLoading && !isAuthenticated && (
               <div className="feature-showcase">
@@ -789,24 +787,26 @@ function App() {
             )}
 
             {/* Bulk action buttons */}
-            {activeTodos.length > 0 && selectedDate !== "pinned" && (
-              <div className="bulk-actions">
-                <button
-                  className="bulk-action-button"
-                  onClick={() => setConfirmArchiveAll(true)}
-                  title="Archive all active todos"
-                >
-                  Archive All (active todos)
-                </button>
-                <button
-                  className="bulk-action-button danger"
-                  onClick={() => setConfirmDeleteAll(true)}
-                  title="Delete all active todos"
-                >
-                  Delete All (active todos)
-                </button>
-              </div>
-            )}
+            {activeTodos.length > 0 &&
+              selectedDate !== "pinned" &&
+              selectedDate !== "backlog" && (
+                <div className="bulk-actions">
+                  <button
+                    className="bulk-action-button"
+                    onClick={() => setConfirmArchiveAll(true)}
+                    title="Archive all active todos"
+                  >
+                    Archive All (active todos)
+                  </button>
+                  <button
+                    className="bulk-action-button danger"
+                    onClick={() => setConfirmDeleteAll(true)}
+                    title="Delete all active todos"
+                  >
+                    Delete All (active todos)
+                  </button>
+                </div>
+              )}
           </div>
         </div>
         {/* Overlay for mobile - clicking closes sidebar */}

@@ -9,6 +9,7 @@
  */
 
 import type * as archivedDates from "../archivedDates.js";
+import type * as backlogLabel from "../backlogLabel.js";
 import type * as dateLabels from "../dateLabels.js";
 import type * as dates from "../dates.js";
 import type * as folders from "../folders.js";
@@ -36,6 +37,7 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   archivedDates: typeof archivedDates;
+  backlogLabel: typeof backlogLabel;
   dateLabels: typeof dateLabels;
   dates: typeof dates;
   folders: typeof folders;
