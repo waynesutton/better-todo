@@ -15,11 +15,7 @@ import { Search, Menu, X } from "lucide-react";
 import { CopyIcon, CheckIcon } from "@radix-ui/react-icons";
 import { Id } from "../convex/_generated/dataModel";
 import { useTheme } from "./context/ThemeContext";
-import {
-  triggerSelectionHaptic,
-  triggerHaptic,
-  triggerSuccessHaptic,
-} from "./lib/haptics";
+import { triggerSelectionHaptic, triggerSuccessHaptic } from "./lib/haptics";
 import "./styles/global.css";
 
 function App() {

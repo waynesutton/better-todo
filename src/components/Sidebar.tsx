@@ -19,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { triggerSelectionHaptic, triggerHaptic } from "../lib/haptics";
+import { triggerSelectionHaptic } from "../lib/haptics";
 
 interface SidebarProps {
   dates: string[];
