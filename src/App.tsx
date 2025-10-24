@@ -22,6 +22,12 @@ function App() {
   const { user } = useUser();
   const { theme } = useTheme();
 
+  // Fetch user preferences for font size
+  const userPreferences = useQuery(
+    api.users.getUserPreferences,
+    isAuthenticated ? undefined : "skip",
+  );
+
   const [selectedDate, setSelectedDate] = useState<string>(
     format(new Date(), "yyyy-MM-dd"),
   );
@@ -65,6 +71,31 @@ function App() {
 
   // Demo mode for logged out users (max 3 todos, no persistence)
   const [demoTodos, setDemoTodos] = useState<any[]>([]);
+
+  // Apply user's custom font size to todo text
+  useEffect(() => {
+    const fontSize = userPreferences?.todoFontSize ?? 12;
+    const styleId = "custom-todo-font-size";
+
+    // Remove existing style if present
+    const existingStyle = document.getElementById(styleId);
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+
+    // Inject new style
+    const style = document.createElement("style");
+    style.id = styleId;
+    style.textContent = `.todo-text { font-size: ${fontSize}px !important; }`;
+    document.head.appendChild(style);
+
+    return () => {
+      const styleToRemove = document.getElementById(styleId);
+      if (styleToRemove) {
+        styleToRemove.remove();
+      }
+    };
+  }, [userPreferences?.todoFontSize]);
 
   // Mutations for footer actions
   const archiveAllTodos = useMutation(api.todos.archiveAllTodos);

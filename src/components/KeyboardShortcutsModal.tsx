@@ -2,6 +2,8 @@ import { createPortal } from "react-dom";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -13,6 +15,26 @@ export function KeyboardShortcutsModal({
   onClose,
 }: KeyboardShortcutsModalProps) {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const { isAuthenticated } = useConvexAuth();
+  
+  // Fetch user preferences
+  const userPreferences = useQuery(
+    api.users.getUserPreferences,
+    isAuthenticated ? undefined : "skip",
+  );
+  
+  // Mutation to update font size
+  const setTodoFontSize = useMutation(api.users.setTodoFontSize);
+  
+  // Font size options
+  const fontSizes = [10, 12, 14, 16, 18, 24];
+  const currentFontSize = userPreferences?.todoFontSize ?? 12;
+  
+  const handleFontSizeChange = async (fontSize: number) => {
+    if (isAuthenticated) {
+      await setTodoFontSize({ fontSize });
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -177,6 +199,33 @@ export function KeyboardShortcutsModal({
               ))}
             </div>
           </div>
+
+          {/* Font Size Customization Section */}
+          {isAuthenticated && (
+            <div className="keyboard-shortcuts-category">
+              <h3>Todo Text Font Size</h3>
+              <p className="keyboard-shortcuts-code-info">
+                Customize the font size for your todo items
+              </p>
+              <div className="font-size-slider-container">
+                <div className="font-size-options">
+                  {fontSizes.map((size) => (
+                    <button
+                      key={size}
+                      className={`font-size-option ${currentFontSize === size ? "active" : ""}`}
+                      onClick={() => handleFontSizeChange(size)}
+                      title={`Set font size to ${size}px`}
+                    >
+                      {size}px
+                    </button>
+                  ))}
+                </div>
+                <div className="font-size-preview" style={{ fontSize: `${currentFontSize}px` }}>
+                  Preview: This is how your todo text will look
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>,

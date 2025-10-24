@@ -4,6 +4,46 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v1.001] - 2025-10-24 - FINAL RELEASE
+
+### Added
+
+- **Todo text font size customization**
+  - User-specific font size settings for todo text (authenticated users only)
+  - Font size options: 10px, 12px (default), 14px, 16px, 18px, 24px
+  - Settings accessible via Keyboard Shortcuts Modal (press `?`)
+  - Real-time preview showing how todo text will appear
+  - Font size persists across sessions and devices per user account
+  - Works in both light and dark themes
+
+### Backend Changes
+
+- **Schema update** (`convex/schema.ts`)
+  - Added `userPreferences` table with `todoFontSize` field
+  - Indexed by `userId` for fast lookups
+- **User preferences functions** (`convex/users.ts`)
+  - `getUserPreferences` query: fetches user's font size preference
+  - `setTodoFontSize` mutation: updates font size for authenticated user
+
+### Frontend Changes
+
+- **KeyboardShortcutsModal component** (`src/components/KeyboardShortcutsModal.tsx`)
+  - Added font size customization section at bottom of modal
+  - Only visible to authenticated users
+  - Interactive buttons for each font size option
+  - Active state highlighting for current selection
+  - Real-time preview text showing selected font size
+- **App component** (`src/App.tsx`)
+  - Fetches user preferences on authentication
+  - Dynamically injects CSS style tag for `.todo-text` elements
+  - Applies font size globally to all todo items
+  - Defaults to 12px for logged out users
+- **Global styles** (`src/styles/global.css`)
+  - New styles for font size option buttons
+  - Active state styling with accent color
+  - Preview container with themed background
+  - Mobile-responsive button layout
+
 ## [2.2.6] - 2025-01-23 - v1.0 FINAL RELEASE
 
 ### Added

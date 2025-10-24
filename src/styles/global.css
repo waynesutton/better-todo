@@ -3580,6 +3580,54 @@ body {
   color: var(--accent);
 }
 
+/* Font Size Customization */
+.font-size-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.font-size-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.font-size-option {
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-width: 60px;
+  text-align: center;
+}
+
+.font-size-option:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
+.font-size-option.active {
+  background: #56b5db;
+  border-color: #56b5db;
+  color: #ffffff;
+}
+
+.font-size-preview {
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.5;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .keyboard-shortcuts-modal {

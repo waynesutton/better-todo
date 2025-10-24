@@ -105,3 +105,65 @@ export const debugAuth = query({
     };
   },
 });
+
+// Get user preferences
+export const getUserPreferences = query({
+  args: {},
+  returns: v.union(
+    v.object({
+      todoFontSize: v.number(),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx) => {
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      return null;
+    }
+
+    const prefs = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (!prefs) {
+      return null;
+    }
+
+    return {
+      todoFontSize: prefs.todoFontSize,
+    };
+  },
+});
+
+// Set todo font size
+export const setTodoFontSize = mutation({
+  args: {
+    fontSize: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const existing = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        todoFontSize: args.fontSize,
+      });
+    } else {
+      await ctx.db.insert("userPreferences", {
+        userId,
+        todoFontSize: args.fontSize,
+      });
+    }
+
+    return null;
+  },
+});

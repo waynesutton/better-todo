@@ -55,6 +55,8 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user_and_month_group`, `by_user_and_date`
   - **pomodoroSessions**: Stores pomodoro timer sessions with work/break intervals, completed sessions, and user preferences
     - Index: `by_user`
+  - **userPreferences**: Stores per-user settings including todoFontSize
+    - Index: `by_user`
 
 ### Functions
 
@@ -144,10 +146,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - Uses Clerk JWT tokens with "convex" template
   - Properly configured for production deployment with environment variables
   - Token validation with Clerk's JWKS endpoint
-- `users.ts` - User management functions:
+- `users.ts` - User management and preferences functions:
   - `getUserId` - Helper function to get current user's ID from authentication context
   - `storeUser` - Store/update Clerk user data in Convex database
   - `getCurrentUser` - Get authenticated user information
+  - `getUserPreferences` - Get user's preferences including font size
+  - `setTodoFontSize` - Update todo text font size for authenticated user
 - `http.ts` - HTTP routes for authentication callbacks (Clerk ready)
 
 ## React Frontend (`src/`)
@@ -296,6 +300,11 @@ This document describes the structure and purpose of each file in the Better Tod
     - Alternative syntax options (e.g., `js vs `javascript)
     - Visual feedback with copy/check icons
     - Mobile-responsive grid layout
+  - **Todo Text Font Size customization** (authenticated users only):
+    - Six size options: 10px, 12px (default), 14px, 16px, 18px, 24px
+    - Real-time preview showing selected font size
+    - Active state highlighting for current selection
+    - Persists across sessions and devices
   - Organized by categories (Navigation, Todo Management, Search, Pomodoro Timer)
   - Accessible via ? key or keyboard shortcuts button
   - Theme-aware styling matching app design
@@ -448,9 +457,19 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Completion sounds** (rotate through): `end-synth.mp3`, `end-epicboom.mp3`, `end-epci.mp3`, `end-deep.mp3`, `end-horns.mp3`, `end-computer.mp3`, `end-flute.mp3`, `end-whoa.mp3`, `end-waves.mp3`, `done.mp3`
 - `timer-worker.js` - Web Worker for background timer execution
 
-## Current Version: 2.2.6 (January 23, 2025) - v1.0 FINAL RELEASE
+## Current Version: v1.001 (October 24, 2025) - FINAL RELEASE
 
-### Latest Features (v2.2.6) - v1.0 FINAL RELEASE
+### Latest Features (v1.001) - FINAL RELEASE
+
+- **Todo text font size customization**
+  - User-specific font size settings for todo text (authenticated users only)
+  - Font size options: 10px, 12px (default), 14px, 16px, 18px, 24px
+  - Settings accessible via Keyboard Shortcuts Modal (press `?`)
+  - Real-time preview showing how todo text will appear
+  - Font size persists across sessions and devices per user account
+  - Works in both light and dark themes
+
+### Previous Features (v2.2.6) - v1.0 FINAL RELEASE
 
 - **Unsplash background images in Pomodoro full-screen mode**
   - Optional beautiful nature images from Unsplash as full-screen backgrounds

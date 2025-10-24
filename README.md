@@ -11,6 +11,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
 ### Core Functionality
 
 - **User authentication** with Clerk - secure login/logout with private user data
+- **Customizable todo text font size** - personalize todo text size with 6 options (authenticated users only)
 - **Real-time synchronization** across browsers using Convex
 - **Notion-style inline input** - type directly to add todos (no button needed)
 - **Daily notes section** with line numbers, Edit/Preview tabs, and syntax-highlighted code blocks
@@ -238,16 +239,27 @@ At the bottom of each date's todo list:
 
 Toggle between dark and light modes using the **half-moon icon** at the bottom of the sidebar (above the login link). The login/user icons automatically switch between dark and light variants based on the current theme.
 
+### Font Size Customization
+
+Authenticated users can customize the font size of todo text:
+
+- Press **?** to open the Keyboard Shortcuts modal
+- Scroll to the **Todo Text Font Size** section at the bottom
+- Choose from 6 size options: 10px, 12px (default), 14px, 16px, 18px, 24px
+- Preview shows how your todo text will look
+- Setting persists across sessions and devices
+- Works in both light and dark themes
+
 ## Project Structure
 
 ```
 better-todo/
 ├── convex/                    # Backend functions and schema
-│   ├── schema.ts              # Database schema (todos + notes + users + folders + monthGroups tables)
+│   ├── schema.ts              # Database schema (todos + notes + users + userPreferences + folders + monthGroups tables)
 │   ├── auth.config.ts         # Clerk JWT authentication configuration
 │   ├── todos.ts               # Todo queries and mutations
 │   ├── notes.ts               # Notes queries and mutations
-│   ├── users.ts               # User management functions
+│   ├── users.ts               # User management and preferences functions
 │   ├── dates.ts               # Date operations and queries
 │   ├── dateLabels.ts          # Custom date labels
 │   ├── archivedDates.ts       # Archived dates
@@ -393,6 +405,7 @@ The app supports continuous deployment, so every push to your main branch will t
 12. **Theme switching**: Login/user icons automatically adapt to your current theme (dark/light)
 13. **Code blocks**: Press ? to see all supported language syntax for code highlighting
 14. **Syntax highlighting**: Use `css, `js, `ts, `html, `json, `py, `go, `rust for proper colorization
+15. **Font size**: Press ? and scroll down to customize todo text font size (authenticated users only)
 
 ## Contributing
 

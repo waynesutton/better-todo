@@ -127,4 +127,10 @@ export default defineSchema({
     userId: v.string(),
     label: v.string(), // Custom text label for backlog section (default: "Backlog")
   }).index("by_user", ["userId"]),
+
+  // User preferences - stores per-user settings
+  userPreferences: defineTable({
+    userId: v.string(),
+    todoFontSize: v.number(), // Font size in pixels for .todo-text (default: 12)
+  }).index("by_user", ["userId"]),
 });

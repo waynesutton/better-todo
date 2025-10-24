@@ -79,7 +79,17 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 
 - None currently
 
-## Completed Tasks (v1.0 Final)
+## Completed Tasks (v1.001 Final)
+
+- [x] **Todo text font size customization** (v1.001)
+  - User-specific font size settings for todo text (authenticated users only)
+  - Font size options: 10px, 12px (default), 14px, 16px, 18px, 24px
+  - Settings accessible via Keyboard Shortcuts Modal (press `?`)
+  - Real-time preview showing selected font size
+  - Font size persists across sessions and devices
+  - Works in both light and dark themes
+  - Added userPreferences table to Convex schema
+  - Implemented getUserPreferences query and setTodoFontSize mutation
 
 - [x] **Unsplash background images in Pomodoro full-screen mode** (v2.2.6)
   - Optional beautiful nature images from Unsplash as full-screen backgrounds
@@ -90,9 +100,9 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
   - Secure API key management via Convex environment variables
   - Images hotlinked from Unsplash CDN following API guidelines
 
-## v1.0 Complete - Ready for Production
+## v1.001 Complete - Ready for Production
 
-**Better Todo v1.0 is now feature-complete and ready for production use!**
+**Better Todo v1.001 is now feature-complete and ready for production use!**
 
 ### Core Features Delivered:
 
@@ -105,6 +115,7 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 - ✅ Full-text search across todos and notes
 - ✅ Pomodoro timer with audio notifications
 - ✅ Unsplash background images in timer full-screen mode
+- ✅ Customizable todo text font size (authenticated users)
 - ✅ Custom folders and auto-grouped months
 - ✅ Pinned todos for quick access
 - ✅ Multiple notes per date with syntax highlighting
