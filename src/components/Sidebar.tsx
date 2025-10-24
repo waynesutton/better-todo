@@ -389,6 +389,41 @@ export function Sidebar({
     }
   }, [isAuthenticated, autoCreateMonthGroups]);
 
+  // Auto-expand folder or month group when a date inside them is selected
+  useEffect(() => {
+    if (
+      !selectedDate ||
+      selectedDate === "pinned" ||
+      selectedDate === "backlog"
+    ) {
+      return;
+    }
+
+    // Check if selected date is in a folder
+    const folderWithDate = folders.find((folder) =>
+      folder.dates.includes(selectedDate),
+    );
+    if (folderWithDate) {
+      setExpandedFolders((prev) => {
+        const next = new Set(prev);
+        next.add(folderWithDate._id);
+        return next;
+      });
+    }
+
+    // Check if selected date is in a month group
+    const monthGroupWithDate = monthGroups.find((monthGroup) =>
+      monthGroup.dates.includes(selectedDate),
+    );
+    if (monthGroupWithDate) {
+      setExpandedMonthGroups((prev) => {
+        const next = new Set(prev);
+        next.add(monthGroupWithDate._id);
+        return next;
+      });
+    }
+  }, [selectedDate, folders, monthGroups]);
+
   // Calculate dates that are in folders or month groups
   const datesInFoldersOrGroups = new Set<string>();
   folders.forEach((folder) =>
@@ -1383,124 +1418,132 @@ export function Sidebar({
             </div>
           )}
 
-          {/* Manage Folders section - shows all folders including empty ones */}
-          {isAuthenticated && folders.length > 0 && (
-            <div className="sidebar-archive-section">
-              <div
-                className="sidebar-archive-header"
-                onClick={() => setShowManageFolders(!showManageFolders)}
-              >
-                <span
-                  className={`collapse-icon ${showManageFolders ? "" : "collapsed"}`}
+          {/* Manage Folders section - shows only empty folders (folders without dates) */}
+          {isAuthenticated &&
+            folders.filter((f) => !f.archived && f.dates.length === 0).length >
+              0 && (
+              <div className="sidebar-archive-section">
+                <div
+                  className="sidebar-archive-header"
+                  onClick={() => setShowManageFolders(!showManageFolders)}
                 >
-                  ▼
-                </span>
-                <span>
-                  Manage Folders ({folders.filter((f) => !f.archived).length})
-                </span>
-              </div>
-              {showManageFolders && (
-                <div className="sidebar-archive-dates">
-                  {folders
-                    .filter((f) => !f.archived)
-                    .map((folder) => (
-                      <div key={folder._id} className="sidebar-archive-section">
-                        <div className="sidebar-archive-header">
-                          <span>{folder.name}</span>
-                          {folder.dates.length > 0 && (
-                            <span className="folder-date-count">
-                              ({folder.dates.length})
-                            </span>
-                          )}
-                        </div>
-                        <div className="date-menu">
-                          <button
-                            className="date-menu-button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowFolderMenu(
-                                showFolderMenu === folder._id
-                                  ? null
-                                  : folder._id,
-                              );
-                            }}
-                          >
-                            ⋯
-                          </button>
-                          {showFolderMenu === folder._id && (
-                            <div className="date-menu-dropdown">
-                              <div
-                                className="menu-item"
+                  <span
+                    className={`collapse-icon ${showManageFolders ? "" : "collapsed"}`}
+                  >
+                    ▼
+                  </span>
+                  <span>
+                    Manage Folders (
+                    {
+                      folders.filter((f) => !f.archived && f.dates.length === 0)
+                        .length
+                    }
+                    )
+                  </span>
+                </div>
+                {showManageFolders && (
+                  <div className="sidebar-archive-dates">
+                    {folders
+                      .filter((f) => !f.archived && f.dates.length === 0)
+                      .map((folder) => (
+                        <div
+                          key={folder._id}
+                          className="sidebar-archive-section"
+                        >
+                          <div className="sidebar-archive-header">
+                            <span>{folder.name}</span>
+                            <span className="folder-date-count">(empty)</span>
+                          </div>
+                          <div className="date-menu">
+                            <button
+                              className="date-menu-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowFolderMenu(
+                                  showFolderMenu === folder._id
+                                    ? null
+                                    : folder._id,
+                                );
+                              }}
+                            >
+                              ⋯
+                            </button>
+                            {showFolderMenu === folder._id && (
+                              <div className="date-menu-dropdown">
+                                <div
+                                  className="menu-item"
+                                  onClick={() => {
+                                    setShowRenameFolderInput(folder._id);
+                                    setFolderNameInput(folder.name);
+                                    setShowFolderMenu(null);
+                                  }}
+                                >
+                                  Rename Folder
+                                </div>
+                                <div
+                                  className="menu-item"
+                                  onClick={() =>
+                                    handleArchiveFolder(folder._id)
+                                  }
+                                >
+                                  Archive Folder
+                                </div>
+                                <div
+                                  className="menu-item danger"
+                                  onClick={() => handleDeleteFolder(folder._id)}
+                                >
+                                  Delete Folder
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {showRenameFolderInput === folder._id && (
+                            <div className="date-picker-modal">
+                              <input
+                                type="text"
+                                value={folderNameInput}
+                                onChange={(e) =>
+                                  setFolderNameInput(e.target.value)
+                                }
+                                placeholder="Enter folder name..."
+                                className="date-picker-input"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (
+                                    e.key === "Enter" &&
+                                    folderNameInput.trim()
+                                  ) {
+                                    handleRenameFolder(folder._id);
+                                  } else if (e.key === "Escape") {
+                                    setShowRenameFolderInput(null);
+                                    setFolderNameInput("");
+                                  }
+                                }}
+                              />
+                              <button
+                                className="date-picker-button"
+                                onClick={() => handleRenameFolder(folder._id)}
+                                disabled={!folderNameInput.trim()}
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="date-picker-button cancel"
                                 onClick={() => {
-                                  setShowRenameFolderInput(folder._id);
-                                  setFolderNameInput(folder.name);
-                                  setShowFolderMenu(null);
+                                  setShowRenameFolderInput(null);
+                                  setFolderNameInput("");
                                 }}
                               >
-                                Rename Folder
-                              </div>
-                              <div
-                                className="menu-item"
-                                onClick={() => handleArchiveFolder(folder._id)}
-                              >
-                                Archive Folder
-                              </div>
-                              <div
-                                className="menu-item danger"
-                                onClick={() => handleDeleteFolder(folder._id)}
-                              >
-                                Delete Folder
-                              </div>
+                                Cancel
+                              </button>
                             </div>
                           )}
                         </div>
-                        {showRenameFolderInput === folder._id && (
-                          <div className="date-picker-modal">
-                            <input
-                              type="text"
-                              value={folderNameInput}
-                              onChange={(e) =>
-                                setFolderNameInput(e.target.value)
-                              }
-                              placeholder="Enter folder name..."
-                              className="date-picker-input"
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (
-                                  e.key === "Enter" &&
-                                  folderNameInput.trim()
-                                ) {
-                                  handleRenameFolder(folder._id);
-                                } else if (e.key === "Escape") {
-                                  setShowRenameFolderInput(null);
-                                  setFolderNameInput("");
-                                }
-                              }}
-                            />
-                            <button
-                              className="date-picker-button"
-                              onClick={() => handleRenameFolder(folder._id)}
-                              disabled={!folderNameInput.trim()}
-                            >
-                              Save
-                            </button>
-                            <button
-                              className="date-picker-button cancel"
-                              onClick={() => {
-                                setShowRenameFolderInput(null);
-                                setFolderNameInput("");
-                              }}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          )}
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
         </div>
       ) : (
         <div className="sidebar-dates collapsed">
