@@ -828,6 +828,11 @@ button:active,
   text-rendering: optimizeLegibility;
 }
 
+/* Calendar icon styling for dark mode */
+:root[data-theme="dark"] .date-picker-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
 .date-picker-button {
   padding: 6px 12px;
   border: 1px solid var(--border-color);
@@ -2190,14 +2195,14 @@ button:active,
 }
 
 .todo-checkbox {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border: 1.5px solid var(--border-color);
   border-radius: 3px;
   cursor: pointer;
   background-color: transparent;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 5px;
   margin-right: 2px;
   display: flex;
   align-items: center;
@@ -2541,6 +2546,22 @@ button:active,
   border-radius: 4px;
   transition: all 0.15s ease;
   font-family: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .bulk-action-button {
+    font-size: 12px;
+    padding: 6px 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .bulk-actions {
+    padding: 0 8px;
+  }
 }
 
 .bulk-action-button:hover {

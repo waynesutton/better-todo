@@ -465,8 +465,11 @@ export function TodoItem({
             className="date-picker-modal"
             style={{
               position: "fixed",
-              top: `${menuPosition.top}px`,
-              left: `${menuPosition.left}px`,
+              top: isMobile
+                ? "50%"
+                : `${Math.min(menuPosition.top, window.innerHeight - 200)}px`,
+              left: isMobile ? "50%" : `${menuPosition.left}px`,
+              transform: isMobile ? "translate(-50%, -50%)" : "none",
               zIndex: 10000,
             }}
           >
