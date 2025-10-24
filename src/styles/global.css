@@ -20,13 +20,13 @@
 
 :root[data-theme="light"] {
   --bg-primary: #ffffff;
-  --bg-secondary: #f7f7f7;
-  --bg-hover: #e8e8e8;
+  --bg-secondary: #fafafa;
+  --bg-hover: #f5f5f5;
   --text-primary: #000000;
   --text-secondary: #666666;
   --border-color: #d1d1d6;
   --accent: #007aff;
-  --checkbox-bg: #f7f7f7;
+  --checkbox-bg: #fafafa;
   --archive-bg: #fafafa;
 
   /* Font sizes */
@@ -39,17 +39,179 @@
 
 /* Clerk modal container */
 .clerk-modal-container {
+  position: relative;
   max-width: 1000px;
   width: 95vw;
-  max-height: 90vh;
+  max-height: 75vh;
   background: var(--bg-primary);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 0;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* Clerk UserProfile Theme Overrides - use site variables */
+:root[data-theme="light"] .cl-card,
+:root[data-theme="light"] .cl-userProfile-card,
+:root[data-theme="light"] .cl-navbar,
+:root[data-theme="light"] .cl-profilePage {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="light"] .cl-profileSection,
+:root[data-theme="light"] .cl-profileSectionPrimaryButton,
+:root[data-theme="light"] .cl-accordionTriggerButton {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+:root[data-theme="light"] .cl-profileSectionTitle,
+:root[data-theme="light"] .cl-profileSectionTitleText,
+:root[data-theme="light"] .cl-accordionTriggerButton,
+:root[data-theme="light"] .cl-accordionTriggerButton__open,
+:root[data-theme="light"] .cl-headerTitle,
+:root[data-theme="light"] .cl-navbarItem,
+:root[data-theme="light"] .cl-userButtonTrigger,
+:root[data-theme="light"] .cl-formFieldLabel,
+:root[data-theme="light"] .cl-internal-b3fm6y {
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="light"] .cl-profileSectionSubtitle,
+:root[data-theme="light"] .cl-profileSectionContent__emailAddresses p,
+:root[data-theme="light"] .cl-profileSectionContent__connectedAccounts p,
+:root[data-theme="light"] .cl-badge {
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme="light"] .cl-badge {
+  background-color: var(--bg-hover) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+:root[data-theme="light"] .cl-formFieldInput,
+:root[data-theme="light"] .cl-input {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Clerk UserProfile Theme Overrides for Dark Mode */
+:root[data-theme="dark"] .cl-card,
+:root[data-theme="dark"] .cl-userProfile-card,
+:root[data-theme="dark"] .cl-navbar,
+:root[data-theme="dark"] .cl-profilePage {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="dark"] .cl-profileSection,
+:root[data-theme="dark"] .cl-profileSectionPrimaryButton,
+:root[data-theme="dark"] .cl-accordionTriggerButton {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+:root[data-theme="dark"] .cl-profileSectionTitle,
+:root[data-theme="dark"] .cl-profileSectionTitleText,
+:root[data-theme="dark"] .cl-accordionTriggerButton,
+:root[data-theme="dark"] .cl-accordionTriggerButton__open,
+:root[data-theme="dark"] .cl-headerTitle,
+:root[data-theme="dark"] .cl-navbarItem,
+:root[data-theme="dark"] .cl-userButtonTrigger,
+:root[data-theme="dark"] .cl-formFieldLabel,
+:root[data-theme="dark"] .cl-internal-b3fm6y {
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="dark"] .cl-profileSectionSubtitle,
+:root[data-theme="dark"] .cl-profileSectionContent__emailAddresses p,
+:root[data-theme="dark"] .cl-profileSectionContent__connectedAccounts p,
+:root[data-theme="dark"] .cl-badge {
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme="dark"] .cl-badge {
+  background-color: var(--bg-hover) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+:root[data-theme="dark"] .cl-formFieldInput,
+:root[data-theme="dark"] .cl-input {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Additional Clerk styling for buttons and interactive elements (neutral) */
+.cl-button {
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+  border: 0px solid var(--border-color) !important;
+  border-radius: 6px !important;
+}
+.cl-button:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+/* Primary action buttons use site accent */
+.cl-formButtonPrimary {
+  background-color: var(--accent) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--accent) !important;
+  border-radius: 6px !important;
+}
+.cl-formButtonPrimary:hover {
+  opacity: 0.92 !important;
+}
+
+/* Clerk dividers and borders */
+:root[data-theme="light"] .cl-divider,
+:root[data-theme="light"] .cl-dividerLine {
+  background-color: #d1d1d6 !important;
+}
+
+:root[data-theme="dark"] .cl-divider,
+:root[data-theme="dark"] .cl-dividerLine {
+  background-color: #3a4350 !important;
+}
+
+/* Clerk hover states */
+:root .cl-profileSectionPrimaryButton:hover,
+:root .cl-accordionTriggerButton:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+/* Clerk text content areas */
+:root .cl-profileSectionContent,
+:root .cl-accordionContent {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Clerk avatar and profile image containers */
+:root .cl-avatarBox {
+  border-color: var(--border-color) !important;
+}
+
+/* Clerk left navbar items */
+:root .cl-navbarItem {
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+}
+:root .cl-navbarItem:hover {
+  background-color: var(--bg-hover) !important;
+}
+:root .cl-navbarItem__active {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
 }
 
 /* Mobile responsive adjustments */
@@ -73,11 +235,11 @@
 /* Clerk close button */
 .clerk-close-button {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 12px;
+  right: 12px;
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   cursor: pointer;
   padding: 8px;
   display: flex;
@@ -85,12 +247,13 @@
   justify-content: center;
   border-radius: 6px;
   transition: all 0.2s ease;
-  z-index: 20;
+  z-index: 1000;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 .clerk-close-button:hover {
   background: var(--bg-hover);
-  color: var(--text-primary);
 }
 
 .clerk-close-button:active {
@@ -121,9 +284,11 @@
   }
 
   .clerk-close-button {
-    top: 12px;
-    right: 12px;
-    padding: 6px;
+    top: 8px;
+    right: 8px;
+    padding: 10px;
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
@@ -149,17 +314,7 @@
   transform: scale(0.98);
 }
 
-/* Clerk form button styling */
-.cl-formButtonPrimary,
-.cl-button {
-  color: #ffffff !important;
-}
-
-/* Dark mode - black text for Clerk buttons */
-:root[data-theme="dark"] .cl-formButtonPrimary,
-:root[data-theme="dark"] .cl-button {
-  color: #000000 !important;
-}
+/* Clerk button styling handled in comprehensive theme overrides above */
 
 /* Mobile-specific Clerk UserProfile fixes */
 @media (max-width: 768px) {
@@ -446,6 +601,10 @@ body {
 /* Light mode date hover */
 :root[data-theme="light"] .date-item-container:hover {
   background-color: rgba(86, 181, 219, 0.1);
+}
+
+:root[data-theme="light"] .date-item-container:hover .date-item {
+  color: var(--text-primary);
 }
 
 .date-item-container.active {

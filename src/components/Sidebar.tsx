@@ -5,7 +5,12 @@ import { useUser } from "@clerk/clerk-react";
 import { api } from "../../convex/_generated/api";
 import { format, addDays, subDays } from "date-fns";
 import { PanelLeft, Pin, Menu, Folder, Plus } from "lucide-react";
-import { KeyboardIcon, InfoCircledIcon } from "@radix-ui/react-icons";
+import {
+  KeyboardIcon,
+  InfoCircledIcon,
+  SunIcon,
+  MoonIcon,
+} from "@radix-ui/react-icons";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
 import {
@@ -1587,16 +1592,20 @@ export function Sidebar({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="theme-toggle" onClick={toggleTheme}>
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
+              <button
+                className="theme-toggle"
+                onClick={toggleTheme}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {theme === "dark" ? (
+                  <SunIcon width={18} height={18} />
+                ) : (
+                  <MoonIcon width={18} height={18} />
+                )}
               </button>
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8}>
