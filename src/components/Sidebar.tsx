@@ -19,6 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import { triggerSelectionHaptic, triggerHaptic } from "../lib/haptics";
 
 interface SidebarProps {
   dates: string[];
@@ -562,7 +563,13 @@ export function Sidebar({
               key="pinned"
               className={`date-item-container pinned-section ${"pinned" === selectedDate ? "active" : ""}`}
             >
-              <div className="date-item" onClick={() => onSelectDate("pinned")}>
+              <div
+                className="date-item"
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  onSelectDate("pinned");
+                }}
+              >
                 Pinned
               </div>
             </div>
@@ -576,7 +583,10 @@ export function Sidebar({
             >
               <div
                 className="date-item"
-                onClick={() => onSelectDate("backlog")}
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  onSelectDate("backlog");
+                }}
               >
                 {backlogLabel}
               </div>
@@ -636,7 +646,13 @@ export function Sidebar({
               key={date}
               className={`date-item-container ${date === selectedDate ? "active" : ""}`}
             >
-              <div className="date-item" onClick={() => onSelectDate(date)}>
+              <div
+                className="date-item"
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  onSelectDate(date);
+                }}
+              >
                 {formatDate(date)}
                 {uncompletedCounts[date] > 0 && (
                   <span className="todo-count">{uncompletedCounts[date]}</span>
@@ -1594,7 +1610,10 @@ export function Sidebar({
             <TooltipTrigger asChild>
               <button
                 className="theme-toggle"
-                onClick={toggleTheme}
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  toggleTheme();
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",

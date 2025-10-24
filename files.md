@@ -248,7 +248,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Custom folders** for organizing dates (collapsible, renameable, archivable, deletable)
   - **Auto-grouped month sections** for completed months (collapsible, archivable, deletable)
   - "+ Add Folder" button at bottom (only shows when authenticated)
-  - Active date highlighting (#56B5DB accent color)
+  - Active date highlighting (#0076C6 accent color)
   - Theme toggle (half-moon icon) at bottom of sidebar above login link
   - Three-dot menu per date with options:
     - Add/edit/remove custom date label
@@ -405,6 +405,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - Activated when user is not authenticated
   - Provides seamless experience for unsigned users
 
+- `haptics.ts` - Haptic feedback support for touch devices:
+  - Provides tactile feedback for user interactions
+  - Supports iOS and Android devices with haptics capabilities
+  - Lightweight utility with graceful fallback
+  - Enhanced mobile experience with physical feedback
+
 ### Styles (`src/styles/`)
 
 - `global.css` - Global styles with:
@@ -413,7 +419,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Light mode: Apple Notes-inspired (#f5f5f7 background)
   - Custom font size variables (--font-app-name, --font-sidebar, --font-todo, --font-archive)
   - Color system:
-    - Accent: #56B5DB (active date, focus states)
+    - Accent: #0076C6 (active date, focus states)
     - Mint green: #80cbae (positive actions, save buttons)
     - Soft red: #e16d76 (destructive actions, delete buttons)
   - Collapsible sidebar animations with smooth width transitions
@@ -442,6 +448,34 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
+## Current Version: v1.002 (October 24, 2025)
+
+### Latest Features (v1.002) - PWA & Haptics
+
+- **Progressive Web App (PWA) support**
+  - `public/manifest.json` - PWA manifest with app metadata, icons, and display settings
+  - `public/splash-1170x2532.png` - iOS splash screen (1170x2532px for iPhone Pro)
+  - Installable on iOS and Android devices
+  - Customizable app name, description, and theme colors
+  - Proper icon configuration for native app experience
+  - Standalone display mode for immersive app feel
+
+- **Haptics library** (`src/lib/haptics.ts`) - Haptic feedback support
+  - Provides haptic feedback for user interactions on supported devices
+  - Lightweight utility for enhanced tactile feedback on iOS and Android
+  - Works on touch devices with haptics capabilities
+  - Graceful fallback for devices without support
+
+### Previous Version (v1.001) - Final Release
+
+- **Todo text font size customization**
+  - User-specific font size settings for todo text (authenticated users only)
+  - Font size options: 10px, 12px (default), 14px, 16px, 18px, 24px
+  - Settings accessible via Keyboard Shortcuts Modal (press `?`)
+  - Real-time preview showing how todo text will appear
+  - Font size persists across sessions and devices per user account
+  - Works in both light and dark themes
+
 ## Public Assets (`public/`)
 
 - Favicon files in multiple sizes (16x16 to 512x512)
@@ -450,6 +484,9 @@ This document describes the structure and purpose of each file in the Better Tod
 - Microsoft tile icons for Windows
 - Convex logo files (black and white variants)
 - SVG favicon with checkmark design
+- **PWA manifest and splash screen**:
+  - `manifest.json` - PWA app manifest with configuration
+  - `splash-1170x2532.png` - iOS splash screen for iPhone Pro
 - **Pomodoro timer audio files** (13 MP3 files):
   - `timer-start.mp3` - Start sound (plays once when timer begins)
   - `5-second-coutdown.mp3` - Countdown alert (plays at 5 seconds remaining)
@@ -457,9 +494,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Completion sounds** (rotate through): `end-synth.mp3`, `end-epicboom.mp3`, `end-epci.mp3`, `end-deep.mp3`, `end-horns.mp3`, `end-computer.mp3`, `end-flute.mp3`, `end-whoa.mp3`, `end-waves.mp3`, `done.mp3`
 - `timer-worker.js` - Web Worker for background timer execution
 
-## Current Version: v1.001 (October 24, 2025) - FINAL RELEASE
-
-### Latest Features (v1.001) - FINAL RELEASE
+### Previous Features (v1.001) - FINAL RELEASE
 
 - **Todo text font size customization**
   - User-specific font size settings for todo text (authenticated users only)
@@ -672,7 +707,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Pin any active todo (excludes completed todos)
   - Pinned section at top of sidebar (only shows when todos are pinned)
   - Dedicated pinned page with full functionality
-  - Blue border (#56B5DB) on original page, no border on pinned view
+  - Blue border (#0076C6) on original page, no border on pinned view
   - Pin/unpin from three-dot menu
 
 ### Previous Version Features (v1.8.3)

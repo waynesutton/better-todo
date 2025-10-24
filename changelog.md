@@ -4,6 +4,45 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Changed
+
+- **Pomodoro button order** in modal and fullscreen mode
+  - Fullscreen/minimize button now appears first for quicker access
+  - Modal: Fullscreen, Play/Pause, Reset, Stop
+  - Fullscreen: Minimize, Image toggle, Play/Pause, Reset, Close
+
+### Fixed
+
+- **Pomodoro background image loading delay** in full-screen mode
+  - Background images now pre-fetch when timer starts instead of when entering full-screen
+  - Image icon button appears immediately in full-screen (no delay)
+  - Improves user experience by preparing background while timer runs
+  - Images ready when user wants to toggle background display
+
+## [v1.002] - 2025-10-24
+
+### Added
+
+- **Progressive Web App (PWA) support**
+  - `public/manifest.json` with complete PWA configuration
+  - iOS splash screen image (1170x2532px) for iPhone Pro devices
+  - App is now installable on iOS via "Add to Home Screen"
+  - App is installable on Android with native app experience
+  - Standalone display mode for immersive full-screen app feel
+  - Customizable theme colors and app metadata
+  - Proper app icons for all device types
+  - Enables offline-first capabilities for future enhancements
+
+- **Haptics library** (`src/lib/haptics.ts`)
+  - New utility for haptic feedback on touch devices
+  - Provides tactile feedback for user interactions
+  - Supports iOS and Android devices with haptics capabilities
+  - Graceful fallback for devices without haptic support
+  - Lightweight implementation for minimal performance impact
+  - Ready to integrate into components for enhanced UX
+
 ## [v1.001] - 2025-10-24 - FINAL RELEASE
 
 ### Added
@@ -601,7 +640,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Pinned section appears at top of sidebar before dates
   - Only shows when at least one todo is pinned
   - Click "Pinned" in sidebar to view all pinned todos on dedicated page
-  - Pinned todos display with blue border (#56B5DB) on original page
+  - Pinned todos display with blue border (#0076C6) on original page
   - Border only shows on original date page, not on pinned view
   - Unpin option available in three-dot menu
   - Works like a normal today page with full functionality
@@ -962,7 +1001,7 @@ The application is now stable, feature-rich, and ready for users to manage their
 
 ### Changed
 
-- Changed active date color to #56B5DB in both light and dark modes
+- Changed active date color to #0076C6 in both light and dark modes
 - Reduced sidebar date padding from 8px to 6px for more compact layout
 - Removed border line between sidebar header and dates section
 - Fixed sidebar collapse behavior on mobile resize

@@ -2,7 +2,7 @@
 :root[data-theme="dark"] {
   --bg-primary: #2e3842;
   --bg-secondary: #252a32;
-  --bg-hover: #3a4350;
+  --bg-hover: #2d404b;
   --text-primary: #ffffff;
   --text-secondary: #b8bcc2;
   --border-color: #3a4350;
@@ -21,7 +21,7 @@
 :root[data-theme="light"] {
   --bg-primary: #ffffff;
   --bg-secondary: #fafafa;
-  --bg-hover: #f5f5f5;
+  --bg-hover: #e9f2f8;
   --text-primary: #000000;
   --text-secondary: #666666;
   --border-color: #d1d1d6;
@@ -414,7 +414,14 @@
   border: 1px solid var(--accent) !important;
   box-shadow: none !important;
   outline: none !important;
-  ring: none !important;
+}
+
+/* iOS Native App Feel - Safe Area Insets */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
 }
 
 /* Reset and base styles */
@@ -422,6 +429,38 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  /* Disable tap highlight on iOS */
+  -webkit-tap-highlight-color: transparent;
+  /* Prevent callouts on long press */
+  -webkit-touch-callout: none;
+}
+
+/* Allow text selection only for text content and inputs */
+input,
+textarea,
+[contenteditable="true"],
+.todo-text,
+.markdown-preview,
+.note-content,
+.search-input {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* Disable text selection for interactive elements */
+button,
+a,
+.drag-handle,
+.menu-button,
+.todo-checkbox,
+.collapse-icon,
+.sidebar-toggle,
+.date-item,
+.note-action-button {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* Remove all focus rings and outlines */
@@ -458,6 +497,50 @@ body {
   text-rendering: optimizeLegibility;
   font-feature-settings: "kern" 1;
   font-kerning: normal;
+  /* iOS native feel */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+  touch-action: pan-y;
+  /* Apply safe area insets */
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
+/* iOS Native Active States for Buttons */
+button,
+.clickable,
+.date-item,
+.menu-button,
+.sidebar-toggle,
+.theme-toggle,
+.search-button,
+.hamburger-button {
+  transition: all 0.15s ease;
+}
+
+button:active,
+.clickable:active,
+.date-item:active,
+.menu-button:active,
+.sidebar-toggle:active,
+.theme-toggle:active,
+.search-button:active,
+.hamburger-button:active {
+  opacity: 0.7;
+  transform: scale(0.97);
+}
+
+/* Smooth momentum scrolling for all scrollable areas */
+.sidebar,
+.main-content,
+.todo-container,
+.archive-content,
+.search-results,
+.sidebar-dates {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 /* App layout */
@@ -465,6 +548,8 @@ body {
   display: flex;
   height: 100vh;
   width: 100vw;
+  /* Prevent overscroll bounce */
+  overscroll-behavior-y: none;
 }
 
 /* Sidebar */
@@ -581,7 +666,7 @@ body {
 }
 
 .date-item-collapsed.active {
-  background-color: #56b5db;
+  background-color: #0076c6;
   color: white;
   font-weight: 600;
 }
@@ -608,7 +693,7 @@ body {
 }
 
 .date-item-container.active {
-  background-color: #56b5db;
+  background-color: #0076c6;
   color: white;
 }
 
@@ -784,7 +869,7 @@ body {
 }
 
 .sidebar-archive-section > .sidebar-archive-header {
-  width: calc(100% - 40px);
+  width: calc(100% - 00px);
 }
 
 .sidebar-archive-section > .date-menu {
@@ -875,7 +960,7 @@ body {
 /* Add Folder Button */
 .sidebar-add-folder {
   margin-top: 8px;
-  padding: 0 16px;
+  padding: 0 0px;
 }
 
 .add-folder-button {
@@ -921,7 +1006,7 @@ body {
 }
 
 .add-folder-input:focus {
-  border-color: #56b5db;
+  border-color: #0076c6;
 }
 
 .add-folder-buttons {
@@ -942,7 +1027,7 @@ body {
 }
 
 .add-folder-save-button {
-  background-color: #56b5db;
+  background-color: #0076c6;
   color: white;
 }
 
@@ -1236,6 +1321,8 @@ body {
   position: sticky;
   bottom: 0;
   z-index: 10;
+  /* Apply safe area bottom padding */
+  padding-bottom: calc(12px + var(--safe-area-bottom));
 }
 
 .main-header {
@@ -1513,10 +1600,6 @@ body {
   padding: 8px;
   border-radius: 4px;
   transition: background-color 0.15s ease;
-}
-
-.note-display-mode:hover {
-  /* background-color: var(--bg-hover);*/
 }
 
 .note-content-block {
@@ -2067,7 +2150,7 @@ body {
   left: 0;
   width: 90%;
   height: 100%;
-  background-color: var(--bg-hover);
+  background-color: var(--bg-secondary);
   border-radius: 4px;
   z-index: -1;
 }
@@ -2127,8 +2210,8 @@ body {
 }
 
 .todo-checkbox.checked {
-  background-color: #56b5db;
-  border-color: #56b5db;
+  background-color: #0076c6;
+  border-color: #0076c6;
   color: white;
 }
 
@@ -2206,19 +2289,25 @@ body {
 }
 
 .menu-button:hover {
-  background-color: var(--bg-secondary);
-
-  color: rgba(0, 0, 0, 0.9);
+  background-color: #0076c6;
+  color: rgba(255, 255, 255, 0.95);
   font-weight: bold;
   transform: scale(2);
 }
 
 [data-theme="dark"] .menu-button:hover {
+  background-color: #0076c6;
   color: rgba(255, 255, 255, 0.95);
 }
 
-:root[data-theme="light"] .menu-button:hover {
-  background-color: var(--bg-secondary);
+.todo-item:hover .menu-button:hover {
+  background-color: #0076c6;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="dark"] .todo-item:hover .menu-button:hover {
+  background-color: #0076c6;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .menu-dropdown {
@@ -2514,10 +2603,17 @@ body {
 
 /* Mobile responsiveness - Native iPhone app feel */
 @media (max-width: 768px) {
+  body {
+    /* Override body padding for mobile - handle safe areas per component */
+    padding: 0;
+  }
+
   .app-container {
     position: relative;
     height: 100dvh;
     overflow: hidden;
+    /* Apply safe area insets on mobile */
+    padding-top: var(--safe-area-top);
   }
 
   .sidebar {
@@ -2643,6 +2739,7 @@ body {
   .sidebar-toggle {
     -webkit-user-select: none;
     user-select: none;
+    -webkit-touch-callout: none;
   }
 
   /* Reduce padding for inline input on mobile */
@@ -3271,7 +3368,7 @@ body {
 
 /* Search Highlight */
 .search-highlight {
-  background: #56b5db;
+  background: #0076c6;
   color: var(--bg-primary);
   padding: 2px 4px;
   border-radius: 3px;
@@ -3613,8 +3710,8 @@ body {
 }
 
 .font-size-option.active {
-  background: #56b5db;
-  border-color: #56b5db;
+  background: #0076c6;
+  border-color: #0076c6;
   color: #ffffff;
 }
 

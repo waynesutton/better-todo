@@ -15,6 +15,11 @@ import { Search, Menu, X } from "lucide-react";
 import { CopyIcon, CheckIcon } from "@radix-ui/react-icons";
 import { Id } from "../convex/_generated/dataModel";
 import { useTheme } from "./context/ThemeContext";
+import {
+  triggerSelectionHaptic,
+  triggerHaptic,
+  triggerSuccessHaptic,
+} from "./lib/haptics";
 import "./styles/global.css";
 
 function App() {
@@ -484,6 +489,30 @@ function App() {
     }
   }, [activeTodos.length, focusedTodoIndex]);
 
+  // Prevent default pull-to-refresh on iOS Safari
+  useEffect(() => {
+    // Prevent pull-to-refresh on body
+    const preventPullToRefresh = (e: TouchEvent) => {
+      // Only prevent if at the top of the page and pulling down
+      if (window.scrollY === 0 && e.touches[0].clientY > 0) {
+        const touchY = e.touches[0].clientY;
+        const initialTouchY = e.touches[0].clientY;
+
+        if (touchY > initialTouchY) {
+          e.preventDefault();
+        }
+      }
+    };
+
+    document.body.addEventListener("touchmove", preventPullToRefresh, {
+      passive: false,
+    });
+
+    return () => {
+      document.body.removeEventListener("touchmove", preventPullToRefresh);
+    };
+  }, []);
+
   // Pull to refresh functionality for mobile
   useEffect(() => {
     const mainContent = mainContentRef.current;
@@ -619,7 +648,10 @@ function App() {
               {sidebarHidden && (
                 <button
                   className="hamburger-button"
-                  onClick={() => setSidebarHidden(false)}
+                  onClick={() => {
+                    triggerSelectionHaptic();
+                    setSidebarHidden(false);
+                  }}
                   title="Open sidebar"
                 >
                   <Menu size={20} />
@@ -631,6 +663,7 @@ function App() {
               <button
                 className="search-button"
                 onClick={() => {
+                  triggerSelectionHaptic();
                   // Copy all unchecked (incomplete) todos to clipboard
                   const incompleteTodos = activeTodos.filter(
                     (todo) => !todo.completed,
@@ -643,6 +676,7 @@ function App() {
                     navigator.clipboard
                       .writeText(todoText)
                       .then(() => {
+                        triggerSuccessHaptic();
                         // Show brief success indicator
                         setShowCopyConfirmation(true);
                         setTimeout(() => {
@@ -666,6 +700,7 @@ function App() {
               <button
                 className="search-button"
                 onClick={() => {
+                  triggerSelectionHaptic();
                   if (!authIsLoading && isAuthenticated) {
                     setSearchModalOpen(true);
                   } else {

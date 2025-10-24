@@ -7,6 +7,7 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { DrawingPinFilledIcon } from "@radix-ui/react-icons";
+import { triggerSelectionHaptic, triggerHaptic } from "../lib/haptics";
 
 interface TodoItemProps {
   id: Id<"todos">;
@@ -112,6 +113,8 @@ export function TodoItem({
   };
 
   const handleCheckboxToggle = async () => {
+    triggerSelectionHaptic();
+
     if (isDemoMode && onDemoToggle) {
       onDemoToggle(id);
       return;
@@ -145,11 +148,13 @@ export function TodoItem({
   };
 
   const handleDeleteClick = () => {
+    triggerHaptic("light");
     setShowDeleteConfirm(true);
     setShowMenu(false);
   };
 
   const handleAddSubtask = async () => {
+    triggerHaptic("light");
     try {
       await createSubtask({
         parentId: id,
@@ -162,15 +167,18 @@ export function TodoItem({
   };
 
   const confirmDelete = async () => {
+    triggerHaptic("medium");
     await deleteTodo({ id });
     setShowDeleteConfirm(false);
   };
 
   const cancelDelete = () => {
+    triggerHaptic("light");
     setShowDeleteConfirm(false);
   };
 
   const handleUnarchive = async () => {
+    triggerHaptic("light");
     await updateTodo({
       id,
       archived: false,
@@ -180,6 +188,7 @@ export function TodoItem({
   };
 
   const handleTogglePin = async () => {
+    triggerHaptic("light");
     await updateTodo({
       id,
       pinned: !pinned,
@@ -188,6 +197,7 @@ export function TodoItem({
   };
 
   const handleToggleBacklog = async () => {
+    triggerHaptic("light");
     await updateTodo({
       id,
       backlog: !backlog,
@@ -197,6 +207,7 @@ export function TodoItem({
 
   const handleMoveToCustomDate = () => {
     if (customDate) {
+      triggerHaptic("light");
       onMoveToCustomDate(customDate);
       setShowMenu(false);
       setShowDatePicker(false);
@@ -205,6 +216,7 @@ export function TodoItem({
   };
 
   const handleMenuToggle = () => {
+    triggerSelectionHaptic();
     if (!showMenu && menuButtonRef.current) {
       const rect = menuButtonRef.current.getBoundingClientRect();
       setMenuPosition({

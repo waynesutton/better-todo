@@ -32,6 +32,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
 - **Auto-grouped months** - completed months automatically group into collapsible sections
 - **Pomodoro timer** - built-in productivity timer with sound notifications and rotating completion sounds
 - **Unsplash background images** - Optional beautiful nature images in Pomodoro full-screen mode with glass morphism overlay
+- **Progressive Web App** - install on iOS or Android for native app experience with offline support
 
 ### UI/UX
 
@@ -43,6 +44,7 @@ An open source, real-time to-do list that never falls out of sync — built on C
   - Visible add button ("+") on mobile devices for easy todo creation
   - Touch-optimized button sizes and spacing
   - Simplified interface for small screens
+  - iOS splash screen for app-like experience when installed
 - **Clean, minimal design** with no boxes or borders around items
 - **Native spell check** enabled (Grammarly disabled for better performance)
 - **Custom font sizing** with CSS variables for easy customization
@@ -239,6 +241,28 @@ At the bottom of each date's todo list:
 
 Toggle between dark and light modes using the **half-moon icon** at the bottom of the sidebar (above the login link). The login/user icons automatically switch between dark and light variants based on the current theme.
 
+### Install as App (PWA)
+
+Better Todo is installable as a native app on iOS and Android:
+
+**iOS:**
+
+- Open in Safari
+- Tap the **Share** button at the bottom
+- Tap **Add to Home Screen**
+- Name the app and tap **Add**
+- App launches with native app feel and custom splash screen
+
+**Android:**
+
+- Open in Chrome or any supported browser
+- Tap the **⋮** (three dots) menu
+- Tap **Install app** or **Add to Home Screen**
+- Confirm installation
+- App launches with native app experience
+
+Once installed, the app runs standalone without browser UI for a cleaner experience.
+
 ### Font Size Customization
 
 Authenticated users can customize the font size of todo text:
@@ -311,7 +335,7 @@ Edit CSS variables in `src/styles/global.css`:
 
 The app uses CSS variables for easy theming. Key colors:
 
-- `--accent: #56B5DB` - Active date and focus color
+- `--accent: #0076C6` - Active date and focus color
 - `--bg-primary` - Main background
 - `--bg-secondary` - Input backgrounds
 - `--text-primary` - Main text

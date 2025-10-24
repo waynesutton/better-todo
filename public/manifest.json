@@ -1,0 +1,29 @@
+{
+  "name": "better todo",
+  "short_name": "better todo",
+  "description": "Real-time markdown todo app with Convex",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2e3842",
+  "theme_color": "#2e3842",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

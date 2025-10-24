@@ -102,6 +102,12 @@ export function PomodoroTimer() {
         playStartSound();
         hasPlayedStartSound.current = true;
       }
+
+      // Pre-fetch background image when timer starts
+      if (!hasFetchedImage.current) {
+        hasFetchedImage.current = true;
+        fetchBackgroundImage({ sessionId: session._id });
+      }
     } else if (session.status === "paused") {
       if (workerRef.current) {
         workerRef.current.postMessage({ type: "pause" });
@@ -110,7 +116,7 @@ export function PomodoroTimer() {
       setIsFullScreen(true);
       setDisplayTime(0);
     }
-  }, [session]);
+  }, [session, fetchBackgroundImage]);
 
   // List of end sounds to rotate through
   const endSounds = [
@@ -226,11 +232,6 @@ export function PomodoroTimer() {
     setIsFullScreen(true);
     // Reset image state to off when entering full-screen
     setShowBackgroundImage(false);
-    // Fetch new image when entering full-screen
-    if (session && !hasFetchedImage.current) {
-      hasFetchedImage.current = true;
-      fetchBackgroundImage({ sessionId: session._id });
-    }
   };
 
   const handleToggleBackground = () => {
@@ -311,6 +312,16 @@ export function PomodoroTimer() {
             </div>
 
             <div className="pomodoro-controls">
+              {(isRunning || isPaused) && (
+                <button
+                  className="pomodoro-control-button"
+                  onClick={handleEnterFullScreen}
+                  title="Enter Full Screen"
+                >
+                  <EnterFullScreenIcon width={24} height={24} />
+                </button>
+              )}
+
               {!isRunning && !isPaused && (
                 <button
                   className="pomodoro-control-button"
@@ -351,13 +362,6 @@ export function PomodoroTimer() {
                     <ResetIcon width={24} height={24} />
                   </button>
                   <button
-                    className="pomodoro-control-button"
-                    onClick={handleEnterFullScreen}
-                    title="Enter Full Screen"
-                  >
-                    <EnterFullScreenIcon width={24} height={24} />
-                  </button>
-                  <button
                     className="pomodoro-control-button danger"
                     onClick={handleStop}
                     title="Stop"
@@ -391,6 +395,14 @@ export function PomodoroTimer() {
               </div>
 
               <div className="pomodoro-controls-large">
+                <button
+                  className="pomodoro-control-button-large"
+                  onClick={handleMinimizeFullScreen}
+                  title="Minimize"
+                >
+                  <ExitFullScreenIcon width={24} height={24} />
+                </button>
+
                 {session?.backgroundImageUrl && (
                   <button
                     className="pomodoro-control-button-large"
@@ -431,14 +443,6 @@ export function PomodoroTimer() {
                   title="Restart"
                 >
                   <ResetIcon width={24} height={24} />
-                </button>
-
-                <button
-                  className="pomodoro-control-button-large"
-                  onClick={handleMinimizeFullScreen}
-                  title="Minimize"
-                >
-                  <ExitFullScreenIcon width={24} height={24} />
                 </button>
 
                 <button
