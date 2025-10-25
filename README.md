@@ -38,7 +38,10 @@ An open source, real-time to-do list that never falls out of sync — built on C
 
 - **Resizable sidebar** - drag to adjust width (200px - 500px)
 - **Collapsible sidebar** - compact date view (MM/DD format) with 60px width
-- **Dark and light themes** with smooth transitions
+- **Three theme options** - Dark, Light, and Tan with smooth transitions
+  - Dark mode: Sublime Text-inspired dark theme
+  - Light mode: Apple Notes-inspired clean theme
+  - Tan mode: Warm document-focused theme for ecosystem strain reduction
 - **Sharp font rendering** - optimized text display across all browsers and devices
 - **Mobile-optimized** with auto-hide sidebar and touch-friendly interface
   - Visible add button ("+") on mobile devices for easy todo creation
@@ -49,6 +52,8 @@ An open source, real-time to-do list that never falls out of sync — built on C
 - **Native spell check** enabled (Grammarly disabled for better performance)
 - **Custom font sizing** with CSS variables for easy customization
 - **Custom confirmation dialogs** matching site design (no browser defaults)
+- **Logged out demo mode** - Try creating up to 3 todos without signing up (data saved locally, lost on refresh)
+- **Feature showcase** - Welcome screen for unauthenticated users explaining app features
 
 ## Tech Stack
 
@@ -116,12 +121,13 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
 
 - **Sign in required** - Click the login icon in the sidebar to authenticate with Clerk
 - **Private data** - Each user has their own private todos and notes (completely isolated)
-- **Theme-aware icons** - Login/user icons automatically switch between dark and light variants
+- **Theme-aware icons** - Login/user icons automatically switch between dark, light, and tan variants
 - **Sign out** - Click your profile icon in the sidebar to sign out
 - **First-time users** - You'll see a "Sign In Required" modal when trying to create todos/notes
 - **Automatic user storage** - Your profile data is automatically saved to the database on first login
 - **Secure JWT tokens** - Authentication uses industry-standard JWT tokens with proper validation
-- **Ephemeral mode** - Unsigned users can use the app with local storage (data lost on refresh)
+- **Demo mode for logged out users** - Try creating up to 3 todos without signing up (data saved locally, lost on refresh)
+- **Feature showcase** - Welcome screen for unauthenticated users explaining app features and benefits
 
 ### Creating Todos
 
@@ -239,7 +245,12 @@ At the bottom of each date's todo list:
 
 ### Themes
 
-Toggle between dark and light modes using the **half-moon icon** at the bottom of the sidebar (above the login link). The login/user icons automatically switch between dark and light variants based on the current theme.
+Toggle between dark, light, and tan modes using the **half-moon icon** at the bottom of the sidebar (above the login link). The login/user icons automatically switch between dark, light, and tan variants based on the current theme.
+
+**Theme Options:**
+- **Dark Mode** - Sublime Text-inspired dark theme (#2E3842 background) with blue accents (#4a9eff)
+- **Light Mode** - Apple Notes-inspired clean theme (#f5f5f7 background) with blue accents (#007aff)
+- **Tan Mode** - Warm document-focused theme (#faf8f5 background) with orange accents (#EB5601) for ecosystem strain reduction
 
 ### Install as App (PWA)
 
@@ -335,11 +346,27 @@ Edit CSS variables in `src/styles/global.css`:
 
 The app uses CSS variables for easy theming. Key colors:
 
-- `--accent: #0076C6` - Active date and focus color
-- `--bg-primary` - Main background
-- `--bg-secondary` - Input backgrounds
-- `--text-primary` - Main text
-- `--text-secondary` - Muted text
+**Dark Mode:**
+- `--accent: #4a9eff` - Active date and focus color
+- `--bg-primary: #2e3842` - Main background
+- `--bg-secondary: #1e2429` - Input backgrounds
+- `--text-primary: #e0e0e0` - Main text
+- `--text-secondary: #9ca3af` - Muted text
+
+**Light Mode:**
+- `--accent: #007aff` - Active date and focus color
+- `--bg-primary: #f5f5f7` - Main background
+- `--bg-secondary: #ffffff` - Input backgrounds
+- `--text-primary: #1d1d1f` - Main text
+- `--text-secondary: #6e6e73` - Muted text
+
+**Tan Mode:**
+- `--accent: #8b7355` - General accent color
+- `--primary-accent: #EB5601` - Primary action color (checkboxes, buttons, active states)
+- `--bg-primary: #faf8f5` - Warm tan background
+- `--bg-secondary: #f5f3f0` - Slightly darker tan
+- `--text-primary: #1a1a1a` - Soft black text
+- `--text-secondary: #6b6b6b` - Warm gray text
 
 ## Development
 

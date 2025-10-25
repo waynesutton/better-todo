@@ -6,6 +6,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Tan Mode Theme** - Third theme option with warm, document-focused design
+  - Warm tan background (#faf8f5) for ecosystem strain reduction
+  - Orange accent color (#EB5601) for interactive elements and primary actions
+  - Comprehensive color overrides for checkboxes, buttons, active states, and focus indicators
+  - Theme-aware styling for Clerk authentication modals
+  - Cloud icon (☁️) from Lucide React for theme toggle button
+  - Default theme set to "tan" for better first-time user experience
+  - Theme switching rotates: dark → light → tan → dark
+
+- **Logged Out Demo Mode** - Feature showcase and demo functionality for unauthenticated users
+  - Feature showcase box explaining app benefits and key features
+  - Try-before-you-buy: Create up to 3 todos without signing up
+  - Demo todos saved in local state (lost on page refresh)
+  - Seamless transition from demo to authenticated account
+  - Feature showcase includes Sign Up and Sign In buttons
+  - Clean, modern welcome screen for first-time visitors
+  - Demo mode banner explaining the 3-todo limit
+
+### Fixed
+
+- **iOS home screen app UI mismatch** resolved for Progressive Web App (PWA) functionality
+  - Added inline script in `index.html` to prevent theme flash when launching from home screen
+  - Theme now applies immediately before React renders (eliminates white flash on dark mode)
+  - Meta theme-color tag now updates dynamically based on user's selected theme
+  - Added comprehensive CSS for standalone mode (display-mode: standalone)
+  - Proper safe area handling for iPhone notch and home indicator using env() CSS
+  - Fixed viewport height calculation for iOS standalone mode using -webkit-fill-available
+  - Prevented rubber band bounce scroll effect in standalone mode
+  - Theme loads consistently whether accessed via browser or home screen icon
+  - Background color matches theme immediately on app launch
+
+- **Build configuration errors** fixed for production deployment
+  - Removed unused imports from Sidebar component (SunIcon, MoonIcon)
+  - Removed unused onOpenSignIn prop from Sidebar and App components
+  - Build now completes successfully with no TypeScript errors
+  - Ready for Netlify deployment with proper dist folder generation
+
+### Changed
+
+- **Theme initialization improved** for faster load times
+  - ThemeContext now applies theme synchronously before React mounts
+  - Theme color in manifest and meta tags updates dynamically
+  - localStorage theme preference loads instantly
+  - Three-way theme rotation instead of two-way (dark ↔ light)
+
+## [v1.002] - 2025-10-24
+
 ### Changed
 
 - **Pomodoro button order** in modal and fullscreen mode

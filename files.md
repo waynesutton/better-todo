@@ -392,10 +392,13 @@ This document describes the structure and purpose of each file in the Better Tod
 ### Context (`src/context/`)
 
 - `ThemeContext.tsx` - Theme management:
-  - Dark/light mode toggle
+  - Three theme toggle (dark, light, tan)
   - Persists preference to localStorage
   - Smooth color transitions
   - CSS variable-based theming
+  - Applies theme synchronously before React mounts to prevent flash
+  - Updates meta theme-color tag dynamically
+  - Default theme is "tan" for warm document-focused experience
 
 ### Library (`src/lib/`)
 
@@ -415,13 +418,15 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `global.css` - Global styles with:
   - CSS custom properties for theming and typography
-  - Dark mode: Sublime Text-inspired (#2E3842 background)
-  - Light mode: Apple Notes-inspired (#f5f5f7 background)
+  - Dark mode: Sublime Text-inspired (#2E3842 background) with blue accents (#4a9eff)
+  - Light mode: Apple Notes-inspired (#f5f5f7 background) with blue accents (#007aff)
+  - Tan mode: Warm document-focused theme (#faf8f5 background) with orange accents (#EB5601)
   - Custom font size variables (--font-app-name, --font-sidebar, --font-todo, --font-archive)
   - Color system:
     - Accent: #0076C6 (active date, focus states)
     - Mint green: #80cbae (positive actions, save buttons)
     - Soft red: #e16d76 (destructive actions, delete buttons)
+    - Tan mode primary accent: #EB5601 (checkboxes, buttons, active states)
   - Collapsible sidebar animations with smooth width transitions
   - Compact date view (MM/DD format) styles for collapsed state
   - Responsive design with mobile breakpoints (≤768px)
@@ -431,6 +436,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - Custom scrollbar styling for sidebar dates
   - Search modal styles with backdrop and keyboard navigation highlighting
   - Clerk authentication modal styling (theme-aware, custom appearance)
+  - Feature showcase styles for logged out users
+  - Demo mode styling for unauthenticated user experience
   - System font stack for native look and feel
 
 ## Documentation (`prds/`)
@@ -732,10 +739,12 @@ This document describes the structure and purpose of each file in the Better Tod
 - Notion-style inline input (type directly, no button)
 - Drag-and-drop reordering for todos and notes
 - Auto-archive on completion, auto-unarchive on uncheck
-- Dark/light themes with CSS variables
+- Three theme options (dark, light, tan) with CSS variables
 - Date-based organization with custom labels
 - Resizable sidebar (200px - 500px)
 - Mobile-optimized with auto-hide and overlay
 - Keyboard shortcuts (Enter, Shift+Enter, Cmd/Ctrl+K, Escape)
 - Clerk authentication integration (fully implemented, deployed, and working in production)
+- Demo mode for logged out users (3 todo limit, local storage)
+- Feature showcase for unauthenticated users
 - **v1.0 COMPLETE** - Feature-rich, production-ready todo application with all core functionality

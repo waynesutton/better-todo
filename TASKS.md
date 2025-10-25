@@ -79,6 +79,25 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 
 - None currently
 
+## Completed Tasks (Latest)
+
+- [x] **Tan Mode Theme** (Latest)
+  - Added third theme option with warm document-focused design
+  - Warm tan background with orange accent color (#EB5601)
+  - Comprehensive color overrides for all interactive elements
+  - Theme-aware Clerk authentication modal styling
+  - Cloud icon for theme toggle button
+  - Default theme set to "tan"
+  - Three-way theme rotation (dark → light → tan → dark)
+
+- [x] **Logged Out Demo Mode** (Latest)
+  - Feature showcase box for unauthenticated users
+  - Demo mode allowing up to 3 todos without sign-up
+  - Local state persistence (lost on refresh)
+  - Seamless demo-to-authenticated transition
+  - Feature showcase with Sign Up and Sign In buttons
+  - Clean welcome screen for first-time visitors
+
 ## Completed Tasks (v1.001 Final)
 
 - [x] **Todo text font size customization** (v1.001)
@@ -247,15 +266,34 @@ The application is built on a modern, real-time architecture:
 ### Relevant Files
 
 - `src/App.tsx` - Main app layout and state management
+  - Demo mode state management for logged out users
+  - Feature showcase rendering for unauthenticated users
+  - Theme-aware authentication modals
 - `src/components/TodoItem.tsx` - Individual todo with markdown and actions
 - `src/components/TodoList.tsx` - Todo list with inline input and DnD
+  - Demo mode props (`isDemoMode`, `demoTodos`, `setDemoTodos`)
+  - 3-todo limit enforcement for unauthenticated users
 - `src/components/Sidebar.tsx` - Resizable sidebar with date navigation
+  - Theme toggle with cloud icon for tan mode
+  - Theme-aware login/user icons (dark, light, tan variants)
 - `src/components/NotesSection.tsx` - Daily notes with Edit/Preview tabs
 - `src/components/ArchiveSection.tsx` - Collapsed archive with bulk actions
 - `src/components/SearchModal.tsx` - Full-text search modal
 - `src/components/ConfirmDialog.tsx` - Custom confirmation dialogs
-- `src/context/ThemeContext.tsx` - Dark/light theme management
+- `src/context/ThemeContext.tsx` - Theme management
+  - Three-way theme rotation (dark → light → tan → dark)
+  - Synchronous theme application before React mounts
+  - Dynamic meta theme-color tag updates
+  - Default theme: "tan"
 - `src/styles/global.css` - CSS variables and theming
+  - Tan mode color variables and overrides
+  - Feature showcase styling for logged out users
+  - Demo mode banner styling
+  - Theme-aware button colors for all three themes
+- `src/lib/localData.ts` - Ephemeral in-memory storage for unsigned users
+  - In-memory todos and notes storage
+  - CRUD operations mirroring Convex API
+  - Data lost on page refresh
 - `convex/schema.ts` - Database schema (todos, notes, archivedDates, dateLabels)
 - `convex/todos.ts` - Todo queries and mutations
 - `convex/notes.ts` - Notes queries and mutations

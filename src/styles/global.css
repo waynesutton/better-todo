@@ -37,6 +37,25 @@
   --font-header-date: 14px;
 }
 
+:root[data-theme="tan"] {
+  --bg-primary: #faf8f5;
+  --bg-secondary: #f5f3f0;
+  --bg-hover: #ebe9e6;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --border-color: #e6e4e1;
+  --accent: #8b7355;
+  --checkbox-bg: #f5f3f0;
+  --archive-bg: #f5f3f0;
+
+  /* Font sizes */
+  --font-app-name: 14px;
+  --font-sidebar: 13px;
+  --font-todo: 14px;
+  --font-archive: 13px;
+  --font-header-date: 14px;
+}
+
 /* Clerk modal container */
 .clerk-modal-container {
   position: relative;
@@ -147,6 +166,185 @@
   border-color: var(--border-color) !important;
 }
 
+/* Clerk UserProfile Theme Overrides for Tan Mode */
+:root[data-theme="tan"] .cl-card,
+:root[data-theme="tan"] .cl-userProfile-card,
+:root[data-theme="tan"] .cl-navbar,
+:root[data-theme="tan"] .cl-profilePage {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="tan"] .cl-profileSection,
+:root[data-theme="tan"] .cl-profileSectionPrimaryButton,
+:root[data-theme="tan"] .cl-accordionTriggerButton {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+:root[data-theme="tan"] .cl-profileSectionTitle,
+:root[data-theme="tan"] .cl-profileSectionTitleText,
+:root[data-theme="tan"] .cl-accordionTriggerButton,
+:root[data-theme="tan"] .cl-accordionTriggerButton__open,
+:root[data-theme="tan"] .cl-headerTitle,
+:root[data-theme="tan"] .cl-navbarItem,
+:root[data-theme="tan"] .cl-userButtonTrigger,
+:root[data-theme="tan"] .cl-formFieldLabel,
+:root[data-theme="tan"] .cl-internal-b3fm6y {
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="tan"] .cl-profileSectionSubtitle,
+:root[data-theme="tan"] .cl-profileSectionContent__emailAddresses p,
+:root[data-theme="tan"] .cl-profileSectionContent__connectedAccounts p,
+:root[data-theme="tan"] .cl-badge {
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme="tan"] .cl-badge {
+  background-color: var(--bg-hover) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+:root[data-theme="tan"] .cl-formFieldInput,
+:root[data-theme="tan"] .cl-input {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Clerk SignIn/SignUp Modal Overrides - Light Mode */
+:root[data-theme="light"] .cl-signIn,
+:root[data-theme="light"] .cl-signUp {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="light"] .cl-signIn .cl-card,
+:root[data-theme="light"] .cl-signUp .cl-card {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="light"] .cl-signIn .cl-headerTitle,
+:root[data-theme="light"] .cl-signUp .cl-headerTitle,
+:root[data-theme="light"] .cl-signIn .cl-formFieldLabel,
+:root[data-theme="light"] .cl-signUp .cl-formFieldLabel {
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="light"] .cl-signIn .cl-formFieldInput,
+:root[data-theme="light"] .cl-signUp .cl-formFieldInput,
+:root[data-theme="light"] .cl-signIn .cl-input,
+:root[data-theme="light"] .cl-signUp .cl-input {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+:root[data-theme="light"] .cl-signIn .cl-formButtonPrimary,
+:root[data-theme="light"] .cl-signUp .cl-formButtonPrimary {
+  background-color: #0076c6 !important;
+  border-color: #0076c6 !important;
+  color: white !important;
+}
+
+:root[data-theme="light"] .cl-signIn .cl-socialButtonsBlockButton,
+:root[data-theme="light"] .cl-signUp .cl-socialButtonsBlockButton {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Clerk SignIn/SignUp Modal Overrides - Dark Mode */
+:root[data-theme="dark"] .cl-signIn,
+:root[data-theme="dark"] .cl-signUp {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="dark"] .cl-signIn .cl-card,
+:root[data-theme="dark"] .cl-signUp .cl-card {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="dark"] .cl-signIn .cl-headerTitle,
+:root[data-theme="dark"] .cl-signUp .cl-headerTitle,
+:root[data-theme="dark"] .cl-signIn .cl-formFieldLabel,
+:root[data-theme="dark"] .cl-signUp .cl-formFieldLabel {
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="dark"] .cl-signIn .cl-formFieldInput,
+:root[data-theme="dark"] .cl-signUp .cl-formFieldInput,
+:root[data-theme="dark"] .cl-signIn .cl-input,
+:root[data-theme="dark"] .cl-signUp .cl-input {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+:root[data-theme="dark"] .cl-signIn .cl-formButtonPrimary,
+:root[data-theme="dark"] .cl-signUp .cl-formButtonPrimary {
+  background-color: #0076c6 !important;
+  border-color: #0076c6 !important;
+  color: white !important;
+}
+
+:root[data-theme="dark"] .cl-signIn .cl-socialButtonsBlockButton,
+:root[data-theme="dark"] .cl-signUp .cl-socialButtonsBlockButton {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Clerk SignIn/SignUp Modal Overrides - Tan Mode */
+:root[data-theme="tan"] .cl-signIn,
+:root[data-theme="tan"] .cl-signUp {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="tan"] .cl-signIn .cl-card,
+:root[data-theme="tan"] .cl-signUp .cl-card {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="tan"] .cl-signIn .cl-headerTitle,
+:root[data-theme="tan"] .cl-signUp .cl-headerTitle,
+:root[data-theme="tan"] .cl-signIn .cl-formFieldLabel,
+:root[data-theme="tan"] .cl-signUp .cl-formFieldLabel {
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="tan"] .cl-signIn .cl-formFieldInput,
+:root[data-theme="tan"] .cl-signUp .cl-formFieldInput,
+:root[data-theme="tan"] .cl-signIn .cl-input,
+:root[data-theme="tan"] .cl-signUp .cl-input {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+:root[data-theme="tan"] .cl-signIn .cl-formButtonPrimary,
+:root[data-theme="tan"] .cl-signUp .cl-formButtonPrimary {
+  background-color: #eb5601 !important;
+  border-color: #eb5601 !important;
+  color: white !important;
+}
+
+:root[data-theme="tan"] .cl-signIn .cl-socialButtonsBlockButton,
+:root[data-theme="tan"] .cl-signUp .cl-socialButtonsBlockButton {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
 /* Additional Clerk styling for buttons and interactive elements (neutral) */
 .cl-button {
   background-color: transparent !important;
@@ -165,6 +363,12 @@
   border: 1px solid var(--accent) !important;
   border-radius: 6px !important;
 }
+
+/* Dark mode primary button text */
+:root[data-theme="dark"] .cl-formButtonPrimary {
+  color: #000000 !important;
+}
+
 .cl-formButtonPrimary:hover {
   opacity: 0.92 !important;
 }
@@ -178,6 +382,11 @@
 :root[data-theme="dark"] .cl-divider,
 :root[data-theme="dark"] .cl-dividerLine {
   background-color: #3a4350 !important;
+}
+
+:root[data-theme="tan"] .cl-divider,
+:root[data-theme="tan"] .cl-dividerLine {
+  background-color: #e6e4e1 !important;
 }
 
 /* Clerk hover states */
@@ -671,6 +880,11 @@ button:active,
   font-weight: 600;
 }
 
+/* Tan mode collapsed date active */
+:root[data-theme="tan"] .date-item-collapsed.active {
+  background-color: #eb5601;
+}
+
 .date-item-container {
   display: flex;
   align-items: center;
@@ -692,8 +906,23 @@ button:active,
   color: var(--text-primary);
 }
 
+/* Tan mode date hover */
+:root[data-theme="tan"] .date-item-container:hover {
+  background-color: rgba(139, 115, 85, 0.08);
+}
+
+:root[data-theme="tan"] .date-item-container:hover .date-item {
+  color: var(--text-primary);
+}
+
 .date-item-container.active {
   background-color: #0076c6;
+  color: white;
+}
+
+/* Tan mode active date */
+:root[data-theme="tan"] .date-item-container.active {
+  background-color: #eb5601;
   color: white;
 }
 
@@ -785,6 +1014,22 @@ button:active,
   background-color: rgba(0, 0, 0, 0.06);
 }
 
+/* Tan mode - warm brown three dots for better visibility */
+:root[data-theme="tan"] .date-item-container:hover .date-menu-button {
+  color: #6b6b6b;
+}
+
+:root[data-theme="tan"]
+  .sidebar-archive-section:hover
+  > .date-menu
+  .date-menu-button {
+  color: #6b6b6b;
+}
+
+:root[data-theme="tan"] .date-menu-button:hover {
+  background-color: rgba(139, 115, 85, 0.1);
+}
+
 .date-menu-dropdown {
   position: absolute;
   right: 0;
@@ -841,6 +1086,11 @@ button:active,
   color: white;
   cursor: pointer;
   font-size: var(--font-sidebar);
+}
+
+/* Tan mode date picker button */
+:root[data-theme="tan"] .date-picker-button {
+  background-color: #eb5601;
 }
 
 .date-picker-button:hover {
@@ -904,6 +1154,11 @@ button:active,
 /* Light mode folder hover */
 :root[data-theme="light"] .sidebar-archive-header:hover {
   background-color: rgba(86, 181, 219, 0.1);
+}
+
+/* Tan mode folder hover */
+:root[data-theme="tan"] .sidebar-archive-header:hover {
+  background-color: rgba(139, 115, 85, 0.08);
 }
 
 /* Apply reduced opacity to folder dates for visual hierarchy */
@@ -1036,8 +1291,17 @@ button:active,
   color: white;
 }
 
+/* Tan mode add folder save button */
+:root[data-theme="tan"] .add-folder-save-button {
+  background-color: #eb5601;
+}
+
 .add-folder-save-button:hover:not(:disabled) {
   background-color: #4a9ec4;
+}
+
+:root[data-theme="tan"] .add-folder-save-button:hover:not(:disabled) {
+  background-color: #d64d01;
 }
 
 .add-folder-save-button:disabled {
@@ -1094,6 +1358,10 @@ button:active,
 
 :root[data-theme="light"] .folder-selector-item:hover {
   background-color: #f0f0f0;
+}
+
+:root[data-theme="tan"] .folder-selector-item:hover {
+  background-color: #ebe9e6;
 }
 
 .sidebar-footer {
@@ -1685,6 +1953,17 @@ button:active,
   background: #ffffff !important;
 }
 
+/* Tan mode code block background */
+:root[data-theme="tan"] .note-code-block-wrapper pre {
+  background: #f5f3f0 !important;
+  background-color: #f5f3f0 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper code {
+  background: #f5f3f0 !important;
+  background-color: #f5f3f0 !important;
+}
+
 .note-code-block-wrapper code {
   font-family:
     "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New",
@@ -1882,6 +2161,104 @@ button:active,
 }
 
 :root[data-theme="light"] .note-code-block-wrapper .token.decorator {
+  color: #795e26 !important;
+}
+
+/* Tan mode syntax highlighting colors (same as light mode) */
+:root[data-theme="tan"] .note-code-block-wrapper .token.comment,
+:root[data-theme="tan"] .note-code-block-wrapper .token.prolog,
+:root[data-theme="tan"] .note-code-block-wrapper .token.doctype,
+:root[data-theme="tan"] .note-code-block-wrapper .token.cdata {
+  color: #008000 !important;
+  font-style: italic;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.punctuation {
+  color: #000000 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.property {
+  color: #001080 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.tag {
+  color: #0000ff !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.boolean,
+:root[data-theme="tan"] .note-code-block-wrapper .token.number {
+  color: #098658 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.constant {
+  color: #0070c1 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.selector {
+  color: #a31515 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.attr-name {
+  color: #0451a5 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.string,
+:root[data-theme="tan"] .note-code-block-wrapper .token.char {
+  color: #a31515 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.builtin {
+  color: #0000ff !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.operator {
+  color: #000000 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.entity {
+  color: #795e26 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.url,
+:root[data-theme="tan"] .note-code-block-wrapper .token.variable {
+  color: #001080 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.atrule {
+  color: #0000ff !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.attr-value {
+  color: #a31515 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.function,
+:root[data-theme="tan"] .note-code-block-wrapper .token.function-variable {
+  color: #795e26 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.keyword {
+  color: #0000ff !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.regex {
+  color: #811f3f !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.important {
+  color: #0000ff !important;
+  font-weight: bold;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.class-name {
+  color: #267f99 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.parameter {
+  color: #001080 !important;
+}
+
+:root[data-theme="tan"] .note-code-block-wrapper .token.decorator {
   color: #795e26 !important;
 }
 
@@ -2125,6 +2502,8 @@ button:active,
 .todo-item.nested {
   margin-left: 20px;
   opacity: 0.9;
+  /* Extend width to compensate for indentation */
+  width: calc(90% + 20px);
 }
 
 .todo-item.nested .todo-checkbox {
@@ -2155,7 +2534,8 @@ button:active,
   left: 0;
   width: 90%;
   height: 100%;
-  background-color: var(--bg-secondary);
+  /* Sets a secondary background color behind focused todo or wrapper item for highlighting */
+  /* background-color: var(--bg-secondary); */
   border-radius: 4px;
   z-index: -1;
 }
@@ -2163,6 +2543,18 @@ button:active,
 .todo-item-wrapper.focused .todo-checkbox,
 .todo-item.focused .todo-checkbox {
   border-color: #e6cd6a !important;
+}
+
+/* Light mode focused checkbox */
+:root[data-theme="light"] .todo-item-wrapper.focused .todo-checkbox,
+:root[data-theme="light"] .todo-item.focused .todo-checkbox {
+  border-color: #0076c6 !important;
+}
+
+/* Tan mode focused checkbox */
+:root[data-theme="tan"] .todo-item-wrapper.focused .todo-checkbox,
+:root[data-theme="tan"] .todo-item.focused .todo-checkbox {
+  border-color: #eb5601 !important;
 }
 
 .todo-item:hover {
@@ -2218,6 +2610,12 @@ button:active,
   background-color: #0076c6;
   border-color: #0076c6;
   color: white;
+}
+
+/* Tan mode checked checkbox */
+:root[data-theme="tan"] .todo-checkbox.checked {
+  background-color: #eb5601;
+  border-color: #eb5601;
 }
 
 .todo-content {
@@ -2285,12 +2683,20 @@ button:active,
   color: rgba(255, 255, 255, 0.3);
 }
 
+[data-theme="tan"] .menu-button {
+  color: rgba(139, 115, 85, 0.3);
+}
+
 .todo-item:hover .menu-button {
   color: rgba(0, 0, 0, 0.45);
 }
 
 [data-theme="dark"] .todo-item:hover .menu-button {
   color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="tan"] .todo-item:hover .menu-button {
+  color: rgba(139, 115, 85, 0.5);
 }
 
 .menu-button:hover {
@@ -2305,6 +2711,11 @@ button:active,
   color: rgba(255, 255, 255, 0.95);
 }
 
+[data-theme="tan"] .menu-button:hover {
+  background-color: #eb5601;
+  color: rgba(255, 255, 255, 0.95);
+}
+
 .todo-item:hover .menu-button:hover {
   background-color: #0076c6;
   color: rgba(255, 255, 255, 0.95);
@@ -2312,6 +2723,11 @@ button:active,
 
 [data-theme="dark"] .todo-item:hover .menu-button:hover {
   background-color: #0076c6;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="tan"] .todo-item:hover .menu-button:hover {
+  background-color: #eb5601;
   color: rgba(255, 255, 255, 0.95);
 }
 
@@ -2369,6 +2785,23 @@ button:active,
 
 :root[data-theme="light"] .menu-item:hover {
   background-color: #f0f0f0;
+}
+
+/* Tan mode specific - warm text for readability */
+:root[data-theme="tan"] .menu-item {
+  color: #1a1a1a;
+}
+
+:root[data-theme="tan"] .menu-item.danger {
+  color: #d5495d;
+}
+
+:root[data-theme="tan"] .menu-item.danger:hover {
+  background-color: rgba(213, 73, 93, 0.08);
+}
+
+:root[data-theme="tan"] .menu-item:hover {
+  background-color: #ebe9e6;
 }
 
 /* Markdown rendering */
@@ -2491,6 +2924,21 @@ button:active,
   text-rendering: optimizeLegibility;
   /* Critical for flex children to shrink on very small screens */
   min-width: 0;
+  /* Larger cursor styling */
+  caret-color: var(--text-primary);
+  caret-shape: block;
+}
+
+/* Larger cursor when focused but not actively typing */
+.notion-input:focus {
+  caret-color: var(--text-primary);
+  caret-shape: block;
+}
+
+/* Even larger cursor when placeholder is visible (not typing) */
+.notion-input:focus:placeholder-shown {
+  caret-color: var(--text-primary);
+  caret-shape: block;
 }
 
 .notion-input::placeholder {
@@ -3018,6 +3466,22 @@ button:active,
   border-color: #80cbae;
 }
 
+/* Dark mode confirm button */
+:root[data-theme="dark"] .confirm-dialog-button-confirm {
+  background-color: #0076c6;
+  border-color: #0076c6;
+}
+
+/* Light mode confirm button */
+:root[data-theme="light"] .confirm-dialog-button-confirm {
+  background-color: #0076c6;
+}
+
+/* Tan mode confirm button */
+:root[data-theme="tan"] .confirm-dialog-button-confirm {
+  background-color: #eb5601;
+}
+
 .confirm-dialog-button-confirm:hover {
   opacity: 0.9;
 }
@@ -3027,9 +3491,20 @@ button:active,
   border-color: #e16d76;
 }
 
+/* Tan mode dangerous confirm button */
+:root[data-theme="tan"] .confirm-dialog-button-confirm.dangerous {
+  background-color: #eb5601;
+  border-color: #eb5601;
+}
+
 .confirm-dialog-button-confirm.dangerous:hover {
   background-color: #c95c64;
   border-color: #c95c64;
+}
+
+:root[data-theme="tan"] .confirm-dialog-button-confirm.dangerous:hover {
+  background-color: #d64d01;
+  border-color: #d64d01;
 }
 
 /* Loading state */
@@ -3060,29 +3535,29 @@ button:active,
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 24px;
+  padding: 16px;
   margin: 0;
 }
 
 .feature-showcase-box {
-  max-width: 600px;
+  max-width: 480px;
   width: 100%;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 32px;
+  padding: 24px;
 }
 
 .feature-showcase-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   color: var(--text-primary);
 }
 
 .feature-showcase-description {
-  font-size: 16px;
-  margin-bottom: 24px;
+  font-size: 14px;
+  margin-bottom: 20px;
   color: var(--text-primary);
   opacity: 0.8;
   line-height: 1.5;
@@ -3091,20 +3566,21 @@ button:active,
 .feature-showcase-list {
   list-style: disc;
   padding-left: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   color: var(--text-secondary);
-  line-height: 1.8;
+  line-height: 1.6;
+  font-size: 14px;
 }
 
 .feature-showcase-buttons {
   display: flex;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 .feature-showcase-button {
   flex: 1;
-  padding: 12px 24px;
+  padding: 10px 20px;
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
@@ -3117,6 +3593,22 @@ button:active,
   background: var(--text-primary);
   color: var(--bg-primary);
   border: none;
+}
+
+/* Dark mode feature showcase button */
+:root[data-theme="dark"] .feature-showcase-button-primary {
+  background: #0076c6;
+  color: #ffffff;
+}
+
+/* Light mode feature showcase button */
+:root[data-theme="light"] .feature-showcase-button-primary {
+  background: #0076c6;
+}
+
+/* Tan mode feature showcase button */
+:root[data-theme="tan"] .feature-showcase-button-primary {
+  background: #eb5601;
 }
 
 .feature-showcase-button-primary:hover {
@@ -3394,6 +3886,11 @@ button:active,
   padding: 2px 4px;
   border-radius: 3px;
   font-weight: 600;
+}
+
+/* Tan mode search highlight */
+:root[data-theme="tan"] .search-highlight {
+  background: #eb5601;
 }
 
 /* Search Footer */
@@ -3736,6 +4233,12 @@ button:active,
   color: #ffffff;
 }
 
+/* Tan mode font size option active */
+:root[data-theme="tan"] .font-size-option.active {
+  background: #eb5601;
+  border-color: #eb5601;
+}
+
 .font-size-preview {
   padding: 12px 16px;
   background: var(--bg-secondary);
@@ -3882,7 +4385,7 @@ button:active,
 .pomodoro-control-button:hover {
   background: var(--bg-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); */
 }
 
 .pomodoro-control-button:active {
@@ -4061,7 +4564,6 @@ button:active,
 .pomodoro-control-button-large:hover {
   background: var(--bg-hover);
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .pomodoro-control-button-large:active {
@@ -4202,5 +4704,56 @@ button:active,
     padding: 16px;
     min-width: 60px;
     min-height: 60px;
+  }
+}
+
+/* iOS Standalone Mode (PWA) Styles */
+@media all and (display-mode: standalone) {
+  /* Ensure proper safe area padding for notch and home indicator */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Ensure app container uses full viewport */
+  #root {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+
+  /* Fix for iOS standalone mode viewport */
+  html {
+    height: -webkit-fill-available;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* iOS specific fixes for home screen app */
+@supports (-webkit-touch-callout: none) {
+  /* Ensure proper height calculation on iOS */
+  #root {
+    min-height: -webkit-fill-available;
+  }
+
+  /* Prevent bounce scroll in standalone mode */
+  @media (display-mode: standalone) {
+    body {
+      position: fixed;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #root {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      height: 100vh;
+    }
   }
 }

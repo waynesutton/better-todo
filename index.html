@@ -13,7 +13,21 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <meta name="theme-color" content="#2e3842" />
+    <meta name="theme-color" content="#faf8f5" />
+    
+    <!-- Inline script to prevent theme flash -->
+    <script>
+      (function() {
+        try {
+          const theme = localStorage.getItem('theme') || 'tan';
+          document.documentElement.setAttribute('data-theme', theme);
+          const colors = { dark: '#2e3842', light: '#ffffff', tan: '#faf8f5' };
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', colors[theme]);
+        } catch (e) {
+          console.error('Theme initialization error:', e);
+        }
+      })();
+    </script>
     <meta name="apple-mobile-web-app-title" content="better todo" />
     <link rel="manifest" href="/manifest.json" />
     <!-- Primary Meta Tags -->

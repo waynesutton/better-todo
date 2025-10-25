@@ -4,13 +4,17 @@ import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { useUser } from "@clerk/clerk-react";
 import { api } from "../../convex/_generated/api";
 import { format, addDays, subDays } from "date-fns";
-import { PanelLeft, Pin, Menu, Folder, Plus } from "lucide-react";
 import {
-  KeyboardIcon,
-  InfoCircledIcon,
-  SunIcon,
-  MoonIcon,
-} from "@radix-ui/react-icons";
+  PanelLeft,
+  Pin,
+  Folder,
+  Plus,
+  Moon,
+  Sun,
+  Cloud,
+  Scroll,
+} from "lucide-react";
+import { KeyboardIcon, InfoCircledIcon } from "@radix-ui/react-icons";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
 import {
@@ -28,7 +32,6 @@ interface SidebarProps {
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   onShowKeyboardShortcuts?: () => void;
-  onOpenSignIn?: () => void;
   onOpenSignUp?: () => void;
   onOpenProfile?: () => void;
   onShowInfo?: () => void;
@@ -41,7 +44,6 @@ export function Sidebar({
   isCollapsed = false,
   onToggleCollapse,
   onShowKeyboardShortcuts,
-  onOpenSignIn,
   onOpenSignUp,
   onOpenProfile,
   onShowInfo,
@@ -55,7 +57,6 @@ export function Sidebar({
   const [customDate, setCustomDate] = useState("");
   const [customLabel, setCustomLabel] = useState("");
   const [showArchived, setShowArchived] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),
   );
@@ -478,9 +479,6 @@ export function Sidebar({
           setShowRenameInput(null);
           setCustomLabel("");
         }
-        if (showMobileMenu) {
-          setShowMobileMenu(false);
-        }
         if (showFolderMenu) {
           setShowFolderMenu(null);
         }
@@ -554,7 +552,6 @@ export function Sidebar({
     showMenuForDate,
     showDatePicker,
     showRenameInput,
-    showMobileMenu,
     showFolderMenu,
     showMonthGroupMenu,
     showRenameFolderInput,
@@ -1559,6 +1556,18 @@ export function Sidebar({
             </div>
           )}
 
+          {/* Backlog section in collapsed view */}
+          {uncompletedBacklogTodos.length > 0 && (
+            <div
+              key="backlog"
+              className={`date-item-collapsed ${"backlog" === selectedDate ? "active" : ""}`}
+              onClick={() => onSelectDate("backlog")}
+              title={backlogLabel}
+            >
+              <Scroll size={16} />
+            </div>
+          )}
+
           {activeDates.map((date) => (
             <div
               key={date}
@@ -1622,30 +1631,6 @@ export function Sidebar({
                   Sign up to save your data
                 </TooltipContent>
               </Tooltip>
-
-              {/* Sign In Button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    className="login-button"
-                    onClick={() => onOpenSignIn?.()}
-                  >
-                    <img
-                      src={
-                        theme === "dark"
-                          ? "/login-light.svg"
-                          : "/login-dark.svg"
-                      }
-                      alt="Sign in"
-                      width="18"
-                      height="18"
-                    />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={8}>
-                  Sign in to save your data
-                </TooltipContent>
-              </Tooltip>
             </>
           )}
 
@@ -1664,14 +1649,16 @@ export function Sidebar({
                 }}
               >
                 {theme === "dark" ? (
-                  <SunIcon width={18} height={18} />
+                  <Sun size={16} />
+                ) : theme === "light" ? (
+                  <Cloud size={16} />
                 ) : (
-                  <MoonIcon width={18} height={18} />
+                  <Moon size={16} />
                 )}
               </button>
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8}>
-              {`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              {`Switch to ${theme === "dark" ? "light" : theme === "light" ? "tan" : "dark"} mode`}
             </TooltipContent>
           </Tooltip>
 
@@ -1748,58 +1735,6 @@ export function Sidebar({
               About better todo
             </TooltipContent>
           </Tooltip>
-        </div>
-
-        {/* Mobile hamburger menu */}
-        <div className="mobile-menu-container">
-          <button
-            className="mobile-menu-button"
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-          >
-            <Menu size={18} />
-          </button>
-          {showMobileMenu && (
-            <div className="mobile-menu-dropdown">
-              <a
-                href="https://github.com/waynesutton/better-todo"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mobile-menu-link"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Open-Source Project
-              </a>
-              <a
-                href="https://vibeapps.dev/#:~:text=Privacy%20Policy%20%7C%20Terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mobile-menu-link"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Privacy Policy | Terms
-              </a>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop links */}
-        <div className="desktop-links">
-          <a
-            href="https://github.com/waynesutton/better-todo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footer-link"
-          >
-            Open-Source Project
-          </a>
-          <a
-            href="https://vibeapps.dev/#:~:text=Privacy%20Policy%20%7C%20Terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footer-link"
-          >
-            Privacy Policy | Terms
-          </a>
         </div>
       </div>
 
