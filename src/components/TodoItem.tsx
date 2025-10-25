@@ -28,6 +28,8 @@ interface TodoItemProps {
   openMenuTrigger?: number;
   isDemoMode?: boolean;
   onDemoToggle?: (id: Id<"todos">) => void;
+  isAuthenticated?: boolean;
+  onRequireSignInForMenu?: () => void;
 }
 
 export function TodoItem({
@@ -48,6 +50,8 @@ export function TodoItem({
   openMenuTrigger,
   isDemoMode = false,
   onDemoToggle,
+  isAuthenticated = false,
+  onRequireSignInForMenu,
 }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
@@ -149,12 +153,24 @@ export function TodoItem({
 
   const handleDeleteClick = () => {
     triggerHaptic("light");
+    // Check authentication before allowing delete
+    if (!isAuthenticated && onRequireSignInForMenu) {
+      setShowMenu(false);
+      onRequireSignInForMenu();
+      return;
+    }
     setShowDeleteConfirm(true);
     setShowMenu(false);
   };
 
   const handleAddSubtask = async () => {
     triggerHaptic("light");
+    // Check authentication before allowing subtask creation
+    if (!isAuthenticated && onRequireSignInForMenu) {
+      setShowMenu(false);
+      onRequireSignInForMenu();
+      return;
+    }
     try {
       await createSubtask({
         parentId: id,
@@ -179,6 +195,12 @@ export function TodoItem({
 
   const handleUnarchive = async () => {
     triggerHaptic("light");
+    // Check authentication before allowing unarchive
+    if (!isAuthenticated && onRequireSignInForMenu) {
+      setShowMenu(false);
+      onRequireSignInForMenu();
+      return;
+    }
     await updateTodo({
       id,
       archived: false,
@@ -189,6 +211,12 @@ export function TodoItem({
 
   const handleTogglePin = async () => {
     triggerHaptic("light");
+    // Check authentication before allowing pin/unpin
+    if (!isAuthenticated && onRequireSignInForMenu) {
+      setShowMenu(false);
+      onRequireSignInForMenu();
+      return;
+    }
     await updateTodo({
       id,
       pinned: !pinned,
@@ -198,6 +226,12 @@ export function TodoItem({
 
   const handleToggleBacklog = async () => {
     triggerHaptic("light");
+    // Check authentication before allowing backlog toggle
+    if (!isAuthenticated && onRequireSignInForMenu) {
+      setShowMenu(false);
+      onRequireSignInForMenu();
+      return;
+    }
     await updateTodo({
       id,
       backlog: !backlog,
@@ -208,6 +242,13 @@ export function TodoItem({
   const handleMoveToCustomDate = () => {
     if (customDate) {
       triggerHaptic("light");
+      // Check authentication before allowing move
+      if (!isAuthenticated && onRequireSignInForMenu) {
+        setShowDatePicker(false);
+        setCustomDate("");
+        onRequireSignInForMenu();
+        return;
+      }
       onMoveToCustomDate(customDate);
       setShowMenu(false);
       setShowDatePicker(false);
@@ -417,6 +458,12 @@ export function TodoItem({
                     <div
                       className="menu-item"
                       onClick={() => {
+                        // Check authentication before allowing move
+                        if (!isAuthenticated && onRequireSignInForMenu) {
+                          setShowMenu(false);
+                          onRequireSignInForMenu();
+                          return;
+                        }
                         onMoveToTomorrow();
                         setShowMenu(false);
                       }}
@@ -426,6 +473,12 @@ export function TodoItem({
                     <div
                       className="menu-item"
                       onClick={() => {
+                        // Check authentication before allowing move
+                        if (!isAuthenticated && onRequireSignInForMenu) {
+                          setShowMenu(false);
+                          onRequireSignInForMenu();
+                          return;
+                        }
                         onMoveToPreviousDay();
                         setShowMenu(false);
                       }}
@@ -435,6 +488,12 @@ export function TodoItem({
                     <div
                       className="menu-item"
                       onClick={() => {
+                        // Check authentication before allowing move
+                        if (!isAuthenticated && onRequireSignInForMenu) {
+                          setShowMenu(false);
+                          onRequireSignInForMenu();
+                          return;
+                        }
                         onMoveToNextDay();
                         setShowMenu(false);
                       }}
@@ -444,6 +503,12 @@ export function TodoItem({
                     <div
                       className="menu-item"
                       onClick={() => {
+                        // Check authentication before allowing move
+                        if (!isAuthenticated && onRequireSignInForMenu) {
+                          setShowMenu(false);
+                          onRequireSignInForMenu();
+                          return;
+                        }
                         setShowDatePicker(true);
                         setShowMenu(false);
                       }}

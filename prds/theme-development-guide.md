@@ -4,6 +4,42 @@
 
 This guide provides a comprehensive framework for creating and implementing new themes in the application. It covers the complete process from design to implementation, ensuring consistency and maintainability.
 
+## Theme Color Reference
+
+Quick reference for all three themes and their key colors:
+
+| Color Type               | Dark Mode             | Light Mode           | Tan Mode              |
+| ------------------------ | --------------------- | -------------------- | --------------------- |
+| **Interactive Accent**   | #27A561 (Green)       | #0076C6 (Blue)       | #EB5601 (Orange)      |
+| **General Accent**       | #4a9eff (Blue)        | #007aff (Blue)       | #8b7355 (Warm Brown)  |
+| **Primary Background**   | #2e3842 (Dark Gray)   | #ffffff (White)      | #faf8f5 (Warm Tan)    |
+| **Secondary Background** | #252a32 (Darker Gray) | #fafafa (Light Gray) | #f5f3f0 (Tan)         |
+| **Hover Background**     | #2d404b (Blue-Gray)   | #e9f2f8 (Light Blue) | #ebe9e6 (Light Tan)   |
+| **Text Primary**         | #ffffff (White)       | #000000 (Black)      | #1a1a1a (Soft Black)  |
+| **Text Secondary**       | #b8bcc2 (Light Gray)  | #666666 (Gray)       | #6b6b6b (Warm Gray)   |
+| **Border Color**         | #3a4350 (Gray)        | #d1d1d6 (Light Gray) | #e6e4e1 (Tan)         |
+| **Checkbox Background**  | #1a1f26 (Dark)        | #fafafa (Light)      | #f5f3f0 (Tan)         |
+| **Mobile Add Button**    | #27a561 (Green)       | #0076c6 (Blue)       | #eb5601 (Orange)      |
+| **Mobile Add Hover**     | #229350 (Dark Green)  | #0065ad (Dark Blue)  | #d14a01 (Dark Orange) |
+
+### Interactive Element Colors
+
+Elements using the interactive accent color in each theme:
+
+- ✅ Checked checkboxes (background and border)
+- ✅ Active date states (sidebar)
+- ✅ Focused checkbox borders
+- ✅ Menu hover states
+- ✅ Primary buttons
+- ✅ Confirm dialog buttons
+- ✅ Feature showcase buttons
+- ✅ Font size option active state
+- ✅ Search highlights
+- ✅ Date picker buttons
+- ✅ Add folder save buttons
+- ✅ Clerk authentication buttons
+- ✅ Collapsed/expanded active dates
+
 ## Theme Architecture
 
 ### 1. CSS Variable System
@@ -330,9 +366,15 @@ Choose appropriate icons from [Lucide Icons](https://lucide.dev):
 #### Dark Mode
 
 - **Base**: Dark grays and blacks
-- **Accent**: Blue (#4a9eff)
+- **Accent**: Green (#27A561) for interactive elements, Blue (#4a9eff) for general accents
 - **Text**: White and light gray
 - **Use Case**: Low-light environments, developer preference
+- **Key Overrides**:
+  - Checked checkboxes use #27A561
+  - Active states use #27A561
+  - Primary buttons use #27A561
+  - Focused elements use #27A561
+  - Menu hover states use #27A561
 
 #### Light Mode
 

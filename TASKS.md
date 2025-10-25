@@ -81,7 +81,19 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 
 ## Completed Tasks (Latest)
 
-- [x] **Tan Mode Theme** (Latest)
+- [x] **Dark Mode Green Accent** (v.004 - 2025-10-25) (Latest)
+  - Updated dark mode accent color from blue (#0076C6) to green (#27A561)
+  - All interactive elements now use green in dark mode
+  - Light mode (#0076C6 blue) and tan mode (#EB5601 orange) remain unchanged
+  - Comprehensive color overrides for:
+    - Checked checkboxes, active states, focused elements
+    - Menu hover states, primary buttons, search highlights
+    - Date picker, confirm dialogs, feature showcase buttons
+    - Clerk authentication buttons, folder save buttons
+    - Mobile add button CSS variables
+  - Updated theme development documentation
+
+- [x] **Tan Mode Theme**
   - Added third theme option with warm document-focused design
   - Warm tan background with orange accent color (#EB5601)
   - Comprehensive color overrides for all interactive elements
@@ -90,7 +102,7 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
   - Default theme set to "tan"
   - Three-way theme rotation (dark → light → tan → dark)
 
-- [x] **Logged Out Demo Mode** (Latest)
+- [x] **Logged Out Demo Mode**
   - Feature showcase box for unauthenticated users
   - Demo mode allowing up to 3 todos without sign-up
   - Local state persistence (lost on refresh)

@@ -4,6 +4,38 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.004] - 2025-10-25
+
+### Changed
+
+- **Dark Mode Accent Color** - Updated from blue (#0076C6) to green (#27A561)
+  - All interactive elements now use green accent in dark mode
+  - Checked checkboxes: green background and border (#27A561)
+  - Active states: green background (#27A561)
+  - Focused elements: green border (#27A561)
+  - Menu hover states: green background (#27A561)
+  - Primary buttons: green background (#27A561)
+  - Font size option active: green background and border (#27A561)
+  - Search highlights: green background (#27A561)
+  - Date picker button: green background (#27A561)
+  - Confirm dialog buttons: green background (#27A561)
+  - Feature showcase buttons: green background (#27A561)
+  - Clerk sign-in/sign-up buttons: green background (#27A561)
+  - Add folder save button: green background (#27A561)
+  - Add folder input focus: green border (#27A561)
+  - Collapsed/expanded active dates: green background (#27A561)
+  - CSS variable `--mobile-add-button-bg` updated to #27a561 in dark mode
+  - CSS variable `--mobile-add-button-hover` updated to #229350 in dark mode
+  - Light mode (#0076C6) and tan mode (#EB5601) remain unchanged
+
+### Added
+
+- **Theme Color Reference** in documentation
+  - Dark mode: Green (#27A561)
+  - Light mode: Blue (#0076C6) 
+  - Tan mode: Orange (#EB5601)
+  - Added comprehensive documentation for future theme development
+
 ## [Unreleased]
 
 ### Added

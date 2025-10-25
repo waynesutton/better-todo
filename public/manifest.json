@@ -3,9 +3,10 @@
   "short_name": "better todo",
   "description": "Real-time markdown todo app with Convex",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#2e3842",
-  "theme_color": "#2e3842",
+  "background_color": "#faf8f5",
+  "theme_color": "#faf8f5",
   "orientation": "portrait-primary",
   "icons": [
     {

@@ -52,12 +52,14 @@ export interface TodoListProps {
   onFocusFirstTodo?: (callback: () => void) => void;
   onRequireSignIn?: () => void; // trigger styled auth modal instead of alert
   onRequireSignInForNote?: () => void; // trigger styled auth modal for notes
+  onRequireSignInForMenu?: () => void; // trigger styled auth modal for menu actions
   onTodoHover?: (id: Id<"todos"> | null) => void;
   openMenuForTodoId?: Id<"todos"> | null;
   openMenuTrigger?: number;
   isDemoMode?: boolean; // for logged out users with 3 todo limit
   demoTodos?: any[];
   setDemoTodos?: React.Dispatch<React.SetStateAction<any[]>>;
+  isAuthenticated?: boolean; // pass auth status to check before menu actions
 }
 
 export interface TodoListRef {
@@ -78,12 +80,14 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       onFocusFirstTodo,
       onRequireSignIn,
       onRequireSignInForNote,
+      onRequireSignInForMenu,
       onTodoHover,
       openMenuForTodoId,
       openMenuTrigger,
       isDemoMode = false,
       demoTodos = [],
       setDemoTodos,
+      isAuthenticated = false,
     },
     ref,
   ) => {
@@ -396,6 +400,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                       }
                       isDemoMode={isDemoMode}
                       onDemoToggle={handleDemoToggle}
+                      isAuthenticated={isAuthenticated}
+                      onRequireSignInForMenu={onRequireSignInForMenu}
                     />
                   </div>
                   {!parent.collapsed &&
@@ -439,6 +445,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                             }
                             isDemoMode={isDemoMode}
                             onDemoToggle={handleDemoToggle}
+                            isAuthenticated={isAuthenticated}
+                            onRequireSignInForMenu={onRequireSignInForMenu}
                           />
                         </div>
                       );

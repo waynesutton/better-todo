@@ -9,6 +9,8 @@
   --accent: #4a9eff;
   --checkbox-bg: #1a1f26;
   --archive-bg: #1f252d;
+  --mobile-add-button-bg: #27a561;
+  --mobile-add-button-hover: #229350;
 
   /* Font sizes */
   --font-app-name: 14px;
@@ -28,6 +30,8 @@
   --accent: #007aff;
   --checkbox-bg: #fafafa;
   --archive-bg: #fafafa;
+  --mobile-add-button-bg: #0076c6;
+  --mobile-add-button-hover: #0065ad;
 
   /* Font sizes */
   --font-app-name: 14px;
@@ -47,6 +51,8 @@
   --accent: #8b7355;
   --checkbox-bg: #f5f3f0;
   --archive-bg: #f5f3f0;
+  --mobile-add-button-bg: #eb5601;
+  --mobile-add-button-hover: #d14a01;
 
   /* Font sizes */
   --font-app-name: 14px;
@@ -289,8 +295,8 @@
 
 :root[data-theme="dark"] .cl-signIn .cl-formButtonPrimary,
 :root[data-theme="dark"] .cl-signUp .cl-formButtonPrimary {
-  background-color: #0076c6 !important;
-  border-color: #0076c6 !important;
+  background-color: #27a561 !important;
+  border-color: #27a561 !important;
   color: white !important;
 }
 
@@ -692,6 +698,18 @@ select:focus-visible,
   box-shadow: none !important;
 }
 
+/* Root container - base styles for all modes */
+html {
+  height: 100%;
+}
+
+#root {
+  min-height: 100vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 body {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
@@ -700,6 +718,8 @@ body {
   color: var(--text-primary);
   line-height: 1;
   overflow-x: hidden;
+  height: 100%;
+  margin: 0;
   /* Font rendering for sharp text across all browsers */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -755,10 +775,12 @@ button:active,
 /* App layout */
 .app-container {
   display: flex;
-  height: 100vh;
-  width: 100vw;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   /* Prevent overscroll bounce */
   overscroll-behavior-y: none;
+  overflow: hidden;
 }
 
 /* Sidebar */
@@ -798,6 +820,7 @@ button:active,
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .sidebar-header.collapsed {
@@ -880,6 +903,11 @@ button:active,
   font-weight: 600;
 }
 
+/* Dark mode collapsed date active */
+:root[data-theme="dark"] .date-item-collapsed.active {
+  background-color: #27a561;
+}
+
 /* Tan mode collapsed date active */
 :root[data-theme="tan"] .date-item-collapsed.active {
   background-color: #eb5601;
@@ -917,6 +945,12 @@ button:active,
 
 .date-item-container.active {
   background-color: #0076c6;
+  color: white;
+}
+
+/* Dark mode active date */
+:root[data-theme="dark"] .date-item-container.active {
+  background-color: #27a561;
   color: white;
 }
 
@@ -1086,6 +1120,16 @@ button:active,
   color: white;
   cursor: pointer;
   font-size: var(--font-sidebar);
+}
+
+/* Dark mode date picker button */
+:root[data-theme="dark"] .date-picker-button {
+  background-color: #27a561;
+}
+
+/* Light mode date picker button */
+:root[data-theme="light"] .date-picker-button {
+  background-color: #0076c6;
 }
 
 /* Tan mode date picker button */
@@ -1269,6 +1313,11 @@ button:active,
   border-color: #0076c6;
 }
 
+/* Dark mode add folder input focus */
+:root[data-theme="dark"] .add-folder-input:focus {
+  border-color: #27a561;
+}
+
 .add-folder-buttons {
   display: flex;
   gap: 6px;
@@ -1291,6 +1340,11 @@ button:active,
   color: white;
 }
 
+/* Dark mode add folder save button */
+:root[data-theme="dark"] .add-folder-save-button {
+  background-color: #27a561;
+}
+
 /* Tan mode add folder save button */
 :root[data-theme="tan"] .add-folder-save-button {
   background-color: #eb5601;
@@ -1298,6 +1352,10 @@ button:active,
 
 .add-folder-save-button:hover:not(:disabled) {
   background-color: #4a9ec4;
+}
+
+:root[data-theme="dark"] .add-folder-save-button:hover:not(:disabled) {
+  background-color: #229350;
 }
 
 :root[data-theme="tan"] .add-folder-save-button:hover:not(:disabled) {
@@ -1371,6 +1429,8 @@ button:active,
   flex-direction: column;
   gap: 12px;
   align-items: flex-start;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .sidebar-footer-left {
@@ -2545,6 +2605,12 @@ button:active,
   border-color: #e6cd6a !important;
 }
 
+/* Dark mode focused checkbox */
+:root[data-theme="dark"] .todo-item-wrapper.focused .todo-checkbox,
+:root[data-theme="dark"] .todo-item.focused .todo-checkbox {
+  border-color: #27a561 !important;
+}
+
 /* Light mode focused checkbox */
 :root[data-theme="light"] .todo-item-wrapper.focused .todo-checkbox,
 :root[data-theme="light"] .todo-item.focused .todo-checkbox {
@@ -2610,6 +2676,12 @@ button:active,
   background-color: #0076c6;
   border-color: #0076c6;
   color: white;
+}
+
+/* Dark mode checked checkbox */
+:root[data-theme="dark"] .todo-checkbox.checked {
+  background-color: #27a561;
+  border-color: #27a561;
 }
 
 /* Tan mode checked checkbox */
@@ -2707,7 +2779,7 @@ button:active,
 }
 
 [data-theme="dark"] .menu-button:hover {
-  background-color: #0076c6;
+  background-color: #27a561;
   color: rgba(255, 255, 255, 0.95);
 }
 
@@ -2722,7 +2794,7 @@ button:active,
 }
 
 [data-theme="dark"] .todo-item:hover .menu-button:hover {
-  background-color: #0076c6;
+  background-color: #27a561;
   color: rgba(255, 255, 255, 0.95);
 }
 
@@ -2953,7 +3025,7 @@ button:active,
 /* Mobile add button */
 .mobile-add-button {
   flex-shrink: 0;
-  background-color: #80cbae;
+  background-color: var(--mobile-add-button-bg);
   border: none;
   border-radius: 6px;
   color: white;
@@ -2969,7 +3041,7 @@ button:active,
 }
 
 .mobile-add-button:hover {
-  background-color: #6fb89a;
+  background-color: var(--mobile-add-button-hover);
 }
 
 .mobile-add-button:active {
@@ -3110,7 +3182,7 @@ button:active,
   .main-content {
     width: 100%;
     margin-left: 0;
-    height: 100dvh;
+    flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -3468,8 +3540,8 @@ button:active,
 
 /* Dark mode confirm button */
 :root[data-theme="dark"] .confirm-dialog-button-confirm {
-  background-color: #0076c6;
-  border-color: #0076c6;
+  background-color: #27a561;
+  border-color: #27a561;
 }
 
 /* Light mode confirm button */
@@ -3597,7 +3669,7 @@ button:active,
 
 /* Dark mode feature showcase button */
 :root[data-theme="dark"] .feature-showcase-button-primary {
-  background: #0076c6;
+  background: #27a561;
   color: #ffffff;
 }
 
@@ -3886,6 +3958,11 @@ button:active,
   padding: 2px 4px;
   border-radius: 3px;
   font-weight: 600;
+}
+
+/* Dark mode search highlight */
+:root[data-theme="dark"] .search-highlight {
+  background: #27a561;
 }
 
 /* Tan mode search highlight */
@@ -4231,6 +4308,12 @@ button:active,
   background: #0076c6;
   border-color: #0076c6;
   color: #ffffff;
+}
+
+/* Dark mode font size option active */
+:root[data-theme="dark"] .font-size-option.active {
+  background: #27a561;
+  border-color: #27a561;
 }
 
 /* Tan mode font size option active */
@@ -4709,27 +4792,22 @@ button:active,
 
 /* iOS Standalone Mode (PWA) Styles */
 @media all and (display-mode: standalone) {
-  /* Ensure proper safe area padding for notch and home indicator */
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-
-  /* Ensure app container uses full viewport */
-  #root {
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
-  }
-
   /* Fix for iOS standalone mode viewport */
   html {
     height: -webkit-fill-available;
   }
 
   body {
-    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    /* Apply safe area padding in standalone mode */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Ensure app container uses full viewport height on iOS */
+  #root {
     min-height: -webkit-fill-available;
   }
 }
@@ -4737,23 +4815,11 @@ button:active,
 /* iOS specific fixes for home screen app */
 @supports (-webkit-touch-callout: none) {
   /* Ensure proper height calculation on iOS */
-  #root {
-    min-height: -webkit-fill-available;
+  html {
+    height: -webkit-fill-available;
   }
 
-  /* Prevent bounce scroll in standalone mode */
-  @media (display-mode: standalone) {
-    body {
-      position: fixed;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    #root {
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      height: 100vh;
-    }
+  #root {
+    min-height: -webkit-fill-available;
   }
 }

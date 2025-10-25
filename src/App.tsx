@@ -35,6 +35,31 @@ function App() {
   // Check if mobile on initial load (hide sidebar completely by default on mobile)
   const isMobile = window.innerWidth <= 768;
   const [sidebarHidden, setSidebarHidden] = useState(isMobile);
+
+  // Track the last known date to detect when a new day starts
+  const lastKnownDateRef = useRef<string>(format(new Date(), "yyyy-MM-dd"));
+
+  // Auto-switch to today when a new day starts (but don't interfere with manual date selection)
+  useEffect(() => {
+    const checkForNewDay = () => {
+      const today = format(new Date(), "yyyy-MM-dd");
+      const lastKnownDate = lastKnownDateRef.current;
+
+      // Only auto-switch if the actual calendar day changed (not just user navigation)
+      if (today !== lastKnownDate) {
+        lastKnownDateRef.current = today;
+        // Only switch to today if user was viewing a regular date (not pinned/backlog)
+        if (selectedDate !== "pinned" && selectedDate !== "backlog") {
+          setSelectedDate(today);
+        }
+      }
+    };
+
+    // Check every minute for a new day
+    const interval = setInterval(checkForNewDay, 60000); // Check every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [selectedDate]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [isResizing, setIsResizing] = useState(false);
@@ -50,6 +75,7 @@ function App() {
   const [showSignInToSearchModal, setShowSignInToSearchModal] = useState(false);
   const [showSignInToCreateModal, setShowSignInToCreateModal] = useState(false);
   const [showSignInToNoteModal, setShowSignInToNoteModal] = useState(false);
+  const [showSignInToMenuModal, setShowSignInToMenuModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const todoInputRef = useRef<HTMLTextAreaElement>(null);
@@ -848,12 +874,14 @@ function App() {
               focusedTodoIndex={focusedTodoIndex}
               onRequireSignIn={() => setShowSignInToCreateModal(true)}
               onRequireSignInForNote={() => setShowSignInToNoteModal(true)}
+              onRequireSignInForMenu={() => setShowSignInToMenuModal(true)}
               onTodoHover={setHoveredTodoId}
               openMenuForTodoId={openMenuForTodoId}
               openMenuTrigger={openMenuTrigger}
               isDemoMode={!authIsLoading && !isAuthenticated}
               demoTodos={demoTodos}
               setDemoTodos={setDemoTodos}
+              isAuthenticated={!authIsLoading && isAuthenticated}
             />
           </div>
 
@@ -994,6 +1022,21 @@ function App() {
             setShowSignUpModal(true);
           }}
           onCancel={() => setShowSignInToNoteModal(false)}
+          isDangerous={false}
+        />
+
+        {/* Sign In To Use Menu Actions Modal */}
+        <ConfirmDialog
+          isOpen={showSignInToMenuModal}
+          title="Sign In to Use Menu Actions"
+          message="Menu actions require an account. Sign in to pin, move, delete, and manage your todos."
+          confirmText="Sign Up"
+          cancelText="Cancel"
+          onConfirm={() => {
+            setShowSignInToMenuModal(false);
+            setShowSignUpModal(true);
+          }}
+          onCancel={() => setShowSignInToMenuModal(false)}
           isDangerous={false}
         />
 

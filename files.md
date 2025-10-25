@@ -418,15 +418,16 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `global.css` - Global styles with:
   - CSS custom properties for theming and typography
-  - Dark mode: Sublime Text-inspired (#2E3842 background) with blue accents (#4a9eff)
-  - Light mode: Apple Notes-inspired (#f5f5f7 background) with blue accents (#007aff)
+  - Dark mode: Sublime Text-inspired (#2E3842 background) with green accents (#27A561 for interactive elements, #4a9eff for general accents)
+  - Light mode: Apple Notes-inspired (#f5f5f7 background) with blue accents (#0076C6 for interactive elements, #007aff for general accents)
   - Tan mode: Warm document-focused theme (#faf8f5 background) with orange accents (#EB5601)
   - Custom font size variables (--font-app-name, --font-sidebar, --font-todo, --font-archive)
   - Color system:
-    - Accent: #0076C6 (active date, focus states)
+    - Dark mode interactive accent: #27A561 green (v.004 update)
+    - Light mode interactive accent: #0076C6 blue
+    - Tan mode primary accent: #EB5601 orange
     - Mint green: #80cbae (positive actions, save buttons)
     - Soft red: #e16d76 (destructive actions, delete buttons)
-    - Tan mode primary accent: #EB5601 (checkboxes, buttons, active states)
   - Collapsible sidebar animations with smooth width transitions
   - Compact date view (MM/DD format) styles for collapsed state
   - Responsive design with mobile breakpoints (≤768px)
@@ -455,7 +456,18 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v1.002 (October 24, 2025)
+## Current Version: v.004 (October 25, 2025)
+
+### Latest Features (v.004) - Dark Mode Green Accent
+
+- **Dark Mode Accent Color Update** - Changed from blue (#0076C6) to green (#27A561)
+  - All interactive elements now use green accent in dark mode
+  - Comprehensive updates across checkboxes, buttons, active states, menus, and more
+  - Light mode (#0076C6 blue) and tan mode (#EB5601 orange) remain unchanged
+  - Complete theme color reference table added to documentation
+  - Mobile add button CSS variables updated for dark mode
+
+## Previous Version: v1.002 (October 24, 2025)
 
 ### Latest Features (v1.002) - PWA & Haptics
 
