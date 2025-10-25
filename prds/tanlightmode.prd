@@ -1,0 +1,489 @@
+# Tan Mode - Third Theme Option
+
+## Overview
+Add a new third theme option called "Tan Mode" to the existing dark and light mode theme switcher. This creates a warm, tan-based minimal design inspired by Cursor documentation pages that's easy on the eyes and focuses on content clarity.
+
+## Goal
+Add a new "Tan Mode" theme option alongside the existing dark and light modes, creating a three-way theme toggle: Dark Mode (moon icon) → Light Mode (sun icon) → Tan Mode (cloud icon). This is a color-only addition - no structural changes, no feature removal, no resizing. Light mode and dark mode remain completely unchanged.
+
+## Theme Switcher Update
+
+### Current Themes (Remain Unchanged)
+1. **Dark Mode** (moon icon 🌙) - Current dark theme stays exactly as is
+2. **Light Mode** (sun icon ☀️) - Current light theme stays exactly as is
+
+### New Third Theme
+3. **Tan Mode** (cloud icon ☁️) - New warm tan theme option
+
+### Theme Rotation
+The theme switcher will cycle through three options:
+- Dark Mode → Light Mode → Tan Mode → Dark Mode (loops)
+- Icon from lucide.dev: `<Cloud />` component
+- Source: https://lucide.dev/icons/cloud
+
+## Existing Theme Colors (UNCHANGED)
+
+### Dark Mode Colors (Keep As Is)
+```css
+:root[data-theme="dark"] {
+  --bg-primary: #2e3842;
+  --bg-secondary: #252a32;
+  --bg-hover: #2d404b;
+  --text-primary: #ffffff;
+  --text-secondary: #b8bcc2;
+  --border-color: #3a4350;
+  --accent: #4a9eff;
+  --checkbox-bg: #1a1f26;
+  --archive-bg: #1f252d;
+}
+```
+
+### Light Mode Colors (Keep As Is)
+```css
+:root[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-hover: #e9f2f8;
+  --text-primary: #000000;
+  --text-secondary: #666666;
+  --border-color: #d1d1d6;
+  --accent: #007aff;
+  --checkbox-bg: #fafafa;
+  --archive-bg: #fafafa;
+}
+```
+
+## New Tan Mode Colors
+Based on Cursor documentation page aesthetic:
+
+```css
+:root[data-theme="tan"] {
+  --bg-primary: #faf8f5;          /* Warm tan background */
+  --bg-secondary: #f5f3f0;        /* Slightly darker tan */
+  --bg-hover: #ebe9e6;            /* Tan hover state */
+  --text-primary: #1a1a1a;        /* Soft black */
+  --text-secondary: #6b6b6b;      /* Warm gray */
+  --border-color: #e6e4e1;        /* Subtle tan border */
+  --accent: #8b7355;              /* Warm brown accent */
+  --checkbox-bg: #f5f3f0;         /* Match secondary bg */
+  --archive-bg: #f5f3f0;          /* Match secondary bg */
+}
+```
+
+## Color Palette Rationale
+
+### Background Colors
+- **Primary Background (#faf8f5)**: Warm tan/beige that's easy on the eyes, reduces eye strain compared to pure white
+- **Secondary Background (#f5f3f0)**: Slightly darker for sidebar, cards, and secondary panels
+- **Hover State (#ebe9e6)**: Subtle darkening on interaction, maintains warmth
+
+### Text Colors
+- **Primary Text (#1a1a1a)**: Soft black instead of pure black for better readability
+- **Secondary Text (#6b6b6b)**: Warm gray for labels, metadata, counts
+
+### Interactive Elements
+- **Border Color (#e6e4e1)**: Very subtle, maintains clean look without harsh lines
+- **Accent Color (#8b7355)**: Warm brown that complements the tan background
+  - Used for: active states, checkboxes when checked, focus indicators, links
+
+## Scope of Changes
+
+### Files to Update
+1. **src/styles/global.css**
+   - Add new `:root[data-theme="tan"]` variables section
+   - Add tan mode specific overrides throughout file (parallel to dark/light overrides)
+   - Keep all existing dark and light mode styles unchanged
+
+2. **src/context/ThemeContext.tsx**
+   - Update theme type to include "tan" option: `"dark" | "light" | "tan"`
+   - Update theme rotation logic: dark → light → tan → dark
+   - Store theme preference in localStorage
+   - Add cloud icon to theme toggle button
+
+3. **src/components/Sidebar.tsx**
+   - Import `Cloud` icon from lucide-react
+   - Update theme toggle button to cycle through three states
+   - Display appropriate icon: Moon (dark) → Sun (light) → Cloud (tan)
+   - Update theme toggle handler to support three-way rotation
+
+4. **package.json** (if needed)
+   - Verify lucide-react is installed (already should be)
+   - `lucide-react` includes the Cloud icon
+
+### Components Affected (Tan Mode Only)
+
+All components below will have tan mode styling added alongside existing dark/light mode styles. Dark and light modes remain completely unchanged.
+
+#### Sidebar
+- Background: tan secondary
+- Active date: warm brown background
+- Hover states: subtle tan darkening
+- Borders: minimal tan borders
+- Folder headers: tan hover states
+- Date items: warm brown when active
+- Theme toggle: Shows cloud icon when in tan mode
+
+#### Main Content Area
+- Background: primary tan
+- Header: seamless tan background
+- Footer: tan background
+
+#### Todo Items
+- Background: transparent over tan
+- Hover: subtle tan darkening
+- Checkbox: tan background, brown when checked
+- Focus state: warm highlight instead of blue
+- Three-dot menu: tan hover states
+
+#### Notes Section
+- Note cards: tan secondary background
+- Code blocks: maintain syntax highlighting but update container backgrounds
+- Headers: warm tan backgrounds
+- Borders: subtle tan
+
+#### Archive Section
+- Background: tan secondary
+- Borders: subtle tan
+- Hover states: darker tan
+
+#### Search Modal
+- Background: primary tan
+- Borders: subtle tan borders
+- Results hover: warm tan
+- Highlight color: warm brown instead of blue
+
+#### Bulk Actions & Buttons
+- Buttons: transparent with tan hover
+- Archive buttons: warm brown accent
+- Delete buttons: keep danger red but adjust for tan background
+
+#### Clerk Modals
+- Update Clerk component overrides for tan backgrounds
+- Form inputs: tan backgrounds
+- Buttons: warm brown accents
+- Borders: subtle tan
+
+#### Confirmation Dialogs
+- Background: tan secondary
+- Borders: subtle tan
+- Buttons: warm brown primary, tan secondary
+
+#### Keyboard Shortcuts Modal
+- Background: primary tan
+- Content area: tan secondary
+- Code blocks: tan backgrounds
+- Keyboard key indicators: tan with brown text
+
+#### Pomodoro Timer
+- Modal background: tan
+- Timer display: warm text
+- Buttons: tan hover states
+- Control buttons: warm brown accents
+
+## Implementation Plan
+
+### Step 1: Update ThemeContext
+Update `src/context/ThemeContext.tsx` to support three themes:
+
+```typescript
+type Theme = "dark" | "light" | "tan";
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(() => {
+    const saved = localStorage.getItem("theme");
+    return (saved as Theme) || "dark";
+  });
+
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      // Three-way rotation: dark → light → tan → dark
+      const next = prev === "dark" ? "light" : prev === "light" ? "tan" : "dark";
+      localStorage.setItem("theme", next);
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+```
+
+### Step 2: Update Sidebar Theme Toggle
+Update `src/components/Sidebar.tsx` to show cloud icon for tan mode:
+
+```typescript
+import { Moon, Sun, Cloud } from "lucide-react";
+
+// In the theme toggle button:
+<button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === "dark" ? "light" : theme === "light" ? "tan" : "dark"} mode`}>
+  {theme === "dark" ? (
+    <Moon size={16} />
+  ) : theme === "light" ? (
+    <Sun size={16} />
+  ) : (
+    <Cloud size={16} />
+  )}
+</button>
+```
+
+### Step 3: Add Tan Mode CSS Variables
+Add new tan mode variables to `src/styles/global.css` (after light mode section):
+
+```css
+:root[data-theme="tan"] {
+  --bg-primary: #faf8f5;
+  --bg-secondary: #f5f3f0;
+  --bg-hover: #ebe9e6;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --border-color: #e6e4e1;
+  --accent: #8b7355;
+  --checkbox-bg: #f5f3f0;
+  --archive-bg: #f5f3f0;
+
+  /* Font sizes (same as light/dark) */
+  --font-app-name: 14px;
+  --font-sidebar: 13px;
+  --font-todo: 14px;
+  --font-archive: 13px;
+  --font-header-date: 14px;
+}
+```
+
+### Step 4: Add Tan Mode Component Overrides
+Search for all `:root[data-theme="light"]` selectors and duplicate them as `:root[data-theme="tan"]` with tan-specific colors:
+
+1. **Clerk Component Overrides** (~lines 57-102)
+   - Duplicate the light mode Clerk overrides
+   - Create `:root[data-theme="tan"]` versions
+   - Already use variables, so they'll inherit tan values
+
+2. **Menu Buttons** (~lines 2268-2316)
+   - Add tan mode three-dot menu colors
+   - Use `rgba(139, 115, 85, 0.3)` for tan mode menu dots
+
+3. **Date Item Hover States** (~lines 687-693)
+   - Add tan mode hover background
+   - Use `rgba(139, 115, 85, 0.08)` for date hovers
+
+4. **Folder Hover States** (~lines 905-907)
+   - Add tan mode folder header hover
+
+5. **Menu Dropdown Items** (~lines 2357-2372)
+   - Add tan mode menu item styles
+   - Hover states to use tan darkening
+
+6. **Syntax Highlighting** (~lines 1790-1886)
+   - Duplicate light mode syntax highlighting for tan mode
+   - Adjust code block backgrounds to tan
+   - Keep syntax colors readable on tan background
+
+7. **Search Highlights** (~line 3391-3397)
+   - Add tan mode search highlight
+   - Use warm brown background instead of blue
+
+8. **Active States**
+   - Ensure `#8b7355` (warm brown) is used for active states in tan mode
+   - Update checkbox checked color to brown
+   - Focus indicators use brown border
+
+### Step 5: Add Tan Mode Specific Overrides
+Add these specific tan mode overrides throughout the CSS file:
+
+```css
+/* Tan mode active date background */
+:root[data-theme="tan"] .date-item-container.active {
+  background-color: #8b7355;
+  color: white;
+}
+
+/* Tan mode checkbox checked */
+:root[data-theme="tan"] .todo-checkbox.checked {
+  background-color: #8b7355;
+  border-color: #8b7355;
+  color: white;
+}
+
+/* Tan mode date hover */
+:root[data-theme="tan"] .date-item-container:hover {
+  background-color: rgba(139, 115, 85, 0.08);
+}
+
+/* Tan mode folder hover */
+:root[data-theme="tan"] .sidebar-archive-header:hover {
+  background-color: rgba(139, 115, 85, 0.08);
+}
+
+/* Tan mode menu item hover */
+:root[data-theme="tan"] .menu-item:hover {
+  background-color: #ebe9e6;
+}
+
+/* Tan mode folder selector hover */
+:root[data-theme="tan"] .folder-selector-item:hover {
+  background-color: #ebe9e6;
+}
+
+/* Tan mode three-dot menu colors */
+[data-theme="tan"] .menu-button {
+  color: rgba(139, 115, 85, 0.3);
+}
+
+[data-theme="tan"] .todo-item:hover .menu-button {
+  color: rgba(139, 115, 85, 0.5);
+}
+
+[data-theme="tan"] .menu-button:hover {
+  background-color: #8b7355;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Tan mode dividers */
+:root[data-theme="tan"] .cl-divider,
+:root[data-theme="tan"] .cl-dividerLine {
+  background-color: #e6e4e1 !important;
+}
+
+/* Tan mode search highlight */
+.search-highlight {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+/* Tan mode font size option active */
+:root[data-theme="tan"] .font-size-option.active {
+  background: #8b7355;
+  border-color: #8b7355;
+  color: #ffffff;
+}
+```
+
+## Testing Checklist
+
+### Theme Switcher Testing
+- [ ] Theme toggle cycles correctly: Dark → Light → Tan → Dark
+- [ ] Moon icon shows in dark mode
+- [ ] Sun icon shows in light mode
+- [ ] Cloud icon shows in tan mode
+- [ ] Theme preference persists in localStorage
+- [ ] Theme applies correctly on page load
+
+### Visual Testing (Tan Mode Only)
+- [ ] Sidebar renders with tan backgrounds
+- [ ] Active date shows warm brown highlight
+- [ ] Hover states use tan darkening
+- [ ] Todo items display correctly on tan
+- [ ] Checkboxes show brown when checked
+- [ ] Notes section uses tan backgrounds
+- [ ] Code blocks have tan containers
+- [ ] Search modal is fully tan-themed
+- [ ] Clerk modals work with tan overrides
+- [ ] Confirmation dialogs use tan
+- [ ] Keyboard shortcuts modal is tan
+- [ ] Pomodoro timer uses tan scheme
+- [ ] Archive section displays correctly
+- [ ] Bulk action buttons work on tan
+- [ ] Three-dot menus are visible and tan
+- [ ] Folder headers hover correctly
+- [ ] Date picker modal uses tan
+- [ ] Focus states show warm brown indicators
+
+### Contrast Testing (Tan Mode)
+- [ ] All text is readable (WCAG AA minimum)
+- [ ] Interactive elements are clearly visible
+- [ ] Borders are subtle but present
+- [ ] Hover states are distinguishable
+- [ ] Active states are clearly marked
+
+### Cross-Theme Testing
+- [ ] Dark mode unchanged and working correctly
+- [ ] Light mode unchanged and working correctly
+- [ ] Tan mode displays correctly
+- [ ] No theme conflicts or bleeding
+- [ ] All three themes coexist without issues
+- [ ] Switching between themes is smooth
+- [ ] No flash of wrong theme on load
+
+### Mobile Testing (All Themes)
+- [ ] Touch targets remain visible in all themes
+- [ ] Hover states work on mobile in all themes
+- [ ] Modals render correctly in all themes
+- [ ] Sidebar looks good in all themes
+- [ ] Pull-to-refresh indicator works in all themes
+- [ ] Theme toggle accessible on mobile
+
+## Implementation Notes
+
+### Do NOT Change
+- Any sizing or dimensions
+- Any layout or structure
+- Any functionality or features
+- **Dark mode colors (leave completely untouched)**
+- **Light mode colors (leave completely untouched)**
+- Font families or font weights
+- Animation timings
+- Spacing or padding values
+- Mobile breakpoints
+
+### Only Add/Change
+- New tan mode color variables (`:root[data-theme="tan"]`)
+- Theme context to support three themes
+- Theme toggle button to show cloud icon for tan mode
+- Tan mode specific CSS overrides (duplicate from light mode patterns)
+- Update theme rotation logic to cycle through three themes
+
+## Color Reference Quick Guide (Tan Mode Only)
+
+### Primary Elements
+- App backgrounds: `#faf8f5`
+- Sidebar: `#f5f3f0`
+- Cards/panels: `#f5f3f0`
+
+### Interactive States
+- Normal: transparent
+- Hover: `#ebe9e6`
+- Active: `#8b7355` with white text
+- Focus: `#8b7355` border or outline
+
+### Text
+- Headings/primary: `#1a1a1a`
+- Body/secondary: `#6b6b6b`
+- Links: `#8b7355`
+- Accent: `#8b7355`
+
+### Borders & Dividers
+- All borders: `#e6e4e1`
+- Very subtle, minimal presence
+
+## Success Criteria
+1. Three-way theme toggle works correctly (Dark → Light → Tan)
+2. Cloud icon appears for tan mode in theme switcher
+3. Dark mode remains completely unchanged
+4. Light mode remains completely unchanged
+5. Tan mode has warm, tan-based color scheme throughout
+6. No theme conflicts or visual bleeding between themes
+7. Consistent warm aesthetic across all tan mode components
+8. Maintains excellent readability and contrast in tan mode
+9. Looks like a refined, document-focused interface
+10. Matches the Cursor documentation page aesthetic
+11. Zero functional changes or removed features
+12. Theme preference persists correctly across sessions
+
+## Final Notes
+This is an additive update that introduces a third theme option alongside the existing dark and light modes. The goal is to provide users with more choice while creating a warmer, more refined aesthetic option that reduces eye strain and provides a premium, document-focused feel for those who prefer it.
+
+**Key Points:**
+- Dark mode and light mode are **completely untouched**
+- Tan mode is a **new third option**, not a replacement
+- Users can choose between all three themes via the theme toggle button
+- Cloud icon (from [lucide.dev](https://lucide.dev/icons/cloud)) represents tan mode
+- All functionality, layout, and features remain exactly the same
+- This is purely a visual color addition with no structural changes
+

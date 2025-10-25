@@ -3990,7 +3990,7 @@ button:active,
 
 .pomodoro-fullscreen-message {
   font-size: 32px;
-  font-weight: 600;
+  font-weight: 300;
   margin-bottom: 48px;
   color: var(--text-primary);
   animation: slideDown 0.5s ease;
