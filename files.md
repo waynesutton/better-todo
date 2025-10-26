@@ -412,6 +412,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Modal and full-screen modes** with play/pause/reset/stop controls
   - Full-screen "keep cooking!" message on completion
   - Timer button in header shows countdown when running
+  - **Timer icon opens modal** - No auto-start, user must click "Start" button
   - Web Worker for accurate background timing
   - Session persistence via Convex (syncs across tabs)
   - Keyboard shortcuts (ESC to close full-screen, f to enter full-screen)

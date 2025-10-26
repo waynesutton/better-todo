@@ -4,7 +4,7 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [v.005] - 2025-10-26
+## [v.005] - 2025-10-26 - READY FOR NETLIFY DEPLOYMENT
 
 ### Added
 
@@ -25,6 +25,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Updated `netlify.toml` for proper SPA fallback routing
 - All routes now properly fallback to React Router
 - 404 page handled by React Router with custom NotFound component
+- **Pomodoro timer click behavior** - Timer icon now opens modal instead of auto-starting
+  - Users must explicitly click "Start" button to begin Pomodoro session
+  - Prevents accidental timer starts when navigating from Launch page
+- Fixed typo in git commit command documentation (TASKS.md)
 
 ### Fixed
 
@@ -40,6 +44,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Removed "Delete Date" option from archived dates (only show "Unarchive Date")
   - Removed "Delete Date" option from dates inside archived folders
   - Dates only show in sidebar when they have uncompleted todos, so deletion is not needed in these contexts
+- **Pomodoro timer auto-start issue** - Fixed timer auto-starting when navigating from Launch page
+  - Timer now requires explicit user action to start (clicking timer icon opens modal)
+  - No accidental timer starts when accessing home page from Launch page
+- **ArchiveSection TypeScript error** - Fixed missing `onMoveToToday` prop in archived todos
+  - Added empty function handler for onMoveToToday prop in ArchiveSection
+  - Resolves TypeScript build error for production deployment
 
 ## [v.004] - 2025-10-25
 

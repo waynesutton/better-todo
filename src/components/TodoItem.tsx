@@ -23,6 +23,7 @@ interface TodoItemProps {
   onMoveToPreviousDay: () => void;
   onMoveToNextDay: () => void;
   onMoveToTomorrow: () => void;
+  onMoveToToday: () => void;
   onMoveToCustomDate: (date: string) => void;
   onHoverChange?: (id: Id<"todos"> | null) => void;
   openMenuTrigger?: number;
@@ -45,6 +46,7 @@ export function TodoItem({
   onMoveToPreviousDay,
   onMoveToNextDay,
   onMoveToTomorrow,
+  onMoveToToday,
   onMoveToCustomDate,
   onHoverChange,
   openMenuTrigger,
@@ -469,6 +471,21 @@ export function TodoItem({
                       }}
                     >
                       Move to Tomorrow
+                    </div>
+                    <div
+                      className="menu-item"
+                      onClick={() => {
+                        // Check authentication before allowing move
+                        if (!isAuthenticated && onRequireSignInForMenu) {
+                          setShowMenu(false);
+                          onRequireSignInForMenu();
+                          return;
+                        }
+                        onMoveToToday();
+                        setShowMenu(false);
+                      }}
+                    >
+                      Move to Today
                     </div>
                     <div
                       className="menu-item"

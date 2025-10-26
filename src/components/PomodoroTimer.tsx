@@ -276,11 +276,7 @@ export function PomodoroTimer() {
   };
 
   const handleClickTimer = () => {
-    if (session?.status === "running" || session?.status === "paused") {
-      setIsModalOpen(true);
-    } else {
-      handleStart();
-    }
+    setIsModalOpen(true);
   };
 
   const isRunning = session?.status === "running";

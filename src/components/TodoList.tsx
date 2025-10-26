@@ -289,6 +289,14 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       });
     };
 
+    const handleMoveToToday = async (todoId: Id<"todos">) => {
+      const today = format(new Date(), "yyyy-MM-dd");
+      await moveTodoToDate({
+        todoId,
+        newDate: today,
+      });
+    };
+
     const handleMoveToCustomDate = async (
       todoId: Id<"todos">,
       newDate: string,
@@ -389,6 +397,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                       }
                       onMoveToNextDay={() => handleMoveToNextDay(parent._id)}
                       onMoveToTomorrow={() => handleMoveToTomorrow(parent._id)}
+                      onMoveToToday={() => handleMoveToToday(parent._id)}
                       onMoveToCustomDate={(date) =>
                         handleMoveToCustomDate(parent._id, date)
                       }
@@ -434,6 +443,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                             onMoveToTomorrow={() =>
                               handleMoveToTomorrow(child._id)
                             }
+                            onMoveToToday={() => handleMoveToToday(child._id)}
                             onMoveToCustomDate={(date) =>
                               handleMoveToCustomDate(child._id, date)
                             }

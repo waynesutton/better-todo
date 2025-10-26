@@ -3,7 +3,7 @@
 A real-time markdown todo app with Notion-style input, daily notes, and Convex backend.
 
 git add .
-git commit -a -m "descriptoin"
+git commit -a -m "description"
 git push -u origin main
 
 ## Completed Tasks
@@ -106,6 +106,21 @@ git push -u origin main
   - Stops all currently playing audio when muting
   - State persists during timer session
   - Uses Volume2 and VolumeOff icons from lucide-react
+
+- [x] **Pomodoro Timer Auto-Start Fix**
+  - Timer icon now opens modal instead of auto-starting
+  - Requires explicit user action to start (clicking "Start" button)
+  - Prevents accidental timer starts when navigating from Launch page
+  - Improved user experience with intentional timer activation
+
+- [x] **Documentation Typo Fix**
+  - Fixed typo in git commit command (changed "descriptoin" to "description")
+  - Updated TASKS.md with correct spelling
+
+- [x] **ArchiveSection TypeScript Fix**
+  - Fixed missing `onMoveToToday` prop in archived todos
+  - Added empty function handler for compatibility
+  - Resolves TypeScript build error for production deployment
 
 ## Completed Tasks (Latest)
 

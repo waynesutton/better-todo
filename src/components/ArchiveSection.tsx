@@ -157,6 +157,7 @@ export function ArchiveSection({
                     onMoveToPreviousDay={() => onMoveToPreviousDay(todo._id)}
                     onMoveToNextDay={() => onMoveToNextDay(todo._id)}
                     onMoveToTomorrow={() => onMoveToTomorrow(todo._id)}
+                    onMoveToToday={() => {}} // Not used in archive section
                     onMoveToCustomDate={(date) =>
                       onMoveToCustomDate(todo._id, date)
                     }
