@@ -742,11 +742,6 @@ function App() {
             <div
               style={{
                 padding: "12px 24px",
-                background:
-                  theme === "dark"
-                    ? "rgba(255,255,255,0.05)"
-                    : "rgba(0,0,0,0.05)",
-                borderBottom: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
                 fontSize: "14px",
                 textAlign: "center",
                 color:
@@ -793,104 +788,136 @@ function App() {
           )}
 
           <div className="main-content-body">
-            {!authIsLoading && !isAuthenticated && (
-              <>
-                <div className="feature-showcase">
-                  <div className="feature-showcase-box">
-                    <h2 className="feature-showcase-title">better todo</h2>
-                    <p className="feature-showcase-description">
-                      An open source, real-time to-do list that never falls out
-                      of sync — built on Convex.
-                    </p>
-                    <div style={{ marginBottom: "16px" }}>
-                      <a href="/about" className="footer-link about-link">
-                        About
-                      </a>
-                    </div>
-                    <ul className="feature-showcase-list">
-                      <li>No AI assistants - just your todos and focus</li>
-                      <li>Real-time synchronization across all your devices</li>
-                      <li>
-                        Notion-style inline input - type directly to add todos
-                      </li>
-                      <li>Daily notes with syntax-highlighted code blocks</li>
-                      <li>Drag and drop reordering with intuitive handles</li>
-                      <li>Full-text search across all todos and notes</li>
-                      <li>Dark and light themes with smooth transitions</li>
-                      <li>Mobile-optimized with touch-friendly interface</li>
-                      <li>Archive and bulk actions for easy management</li>
-                      <li>Built-in Pomodoro timer for productivity</li>
-                    </ul>
-                    <div
-                      style={{
-                        marginTop: "24px",
-                        display: "flex",
-                        gap: "16px",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <a
-                        href="https://github.com/waynesutton/better-todo"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="footer-link"
+            {!authIsLoading && !isAuthenticated ? (
+              <div className="logged-out-two-column-layout">
+                <div className="logged-out-left-column">
+                  <div className="feature-showcase">
+                    <div className="feature-showcase-box">
+                      <h2 className="feature-showcase-title">better todo</h2>
+                      <p className="feature-showcase-description">
+                        An open source, real-time to-do list that never falls
+                        out of sync — built on Convex.
+                      </p>
+                      <div style={{ marginBottom: "16px" }}>
+                        <a href="/about" className="footer-link about-link">
+                          About
+                        </a>
+                      </div>
+                      <ul className="feature-showcase-list">
+                        <li>No AI assistants - just your todos and focus</li>
+                        <li>
+                          Real-time synchronization across all your devices
+                        </li>
+                        <li>
+                          Notion-style inline input - type directly to add todos
+                        </li>
+                        <li>Daily notes with syntax-highlighted code blocks</li>
+                        <li>Drag and drop reordering with intuitive handles</li>
+                        <li>Full-text search across all todos and notes</li>
+                        <li>Dark and light themes with smooth transitions</li>
+                        <li>Mobile-optimized with touch-friendly interface</li>
+                        <li>Archive and bulk actions for easy management</li>
+                        <li>Built-in Pomodoro timer for productivity</li>
+                      </ul>
+                      <div
+                        style={{
+                          marginTop: "24px",
+                          display: "flex",
+                          gap: "16px",
+                          flexWrap: "wrap",
+                        }}
                       >
-                        Open-Source Project
-                      </a>
-                      <a
-                        href="https://www.convex.dev/legal/tos/v2022-03-02"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="footer-link"
-                      >
-                        Privacy Policy | Terms
-                      </a>
-                    </div>
-                    <div className="feature-showcase-buttons">
-                      <button
-                        onClick={() => setShowSignUpModal(true)}
-                        className="feature-showcase-button feature-showcase-button-primary"
-                      >
-                        Sign Up
-                      </button>
-                      <button
-                        onClick={() => setShowSignInModal(true)}
-                        className="feature-showcase-button feature-showcase-button-secondary"
-                      >
-                        Sign In
-                      </button>
+                        <a
+                          href="https://github.com/waynesutton/better-todo"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="footer-link"
+                        >
+                          Open-Source Project
+                        </a>
+                        <a
+                          href="https://www.convex.dev/legal/tos/v2022-03-02"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="footer-link"
+                        >
+                          Privacy Policy | Terms
+                        </a>
+                      </div>
+                      <div className="feature-showcase-buttons">
+                        <button
+                          onClick={() => setShowSignUpModal(true)}
+                          className="feature-showcase-button feature-showcase-button-primary"
+                        >
+                          Sign Up
+                        </button>
+                        <button
+                          onClick={() => setShowSignInModal(true)}
+                          className="feature-showcase-button feature-showcase-button-secondary"
+                        >
+                          Sign In
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="logged-out-demo-section">
-                  <p className="logged-out-demo-text">
-                    Try creating up to 3 todos below (saved locally until you
-                    sign up)
-                  </p>
+                <div className="logged-out-right-column">
+                  <div className="logged-out-demo-section">
+                    <p className="logged-out-demo-text">
+                      Try creating up to 3 todos below (saved locally until you
+                      sign up)
+                    </p>
+                  </div>
+                  <TodoList
+                    ref={todoListRef}
+                    todos={displayTodos}
+                    date={selectedDate}
+                    expandedNoteId={expandedNoteId}
+                    onNoteExpanded={() => setExpandedNoteId(null)}
+                    isPinnedView={selectedDate === "pinned"}
+                    isBacklogView={selectedDate === "backlog"}
+                    todoInputRef={todoInputRef}
+                    focusedTodoIndex={focusedTodoIndex}
+                    onRequireSignIn={() => setShowSignInToCreateModal(true)}
+                    onRequireSignInForNote={() =>
+                      setShowSignInToNoteModal(true)
+                    }
+                    onRequireSignInForMenu={() =>
+                      setShowSignInToMenuModal(true)
+                    }
+                    onTodoHover={setHoveredTodoId}
+                    openMenuForTodoId={openMenuForTodoId}
+                    openMenuTrigger={openMenuTrigger}
+                    isDemoMode={!authIsLoading && !isAuthenticated}
+                    demoTodos={demoTodos}
+                    setDemoTodos={setDemoTodos}
+                    isAuthenticated={!authIsLoading && isAuthenticated}
+                  />
                 </div>
-              </>
+              </div>
+            ) : (
+              <TodoList
+                ref={todoListRef}
+                todos={displayTodos}
+                date={selectedDate}
+                expandedNoteId={expandedNoteId}
+                onNoteExpanded={() => setExpandedNoteId(null)}
+                isPinnedView={selectedDate === "pinned"}
+                isBacklogView={selectedDate === "backlog"}
+                todoInputRef={todoInputRef}
+                focusedTodoIndex={focusedTodoIndex}
+                onRequireSignIn={() => setShowSignInToCreateModal(true)}
+                onRequireSignInForNote={() => setShowSignInToNoteModal(true)}
+                onRequireSignInForMenu={() => setShowSignInToMenuModal(true)}
+                onTodoHover={setHoveredTodoId}
+                openMenuForTodoId={openMenuForTodoId}
+                openMenuTrigger={openMenuTrigger}
+                isDemoMode={!authIsLoading && !isAuthenticated}
+                demoTodos={demoTodos}
+                setDemoTodos={setDemoTodos}
+                isAuthenticated={!authIsLoading && isAuthenticated}
+              />
             )}
-            <TodoList
-              ref={todoListRef}
-              todos={displayTodos}
-              date={selectedDate}
-              expandedNoteId={expandedNoteId}
-              onNoteExpanded={() => setExpandedNoteId(null)}
-              isPinnedView={selectedDate === "pinned"}
-              isBacklogView={selectedDate === "backlog"}
-              todoInputRef={todoInputRef}
-              focusedTodoIndex={focusedTodoIndex}
-              onRequireSignIn={() => setShowSignInToCreateModal(true)}
-              onRequireSignInForNote={() => setShowSignInToNoteModal(true)}
-              onRequireSignInForMenu={() => setShowSignInToMenuModal(true)}
-              onTodoHover={setHoveredTodoId}
-              openMenuForTodoId={openMenuForTodoId}
-              openMenuTrigger={openMenuTrigger}
-              isDemoMode={!authIsLoading && !isAuthenticated}
-              demoTodos={demoTodos}
-              setDemoTodos={setDemoTodos}
-              isAuthenticated={!authIsLoading && isAuthenticated}
-            />
           </div>
 
           {/* Sticky footer with archive and bulk actions */}
@@ -914,7 +941,8 @@ function App() {
             {/* Bulk action buttons */}
             {activeTodos.length > 0 &&
               selectedDate !== "pinned" &&
-              selectedDate !== "backlog" && (
+              selectedDate !== "backlog" &&
+              isAuthenticated && (
                 <div className="bulk-actions">
                   <button
                     className="bulk-action-button"

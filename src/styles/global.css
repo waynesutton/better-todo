@@ -997,6 +997,10 @@ button:active,
   flex-shrink: 0;
 }
 
+.date-item-container.active .todo-count {
+  color: white;
+}
+
 .date-menu {
   position: relative;
   padding: 6px 8px 6px 0;
@@ -3616,6 +3620,26 @@ button:active,
   font-weight: 400;
 }
 
+/* Two-column layout for logged out users */
+.logged-out-two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.logged-out-left-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.logged-out-right-column {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Feature showcase box for unauthenticated users */
 .feature-showcase {
   display: flex;
@@ -3713,6 +3737,12 @@ button:active,
 }
 
 @media (max-width: 768px) {
+  .logged-out-two-column-layout {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 16px;
+  }
+
   .feature-showcase {
     padding: 12px;
     margin: 0;
@@ -4882,7 +4912,7 @@ button:active,
   font-weight: 400;
   padding: 0 24px 24px 24px;
   color: var(--text-primary);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 0px solid var(--border-color);
   margin-bottom: 16px;
 }
 
