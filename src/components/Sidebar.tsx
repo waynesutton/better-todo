@@ -250,6 +250,11 @@ export function Sidebar({
 
   const confirmDelete = async () => {
     if (confirmDialog.date) {
+      // Check if date is in a folder and remove it first
+      const folderForDate = getFolderForDate(confirmDialog.date);
+      if (folderForDate) {
+        await removeDateFromFolder({ date: confirmDialog.date });
+      }
       await deleteDate({ date: confirmDialog.date });
     }
     setConfirmDialog({ isOpen: false, date: "", formattedDate: "" });
@@ -1083,12 +1088,6 @@ export function Sidebar({
                             >
                               Archive Date
                             </div>
-                            <div
-                              className="menu-item danger"
-                              onClick={() => handleDeleteDate(date)}
-                            >
-                              Delete Date
-                            </div>
                           </div>
                         )}
                       </div>
@@ -1217,12 +1216,6 @@ export function Sidebar({
                             >
                               Unarchive Date
                             </div>
-                            <div
-                              className="menu-item danger"
-                              onClick={() => handleDeleteDate(date)}
-                            >
-                              Delete Date
-                            </div>
                           </div>
                         )}
                       </div>
@@ -1322,12 +1315,6 @@ export function Sidebar({
                                       onClick={() => handleUnarchiveDate(date)}
                                     >
                                       Unarchive Date
-                                    </div>
-                                    <div
-                                      className="menu-item danger"
-                                      onClick={() => handleDeleteDate(date)}
-                                    >
-                                      Delete Date
                                     </div>
                                   </div>
                                 )}

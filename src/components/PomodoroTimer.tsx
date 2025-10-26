@@ -12,18 +12,21 @@ import {
   EnterFullScreenIcon,
   ImageIcon,
 } from "@radix-ui/react-icons";
+import { Volume2, VolumeOff } from "lucide-react";
 
 export function PomodoroTimer() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [displayTime, setDisplayTime] = useState(25 * 60 * 1000); // 25 minutes in ms
   const [showBackgroundImage, setShowBackgroundImage] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const hasPlayedStartSound = useRef(false);
   const hasPlayedCountdownSound = useRef(false);
   const lastEndSoundIndex = useRef(0);
   const hasCalledComplete = useRef(false);
   const hasFetchedImage = useRef(false);
+  const activeAudioRef = useRef<HTMLAudioElement[]>([]);
 
   // Fetch current session from Convex
   const session = useQuery(api.pomodoro.getPomodoroSession);
@@ -135,31 +138,51 @@ export function PomodoroTimer() {
 
   // Play start sound
   const playStartSound = () => {
+    if (isMuted) return;
     const audio = new Audio("/timer-start.mp3");
     audio.volume = 0.7;
+    activeAudioRef.current.push(audio);
     audio.play().catch(console.error);
+    audio.onended = () => {
+      activeAudioRef.current = activeAudioRef.current.filter((a) => a !== audio);
+    };
   };
 
   // Play 5-second countdown sound
   const playCountdownSound = () => {
+    if (isMuted) return;
     const audio = new Audio("/5-second-coutdown.mp3");
     audio.volume = 0.7;
+    activeAudioRef.current.push(audio);
     audio.play().catch(console.error);
+    audio.onended = () => {
+      activeAudioRef.current = activeAudioRef.current.filter((a) => a !== audio);
+    };
   };
 
   // Play pause sound
   const playPauseSound = () => {
+    if (isMuted) return;
     const audio = new Audio("/pause.mp3");
     audio.volume = 0.7;
+    activeAudioRef.current.push(audio);
     audio.play().catch(console.error);
+    audio.onended = () => {
+      activeAudioRef.current = activeAudioRef.current.filter((a) => a !== audio);
+    };
   };
 
   // Play completion sound (rotates through list)
   const playCompletionSound = () => {
+    if (isMuted) return;
     const soundUrl = endSounds[lastEndSoundIndex.current];
     const audio = new Audio(soundUrl);
     audio.volume = 0.7;
+    activeAudioRef.current.push(audio);
     audio.play().catch(console.error);
+    audio.onended = () => {
+      activeAudioRef.current = activeAudioRef.current.filter((a) => a !== audio);
+    };
 
     // Move to next sound in rotation
     lastEndSoundIndex.current =
@@ -238,6 +261,20 @@ export function PomodoroTimer() {
     setShowBackgroundImage(!showBackgroundImage);
   };
 
+  const handleToggleMute = () => {
+    const newMutedState = !isMuted;
+    setIsMuted(newMutedState);
+    
+    // Stop all currently playing audio when muting
+    if (newMutedState) {
+      activeAudioRef.current.forEach((audio) => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+      activeAudioRef.current = [];
+    }
+  };
+
   const handleClickTimer = () => {
     if (session?.status === "running" || session?.status === "paused") {
       setIsModalOpen(true);
@@ -299,6 +336,19 @@ export function PomodoroTimer() {
       {isModalOpen && !isFullScreen && (
         <div className="search-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="pomodoro-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="pomodoro-modal-close"
+              onClick={handleToggleMute}
+              title={isMuted ? "Unmute" : "Mute"}
+              style={{ right: "3.5rem" }}
+            >
+              {isMuted ? (
+                <VolumeOff width={18} height={18} />
+              ) : (
+                <Volume2 width={18} height={18} />
+              )}
+            </button>
+
             <button
               className="pomodoro-modal-close"
               onClick={() => setIsModalOpen(false)}
@@ -443,6 +493,18 @@ export function PomodoroTimer() {
                   title="Restart"
                 >
                   <ResetIcon width={24} height={24} />
+                </button>
+
+                <button
+                  className="pomodoro-control-button-large"
+                  onClick={handleToggleMute}
+                  title={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? (
+                    <VolumeOff width={24} height={24} />
+                  ) : (
+                    <Volume2 width={24} height={24} />
+                  )}
                 </button>
 
                 <button

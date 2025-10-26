@@ -1,5 +1,6 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserId } from "./users";
 
 // Delete all data for a specific date
 export const deleteDate = mutation({
@@ -8,12 +9,11 @@ export const deleteDate = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Get authenticated user ID from WorkOS
-    // No auth required
-    if (false) {
-      
+    // Get authenticated user ID
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
     }
-    const userId = "demo-user";
 
     // Delete all todos for this date
     const todos = await ctx.db

@@ -1,6 +1,6 @@
-# better todo - The modern todo app for developers and busy people with convex and no ai assistants
+# better todo - The open-source modern todo app for developers and busy people with convex and no ai assistants
 
-An open source, real-time to-do list that never falls out of sync — built on Convex.
+An open source, real-time open-source to-do list that never falls out of sync — built on Convex.
 
 **Live Demo**: [better-todo.co](https://better-todo.co)
 
@@ -232,6 +232,7 @@ At the bottom of each date's todo list:
   - 5-second countdown sound plays when 5 seconds remain
   - Completion sounds rotate through 11 different sounds (synth, epicboom, epci, deep, horns, computer, flute, pause, whoa, waves, done)
   - Pause sound plays when timer is paused
+- **Mute/unmute controls** - toggle sound notifications on or off
 - **Full-screen completion mode** with "keep cooking!" message
 - **Modal and full-screen controls** - start, pause, resume, reset, and stop
 - **Visual countdown** displays time remaining in MM:SS format
@@ -248,6 +249,7 @@ At the bottom of each date's todo list:
 Toggle between dark, light, and tan modes using the **half-moon icon** at the bottom of the sidebar (above the login link). The login/user icons automatically switch between dark, light, and tan variants based on the current theme.
 
 **Theme Options:**
+
 - **Dark Mode** - Sublime Text-inspired dark theme (#2E3842 background) with blue accents (#4a9eff)
 - **Light Mode** - Apple Notes-inspired clean theme (#f5f5f7 background) with blue accents (#007aff)
 - **Tan Mode** - Warm document-focused theme (#faf8f5 background) with orange accents (#EB5601) for ecosystem strain reduction
@@ -312,17 +314,20 @@ better-todo/
 │   │   ├── NotesSection.tsx   # Notes with line numbers
 │   │   ├── ArchiveSection.tsx # Archived todos
 │   │   ├── SearchModal.tsx    # Search modal
-│   │   ├── PomodoroTimer.tsx  # Pomodoro productivity timer
+│   │   ├── PomodoroTimer.tsx  # Pomodoro productivity timer with mute controls
 │   │   ├── ConfirmDialog.tsx  # Confirmation dialogs
 │   │   └── ui/
 │   │       └── tooltip.tsx    # Reusable tooltip component
+│   ├── pages/                 # Page components
+│   │   ├── Launch.tsx         # Launch/about page with feature showcase
+│   │   └── NotFound.tsx       # 404 Not Found page
 │   ├── context/
 │   │   └── ThemeContext.tsx   # Theme management
 │   ├── styles/
 │   │   └── global.css         # CSS with variables
 │   ├── lib/
 │   │   └── localData.ts       # Ephemeral in-memory storage for unsigned users
-│   ├── App.tsx                # Main layout and state
+│   ├── App.tsx                # Main layout and state with routing
 │   └── main.tsx               # Entry point
 └── package.json
 ```
@@ -347,6 +352,7 @@ Edit CSS variables in `src/styles/global.css`:
 The app uses CSS variables for easy theming. Key colors:
 
 **Dark Mode:**
+
 - `--accent: #4a9eff` - Active date and focus color
 - `--bg-primary: #2e3842` - Main background
 - `--bg-secondary: #1e2429` - Input backgrounds
@@ -354,6 +360,7 @@ The app uses CSS variables for easy theming. Key colors:
 - `--text-secondary: #9ca3af` - Muted text
 
 **Light Mode:**
+
 - `--accent: #007aff` - Active date and focus color
 - `--bg-primary: #f5f5f7` - Main background
 - `--bg-secondary: #ffffff` - Input backgrounds
@@ -361,6 +368,7 @@ The app uses CSS variables for easy theming. Key colors:
 - `--text-secondary: #6e6e73` - Muted text
 
 **Tan Mode:**
+
 - `--accent: #8b7355` - General accent color
 - `--primary-accent: #EB5601` - Primary action color (checkboxes, buttons, active states)
 - `--bg-primary: #faf8f5` - Warm tan background

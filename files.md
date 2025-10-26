@@ -91,6 +91,9 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `dates.ts` - Date management mutations:
   - `deleteDate` - Delete all data for a specific date (todos, notes, archived entry, labels)
+    - Requires authentication via `getUserId(ctx)`
+    - Deletes all todos, notes, archived date entries, and custom labels for the authenticated user's date
+    - Throws error if user is not authenticated
 
 - `dateLabels.ts` - Custom date label management:
   - `getDateLabels` - Get all custom labels for dates
@@ -163,6 +166,28 @@ This document describes the structure and purpose of each file in the Better Tod
   - ConvexProviderWithClerk for Clerk-Convex integration
   - ThemeProvider for dark/light mode management
   - Properly configured for both development and production environments
+
+### Pages (`src/pages/`)
+
+- `src/pages/Launch.tsx` - Launch/about page featuring:
+  - Comprehensive feature showcase with navigation sidebar
+  - Demo video on intro section
+  - Screenshot galleries for different features (themes, timer, mobile)
+  - Image modal with keyboard navigation (arrow keys, Escape)
+  - Mobile-responsive sidebar with hamburger menu
+  - Sections: Introduction, Key Features, Built for Developers, Themes, Timer, Mobile, Real-time Sync, Open Source
+  - Call-to-action buttons (View on GitHub, Try better-todo)
+  - Footer with technology credits
+  - Accessible at `/launch` and `/about` routes
+
+- `src/pages/NotFound.tsx` - Custom 404 Not Found page with:
+  - Clean, minimal design matching app aesthetic
+  - Large "404" heading with soft black text
+  - Friendly message: "Not found and found out. Go make a todo and get back to work."
+  - Orange action button linking back to home
+  - Tan-themed background (#faf8f5) with system font stack
+  - Responsive typography with clamp() for scaling
+
 - `App.tsx` - Main app component with:
   - Layout management (sidebar + main content)
   - Sidebar resize functionality (200px - 500px)
@@ -380,6 +405,10 @@ This document describes the structure and purpose of each file in the Better Tod
     - Completion sounds rotate through 11 MP3 files (synth, epicboom, epci, deep, horns, computer, flute, pause, whoa, waves, done)
     - Pause sound (`pause.mp3`) plays when user pauses timer
     - All sounds at 70% volume
+  - **Mute/unmute controls** with volume button in modal and full-screen mode
+    - Toggle to mute all timer sounds
+    - Stops all currently playing audio when muting
+    - State persists during timer session
   - **Modal and full-screen modes** with play/pause/reset/stop controls
   - Full-screen "keep cooking!" message on completion
   - Timer button in header shows countdown when running
@@ -456,7 +485,30 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.004 (October 25, 2025)
+## Current Version: v.005 (October 26, 2025)
+
+### Latest Features (v.005) - Launch Page & Timer Mute
+
+- **Launch Page** (`/launch` and `/about` routes)
+  - Comprehensive feature showcase with navigation sidebar
+  - Demo video on intro section
+  - Screenshot galleries for themes, timer, and mobile views
+  - Image modal with keyboard navigation
+  - Mobile-responsive design with hamburger menu
+  - Call-to-action buttons for GitHub and app access
+
+- **Custom 404 Page**
+  - Clean, minimal Not Found page matching app design
+  - Friendly message with orange action button
+  - Tan-themed background with responsive typography
+
+- **Pomodoro Timer Mute Controls**
+  - Volume button in modal and full-screen mode
+  - Mute all timer sounds (start, countdown, completion, pause)
+  - Stops all currently playing audio when muting
+  - State persists during timer session
+
+## Previous Version: v.004 (October 25, 2025)
 
 ### Latest Features (v.004) - Dark Mode Green Accent
 

@@ -4,6 +4,43 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.005] - 2025-10-26
+
+### Added
+
+- Launch page route at `/launch` and `/about`
+- Custom 404 Not Found page component
+- Netlify build configuration optimized for SPA routing
+- Public `_redirects` file for Netlify deployment
+- Demo video (`demo-video-v1.mp4`) on Launch page intro section
+- **Pomodoro timer mute/unmute controls**
+  - Volume button in modal (top right) and full-screen mode
+  - Mute all timer sounds (start, countdown, completion, pause)
+  - Stops all currently playing audio when muting
+  - State persists during timer session
+  - Works in both modal and full-screen modes
+
+### Changed
+
+- Updated `netlify.toml` for proper SPA fallback routing
+- All routes now properly fallback to React Router
+- 404 page handled by React Router with custom NotFound component
+
+### Fixed
+
+- Netlify routing configuration for Launch page
+- Build process now includes all necessary static assets
+- Launch images properly copied to dist during build
+- **Delete date functionality** now works for authenticated users
+  - Fixed `deleteDate` mutation to use proper authentication via `getUserId(ctx)`
+  - Removed hardcoded "demo-user" that was preventing authenticated users from deleting dates
+  - Mutation now properly throws error for unauthenticated users
+- **Sidebar date deletion menu options** cleaned up for better UX
+  - Removed "Delete Date" option from dates inside folders (only show "Remove from Folder" and "Archive Date")
+  - Removed "Delete Date" option from archived dates (only show "Unarchive Date")
+  - Removed "Delete Date" option from dates inside archived folders
+  - Dates only show in sidebar when they have uncompleted todos, so deletion is not needed in these contexts
+
 ## [v.004] - 2025-10-25
 
 ### Changed
@@ -32,7 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **Theme Color Reference** in documentation
   - Dark mode: Green (#27A561)
-  - Light mode: Blue (#0076C6) 
+  - Light mode: Blue (#0076C6)
   - Tan mode: Orange (#EB5601)
   - Added comprehensive documentation for future theme development
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Routes, Route } from "react-router-dom";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useUser } from "@clerk/clerk-react";
 import { SignIn, SignUp, UserProfile, SignOutButton } from "@clerk/clerk-react";
@@ -10,6 +11,8 @@ import { ArchiveSection } from "./components/ArchiveSection";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { PomodoroTimer } from "./components/PomodoroTimer";
+import { Launch } from "./pages/Launch";
+import { NotFound } from "./pages/NotFound";
 import { format } from "date-fns";
 import { Search, Menu, X } from "lucide-react";
 import { CopyIcon, CheckIcon } from "@radix-ui/react-icons";
@@ -799,6 +802,11 @@ function App() {
                       An open source, real-time to-do list that never falls out
                       of sync — built on Convex.
                     </p>
+                    <div style={{ marginBottom: "16px" }}>
+                      <a href="/about" className="footer-link about-link">
+                        About
+                      </a>
+                    </div>
                     <ul className="feature-showcase-list">
                       <li>No AI assistants - just your todos and focus</li>
                       <li>Real-time synchronization across all your devices</li>
@@ -1156,10 +1164,16 @@ function App() {
 
               <div style={{ padding: "32px" }}>
                 <h2 className="feature-showcase-title">better todo</h2>
+
                 <p className="feature-showcase-description">
                   An open source, real-time to-do list that never falls out of
                   sync — built on Convex.
                 </p>
+                <div style={{ marginBottom: "16px" }}>
+                  <a href="/about" className="footer-link about-link">
+                    About
+                  </a>
+                </div>
                 <ul className="feature-showcase-list">
                   <li>No AI assistants - just your todos and focus</li>
                   <li>Real-time synchronization across all your devices</li>
@@ -1208,4 +1222,16 @@ function App() {
   );
 }
 
-export default App;
+// Router wrapper
+function AppRouter() {
+  return (
+    <Routes>
+      <Route path="/launch" element={<Launch />} />
+      <Route path="/about" element={<Launch />} />
+      <Route path="/" element={<App />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+export default AppRouter;

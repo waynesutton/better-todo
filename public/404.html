@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 - Page Not Found</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background-color: #faf8f5;
+        color: #1a1a1a;
+        line-height: 1.6;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        text-align: center;
+        max-width: 600px;
+        width: 100%;
+      }
+
+      .error-code {
+        font-size: clamp(80px, 15vw, 180px);
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        color: #1a1a1a;
+        margin-bottom: 20px;
+        line-height: 1;
+      }
+
+      .error-message {
+        font-size: clamp(20px, 4vw, 32px);
+        font-weight: 300;
+        color: #6b6b6b;
+        margin-bottom: 16px;
+        letter-spacing: -0.01em;
+      }
+
+      .error-description {
+        font-size: clamp(14px, 2.5vw, 16px);
+        font-weight: 400;
+        color: #6b6b6b;
+        margin-bottom: 48px;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
+      }
+
+      .back-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #eb5601;
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 400;
+        padding: 14px 32px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        letter-spacing: 0.01em;
+      }
+
+      .back-button:hover {
+        background-color: #d14a01;
+        transform: translateY(-1px);
+      }
+
+      .back-button:active {
+        transform: translateY(0);
+      }
+
+      @media (max-width: 640px) {
+        .error-code {
+          margin-bottom: 16px;
+        }
+
+        .error-message {
+          margin-bottom: 12px;
+        }
+
+        .error-description {
+          margin-bottom: 32px;
+        }
+
+        .back-button {
+          padding: 12px 28px;
+          font-size: 15px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .back-button {
+          transition: none;
+        }
+
+        .back-button:hover {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="error-code">404</div>
+      <div class="error-message">Page not found</div>
+      <div class="error-description">
+        404 not found and found out. Go make a todo and get back to work.
+      </div>
+      <a href="/" class="back-button">Back to home</a>
+    </div>
+  </body>
+</html>

@@ -2,6 +2,10 @@
 
 A real-time markdown todo app with Notion-style input, daily notes, and Convex backend.
 
+git add .
+git commit -a -m "descriptoin"
+git push -u origin main
+
 ## Completed Tasks
 
 - [x] Set up React 18 with TypeScript and Vite
@@ -78,6 +82,30 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 ## In Progress Tasks
 
 - None currently
+
+## Completed Tasks (v.005 - 2025-10-26)
+
+- [x] **Launch Page** - Feature showcase page at `/launch` and `/about`
+  - Comprehensive feature showcase with navigation sidebar
+  - Demo video on intro section
+  - Screenshot galleries for themes, timer, and mobile views
+  - Image modal with keyboard navigation (arrow keys, Escape)
+  - Mobile-responsive design with hamburger menu
+  - Call-to-action buttons for GitHub and app access
+  - Footer with technology credits
+
+- [x] **Custom 404 Page** - Not Found page component
+  - Clean, minimal design matching app aesthetic
+  - Friendly message with orange action button
+  - Tan-themed background with responsive typography
+  - Accessible at any invalid route
+
+- [x] **Pomodoro Timer Mute Controls**
+  - Volume button in modal (top right) and full-screen mode
+  - Mute all timer sounds (start, countdown, completion, pause)
+  - Stops all currently playing audio when muting
+  - State persists during timer session
+  - Uses Volume2 and VolumeOff icons from lucide-react
 
 ## Completed Tasks (Latest)
 
@@ -166,7 +194,7 @@ A real-time markdown todo app with Notion-style input, daily notes, and Convex b
 - **Audio**: MP3 files for timer notifications
 - **Images**: Unsplash API integration
 
-## Future Tasks (v2.0+)
+## Future Tasks (v2.0+) - nope
 
 ### Collaboration Features
 
