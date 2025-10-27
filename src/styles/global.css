@@ -2860,6 +2860,14 @@ button:active,
   background-color: rgba(225, 109, 118, 0.1);
 }
 
+/* Menu separator */
+.menu-separator {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 6px 0;
+  opacity: 0.5;
+}
+
 /* Light mode specific - darker text for better readability */
 :root[data-theme="light"] .menu-item {
   color: #1d1d1f;

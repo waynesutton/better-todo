@@ -83,6 +83,17 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.006 - 2025-10-26)
+
+- [x] **Folders Renamed to Projects**
+  - Updated terminology throughout the app
+  - "Folders" now called "Projects" in UI and documentation
+  - "+ Add Folder" button changed to "+ Add Project"
+  - "Manage Folders" section renamed to "Manage Projects"
+  - Menu options updated with project terminology
+  - More intuitive naming for organizing dates by project context
+  - Backend table name remains "folders" for database compatibility
+
 ## Completed Tasks (v.005 - 2025-10-26)
 
 - [x] **Launch Page** - Feature showcase page at `/launch` and `/about`

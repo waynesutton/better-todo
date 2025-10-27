@@ -15,7 +15,7 @@ import { Launch } from "./pages/Launch";
 import { NotFound } from "./pages/NotFound";
 import { format } from "date-fns";
 import { Search, Menu, X } from "lucide-react";
-import { CopyIcon, CheckIcon } from "@radix-ui/react-icons";
+import { CopyIcon, CheckIcon, ExternalLinkIcon } from "@radix-ui/react-icons";
 import { Id } from "../convex/_generated/dataModel";
 import { useTheme } from "./context/ThemeContext";
 import { triggerSelectionHaptic, triggerSuccessHaptic } from "./lib/haptics";
@@ -800,7 +800,14 @@ function App() {
                       </p>
                       <div style={{ marginBottom: "16px" }}>
                         <a href="/about" className="footer-link about-link">
-                          About
+                          About{" "}
+                          <ExternalLinkIcon
+                            style={{
+                              display: "inline",
+                              marginLeft: "4px",
+                              verticalAlign: "middle",
+                            }}
+                          />
                         </a>
                       </div>
                       <ul className="feature-showcase-list">
@@ -1199,7 +1206,14 @@ function App() {
                 </p>
                 <div style={{ marginBottom: "16px" }}>
                   <a href="/about" className="footer-link about-link">
-                    About
+                    About{" "}
+                    <ExternalLinkIcon
+                      style={{
+                        display: "inline",
+                        marginLeft: "4px",
+                        verticalAlign: "middle",
+                      }}
+                    />
                   </a>
                 </div>
                 <ul className="feature-showcase-list">

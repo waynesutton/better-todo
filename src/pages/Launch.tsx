@@ -11,6 +11,7 @@ export function Launch() {
   const sections = [
     { id: "intro", title: "Introduction" },
     { id: "key-features", title: "Key features" },
+    { id: "projects", title: "Organize with projects" },
     { id: "developers", title: "Built for developers" },
     { id: "themes", title: "Three beautiful themes" },
     { id: "timer", title: "Built-in Pomodoro timer" },
@@ -177,6 +178,22 @@ export function Launch() {
             <li>Archive and bulk actions for easy management</li>
             <li>Built-in Pomodoro timer for productivity</li>
           </ul>
+        </section>
+
+        <section id="projects" className="launch-section">
+          <h2 className="section-title">Organize with projects</h2>
+          <p>
+            Group related dates into projects for better organization. Whether
+            you're tracking a sprint, planning a launch, or managing multiple
+            initiatives, projects help you keep everything organized in the
+            sidebar.
+          </p>
+          <p>
+            Create custom projects, add dates to them, and collapse or expand
+            them as needed. Projects sync in real-time across all your devices
+            for authenticated users, making it easy to stay organized wherever
+            you work.
+          </p>
         </section>
 
         <section id="developers" className="launch-section">

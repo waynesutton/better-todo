@@ -438,11 +438,14 @@ export function TodoItem({
               )
             ) : (
               <div className="menu-dropdown" ref={menuDropdownRef}>
+                {/* Pin */}
                 {!completed && !isBacklogView && (
                   <div className="menu-item" onClick={handleTogglePin}>
                     {pinned ? "Unpin" : "Pin"}
                   </div>
                 )}
+                
+                {/* Add to Backlog */}
                 {!completed && !isPinnedView && (
                   <div className="menu-item" onClick={handleToggleBacklog}>
                     {backlog || isBacklogView
@@ -450,54 +453,94 @@ export function TodoItem({
                       : "Add to Backlog"}
                   </div>
                 )}
+                
+                {/* Add Subtask */}
                 {!completed && !isBacklogView && (
                   <div className="menu-item" onClick={handleAddSubtask}>
-                    Add subtask
+                    Add Subtask
                   </div>
                 )}
+
+                {/* Separator */}
+                {!isBacklogView && (
+                  <div className="menu-separator"></div>
+                )}
+
+                {/* Move options */}
                 {!isBacklogView && (
                   <>
                     <div
                       className="menu-item"
-                      onClick={() => {
-                        // Check authentication before allowing move
-                        if (!isAuthenticated && onRequireSignInForMenu) {
+                      onClick={async () => {
+                        try {
+                          triggerHaptic("light");
+                          if (!isAuthenticated && onRequireSignInForMenu) {
+                            setShowMenu(false);
+                            onRequireSignInForMenu();
+                            return;
+                          }
                           setShowMenu(false);
-                          onRequireSignInForMenu();
-                          return;
+                          await onMoveToToday();
+                        } catch (error) {
+                          console.error("Error moving to today:", error);
                         }
-                        onMoveToTomorrow();
-                        setShowMenu(false);
-                      }}
-                    >
-                      Move to Tomorrow
-                    </div>
-                    <div
-                      className="menu-item"
-                      onClick={() => {
-                        // Check authentication before allowing move
-                        if (!isAuthenticated && onRequireSignInForMenu) {
-                          setShowMenu(false);
-                          onRequireSignInForMenu();
-                          return;
-                        }
-                        onMoveToToday();
-                        setShowMenu(false);
                       }}
                     >
                       Move to Today
                     </div>
                     <div
                       className="menu-item"
-                      onClick={() => {
-                        // Check authentication before allowing move
-                        if (!isAuthenticated && onRequireSignInForMenu) {
+                      onClick={async () => {
+                        try {
+                          triggerHaptic("light");
+                          if (!isAuthenticated && onRequireSignInForMenu) {
+                            setShowMenu(false);
+                            onRequireSignInForMenu();
+                            return;
+                          }
                           setShowMenu(false);
-                          onRequireSignInForMenu();
-                          return;
+                          await onMoveToTomorrow();
+                        } catch (error) {
+                          console.error("Error moving to tomorrow:", error);
                         }
-                        onMoveToPreviousDay();
-                        setShowMenu(false);
+                      }}
+                    >
+                      Move to Tomorrow
+                    </div>
+                    <div
+                      className="menu-item"
+                      onClick={async () => {
+                        try {
+                          triggerHaptic("light");
+                          if (!isAuthenticated && onRequireSignInForMenu) {
+                            setShowMenu(false);
+                            onRequireSignInForMenu();
+                            return;
+                          }
+                          setShowMenu(false);
+                          await onMoveToNextDay();
+                        } catch (error) {
+                          console.error("Error moving to next day:", error);
+                        }
+                      }}
+                    >
+                      Move to Next Day
+                    </div>
+                    <div
+                      className="menu-item"
+                      onClick={async () => {
+                        try {
+                          triggerHaptic("light");
+                          if (!isAuthenticated && onRequireSignInForMenu) {
+                            setShowMenu(false);
+                            onRequireSignInForMenu();
+                            return;
+                          }
+                          setShowMenu(false);
+                          await onMoveToPreviousDay();
+                        } catch (error) {
+                          console.error("Error moving to previous day:", error);
+                        }
                       }}
                     >
                       Move to Previous Day
@@ -505,22 +548,7 @@ export function TodoItem({
                     <div
                       className="menu-item"
                       onClick={() => {
-                        // Check authentication before allowing move
-                        if (!isAuthenticated && onRequireSignInForMenu) {
-                          setShowMenu(false);
-                          onRequireSignInForMenu();
-                          return;
-                        }
-                        onMoveToNextDay();
-                        setShowMenu(false);
-                      }}
-                    >
-                      Move to Next Day
-                    </div>
-                    <div
-                      className="menu-item"
-                      onClick={() => {
-                        // Check authentication before allowing move
+                        triggerHaptic("light");
                         if (!isAuthenticated && onRequireSignInForMenu) {
                           setShowMenu(false);
                           onRequireSignInForMenu();
@@ -530,10 +558,15 @@ export function TodoItem({
                         setShowMenu(false);
                       }}
                     >
-                      Move to Date...
+                      Move to Date…
                     </div>
                   </>
                 )}
+
+                {/* Separator */}
+                <div className="menu-separator"></div>
+
+                {/* Delete */}
                 <div className="menu-item danger" onClick={handleDeleteClick}>
                   Delete
                 </div>

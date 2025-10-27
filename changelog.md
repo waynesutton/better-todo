@@ -4,6 +4,18 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.006] - 2025-10-26 - READY FOR NETLIFY DEPLOYMENT
+
+### Changed
+
+- **Folders renamed to Projects** - Updated terminology throughout the app
+  - "Folders" now called "Projects" in UI and documentation
+  - "+ Add Folder" button changed to "+ Add Project"
+  - "Manage Folders" section renamed to "Manage Projects"
+  - Menu options updated: "Add to Project...", "Remove from Project", "Rename Project", "Archive Project", "Delete Project"
+  - More intuitive naming for organizing dates by project context
+  - Backend table name remains "folders" for database compatibility
+
 ## [v.005] - 2025-10-26 - READY FOR NETLIFY DEPLOYMENT
 
 ### Added

@@ -260,51 +260,79 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
     };
 
     const handleMoveToPreviousDay = async (todoId: Id<"todos">) => {
-      const previousDate = format(
-        subDays(new Date(date + "T00:00:00"), 1),
-        "yyyy-MM-dd",
-      );
-      await moveTodoToDate({
-        todoId,
-        newDate: previousDate,
-      });
+      try {
+        const previousDate = format(
+          subDays(new Date(date + "T00:00:00"), 1),
+          "yyyy-MM-dd",
+        );
+        await moveTodoToDate({
+          todoId,
+          newDate: previousDate,
+        });
+      } catch (error) {
+        console.error("Error moving todo to previous day:", error);
+      }
     };
 
     const handleMoveToNextDay = async (todoId: Id<"todos">) => {
-      const nextDate = format(
-        addDays(new Date(date + "T00:00:00"), 1),
-        "yyyy-MM-dd",
-      );
-      await moveTodoToDate({
-        todoId,
-        newDate: nextDate,
-      });
+      try {
+        const nextDate = format(
+          addDays(new Date(date + "T00:00:00"), 1),
+          "yyyy-MM-dd",
+        );
+        await moveTodoToDate({
+          todoId,
+          newDate: nextDate,
+        });
+      } catch (error) {
+        console.error("Error moving todo to next day:", error);
+      }
     };
 
     const handleMoveToTomorrow = async (todoId: Id<"todos">) => {
-      const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
-      await moveTodoToDate({
-        todoId,
-        newDate: tomorrow,
-      });
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = format(addDays(today, 1), "yyyy-MM-dd");
+        await moveTodoToDate({
+          todoId,
+          newDate: tomorrow,
+        });
+      } catch (error) {
+        console.error("Error moving todo to tomorrow:", error);
+      }
     };
 
     const handleMoveToToday = async (todoId: Id<"todos">) => {
-      const today = format(new Date(), "yyyy-MM-dd");
-      await moveTodoToDate({
-        todoId,
-        newDate: today,
-      });
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = format(today, "yyyy-MM-dd");
+        await moveTodoToDate({
+          todoId,
+          newDate: todayStr,
+        });
+      } catch (error) {
+        console.error("Error moving todo to today:", error);
+      }
     };
 
     const handleMoveToCustomDate = async (
       todoId: Id<"todos">,
       newDate: string,
     ) => {
-      await moveTodoToDate({
-        todoId,
-        newDate,
-      });
+      try {
+        // Don't move if it's the same date
+        if (newDate === date) {
+          return;
+        }
+        await moveTodoToDate({
+          todoId,
+          newDate,
+        });
+      } catch (error) {
+        console.error("Error moving todo to custom date:", error);
+      }
     };
 
     const [newNoteId, setNewNoteId] = useState<Id<"notes"> | null>(null);

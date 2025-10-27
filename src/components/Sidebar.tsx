@@ -71,12 +71,12 @@ export function Sidebar({
     string | null
   >(null);
   const [folderNameInput, setFolderNameInput] = useState("");
-  const [showAddFolder, setShowAddFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
-  const [showFolderSelector, setShowFolderSelector] = useState<string | null>(
+  const [showAddProject, setShowAddProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [showProjectSelector, setShowProjectSelector] = useState<string | null>(
     null,
   );
-  const [showManageFolders, setShowManageFolders] = useState(false);
+  const [showManageProjects, setShowManageProjects] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     date: string;
@@ -178,65 +178,126 @@ export function Sidebar({
   };
 
   const handleCopyToTomorrow = async (sourceDate: string) => {
-    const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
-    await copyTodosToDate({ sourceDate, targetDate: tomorrow });
-    setShowMenuForDate(null);
+    try {
+      // Calculate tomorrow from today (not from sourceDate)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = format(addDays(today, 1), "yyyy-MM-dd");
+      
+      // Don't copy if source and target are the same
+      if (sourceDate === tomorrow) {
+        return;
+      }
+      
+      await copyTodosToDate({ sourceDate, targetDate: tomorrow });
+      setShowMenuForDate(null);
+    } catch (error) {
+      console.error("Error copying to tomorrow:", error);
+      setShowMenuForDate(null);
+    }
   };
 
   const handleCopyToPreviousDay = async (sourceDate: string) => {
-    const previousDay = format(
-      subDays(new Date(sourceDate + "T00:00:00"), 1),
-      "yyyy-MM-dd",
-    );
-    await copyTodosToDate({ sourceDate, targetDate: previousDay });
-    setShowMenuForDate(null);
+    try {
+      const previousDay = format(
+        subDays(new Date(sourceDate + "T00:00:00"), 1),
+        "yyyy-MM-dd",
+      );
+      await copyTodosToDate({ sourceDate, targetDate: previousDay });
+      setShowMenuForDate(null);
+    } catch (error) {
+      console.error("Error copying to previous day:", error);
+      setShowMenuForDate(null);
+    }
   };
 
   const handleCopyToNextDay = async (sourceDate: string) => {
-    const nextDay = format(
-      addDays(new Date(sourceDate + "T00:00:00"), 1),
-      "yyyy-MM-dd",
-    );
-    await copyTodosToDate({ sourceDate, targetDate: nextDay });
-    setShowMenuForDate(null);
+    try {
+      const nextDay = format(
+        addDays(new Date(sourceDate + "T00:00:00"), 1),
+        "yyyy-MM-dd",
+      );
+      await copyTodosToDate({ sourceDate, targetDate: nextDay });
+      setShowMenuForDate(null);
+    } catch (error) {
+      console.error("Error copying to next day:", error);
+      setShowMenuForDate(null);
+    }
   };
 
   const handleCopyToCustomDate = async (sourceDate: string) => {
     if (customDate) {
-      await copyTodosToDate({ sourceDate, targetDate: customDate });
-      setShowMenuForDate(null);
-      setShowDatePicker(null);
-      setCustomDate("");
+      try {
+        // Don't copy if source and target are the same
+        if (sourceDate === customDate) {
+          setShowDatePicker(null);
+          setCustomDate("");
+          setShowMenuForDate(null);
+          return;
+        }
+        
+        await copyTodosToDate({ sourceDate, targetDate: customDate });
+        setShowMenuForDate(null);
+        setShowDatePicker(null);
+        setCustomDate("");
+      } catch (error) {
+        console.error("Error copying to custom date:", error);
+        setShowMenuForDate(null);
+        setShowDatePicker(null);
+        setCustomDate("");
+      }
     }
   };
 
   const handleArchiveDate = async (date: string) => {
-    await archiveDate({ date });
-    setShowMenuForDate(null);
+    try {
+      await archiveDate({ date });
+      setShowMenuForDate(null);
+    } catch (error) {
+      console.error("Error archiving date:", error);
+      setShowMenuForDate(null);
+    }
   };
 
   const handleUnarchiveDate = async (date: string) => {
-    // Check if date is in a folder and remove it
-    const folderForDate = getFolderForDate(date);
-    if (folderForDate) {
-      await removeDateFromFolder({ date });
+    try {
+      // Check if date is in a folder and remove it
+      const folderForDate = getFolderForDate(date);
+      if (folderForDate) {
+        await removeDateFromFolder({ date });
+      }
+      await unarchiveDate({ date });
+      setShowMenuForDate(null);
+    } catch (error) {
+      console.error("Error unarchiving date:", error);
+      setShowMenuForDate(null);
     }
-    await unarchiveDate({ date });
-    setShowMenuForDate(null);
   };
 
   const handleSetLabel = async (date: string) => {
     if (customLabel.trim()) {
-      await setDateLabel({ date, label: customLabel.trim() });
-      setShowMenuForDate(null);
-      setShowRenameInput(null);
-      setCustomLabel("");
+      try {
+        await setDateLabel({ date, label: customLabel.trim() });
+        setShowMenuForDate(null);
+        setShowRenameInput(null);
+        setCustomLabel("");
+      } catch (error) {
+        console.error("Error setting label:", error);
+        setShowMenuForDate(null);
+        setShowRenameInput(null);
+        setCustomLabel("");
+      }
     }
   };
 
   const handleRemoveLabel = async (date: string) => {
-    await removeDateLabel({ date });
-    setShowMenuForDate(null);
+    try {
+      await removeDateLabel({ date });
+      setShowMenuForDate(null);
+    } catch (error) {
+      console.error("Error removing label:", error);
+      setShowMenuForDate(null);
+    }
   };
 
   const handleDeleteDate = (date: string) => {
@@ -264,75 +325,129 @@ export function Sidebar({
     setConfirmDialog({ isOpen: false, date: "", formattedDate: "" });
   };
 
-  // Handler for creating a new folder
+  // Handler for creating a new project
   const handleCreateFolder = async () => {
-    if (newFolderName.trim()) {
-      await createFolder({ name: newFolderName.trim() });
-      setNewFolderName("");
-      setShowAddFolder(false);
+    if (newProjectName.trim()) {
+      try {
+        await createFolder({ name: newProjectName.trim() });
+        setNewProjectName("");
+        setShowAddProject(false);
+      } catch (error) {
+        console.error("Error creating project:", error);
+        setNewProjectName("");
+        setShowAddProject(false);
+      }
     }
   };
 
   // Handler for renaming a folder
   const handleRenameFolder = async (folderId: Id<"folders">) => {
     if (folderNameInput.trim()) {
-      await renameFolder({ folderId, name: folderNameInput.trim() });
-      setShowRenameFolderInput(null);
-      setFolderNameInput("");
-      setShowFolderMenu(null);
+      try {
+        await renameFolder({ folderId, name: folderNameInput.trim() });
+        setShowRenameFolderInput(null);
+        setFolderNameInput("");
+        setShowFolderMenu(null);
+      } catch (error) {
+        console.error("Error renaming project:", error);
+        setShowRenameFolderInput(null);
+        setFolderNameInput("");
+        setShowFolderMenu(null);
+      }
     }
   };
 
   // Handler for archiving a folder
   const handleArchiveFolder = async (folderId: Id<"folders">) => {
-    await archiveFolder({ folderId });
-    setShowFolderMenu(null);
+    try {
+      await archiveFolder({ folderId });
+      setShowFolderMenu(null);
+    } catch (error) {
+      console.error("Error archiving project:", error);
+      setShowFolderMenu(null);
+    }
   };
 
   // Handler for unarchiving a folder
   const handleUnarchiveFolder = async (folderId: Id<"folders">) => {
-    await unarchiveFolder({ folderId });
-    setShowFolderMenu(null);
+    try {
+      await unarchiveFolder({ folderId });
+      setShowFolderMenu(null);
+    } catch (error) {
+      console.error("Error unarchiving project:", error);
+      setShowFolderMenu(null);
+    }
   };
 
   // Handler for deleting a folder
   const handleDeleteFolder = async (folderId: Id<"folders">) => {
-    await deleteFolder({ folderId });
-    setShowFolderMenu(null);
+    try {
+      await deleteFolder({ folderId });
+      setShowFolderMenu(null);
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      setShowFolderMenu(null);
+    }
   };
 
   // Handler for archiving a month group
   const handleArchiveMonthGroup = async (monthGroupId: Id<"monthGroups">) => {
-    await archiveMonthGroup({ monthGroupId });
-    setShowMonthGroupMenu(null);
+    try {
+      await archiveMonthGroup({ monthGroupId });
+      setShowMonthGroupMenu(null);
+    } catch (error) {
+      console.error("Error archiving month group:", error);
+      setShowMonthGroupMenu(null);
+    }
   };
 
   // Handler for unarchiving a month group
   const handleUnarchiveMonthGroup = async (monthGroupId: Id<"monthGroups">) => {
-    await unarchiveMonthGroup({ monthGroupId });
-    setShowMonthGroupMenu(null);
+    try {
+      await unarchiveMonthGroup({ monthGroupId });
+      setShowMonthGroupMenu(null);
+    } catch (error) {
+      console.error("Error unarchiving month group:", error);
+      setShowMonthGroupMenu(null);
+    }
   };
 
   // Handler for deleting a month group
   const handleDeleteMonthGroup = async (monthGroupId: Id<"monthGroups">) => {
-    await deleteMonthGroup({ monthGroupId });
-    setShowMonthGroupMenu(null);
+    try {
+      await deleteMonthGroup({ monthGroupId });
+      setShowMonthGroupMenu(null);
+    } catch (error) {
+      console.error("Error deleting month group:", error);
+      setShowMonthGroupMenu(null);
+    }
   };
 
   // Handler for deleting all archived dates
   const handleDeleteAllArchived = async () => {
     if (isAuthenticated) {
-      await deleteAllArchivedDates({});
-      setConfirmDeleteArchived(false);
+      try {
+        await deleteAllArchivedDates({});
+        setConfirmDeleteArchived(false);
+      } catch (error) {
+        console.error("Error deleting all archived dates:", error);
+        setConfirmDeleteArchived(false);
+      }
     }
   };
 
   // Handler for renaming backlog
   const handleRenameBacklog = async () => {
     if (backlogLabelInput.trim() && isAuthenticated) {
-      await setBacklogLabel({ label: backlogLabelInput.trim() });
-      setShowRenameBacklog(false);
-      setBacklogLabelInput("");
+      try {
+        await setBacklogLabel({ label: backlogLabelInput.trim() });
+        setShowRenameBacklog(false);
+        setBacklogLabelInput("");
+      } catch (error) {
+        console.error("Error renaming backlog:", error);
+        setShowRenameBacklog(false);
+        setBacklogLabelInput("");
+      }
     }
   };
 
@@ -341,15 +456,26 @@ export function Sidebar({
     date: string,
     folderId: Id<"folders">,
   ) => {
-    await addDateToFolder({ folderId, date });
-    setShowFolderSelector(null);
-    setShowMenuForDate(null);
+    try {
+      await addDateToFolder({ folderId, date });
+      setShowProjectSelector(null);
+      setShowMenuForDate(null);
+    } catch (error) {
+      console.error("Error adding date to project:", error);
+      setShowProjectSelector(null);
+      setShowMenuForDate(null);
+    }
   };
 
   // Handler for removing date from folder
   const handleRemoveDateFromFolder = async (date: string) => {
-    await removeDateFromFolder({ date });
-    setShowMenuForDate(null);
+    try {
+      await removeDateFromFolder({ date });
+      setShowMenuForDate(null);
+    } catch (error) {
+      console.error("Error removing date from project:", error);
+      setShowMenuForDate(null);
+    }
   };
 
   // Get folder for a date
@@ -494,12 +620,12 @@ export function Sidebar({
           setShowRenameFolderInput(null);
           setFolderNameInput("");
         }
-        if (showAddFolder) {
-          setShowAddFolder(false);
-          setNewFolderName("");
+        if (showAddProject) {
+          setShowAddProject(false);
+          setNewProjectName("");
         }
-        if (showFolderSelector) {
-          setShowFolderSelector(null);
+        if (showProjectSelector) {
+          setShowProjectSelector(null);
         }
         if (showRenameBacklog) {
           setShowRenameBacklog(false);
@@ -515,14 +641,14 @@ export function Sidebar({
       const isInsideMenuDropdown = target.closest(".date-menu-dropdown");
       const isInsideMenuButton = target.closest(".date-menu-button");
       const isInsideDatePicker = target.closest(".date-picker-modal");
-      const isInsideFolderSelector = target.closest(".folder-selector");
+      const isInsideProjectSelector = target.closest(".project-selector");
 
       // Close menus if clicking outside
       if (
         !isInsideMenuDropdown &&
         !isInsideMenuButton &&
         !isInsideDatePicker &&
-        !isInsideFolderSelector
+        !isInsideProjectSelector
       ) {
         if (showMenuForDate) {
           setShowMenuForDate(null);
@@ -541,9 +667,9 @@ export function Sidebar({
         setCustomDate("");
       }
 
-      // Close folder selector if clicking outside
-      if (!isInsideFolderSelector && showFolderSelector) {
-        setShowFolderSelector(null);
+      // Close project selector if clicking outside
+      if (!isInsideProjectSelector && showProjectSelector) {
+        setShowProjectSelector(null);
       }
     };
 
@@ -560,8 +686,8 @@ export function Sidebar({
     showFolderMenu,
     showMonthGroupMenu,
     showRenameFolderInput,
-    showAddFolder,
-    showFolderSelector,
+    showAddProject,
+    showProjectSelector,
     showRenameBacklog,
   ]);
 
@@ -735,18 +861,18 @@ export function Sidebar({
                               className="menu-item"
                               onClick={() => handleRemoveDateFromFolder(date)}
                             >
-                              Remove from Folder
+                              Remove from Project
                             </div>
                           ) : (
                             <div
                               className="menu-item"
                               onClick={() => {
-                                setShowFolderSelector(date);
+                                setShowProjectSelector(date);
                                 setShowDatePicker(null);
                                 setShowRenameInput(null);
                               }}
                             >
-                              Add to Folder...
+                              Add to Project...
                             </div>
                           )}
                         </>
@@ -854,9 +980,9 @@ export function Sidebar({
                     </button>
                   </div>
                 )}
-                {showFolderSelector === date && (
-                  <div className="date-picker-modal folder-selector">
-                    <div className="folder-selector-title">Select Folder</div>
+                {showProjectSelector === date && (
+                  <div className="date-picker-modal project-selector">
+                    <div className="folder-selector-title">Select Project</div>
                     <div className="folder-selector-list">
                       {folders
                         .filter((f) => !f.archived)
@@ -875,7 +1001,7 @@ export function Sidebar({
                     </div>
                     <button
                       className="date-picker-button cancel"
-                      onClick={() => setShowFolderSelector(null)}
+                      onClick={() => setShowProjectSelector(null)}
                     >
                       Cancel
                     </button>
@@ -991,19 +1117,19 @@ export function Sidebar({
                         setShowFolderMenu(null);
                       }}
                     >
-                      Rename Folder
+                      Rename Project
                     </div>
                     <div
                       className="menu-item"
                       onClick={() => handleArchiveFolder(folder._id)}
                     >
-                      Archive Folder
+                      Archive Project
                     </div>
                     <div
                       className="menu-item danger"
                       onClick={() => handleDeleteFolder(folder._id)}
                     >
-                      Delete Folder
+                      Delete Project
                     </div>
                   </div>
                 )}
@@ -1014,7 +1140,7 @@ export function Sidebar({
                     type="text"
                     value={folderNameInput}
                     onChange={(e) => setFolderNameInput(e.target.value)}
-                    placeholder="Enter folder name..."
+                    placeholder="Enter project name..."
                     className="date-picker-input"
                     autoFocus
                     onKeyDown={(e) => {
@@ -1080,7 +1206,7 @@ export function Sidebar({
                               className="menu-item"
                               onClick={() => handleRemoveDateFromFolder(date)}
                             >
-                              Remove from Folder
+                              Remove from Project
                             </div>
                             <div
                               className="menu-item"
@@ -1098,32 +1224,32 @@ export function Sidebar({
             </div>
           ))}
 
-          {/* Add Folder button */}
+          {/* Add Project button */}
           {isAuthenticated && (
             <div className="sidebar-add-folder">
-              {!showAddFolder ? (
+              {!showAddProject ? (
                 <button
                   className="add-folder-button"
-                  onClick={() => setShowAddFolder(true)}
+                  onClick={() => setShowAddProject(true)}
                 >
                   <Plus size={14} />
-                  <span>Add Folder</span>
+                  <span>Add Project</span>
                 </button>
               ) : (
                 <div className="add-folder-input-container">
                   <input
                     type="text"
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    placeholder="Enter folder name..."
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    placeholder="Enter project name..."
                     className="add-folder-input"
                     autoFocus
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && newFolderName.trim()) {
+                      if (e.key === "Enter" && newProjectName.trim()) {
                         handleCreateFolder();
                       } else if (e.key === "Escape") {
-                        setShowAddFolder(false);
-                        setNewFolderName("");
+                        setShowAddProject(false);
+                        setNewProjectName("");
                       }
                     }}
                   />
@@ -1131,15 +1257,15 @@ export function Sidebar({
                     <button
                       className="add-folder-save-button"
                       onClick={handleCreateFolder}
-                      disabled={!newFolderName.trim()}
+                      disabled={!newProjectName.trim()}
                     >
                       Create
                     </button>
                     <button
                       className="add-folder-cancel-button"
                       onClick={() => {
-                        setShowAddFolder(false);
-                        setNewFolderName("");
+                        setShowAddProject(false);
+                        setNewProjectName("");
                       }}
                     >
                       Cancel
@@ -1258,19 +1384,19 @@ export function Sidebar({
                                 setShowFolderMenu(null);
                               }}
                             >
-                              Rename Folder
+                              Rename Project
                             </div>
                             <div
                               className="menu-item"
                               onClick={() => handleUnarchiveFolder(folder._id)}
                             >
-                              Unarchive Folder
+                              Unarchive Project
                             </div>
                             <div
                               className="menu-item danger"
                               onClick={() => handleDeleteFolder(folder._id)}
                             >
-                              Delete Folder
+                              Delete Project
                             </div>
                           </div>
                         )}
@@ -1308,7 +1434,7 @@ export function Sidebar({
                                         handleRemoveDateFromFolder(date)
                                       }
                                     >
-                                      Remove from Folder
+                                      Remove from Project
                                     </div>
                                     <div
                                       className="menu-item"
@@ -1402,22 +1528,22 @@ export function Sidebar({
             </div>
           )}
 
-          {/* Manage Folders section - shows only empty folders (folders without dates) */}
+          {/* Manage Projects section - shows only empty projects (projects without dates) */}
           {isAuthenticated &&
             folders.filter((f) => !f.archived && f.dates.length === 0).length >
               0 && (
               <div className="sidebar-archive-section">
                 <div
                   className="sidebar-archive-header"
-                  onClick={() => setShowManageFolders(!showManageFolders)}
+                  onClick={() => setShowManageProjects(!showManageProjects)}
                 >
                   <span
-                    className={`collapse-icon ${showManageFolders ? "" : "collapsed"}`}
+                    className={`collapse-icon ${showManageProjects ? "" : "collapsed"}`}
                   >
                     ▼
                   </span>
                   <span>
-                    Manage Folders (
+                    Manage Projects (
                     {
                       folders.filter((f) => !f.archived && f.dates.length === 0)
                         .length
@@ -1425,7 +1551,7 @@ export function Sidebar({
                     )
                   </span>
                 </div>
-                {showManageFolders && (
+                {showManageProjects && (
                   <div className="sidebar-archive-dates">
                     {folders
                       .filter((f) => !f.archived && f.dates.length === 0)
@@ -1462,7 +1588,7 @@ export function Sidebar({
                                     setShowFolderMenu(null);
                                   }}
                                 >
-                                  Rename Folder
+                                  Rename Project
                                 </div>
                                 <div
                                   className="menu-item"
@@ -1470,13 +1596,13 @@ export function Sidebar({
                                     handleArchiveFolder(folder._id)
                                   }
                                 >
-                                  Archive Folder
+                                  Archive Project
                                 </div>
                                 <div
                                   className="menu-item danger"
                                   onClick={() => handleDeleteFolder(folder._id)}
                                 >
-                                  Delete Folder
+                                  Delete Project
                                 </div>
                               </div>
                             )}
@@ -1489,7 +1615,7 @@ export function Sidebar({
                                 onChange={(e) =>
                                   setFolderNameInput(e.target.value)
                                 }
-                                placeholder="Enter folder name..."
+                                placeholder="Enter project name..."
                                 className="date-picker-input"
                                 autoFocus
                                 onKeyDown={(e) => {

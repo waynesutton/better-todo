@@ -106,17 +106,17 @@ This document describes the structure and purpose of each file in the Better Tod
   - `unarchiveDate` - Restore archived date to main list
   - `deleteAllArchivedDates` - Permanently delete all archived dates at once
 
-- `folders.ts` - Custom folder management for organizing dates:
-  - `getFolders` - Get all folders with their associated dates
-  - `getFolderDates` - Get dates for a specific folder
-  - `getFolderForDate` - Check if a date belongs to a folder
-  - `createFolder` - Create new folder with custom name
-  - `renameFolder` - Update folder name
-  - `archiveFolder` - Archive a folder
-  - `unarchiveFolder` - Restore archived folder
-  - `deleteFolder` - Delete folder and all associations
-  - `addDateToFolder` - Associate a date with a folder
-  - `removeDateFromFolder` - Remove date from folder
+- `folders.ts` - Custom project management for organizing dates (UI calls them "Projects"):
+  - `getFolders` - Get all projects with their associated dates
+  - `getFolderDates` - Get dates for a specific project
+  - `getFolderForDate` - Check if a date belongs to a project
+  - `createFolder` - Create new project with custom name
+  - `renameFolder` - Update project name
+  - `archiveFolder` - Archive a project
+  - `unarchiveFolder` - Restore archived project
+  - `deleteFolder` - Delete project and all associations
+  - `addDateToFolder` - Associate a date with a project
+  - `removeDateFromFolder` - Remove date from project
 
 - `monthGroups.ts` - Auto-grouping for completed months:
   - `getMonthGroups` - Get all month groups with their associated dates
@@ -270,32 +270,32 @@ This document describes the structure and purpose of each file in the Better Tod
   - Collapse button next to "better todo" title (PanelLeft icon)
   - Smooth animated transitions between full (260px) and collapsed (60px) states
   - Custom date labels (rename dates with any text while preserving chronological order)
-  - **Custom folders** for organizing dates (collapsible, renameable, archivable, deletable)
+  - **Custom projects** for organizing dates (collapsible, renameable, archivable, deletable) - UI calls them "Projects"
   - **Auto-grouped month sections** for completed months (collapsible, archivable, deletable)
-  - "+ Add Folder" button at bottom (only shows when authenticated)
+  - "+ Add Project" button at bottom (only shows when authenticated)
   - Active date highlighting (#0076C6 accent color)
   - Theme toggle (half-moon icon) at bottom of sidebar above login link
   - Three-dot menu per date with options:
     - Add/edit/remove custom date label
-    - Add to Folder (shows folder selector modal when folders exist)
-    - Remove from Folder (when date is in a folder)
+    - Add to Project (shows project selector modal when projects exist)
+    - Remove from Project (when date is in a project)
     - Copy all non-archived todos to tomorrow, previous/next day, or custom date
     - Archive the entire date
     - Delete the date and all its content
-  - Three-dot menu for dates inside folders with options:
-    - Remove from Folder
+  - Three-dot menu for dates inside projects with options:
+    - Remove from Project
     - Archive Date
     - Delete Date
-  - Three-dot menu per folder with options:
-    - Rename folder
-    - Archive folder
-    - Delete folder
+  - Three-dot menu per project with options:
+    - Rename project
+    - Archive project
+    - Delete project
   - Three-dot menu per month group with options:
     - Archive month
     - Delete month
   - Archived section (collapsible) includes:
     - Archived dates
-    - Archived folders with their dates
+    - Archived projects with their dates
     - Archived month groups with their dates
     - Delete All button to permanently remove all archived dates
   - Clerk authentication integration:

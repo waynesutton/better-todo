@@ -28,7 +28,7 @@ An open source, real-time open-source to-do list that never falls out of sync �
 - **Archive dates** - hide completed days while preserving data
 - **Todo count badges** - see uncompleted todo counts next to each date in sidebar
 - **Pin todos** - pin important todos with visual pin icons and sort them to the top
-- **Custom folders** - organize dates into collapsible folders with custom names
+- **Custom projects** - organize dates into collapsible projects with custom names
 - **Auto-grouped months** - completed months automatically group into collapsible sections
 - **Pomodoro timer** - built-in productivity timer with sound notifications and rotating completion sounds
 - **Unsplash background images** - Optional beautiful nature images in Pomodoro full-screen mode with glass morphism overlay
@@ -167,20 +167,20 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
 - **Custom labels** - add text labels to dates (e.g., "Sprint Planning", "Weekly Review")
   - Labels display instead of dates but preserve chronological order
   - Add, edit, or remove labels via the three-dot menu
-- **Custom folders** - organize dates into collapsible folders with custom names
-  - Create folders via "+ Add Folder" button (authenticated users only)
-  - Add dates to folders via three-dot menu "Add to Folder..." option
-  - Folders with dates appear between active dates and archived section
-  - "Manage Folders" section below archived list shows all folders (including empty ones)
-  - Rename, archive, and delete folders via three-dot menu in each section
-  - Empty folders can be deleted from "Manage Folders" section
+- **Custom projects** - organize dates into collapsible projects with custom names
+  - Create projects via "+ Add Project" button (authenticated users only)
+  - Add dates to projects via three-dot menu "Add to Project..." option
+  - Projects with dates appear between active dates and archived section
+  - "Manage Projects" section below archived list shows all projects (including empty ones)
+  - Rename, archive, and delete projects via three-dot menu in each section
+  - Empty projects can be deleted from "Manage Projects" section
 - **Auto-grouped months** - completed months automatically group into collapsible sections
   - Named by month and year (e.g., "January 2025")
   - Only displays after a full month has passed
   - Archive, unarchive, and delete month groups
 - **Three-dot menu** next to dates with options to:
   - Add/edit/remove custom date label
-  - Add to Folder (when folders exist) or Remove from Folder
+  - Add to Project (when projects exist) or Remove from Project
   - Copy all non-archived todos to tomorrow, previous/next day, or custom date
   - Archive the entire date
   - Delete the date and all its content (with confirmation)
@@ -300,7 +300,7 @@ better-todo/
 │   ├── dates.ts               # Date operations and queries
 │   ├── dateLabels.ts          # Custom date labels
 │   ├── archivedDates.ts       # Archived dates
-│   ├── folders.ts             # Custom folder management
+│   ├── folders.ts             # Custom project management
 │   ├── monthGroups.ts         # Auto-grouped month management
 │   ├── pomodoro.ts            # Pomodoro timer functionality
 │   ├── unsplash.ts            # Unsplash background image fetching
@@ -310,7 +310,7 @@ better-todo/
 │   ├── components/            # React components
 │   │   ├── TodoItem.tsx       # Individual todo component
 │   │   ├── TodoList.tsx       # Todo list with drag and drop
-│   │   ├── Sidebar.tsx        # Resizable sidebar with dates, folders, and month groups
+│   │   ├── Sidebar.tsx        # Resizable sidebar with dates, projects, and month groups
 │   │   ├── NotesSection.tsx   # Notes with line numbers
 │   │   ├── ArchiveSection.tsx # Archived todos
 │   │   ├── SearchModal.tsx    # Search modal
