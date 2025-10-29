@@ -3,8 +3,8 @@ import { v } from "convex/values";
 
 // Search result type
 const searchResultValidator = v.object({
-  _id: v.union(v.id("todos"), v.id("notes")),
-  type: v.union(v.literal("todo"), v.literal("note")),
+  _id: v.union(v.id("todos"), v.id("notes"), v.id("fullPageNotes")),
+  type: v.union(v.literal("todo"), v.literal("note"), v.literal("fullPageNote")),
   content: v.string(),
   title: v.optional(v.string()),
   date: v.string(),
@@ -32,7 +32,7 @@ export const searchAll = query({
 
     const results: Array<{
       _id: any;
-      type: "todo" | "note";
+      type: "todo" | "note" | "fullPageNote";
       content: string;
       title?: string;
       date: string;
@@ -86,6 +86,39 @@ export const searchAll = query({
         results.push({
           _id: note._id,
           type: "note",
+          content: note.content,
+          title: note.title,
+          date: note.date,
+        });
+      }
+    }
+
+    // Search full-page notes by content
+    const fullPageNotesByContent = await ctx.db
+      .query("fullPageNotes")
+      .withSearchIndex("search_content", (q) =>
+        q.search("content", args.searchQuery).eq("userId", userId),
+      )
+      .take(20);
+
+    // Search full-page notes by title
+    const fullPageNotesByTitle = await ctx.db
+      .query("fullPageNotes")
+      .withSearchIndex("search_title", (q) =>
+        q.search("title", args.searchQuery).eq("userId", userId),
+      )
+      .take(20);
+
+    // Combine full-page notes, avoiding duplicates
+    const fullPageNoteIds = new Set<string>();
+    const allFullPageNotes = [...fullPageNotesByTitle, ...fullPageNotesByContent];
+
+    for (const note of allFullPageNotes) {
+      if (!fullPageNoteIds.has(note._id)) {
+        fullPageNoteIds.add(note._id);
+        results.push({
+          _id: note._id,
+          type: "fullPageNote",
           content: note.content,
           title: note.title,
           date: note.date,

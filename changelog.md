@@ -4,6 +4,91 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.007] - 2025-10-29 - READY FOR NETLIFY DEPLOYMENT
+
+### Added
+
+- **Full-Page Notes** - Dedicated note-taking workspace for each date
+  - Create unlimited full-page notes per date with Chrome-style tabbed interface
+  - FileText icon in header to access full-page notes view
+  - FilePlus icon to create new notes within full-page notes page
+  - Checkbox icon to return to todos from full-page notes
+  - Single-click to start typing with automatic edit mode
+  - Double-click tab titles to rename notes
+  - Line numbers that scale with font size
+  - Markdown rendering and syntax highlighting for code blocks
+  - Auto-save on content changes
+  - Copy button for note content
+  - X button closes tab without deleting note from database
+  - Notes folder in sidebar shows all note titles for each date
+  - Click sidebar note title to open that note
+  - Active state indicator for currently selected notes
+  - Three-dot menu for rename and delete actions
+  - Font size integration with Todo Text Font Size setting
+  - Mobile-optimized with responsive design
+  - ESC key closes note menus
+  - Real-time sync across devices
+
+### Backend Changes
+
+- **Schema update** (`convex/schema.ts`)
+  - Added `fullPageNotes` table with fields: userId, date, title, content, order, collapsed, pinnedToTop
+  - Indexed by `by_user_and_date` for efficient querying
+  - Search indexes on `search_content` and `search_title` fields
+- **New Convex file** (`convex/fullPageNotes.ts`)
+  - `getFullPageNotesByDate` query: fetches all full-page notes for a date
+  - `getFullPageNote` query: fetches single note by ID
+  - `getFullPageNoteCounts` query: returns count of notes per date for sidebar
+  - `createFullPageNote` mutation: creates new note with auto-ordering
+  - `updateFullPageNote` mutation: updates title or content (idempotent, no pre-read)
+  - `deleteFullPageNote` mutation: permanently removes note
+  - `reorderFullPageNotes` mutation: updates order with parallel updates
+
+### Frontend Changes
+
+- **New Components**
+  - `FullPageNoteView.tsx`: Note editing/display with line numbers and syntax highlighting
+  - `FullPageNoteTabs.tsx`: Chrome-style tab interface with scrolling support
+- **App component** (`src/App.tsx`)
+  - Added full-page notes state management
+  - FileText icon navigation to full-page notes view
+  - Context-aware copy button (todos vs full-page notes)
+  - Checkbox icon to return to todos page
+  - Hidden footer on full-page note pages
+  - Font size application includes full-page notes and line numbers
+  - Mobile date format optimization (10/28/25)
+- **Sidebar component** (`src/components/Sidebar.tsx`)
+  - Collapsible "Notes" folder under dates with full-page notes
+  - Note titles clickable to open that note
+  - Three-dot menu for rename and delete actions
+  - Active state with dark transparent overlay for selected notes
+  - ESC key support for closing note menus
+  - Haptic feedback when clicking note links
+- **Launch page** (`src/pages/Launch.tsx`)
+  - Added full-page notes section with description
+  - Three screenshot images in gallery
+  - Updated navigation to include full-page notes link
+
+### Styling Changes
+
+- **Global CSS** (`src/styles/global.css`)
+  - Full-page note tabs with horizontal scrolling
+  - Tab styling: 120-200px width (desktop), 80-120px (mobile)
+  - Notes folder styling in sidebar
+  - Active note state with rgba(0, 0, 0, 0.2) overlay
+  - Three-dot menu always visible with opacity transitions
+  - Mobile-responsive padding and font sizes
+  - Line number scaling with font size
+
+### Documentation
+
+- **PRDs folder**
+  - Added `full-page-notes-feature.plan.md` with comprehensive feature documentation
+- **Updated files**
+  - `files.md`: Added full-page notes components and backend functions
+  - `README.md`: Updated with full-page notes feature
+  - `changelog.md`: This entry
+
 ## [v.006] - 2025-10-26 - READY FOR NETLIFY DEPLOYMENT
 
 ### Changed

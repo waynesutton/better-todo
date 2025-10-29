@@ -13,6 +13,7 @@ import type * as backlogLabel from "../backlogLabel.js";
 import type * as dateLabels from "../dateLabels.js";
 import type * as dates from "../dates.js";
 import type * as folders from "../folders.js";
+import type * as fullPageNotes from "../fullPageNotes.js";
 import type * as http from "../http.js";
 import type * as monthGroups from "../monthGroups.js";
 import type * as notes from "../notes.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   dateLabels: typeof dateLabels;
   dates: typeof dates;
   folders: typeof folders;
+  fullPageNotes: typeof fullPageNotes;
   http: typeof http;
   monthGroups: typeof monthGroups;
   notes: typeof notes;

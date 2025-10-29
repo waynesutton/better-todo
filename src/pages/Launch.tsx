@@ -11,6 +11,7 @@ export function Launch() {
   const sections = [
     { id: "intro", title: "Introduction" },
     { id: "key-features", title: "Key features" },
+    { id: "fullpage-notes", title: "Full-page notes" },
     { id: "projects", title: "Organize with projects" },
     { id: "developers", title: "Built for developers" },
     { id: "themes", title: "Three beautiful themes" },
@@ -25,6 +26,11 @@ export function Launch() {
       "/launchimages/tan-mode-task.png",
       "/launchimages/lightmode-task.png",
       "/launchimages/dark-mode-code.png",
+    ],
+    fullpageNotes: [
+      "/launchimages/dark-fullpage-code-text.png",
+      "/launchimages/light-fullpage-note-text.png",
+      "/launchimages/tan-fullpage-css-text.png",
     ],
     timer: [
       "/launchimages/timer-modal.png",
@@ -91,7 +97,7 @@ export function Launch() {
       window.addEventListener("keydown", handleKeyDown);
       return () => window.removeEventListener("keydown", handleKeyDown);
     }
-  }, [modalOpen]);
+  }, [modalOpen, currentImageSet.length]);
 
   return (
     <div className="launch-page" data-theme="tan">
@@ -117,6 +123,11 @@ export function Launch() {
               </a>
             </li>
           ))}
+          <li>
+            <a href="/changelog" onClick={() => setSidebarOpen(false)}>
+              Changelog
+            </a>
+          </li>
           <li>
             <a href="/" onClick={() => setSidebarOpen(false)}>
               Home
@@ -178,6 +189,32 @@ export function Launch() {
             <li>Archive and bulk actions for easy management</li>
             <li>Built-in Pomodoro timer for productivity</li>
           </ul>
+        </section>
+
+        <section id="fullpage-notes" className="launch-section">
+          <h2 className="section-title">Full-page notes</h2>
+          <p>
+            Create unlimited full-page notes for each date with dedicated editing
+            space, line numbers, and markdown support. Perfect for detailed
+            documentation, code snippets, meeting notes, or planning sessions.
+          </p>
+          <p>
+            Each note opens in a Chrome-style tab interface with syntax
+            highlighting for multiple languages, auto-save, and the ability to
+            quickly switch between notes. Notes are organized in the sidebar under
+            each date, making it easy to find and access your work.
+          </p>
+          <div className="launch-screenshots">
+            {imageGalleries.fullpageNotes.map((img, idx) => (
+              <div
+                key={idx}
+                className="screenshot-item"
+                onClick={() => openImageModal(imageGalleries.fullpageNotes, idx)}
+              >
+                <img src={img} alt={`Full-page notes ${idx + 1}`} />
+              </div>
+            ))}
+          </div>
         </section>
 
         <section id="projects" className="launch-section">

@@ -13,6 +13,7 @@ import {
   Sun,
   Cloud,
   Scroll,
+  ChevronRight,
 } from "lucide-react";
 import { KeyboardIcon, InfoCircledIcon } from "@radix-ui/react-icons";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -25,6 +26,173 @@ import {
 } from "./ui/tooltip";
 import { triggerSelectionHaptic } from "../lib/haptics";
 
+// Component to display notes for a specific date
+function NotesForDate({
+  date,
+  expanded,
+  onToggle,
+  onOpenNote,
+  showMenuForNoteId,
+  setShowMenuForNoteId,
+  selectedNoteId,
+}: {
+  date: string;
+  expanded: boolean;
+  onToggle: () => void;
+  onOpenNote: (noteId: Id<"fullPageNotes">) => void;
+  showMenuForNoteId: Id<"fullPageNotes"> | null;
+  setShowMenuForNoteId: (noteId: Id<"fullPageNotes"> | null) => void;
+  selectedNoteId: Id<"fullPageNotes"> | null | undefined;
+}) {
+  const { isAuthenticated } = useConvexAuth();
+  const updateFullPageNote = useMutation(api.fullPageNotes.updateFullPageNote);
+  const deleteFullPageNote = useMutation(api.fullPageNotes.deleteFullPageNote);
+  const [renamingNoteId, setRenamingNoteId] =
+    useState<Id<"fullPageNotes"> | null>(null);
+  const [renameInput, setRenameInput] = useState("");
+  const [confirmDeleteNoteId, setConfirmDeleteNoteId] =
+    useState<Id<"fullPageNotes"> | null>(null);
+
+  // Fetch full-page notes for this date when folder is expanded
+  const notes = useQuery(
+    api.fullPageNotes.getFullPageNotesByDate,
+    isAuthenticated && expanded ? { date } : "skip",
+  );
+
+  const handleRenameNote = async (noteId: Id<"fullPageNotes">) => {
+    if (renameInput.trim()) {
+      await updateFullPageNote({ id: noteId, title: renameInput.trim() });
+      setRenamingNoteId(null);
+      setRenameInput("");
+    }
+  };
+
+  const handleDeleteNote = async () => {
+    if (confirmDeleteNoteId) {
+      await deleteFullPageNote({ id: confirmDeleteNoteId });
+      setShowMenuForNoteId(null);
+      setConfirmDeleteNoteId(null);
+    }
+  };
+
+  return (
+    <div className="notes-folder-section">
+      <div className="notes-folder-header" onClick={onToggle}>
+        <ChevronRight
+          size={14}
+          className={`notes-folder-arrow ${expanded ? "expanded" : ""}`}
+        />
+
+        <span className="notes-folder-title">Notes</span>
+      </div>
+      {expanded && notes && notes.length > 0 && (
+        <div className="notes-folder-items">
+          {notes.map((note) => (
+            <div key={note._id} className="notes-folder-item-container">
+              {renamingNoteId === note._id ? (
+                <div className="date-picker-modal">
+                  <input
+                    type="text"
+                    value={renameInput}
+                    onChange={(e) => setRenameInput(e.target.value)}
+                    placeholder="Enter note name..."
+                    className="date-picker-input"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && renameInput.trim()) {
+                        handleRenameNote(note._id);
+                      } else if (e.key === "Escape") {
+                        setRenamingNoteId(null);
+                        setRenameInput("");
+                      }
+                    }}
+                  />
+                  <button
+                    className="date-picker-button"
+                    onClick={() => handleRenameNote(note._id)}
+                    disabled={!renameInput.trim()}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="date-picker-button cancel"
+                    onClick={() => {
+                      setRenamingNoteId(null);
+                      setRenameInput("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div
+                    className={`notes-folder-item ${selectedNoteId === note._id ? "active" : ""}`}
+                    onClick={() => {
+                      triggerSelectionHaptic();
+                      onOpenNote(note._id);
+                    }}
+                  >
+                    <span className="notes-folder-item-title">
+                      {note.title || "Untitled"}
+                    </span>
+                  </div>
+                  <button
+                    className="date-menu-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenuForNoteId(
+                        showMenuForNoteId === note._id ? null : note._id,
+                      );
+                    }}
+                  >
+                    ⋯
+                  </button>
+                  {showMenuForNoteId === note._id && (
+                    <div className="date-menu-dropdown">
+                      <div
+                        className="menu-item"
+                        onClick={() => {
+                          setRenamingNoteId(note._id);
+                          setRenameInput(note.title || "");
+                          setShowMenuForNoteId(null);
+                        }}
+                      >
+                        Rename Note
+                      </div>
+                      <div
+                        className="menu-item danger"
+                        onClick={() => {
+                          setConfirmDeleteNoteId(note._id);
+                          setShowMenuForNoteId(null);
+                        }}
+                      >
+                        Delete Note
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDeleteNoteId !== null}
+        title="Delete Full-Page Note"
+        message="Are you sure you want to delete this note? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteNote}
+        onCancel={() => setConfirmDeleteNoteId(null)}
+        isDangerous={true}
+      />
+    </div>
+  );
+}
+
 interface SidebarProps {
   dates: string[];
   selectedDate: string;
@@ -35,6 +203,8 @@ interface SidebarProps {
   onOpenSignUp?: () => void;
   onOpenProfile?: () => void;
   onShowInfo?: () => void;
+  onOpenFullPageNote?: (noteId: Id<"fullPageNotes">, date: string) => void;
+  selectedFullPageNoteId?: Id<"fullPageNotes"> | null;
 }
 
 export function Sidebar({
@@ -47,6 +217,8 @@ export function Sidebar({
   onOpenSignUp,
   onOpenProfile,
   onShowInfo,
+  onOpenFullPageNote,
+  selectedFullPageNoteId,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
   const { isLoading: authIsLoading, isAuthenticated } = useConvexAuth();
@@ -85,6 +257,8 @@ export function Sidebar({
   const [confirmDeleteArchived, setConfirmDeleteArchived] = useState(false);
   const [showRenameBacklog, setShowRenameBacklog] = useState(false);
   const [backlogLabelInput, setBacklogLabelInput] = useState("");
+  const [showMenuForNoteId, setShowMenuForNoteId] =
+    useState<Id<"fullPageNotes"> | null>(null);
 
   // Fetch data
   const archivedDates = useQuery(api.archivedDates.getArchivedDates) || [];
@@ -109,6 +283,29 @@ export function Sidebar({
       api.monthGroups.getMonthGroups,
       isAuthenticated ? undefined : "skip",
     ) || [];
+  const fullPageNoteCounts =
+    useQuery(
+      api.fullPageNotes.getFullPageNoteCounts,
+      isAuthenticated ? undefined : "skip",
+    ) || {};
+
+  // State to track which dates have notes folder expanded
+  const [expandedNotesFor, setExpandedNotesFor] = useState<Set<string>>(
+    new Set(),
+  );
+
+  // Helper to toggle notes folder for a date
+  const toggleNotesFolder = (date: string) => {
+    setExpandedNotesFor((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) {
+        next.delete(date);
+      } else {
+        next.add(date);
+      }
+      return next;
+    });
+  };
 
   // Mutations
   const copyTodosToDate = useMutation(api.todos.copyTodosToDate);
@@ -183,12 +380,12 @@ export function Sidebar({
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = format(addDays(today, 1), "yyyy-MM-dd");
-      
+
       // Don't copy if source and target are the same
       if (sourceDate === tomorrow) {
         return;
       }
-      
+
       await copyTodosToDate({ sourceDate, targetDate: tomorrow });
       setShowMenuForDate(null);
     } catch (error) {
@@ -235,7 +432,7 @@ export function Sidebar({
           setShowMenuForDate(null);
           return;
         }
-        
+
         await copyTodosToDate({ sourceDate, targetDate: customDate });
         setShowMenuForDate(null);
         setShowDatePicker(null);
@@ -631,6 +828,9 @@ export function Sidebar({
           setShowRenameBacklog(false);
           setBacklogLabelInput("");
         }
+        if (showMenuForNoteId) {
+          setShowMenuForNoteId(null);
+        }
       }
     };
 
@@ -689,6 +889,7 @@ export function Sidebar({
     showAddProject,
     showProjectSelector,
     showRenameBacklog,
+    showMenuForNoteId,
   ]);
 
   return (
@@ -744,62 +945,64 @@ export function Sidebar({
               key="backlog"
               className={`date-item-container backlog-section ${"backlog" === selectedDate ? "active" : ""}`}
             >
-              <div
-                className="date-item"
-                onClick={() => {
-                  triggerSelectionHaptic();
-                  onSelectDate("backlog");
-                }}
-              >
-                {backlogLabel}
-              </div>
-              <div className="date-menu">
-                <button
-                  className="date-menu-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowRenameBacklog(!showRenameBacklog);
-                    setBacklogLabelInput(backlogLabel);
+              <div className="date-item-container-row">
+                <div
+                  className="date-item"
+                  onClick={() => {
+                    triggerSelectionHaptic();
+                    onSelectDate("backlog");
                   }}
                 >
-                  ⋯
-                </button>
-                {showRenameBacklog && (
-                  <div className="date-picker-modal">
-                    <input
-                      type="text"
-                      value={backlogLabelInput}
-                      onChange={(e) => setBacklogLabelInput(e.target.value)}
-                      placeholder="Enter backlog label..."
-                      className="date-picker-input"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && backlogLabelInput.trim()) {
-                          handleRenameBacklog();
-                        } else if (e.key === "Escape") {
+                  {backlogLabel}
+                </div>
+                <div className="date-menu">
+                  <button
+                    className="date-menu-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowRenameBacklog(!showRenameBacklog);
+                      setBacklogLabelInput(backlogLabel);
+                    }}
+                  >
+                    ⋯
+                  </button>
+                  {showRenameBacklog && (
+                    <div className="date-picker-modal">
+                      <input
+                        type="text"
+                        value={backlogLabelInput}
+                        onChange={(e) => setBacklogLabelInput(e.target.value)}
+                        placeholder="Enter backlog label..."
+                        className="date-picker-input"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && backlogLabelInput.trim()) {
+                            handleRenameBacklog();
+                          } else if (e.key === "Escape") {
+                            setShowRenameBacklog(false);
+                            setBacklogLabelInput("");
+                          }
+                        }}
+                      />
+                      <button
+                        className="date-picker-button"
+                        onClick={handleRenameBacklog}
+                        disabled={!backlogLabelInput.trim()}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="date-picker-button cancel"
+                        onClick={() => {
                           setShowRenameBacklog(false);
                           setBacklogLabelInput("");
-                        }
-                      }}
-                    />
-                    <button
-                      className="date-picker-button"
-                      onClick={handleRenameBacklog}
-                      disabled={!backlogLabelInput.trim()}
-                    >
-                      Save
-                    </button>
-                    <button
-                      className="date-picker-button cancel"
-                      onClick={() => {
-                        setShowRenameBacklog(false);
-                        setBacklogLabelInput("");
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -809,205 +1012,230 @@ export function Sidebar({
               key={date}
               className={`date-item-container ${date === selectedDate ? "active" : ""}`}
             >
-              <div
-                className="date-item"
-                onClick={() => {
-                  triggerSelectionHaptic();
-                  onSelectDate(date);
-                }}
-              >
-                {formatDate(date)}
-                {uncompletedCounts[date] > 0 && (
-                  <span className="todo-count">{uncompletedCounts[date]}</span>
-                )}
-              </div>
-              <div className="date-menu">
-                <button
-                  className="date-menu-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMenuForDate(showMenuForDate === date ? null : date);
-                    setShowDatePicker(null);
-                    setShowRenameInput(null);
+              <div className="date-item-container-row">
+                <div
+                  className="date-item"
+                  onClick={() => {
+                    triggerSelectionHaptic();
+                    onSelectDate(date);
                   }}
                 >
-                  ⋯
-                </button>
-                {showMenuForDate === date && (
-                  <div className="date-menu-dropdown">
-                    <div
-                      className="menu-item"
-                      onClick={() => {
-                        setShowRenameInput(date);
-                        setCustomLabel(dateLabels.get(date) || "");
-                        setShowDatePicker(null);
-                      }}
-                    >
-                      {dateLabels.has(date) ? "Edit Label" : "Add Label"}
-                    </div>
-                    {dateLabels.has(date) && (
+                  {formatDate(date)}
+                  {uncompletedCounts[date] > 0 && (
+                    <span className="todo-count">
+                      {uncompletedCounts[date]}
+                    </span>
+                  )}
+                </div>
+                <div className="date-menu">
+                  <button
+                    className="date-menu-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenuForDate(
+                        showMenuForDate === date ? null : date,
+                      );
+                      setShowDatePicker(null);
+                      setShowRenameInput(null);
+                    }}
+                  >
+                    ⋯
+                  </button>
+                  {showMenuForDate === date && (
+                    <div className="date-menu-dropdown">
                       <div
                         className="menu-item"
-                        onClick={() => handleRemoveLabel(date)}
+                        onClick={() => {
+                          setShowRenameInput(date);
+                          setCustomLabel(dateLabels.get(date) || "");
+                          setShowDatePicker(null);
+                        }}
                       >
-                        Remove Label
+                        {dateLabels.has(date) ? "Edit Label" : "Add Label"}
                       </div>
-                    )}
-                    {isAuthenticated &&
-                      folders.filter((f) => !f.archived).length > 0 && (
-                        <>
-                          {getFolderForDate(date) ? (
-                            <div
-                              className="menu-item"
-                              onClick={() => handleRemoveDateFromFolder(date)}
-                            >
-                              Remove from Project
-                            </div>
-                          ) : (
-                            <div
-                              className="menu-item"
-                              onClick={() => {
-                                setShowProjectSelector(date);
-                                setShowDatePicker(null);
-                                setShowRenameInput(null);
-                              }}
-                            >
-                              Add to Project...
-                            </div>
-                          )}
-                        </>
+                      {dateLabels.has(date) && (
+                        <div
+                          className="menu-item"
+                          onClick={() => handleRemoveLabel(date)}
+                        >
+                          Remove Label
+                        </div>
                       )}
-                    <div
-                      className="menu-item"
-                      onClick={() => handleCopyToTomorrow(date)}
-                    >
-                      Copy to Tomorrow
+                      {isAuthenticated &&
+                        folders.filter((f) => !f.archived).length > 0 && (
+                          <>
+                            {getFolderForDate(date) ? (
+                              <div
+                                className="menu-item"
+                                onClick={() => handleRemoveDateFromFolder(date)}
+                              >
+                                Remove from Project
+                              </div>
+                            ) : (
+                              <div
+                                className="menu-item"
+                                onClick={() => {
+                                  setShowProjectSelector(date);
+                                  setShowDatePicker(null);
+                                  setShowRenameInput(null);
+                                }}
+                              >
+                                Add to Project...
+                              </div>
+                            )}
+                          </>
+                        )}
+                      <div
+                        className="menu-item"
+                        onClick={() => handleCopyToTomorrow(date)}
+                      >
+                        Copy to Tomorrow
+                      </div>
+                      <div
+                        className="menu-item"
+                        onClick={() => handleCopyToPreviousDay(date)}
+                      >
+                        Copy to Previous Day
+                      </div>
+                      <div
+                        className="menu-item"
+                        onClick={() => handleCopyToNextDay(date)}
+                      >
+                        Copy to Next Day
+                      </div>
+                      <div
+                        className="menu-item"
+                        onClick={() => {
+                          setShowDatePicker(date);
+                          setShowRenameInput(null);
+                        }}
+                      >
+                        Copy to Custom Date...
+                      </div>
+                      <div
+                        className="menu-item"
+                        onClick={() => handleArchiveDate(date)}
+                      >
+                        Archive Date
+                      </div>
+                      <div
+                        className="menu-item danger"
+                        onClick={() => handleDeleteDate(date)}
+                      >
+                        Delete Date
+                      </div>
                     </div>
-                    <div
-                      className="menu-item"
-                      onClick={() => handleCopyToPreviousDay(date)}
-                    >
-                      Copy to Previous Day
+                  )}
+                  {showDatePicker === date && (
+                    <div className="date-picker-modal">
+                      <input
+                        type="date"
+                        value={customDate}
+                        onChange={(e) => setCustomDate(e.target.value)}
+                        className="date-picker-input"
+                      />
+                      <button
+                        className="date-picker-button"
+                        onClick={() => handleCopyToCustomDate(date)}
+                        disabled={!customDate}
+                      >
+                        Copy
+                      </button>
+                      <button
+                        className="date-picker-button cancel"
+                        onClick={() => {
+                          setShowDatePicker(null);
+                          setCustomDate("");
+                        }}
+                      >
+                        Cancel
+                      </button>
                     </div>
-                    <div
-                      className="menu-item"
-                      onClick={() => handleCopyToNextDay(date)}
-                    >
-                      Copy to Next Day
-                    </div>
-                    <div
-                      className="menu-item"
-                      onClick={() => {
-                        setShowDatePicker(date);
-                        setShowRenameInput(null);
-                      }}
-                    >
-                      Copy to Custom Date...
-                    </div>
-                    <div
-                      className="menu-item"
-                      onClick={() => handleArchiveDate(date)}
-                    >
-                      Archive Date
-                    </div>
-                    <div
-                      className="menu-item danger"
-                      onClick={() => handleDeleteDate(date)}
-                    >
-                      Delete Date
-                    </div>
-                  </div>
-                )}
-                {showDatePicker === date && (
-                  <div className="date-picker-modal">
-                    <input
-                      type="date"
-                      value={customDate}
-                      onChange={(e) => setCustomDate(e.target.value)}
-                      className="date-picker-input"
-                    />
-                    <button
-                      className="date-picker-button"
-                      onClick={() => handleCopyToCustomDate(date)}
-                      disabled={!customDate}
-                    >
-                      Copy
-                    </button>
-                    <button
-                      className="date-picker-button cancel"
-                      onClick={() => {
-                        setShowDatePicker(null);
-                        setCustomDate("");
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-                {showRenameInput === date && (
-                  <div className="date-picker-modal">
-                    <input
-                      type="text"
-                      value={customLabel}
-                      onChange={(e) => setCustomLabel(e.target.value)}
-                      placeholder="Enter custom label..."
-                      className="date-picker-input"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && customLabel.trim()) {
-                          handleSetLabel(date);
-                        } else if (e.key === "Escape") {
+                  )}
+                  {showRenameInput === date && (
+                    <div className="date-picker-modal">
+                      <input
+                        type="text"
+                        value={customLabel}
+                        onChange={(e) => setCustomLabel(e.target.value)}
+                        placeholder="Enter custom label..."
+                        className="date-picker-input"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && customLabel.trim()) {
+                            handleSetLabel(date);
+                          } else if (e.key === "Escape") {
+                            setShowRenameInput(null);
+                            setCustomLabel("");
+                          }
+                        }}
+                      />
+                      <button
+                        className="date-picker-button"
+                        onClick={() => handleSetLabel(date)}
+                        disabled={!customLabel.trim()}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="date-picker-button cancel"
+                        onClick={() => {
                           setShowRenameInput(null);
                           setCustomLabel("");
-                        }
-                      }}
-                    />
-                    <button
-                      className="date-picker-button"
-                      onClick={() => handleSetLabel(date)}
-                      disabled={!customLabel.trim()}
-                    >
-                      Save
-                    </button>
-                    <button
-                      className="date-picker-button cancel"
-                      onClick={() => {
-                        setShowRenameInput(null);
-                        setCustomLabel("");
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-                {showProjectSelector === date && (
-                  <div className="date-picker-modal project-selector">
-                    <div className="folder-selector-title">Select Project</div>
-                    <div className="folder-selector-list">
-                      {folders
-                        .filter((f) => !f.archived)
-                        .map((folder) => (
-                          <div
-                            key={folder._id}
-                            className="folder-selector-item"
-                            onClick={() =>
-                              handleAddDateToFolder(date, folder._id)
-                            }
-                          >
-                            <Folder size={14} />
-                            <span>{folder.name}</span>
-                          </div>
-                        ))}
+                        }}
+                      >
+                        Cancel
+                      </button>
                     </div>
-                    <button
-                      className="date-picker-button cancel"
-                      onClick={() => setShowProjectSelector(null)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
+                  )}
+                  {showProjectSelector === date && (
+                    <div className="date-picker-modal project-selector">
+                      <div className="folder-selector-title">
+                        Select Project
+                      </div>
+                      <div className="folder-selector-list">
+                        {folders
+                          .filter((f) => !f.archived)
+                          .map((folder) => (
+                            <div
+                              key={folder._id}
+                              className="folder-selector-item"
+                              onClick={() =>
+                                handleAddDateToFolder(date, folder._id)
+                              }
+                            >
+                              <Folder size={14} />
+                              <span>{folder.name}</span>
+                            </div>
+                          ))}
+                      </div>
+                      <button
+                        className="date-picker-button cancel"
+                        onClick={() => setShowProjectSelector(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Notes folder for this date - show if date has full-page notes */}
+              {fullPageNoteCounts[date] > 0 && (
+                <NotesForDate
+                  date={date}
+                  expanded={expandedNotesFor.has(date)}
+                  onToggle={() => toggleNotesFolder(date)}
+                  onOpenNote={(noteId) => {
+                    if (onOpenFullPageNote) {
+                      onOpenFullPageNote(noteId, date);
+                    }
+                  }}
+                  showMenuForNoteId={showMenuForNoteId}
+                  setShowMenuForNoteId={setShowMenuForNoteId}
+                  selectedNoteId={selectedFullPageNoteId}
+                />
+              )}
             </div>
           ))}
 
@@ -1316,34 +1544,36 @@ export function Sidebar({
                       key={date}
                       className={`date-item-container archived ${date === selectedDate ? "active" : ""}`}
                     >
-                      <div
-                        className="date-item"
-                        onClick={() => onSelectDate(date)}
-                      >
-                        {formatDate(date)}
-                      </div>
-                      <div className="date-menu">
-                        <button
-                          className="date-menu-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMenuForDate(
-                              showMenuForDate === date ? null : date,
-                            );
-                          }}
+                      <div className="date-item-container-row">
+                        <div
+                          className="date-item"
+                          onClick={() => onSelectDate(date)}
                         >
-                          ⋯
-                        </button>
-                        {showMenuForDate === date && (
-                          <div className="date-menu-dropdown">
-                            <div
-                              className="menu-item"
-                              onClick={() => handleUnarchiveDate(date)}
-                            >
-                              Unarchive Date
+                          {formatDate(date)}
+                        </div>
+                        <div className="date-menu">
+                          <button
+                            className="date-menu-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowMenuForDate(
+                                showMenuForDate === date ? null : date,
+                              );
+                            }}
+                          >
+                            ⋯
+                          </button>
+                          {showMenuForDate === date && (
+                            <div className="date-menu-dropdown">
+                              <div
+                                className="menu-item"
+                                onClick={() => handleUnarchiveDate(date)}
+                              >
+                                Unarchive Date
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1408,42 +1638,46 @@ export function Sidebar({
                               key={date}
                               className={`date-item-container archived ${date === selectedDate ? "active" : ""}`}
                             >
-                              <div
-                                className="date-item"
-                                onClick={() => onSelectDate(date)}
-                              >
-                                {formatDate(date)}
-                              </div>
-                              <div className="date-menu">
-                                <button
-                                  className="date-menu-button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowMenuForDate(
-                                      showMenuForDate === date ? null : date,
-                                    );
-                                  }}
+                              <div className="date-item-container-row">
+                                <div
+                                  className="date-item"
+                                  onClick={() => onSelectDate(date)}
                                 >
-                                  ⋯
-                                </button>
-                                {showMenuForDate === date && (
-                                  <div className="date-menu-dropdown">
-                                    <div
-                                      className="menu-item"
-                                      onClick={() =>
-                                        handleRemoveDateFromFolder(date)
-                                      }
-                                    >
-                                      Remove from Project
+                                  {formatDate(date)}
+                                </div>
+                                <div className="date-menu">
+                                  <button
+                                    className="date-menu-button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowMenuForDate(
+                                        showMenuForDate === date ? null : date,
+                                      );
+                                    }}
+                                  >
+                                    ⋯
+                                  </button>
+                                  {showMenuForDate === date && (
+                                    <div className="date-menu-dropdown">
+                                      <div
+                                        className="menu-item"
+                                        onClick={() =>
+                                          handleRemoveDateFromFolder(date)
+                                        }
+                                      >
+                                        Remove from Project
+                                      </div>
+                                      <div
+                                        className="menu-item"
+                                        onClick={() =>
+                                          handleUnarchiveDate(date)
+                                        }
+                                      >
+                                        Unarchive Date
+                                      </div>
                                     </div>
-                                    <div
-                                      className="menu-item"
-                                      onClick={() => handleUnarchiveDate(date)}
-                                    >
-                                      Unarchive Date
-                                    </div>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
                             </div>
                           ))}

@@ -133,4 +133,24 @@ export default defineSchema({
     userId: v.string(),
     todoFontSize: v.number(), // Font size in pixels for .todo-text (default: 12)
   }).index("by_user", ["userId"]),
+
+  // Full page notes - stores full-page notes with Chrome-style tabs
+  fullPageNotes: defineTable({
+    userId: v.string(),
+    date: v.string(), // Format: YYYY-MM-DD
+    title: v.optional(v.string()), // Note title (defaults to "Untitled")
+    content: v.string(), // Note content with markdown/code block support
+    order: v.number(), // Order for sorting tabs left-to-right
+    collapsed: v.optional(v.boolean()), // For future collapsible functionality
+    pinnedToTop: v.optional(v.boolean()), // For future pin functionality
+  })
+    .index("by_user_and_date", ["userId", "date"])
+    .searchIndex("search_content", {
+      searchField: "content",
+      filterFields: ["userId"],
+    })
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["userId"],
+    }),
 });

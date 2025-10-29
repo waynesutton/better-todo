@@ -920,32 +920,42 @@ button:active,
 
 .date-item-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   transition: background-color 0.15s ease;
   position: relative;
 }
 
-.date-item-container:hover {
+.date-item-container-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.date-item-container:hover:not(.active) {
   background-color: rgba(86, 181, 219, 0.15);
 }
 
 /* Light mode date hover */
-:root[data-theme="light"] .date-item-container:hover {
+:root[data-theme="light"] .date-item-container:hover:not(.active) {
   background-color: rgba(86, 181, 219, 0.1);
 }
 
-:root[data-theme="light"] .date-item-container:hover .date-item {
+:root[data-theme="light"] .date-item-container:hover:not(.active) .date-item {
   color: var(--text-primary);
 }
 
 /* Tan mode date hover */
-:root[data-theme="tan"] .date-item-container:hover {
+:root[data-theme="tan"] .date-item-container:hover:not(.active) {
   background-color: rgba(139, 115, 85, 0.08);
 }
 
-:root[data-theme="tan"] .date-item-container:hover .date-item {
-  color: var(--text-primary);
+:root[data-theme="tan"] .date-item-container:hover:not(.active) .date-item {
+  color: var(--text-secondary);
+}
+
+:root[data-theme="tan"] .date-item-container:active .date-item {
+  color: #ffffff;
 }
 
 .date-item-container.active {
@@ -1009,7 +1019,7 @@ button:active,
 .date-menu-button {
   background: none;
   border: none;
-  color: transparent;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 3px;
@@ -1018,55 +1028,57 @@ button:active,
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0.4;
   transition:
     color 0.15s ease,
-    background-color 0.15s ease;
+    background-color 0.15s ease,
+    opacity 0.15s ease;
 }
 
-.date-item-container:hover .date-menu-button {
-  color: var(--text-secondary);
+.date-item-container:hover .date-menu-button,
+.notes-folder-item-container:hover .date-menu-button {
+  opacity: 1;
 }
 
 .date-item-container.active .date-menu-button {
   color: white;
-  opacity: 0.8;
+  opacity: 0.6;
+}
+
+.date-item-container.active:hover .date-menu-button {
+  color: white;
+  opacity: 1;
 }
 
 /* Show three dots on folder/month group headers on hover */
 .sidebar-archive-section:hover > .date-menu .date-menu-button {
-  color: var(--text-secondary);
+  opacity: 1;
 }
 
 .date-menu-button:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-/* Light mode - darker three dots for better visibility */
-:root[data-theme="light"] .date-item-container:hover .date-menu-button {
-  color: #3d3d3d;
+/* Light mode - use theme text colors */
+:root[data-theme="light"] .date-menu-button {
+  color: var(--text-secondary);
 }
 
-:root[data-theme="light"]
-  .sidebar-archive-section:hover
-  > .date-menu
-  .date-menu-button {
-  color: #3d3d3d;
+:root[data-theme="light"] .date-item-container.active .date-menu-button {
+  color: white;
 }
 
 :root[data-theme="light"] .date-menu-button:hover {
   background-color: rgba(0, 0, 0, 0.06);
 }
 
-/* Tan mode - warm brown three dots for better visibility */
-:root[data-theme="tan"] .date-item-container:hover .date-menu-button {
-  color: #6b6b6b;
+/* Tan mode - use theme text colors */
+:root[data-theme="tan"] .date-menu-button {
+  color: var(--text-secondary);
 }
 
-:root[data-theme="tan"]
-  .sidebar-archive-section:hover
-  > .date-menu
-  .date-menu-button {
-  color: #6b6b6b;
+:root[data-theme="tan"] .date-item-container.active .date-menu-button {
+  color: white;
 }
 
 :root[data-theme="tan"] .date-menu-button:hover {
@@ -1222,7 +1234,7 @@ button:active,
   transition: opacity 0.15s ease;
 }
 
-.sidebar-archive-dates .date-item-container:hover .date-item {
+.sidebar-archive-dates .date-item-container:hover:not(.active) .date-item {
   opacity: 0.9;
 }
 
@@ -4998,6 +5010,14 @@ button:active,
   color: var(--text-secondary);
 }
 
+.changelog-subtitle {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 24px 0 12px 0;
+  color: var(--text-secondary);
+}
+
 .launch-video-container {
   width: 100%;
   margin-bottom: 32px;
@@ -5221,6 +5241,10 @@ button:active,
     font-size: 16px;
   }
 
+  .changelog-subtitle {
+    font-size: 15px;
+  }
+
   .launch-screenshots {
     grid-template-columns: 1fr;
   }
@@ -5356,5 +5380,384 @@ button:active,
     top: 10px;
     right: 10px;
     padding: 10px;
+  }
+}
+
+/* Full-page notes styles */
+.fullpage-note-tabs {
+  display: flex;
+  align-items: center;
+  /* border-bottom: 1px solid var(--border-color); */
+  background-color: var(--bg-primary);
+  padding: 0 15px;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.fullpage-note-tabs::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.fullpage-note-tabs-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+}
+
+.fullpage-note-tab-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border: none;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.fullpage-note-tab-back:hover {
+  background-color: var(--bg-hover);
+}
+
+.fullpage-note-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 120px;
+  max-width: 200px;
+  position: relative;
+}
+
+.fullpage-note-tab:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.fullpage-note-tab.active {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--accent-color);
+}
+
+.fullpage-note-tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  cursor: text;
+}
+
+.fullpage-note-tab-title-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 0;
+  outline: none;
+  min-width: 60px;
+  max-width: 200px;
+}
+
+.fullpage-note-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.fullpage-note-tab-close:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.fullpage-note-tab-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  margin-left: 4px;
+}
+
+.fullpage-note-tab-add:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.fullpage-note-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+.fullpage-note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.fullpage-note-title-section {
+  flex: 1;
+}
+
+.fullpage-note-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.fullpage-note-title:hover {
+  background-color: var(--bg-secondary);
+}
+
+.fullpage-note-title-input {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: inherit;
+  width: 100%;
+  max-width: 600px;
+}
+
+.fullpage-note-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fullpage-note-content-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: 5px;
+}
+
+.fullpage-note-editor-container {
+  position: relative;
+  display: flex;
+  gap: 5px;
+}
+
+.fullpage-note-textarea {
+  flex: 1;
+  padding: 12px;
+  padding-left: 8px;
+  font-size: var(--font-todo);
+  font-family: inherit;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  border: none;
+  border-radius: 4px;
+  resize: none;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-y: auto;
+}
+
+.fullpage-note-textarea:focus {
+  outline: none;
+  border: none;
+}
+
+.fullpage-note-display-mode {
+  cursor: pointer;
+  min-height: 400px;
+  padding: 12px;
+  border: none;
+}
+
+.fullpage-note-empty-state {
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 24px;
+  text-align: center;
+}
+
+/* Notes folder in sidebar */
+.notes-folder-section {
+  margin-left: 24px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.notes-folder-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.notes-folder-header:active {
+  color: #ffffff;
+}
+.notes-folder-header:hover {
+  color: var(--text-primary);
+}
+
+.notes-folder-arrow {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.notes-folder-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.notes-folder-title {
+  flex: 1;
+}
+
+/* White text, icon, and arrow when parent date is active */
+.date-item-container.active .notes-folder-title,
+.date-item-container.active .notes-folder-icon,
+.date-item-container.active .notes-folder-arrow {
+  color: #ffffff;
+}
+
+.notes-folder-title:active {
+  color: #ffffff;
+}
+.notes-folder-title:hover {
+  color: var(--text-primary);
+}
+
+.notes-folder-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.notes-folder-arrow {
+  color: var(--text-secondary);
+}
+
+.notes-count {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.notes-folder-items {
+  margin-top: 4px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notes-folder-item-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 4px;
+}
+
+.notes-folder-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  font-size: 12px;
+  flex: 1;
+}
+
+/* Active state for selected full-page note */
+.notes-folder-item.active {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.notes-folder-item-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+/* White text when parent date is active */
+.date-item-container.active .notes-folder-item-title {
+  color: #ffffff;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .fullpage-note-tabs {
+    padding: 0 8px;
+  }
+
+  .fullpage-note-content-wrapper {
+    padding: 12px;
+  }
+
+  .fullpage-note-tab {
+    min-width: 80px;
+    max-width: 120px;
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  .fullpage-note-tab-back {
+    padding: 4px 8px;
+  }
+
+  .fullpage-note-tab-add {
+    padding: 6px 8px;
+  }
+
+  .fullpage-note-textarea {
+    padding: 8px;
+    padding-left: 6px;
+  }
+
+  .fullpage-note-tab-title-input {
+    font-size: 12px;
   }
 }

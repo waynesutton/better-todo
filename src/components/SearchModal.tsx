@@ -7,7 +7,11 @@ import { Id } from "../../convex/_generated/dataModel";
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectDate: (date: string, noteId?: Id<"notes">) => void;
+  onSelectDate: (
+    date: string,
+    noteId?: Id<"notes">,
+    fullPageNoteId?: Id<"fullPageNotes">,
+  ) => void;
 }
 
 export function SearchModal({
@@ -96,7 +100,13 @@ export function SearchModal({
     // Navigate to the date of the selected result
     // If it's a note, pass the note ID so it can be expanded
     if (result.type === "note") {
-      onSelectDate(result.date, result._id as Id<"notes">);
+      onSelectDate(result.date, result._id as Id<"notes">, undefined);
+    } else if (result.type === "fullPageNote") {
+      onSelectDate(
+        result.date,
+        undefined,
+        result._id as Id<"fullPageNotes">,
+      );
     } else {
       onSelectDate(result.date);
     }
@@ -216,7 +226,11 @@ export function SearchModal({
                   />
                   <div className="search-result-meta">
                     <span className="search-result-type">
-                      {result.type === "todo" ? "Todo" : "Note"}
+                      {result.type === "todo"
+                        ? "Todo"
+                        : result.type === "fullPageNote"
+                          ? "Full-Page Note"
+                          : "Note"}
                     </span>
                     <span className="search-result-date">
                       {formatDate(result.date)}

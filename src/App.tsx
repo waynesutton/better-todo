@@ -11,11 +11,14 @@ import { ArchiveSection } from "./components/ArchiveSection";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { PomodoroTimer } from "./components/PomodoroTimer";
+import { FullPageNoteView } from "./components/FullPageNoteView";
+import { FullPageNoteTabs } from "./components/FullPageNoteTabs";
 import { Launch } from "./pages/Launch";
+import { Changelog } from "./pages/Changelog";
 import { NotFound } from "./pages/NotFound";
 import { format } from "date-fns";
 import { Search, Menu, X } from "lucide-react";
-import { CopyIcon, CheckIcon, ExternalLinkIcon } from "@radix-ui/react-icons";
+import { CopyIcon, CheckIcon, ExternalLinkIcon, FileTextIcon } from "@radix-ui/react-icons";
 import { Id } from "../convex/_generated/dataModel";
 import { useTheme } from "./context/ThemeContext";
 import { triggerSelectionHaptic, triggerSuccessHaptic } from "./lib/haptics";
@@ -102,7 +105,15 @@ function App() {
   // Demo mode for logged out users (max 3 todos, no persistence)
   const [demoTodos, setDemoTodos] = useState<any[]>([]);
 
-  // Apply user's custom font size to todo text
+  // Full-page notes state
+  const [showFullPageNotes, setShowFullPageNotes] = useState(false);
+  const [openFullPageNoteTabs, setOpenFullPageNoteTabs] = useState<
+    Array<Id<"fullPageNotes">>
+  >([]);
+  const [selectedFullPageNoteId, setSelectedFullPageNoteId] =
+    useState<Id<"fullPageNotes"> | null>(null);
+
+  // Apply user's custom font size to todo text and full-page notes
   useEffect(() => {
     const fontSize = userPreferences?.todoFontSize ?? 12;
     const styleId = "custom-todo-font-size";
@@ -113,10 +124,19 @@ function App() {
       existingStyle.remove();
     }
 
-    // Inject new style
+    // Calculate line height based on font size (1.5 line height ratio)
+    const lineHeight = Math.round(fontSize * 1.5);
+
+    // Inject new style for todos and full-page notes
     const style = document.createElement("style");
     style.id = styleId;
-    style.textContent = `.todo-text { font-size: ${fontSize}px !important; }`;
+    style.textContent = `
+      .todo-text { font-size: ${fontSize}px !important; }
+      .fullpage-note-textarea { font-size: ${fontSize}px !important; }
+      .fullpage-note-display-mode { font-size: ${fontSize}px !important; }
+      .note-line-numbers { font-size: ${fontSize}px !important; }
+      .note-line-numbers .line-number { height: ${lineHeight}px !important; }
+    `;
     document.head.appendChild(style);
 
     return () => {
@@ -137,6 +157,9 @@ function App() {
   const moveTodoToDate = useMutation(api.todos.moveTodoToDate);
   const createSubtask = useMutation(api.todos.createSubtask);
 
+  // Full-page notes mutations
+  const createFullPageNote = useMutation(api.fullPageNotes.createFullPageNote);
+
   // Fetch available dates and todos (skip if not authenticated)
   const availableDates = useQuery(
     api.todos.getAvailableDates,
@@ -152,6 +175,14 @@ function App() {
   );
   const todos = useQuery(
     api.todos.getTodosByDate,
+    isAuthenticated && selectedDate !== "pinned" && selectedDate !== "backlog"
+      ? { date: selectedDate }
+      : "skip",
+  );
+
+  // Fetch full-page notes for selected date
+  const fullPageNotes = useQuery(
+    api.fullPageNotes.getFullPageNotesByDate,
     isAuthenticated && selectedDate !== "pinned" && selectedDate !== "backlog"
       ? { date: selectedDate }
       : "skip",
@@ -259,6 +290,16 @@ function App() {
 
     if (dateOnly.getTime() === today.getTime()) {
       return "Today";
+    }
+
+    // On mobile (≤768px), show short format (10/28/25), otherwise show full format
+    const isMobileDevice = window.innerWidth <= 768;
+    if (isMobileDevice) {
+      // Format as MM/DD/YY for mobile
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const year = String(date.getFullYear()).slice(-2);
+      return `${month}/${day}/${year}`;
     }
 
     return date.toLocaleDateString("en-US", {
@@ -634,13 +675,32 @@ function App() {
           <Sidebar
             dates={allDates}
             selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
+            onSelectDate={(date) => {
+              setSelectedDate(date);
+              // Close full-page notes view when selecting a date
+              setShowFullPageNotes(false);
+              setSelectedFullPageNoteId(null);
+            }}
             isCollapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
             onShowKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
             onOpenSignUp={() => setShowSignUpModal(true)}
             onOpenProfile={() => setShowProfileModal(true)}
             onShowInfo={() => setShowInfoModal(true)}
+            onOpenFullPageNote={(noteId, date) => {
+              // Navigate to the date and open the full-page note
+              setSelectedDate(date);
+              setOpenFullPageNoteTabs((prev) =>
+                prev.includes(noteId) ? prev : [...prev, noteId],
+              );
+              setSelectedFullPageNoteId(noteId);
+              setShowFullPageNotes(true);
+              // Close sidebar on mobile
+              if (window.innerWidth <= 768) {
+                setSidebarHidden(true);
+              }
+            }}
+            selectedFullPageNoteId={selectedFullPageNoteId}
           />
         </div>
         {!sidebarHidden && !sidebarCollapsed && (
@@ -688,31 +748,57 @@ function App() {
                 className="search-button"
                 onClick={() => {
                   triggerSelectionHaptic();
-                  // Copy all unchecked (incomplete) todos to clipboard
-                  const incompleteTodos = activeTodos.filter(
-                    (todo) => !todo.completed,
-                  );
-                  const todoText = incompleteTodos
-                    .map((todo) => `- ${todo.content}`)
-                    .join("\n");
+                  
+                  // If on full-page note view, copy the note content
+                  if (showFullPageNotes && selectedFullPageNoteId) {
+                    const currentNote = fullPageNotes?.find(
+                      (note) => note._id === selectedFullPageNoteId,
+                    );
+                    if (currentNote && currentNote.content) {
+                      navigator.clipboard
+                        .writeText(currentNote.content)
+                        .then(() => {
+                          triggerSuccessHaptic();
+                          setShowCopyConfirmation(true);
+                          setTimeout(() => {
+                            setShowCopyConfirmation(false);
+                          }, 2000);
+                        })
+                        .catch((err) => {
+                          console.error("Failed to copy note:", err);
+                        });
+                    }
+                  } else {
+                    // Otherwise, copy all unchecked (incomplete) todos to clipboard
+                    const incompleteTodos = activeTodos.filter(
+                      (todo) => !todo.completed,
+                    );
+                    const todoText = incompleteTodos
+                      .map((todo) => `- ${todo.content}`)
+                      .join("\n");
 
-                  if (todoText) {
-                    navigator.clipboard
-                      .writeText(todoText)
-                      .then(() => {
-                        triggerSuccessHaptic();
-                        // Show brief success indicator
-                        setShowCopyConfirmation(true);
-                        setTimeout(() => {
-                          setShowCopyConfirmation(false);
-                        }, 2000);
-                      })
-                      .catch((err) => {
-                        console.error("Failed to copy todos:", err);
-                      });
+                    if (todoText) {
+                      navigator.clipboard
+                        .writeText(todoText)
+                        .then(() => {
+                          triggerSuccessHaptic();
+                          // Show brief success indicator
+                          setShowCopyConfirmation(true);
+                          setTimeout(() => {
+                            setShowCopyConfirmation(false);
+                          }, 2000);
+                        })
+                        .catch((err) => {
+                          console.error("Failed to copy todos:", err);
+                        });
+                    }
                   }
                 }}
-                title="Copy unchecked todos"
+                title={
+                  showFullPageNotes && selectedFullPageNoteId
+                    ? "Copy note content"
+                    : "Copy unchecked todos"
+                }
               >
                 {showCopyConfirmation ? (
                   <CheckIcon style={{ width: 18, height: 18 }} />
@@ -720,6 +806,39 @@ function App() {
                   <CopyIcon style={{ width: 18, height: 18 }} />
                 )}
               </button>
+              {/* Full-page notes icon - only show on regular date pages */}
+              {selectedDate !== "pinned" && selectedDate !== "backlog" && (
+                <button
+                  className="search-button"
+                  onClick={async () => {
+                    triggerSelectionHaptic();
+                    if (!authIsLoading && isAuthenticated) {
+                      // If there are existing notes, open the first one
+                      if (fullPageNotes && fullPageNotes.length > 0) {
+                        const firstNote = fullPageNotes[0];
+                        if (!openFullPageNoteTabs.includes(firstNote._id)) {
+                          setOpenFullPageNoteTabs((prev) => [...prev, firstNote._id]);
+                        }
+                        setSelectedFullPageNoteId(firstNote._id);
+                        setShowFullPageNotes(true);
+                      } else {
+                        // No notes exist, create a new one
+                        const newNoteId = await createFullPageNote({
+                          date: selectedDate,
+                        });
+                        setOpenFullPageNoteTabs([newNoteId]);
+                        setSelectedFullPageNoteId(newNoteId);
+                        setShowFullPageNotes(true);
+                      }
+                    } else {
+                      setShowSignInToNoteModal(true);
+                    }
+                  }}
+                  title="View full-page notes"
+                >
+                  <FileTextIcon style={{ width: 18, height: 18 }} />
+                </button>
+              )}
               <PomodoroTimer />
               <button
                 className="search-button"
@@ -902,6 +1021,48 @@ function App() {
                   />
                 </div>
               </div>
+            ) : showFullPageNotes && selectedFullPageNoteId ? (
+              <>
+                {/* Full-page notes tabs */}
+                <FullPageNoteTabs
+                  notes={fullPageNotes || []}
+                  openTabIds={openFullPageNoteTabs}
+                  selectedNoteId={selectedFullPageNoteId}
+                  onSelectNote={(noteId) => {
+                    setSelectedFullPageNoteId(noteId);
+                  }}
+                  onCloseTab={(noteId) => {
+                    const newTabs = openFullPageNoteTabs.filter(
+                      (id) => id !== noteId,
+                    );
+                    setOpenFullPageNoteTabs(newTabs);
+                    // If closing the selected tab, select the previous tab or exit full-page view
+                    if (noteId === selectedFullPageNoteId) {
+                      if (newTabs.length > 0) {
+                        setSelectedFullPageNoteId(newTabs[newTabs.length - 1]);
+                      } else {
+                        setShowFullPageNotes(false);
+                        setSelectedFullPageNoteId(null);
+                      }
+                    }
+                    // Note: X button only closes the tab, does NOT delete the note
+                    // The note remains in the database and sidebar
+                  }}
+                  onCreateNote={async () => {
+                    const newNoteId = await createFullPageNote({
+                      date: selectedDate,
+                    });
+                    setOpenFullPageNoteTabs((prev) => [...prev, newNoteId]);
+                    setSelectedFullPageNoteId(newNoteId);
+                  }}
+                  onBackToTodos={() => {
+                    setShowFullPageNotes(false);
+                    setSelectedFullPageNoteId(null);
+                  }}
+                />
+                {/* Full-page note view */}
+                <FullPageNoteView noteId={selectedFullPageNoteId} />
+              </>
             ) : (
               <TodoList
                 ref={todoListRef}
@@ -929,24 +1090,27 @@ function App() {
 
           {/* Sticky footer with archive and bulk actions */}
           <div className="main-content-footer">
-            {/* Archive section - only show for authenticated users */}
-            {archivedTodos.length > 0 && isAuthenticated && (
-              <ArchiveSection
-                archivedTodos={archivedTodos}
-                onMoveToPreviousDay={() => {}}
-                onMoveToNextDay={() => {}}
-                onMoveToTomorrow={() => {}}
-                onMoveToCustomDate={handleMoveArchivedToCustomDate}
-                onDeleteArchived={handleDeleteArchived}
-                onDeleteAllArchived={handleDeleteAllArchived}
-                isExpanded={archiveExpanded}
-                onToggleExpanded={() => setArchiveExpanded(!archiveExpanded)}
-                onReorderArchived={handleReorderArchived}
-              />
-            )}
+            {/* Archive section - only show for authenticated users and not on full-page notes view */}
+            {!showFullPageNotes &&
+              archivedTodos.length > 0 &&
+              isAuthenticated && (
+                <ArchiveSection
+                  archivedTodos={archivedTodos}
+                  onMoveToPreviousDay={() => {}}
+                  onMoveToNextDay={() => {}}
+                  onMoveToTomorrow={() => {}}
+                  onMoveToCustomDate={handleMoveArchivedToCustomDate}
+                  onDeleteArchived={handleDeleteArchived}
+                  onDeleteAllArchived={handleDeleteAllArchived}
+                  isExpanded={archiveExpanded}
+                  onToggleExpanded={() => setArchiveExpanded(!archiveExpanded)}
+                  onReorderArchived={handleReorderArchived}
+                />
+              )}
 
-            {/* Bulk action buttons */}
-            {activeTodos.length > 0 &&
+            {/* Bulk action buttons - hide on full-page notes view */}
+            {!showFullPageNotes &&
+              activeTodos.length > 0 &&
               selectedDate !== "pinned" &&
               selectedDate !== "backlog" &&
               isAuthenticated && (
@@ -981,11 +1145,24 @@ function App() {
         <SearchModal
           isOpen={searchModalOpen}
           onClose={() => setSearchModalOpen(false)}
-          onSelectDate={(date, noteId) => {
+          onSelectDate={(date, noteId, fullPageNoteId) => {
             setSelectedDate(date);
-            // If a note was selected, set it to be expanded
-            if (noteId) {
+            // If a full-page note was selected, open it
+            if (fullPageNoteId) {
+              setOpenFullPageNoteTabs((prev) =>
+                prev.includes(fullPageNoteId) ? prev : [...prev, fullPageNoteId],
+              );
+              setSelectedFullPageNoteId(fullPageNoteId);
+              setShowFullPageNotes(true);
+            }
+            // If a regular note was selected, set it to be expanded
+            else if (noteId) {
               setExpandedNoteId(noteId);
+              setShowFullPageNotes(false);
+            }
+            // Otherwise, just navigate to the date
+            else {
+              setShowFullPageNotes(false);
             }
             // Close sidebar on mobile after selecting from search
             if (window.innerWidth <= 768) {
@@ -1270,6 +1447,7 @@ function AppRouter() {
     <Routes>
       <Route path="/launch" element={<Launch />} />
       <Route path="/about" element={<Launch />} />
+      <Route path="/changelog" element={<Changelog />} />
       <Route path="/" element={<App />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

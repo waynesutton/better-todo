@@ -57,6 +57,9 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user`
   - **userPreferences**: Stores per-user settings including todoFontSize
     - Index: `by_user`
+  - **fullPageNotes**: Stores full-page notes with userId, date, title, content, order, collapsed, and pinnedToTop
+    - Index: `by_user_and_date`
+    - Search indexes: `search_content` on content field, `search_title` on title field
 
 ### Functions
 
@@ -83,6 +86,15 @@ This document describes the structure and purpose of each file in the Better Tod
   - `deleteNote` - Remove a note by ID
   - `updateNoteCollapsed` - Toggle note collapsed state
   - `reorderNotes` - Update order after drag-and-drop
+
+- `fullPageNotes.ts` - Queries and mutations for full-page notes:
+  - `getFullPageNotesByDate` - Get all full-page notes for a specific date
+  - `getFullPageNote` - Get single full-page note by ID
+  - `getFullPageNoteCounts` - Get count of full-page notes per date for sidebar
+  - `createFullPageNote` - Create new full-page note with auto-ordering
+  - `updateFullPageNote` - Update note title or content (idempotent, no pre-read)
+  - `deleteFullPageNote` - Permanently remove a full-page note
+  - `reorderFullPageNotes` - Update order with parallel updates
 
 - `search.ts` - Full-text search functionality using Convex search indexes:
   - `searchAll` - Search across todos (by content) and notes (by title and content)
@@ -266,6 +278,11 @@ This document describes the structure and purpose of each file in the Better Tod
   - Collapsed view shows pin emoji (📌) for pinned section
   - Date list showing all days with todos (scrollable with custom scrollbar)
   - **Todo count badges** - Shows count of uncompleted todos next to each date
+  - **Full-page notes folders** - Collapsible "Notes" folder under dates with full-page notes
+    - Shows all note titles for that date
+    - Click note title to open that note
+    - Three-dot menu for rename/delete actions
+    - Active state indicator (dark transparent overlay) for selected note
   - Collapsible view with compact date format (MM/DD) via panel icon in header
   - Collapse button next to "better todo" title (PanelLeft icon)
   - Smooth animated transitions between full (260px) and collapsed (60px) states
@@ -419,6 +436,26 @@ This document describes the structure and purpose of each file in the Better Tod
   - Sound state tracking with refs (`hasPlayedStartSound`, `hasPlayedCountdownSound`, `lastEndSoundIndex`)
   - Accessible from timer icon in header
 
+- `FullPageNoteView.tsx` - Full-page note editing and display component:
+  - Dual-mode rendering (edit/display) with single-click to start typing
+  - Line numbers that scale with font size (1.5 ratio)
+  - Markdown rendering in display mode
+  - Syntax highlighting for code blocks
+  - Auto-save on content changes
+  - Copy button for note content
+  - Font size respects user preferences
+  - Automatic edit mode for new/empty notes
+
+- `FullPageNoteTabs.tsx` - Chrome-style tab interface for full-page notes:
+  - Horizontal tab navigation with smooth scrolling
+  - Double-click tab title to rename
+  - X button to close tab (does not delete note)
+  - FilePlus icon to create new notes
+  - Checkbox icon to return to todos view
+  - Tab width: 120-200px (desktop), 80-120px (mobile)
+  - Active state highlighting
+  - Supports unlimited tabs with scrolling
+
 ### Context (`src/context/`)
 
 - `ThemeContext.tsx` - Theme management:
@@ -476,6 +513,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `QUICKSTART.md` - 2-minute setup guide for quick start
 - `GETTING_STARTED.md` - Detailed feature walkthrough and usage guide
 - `PROJECT_SUMMARY.md` - Complete project overview and architecture
+- `full-page-notes-feature.plan.md` - Comprehensive documentation of full-page notes feature
 - `cl.plan.md` - Clerk authentication implementation plan and notes
 - `menu-button-alignment-fix.md` - Documentation of menu button alignment fix using pseudo-element approach
 
@@ -486,14 +524,40 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.005 (October 26, 2025)
+## Current Version: v.006 (October 29, 2025)
 
-### Latest Features (v.005) - Launch Page & Timer Mute
+### Latest Features (v.006) - Full-Page Notes
+
+- **Full-Page Notes** - Dedicated note-taking workspace for each date
+  - Create unlimited full-page notes per date
+  - Chrome-style tabbed interface with horizontal scrolling
+  - FileText icon in header to access full-page notes
+  - FilePlus icon to create new notes within full-page notes view
+  - Checkbox icon to return to todos from full-page notes
+  - Single-click to start typing (automatic edit mode)
+  - Double-click tab titles to rename notes
+  - Line numbers that scale with font size
+  - Markdown rendering and syntax highlighting
+  - Auto-save on content changes
+  - Copy button for note content
+  - X button closes tab without deleting note
+  - Notes folder in sidebar shows all note titles
+  - Click sidebar note title to open that note
+  - Active state indicator for selected notes
+  - Three-dot menu for rename/delete actions
+  - Font size integration with Todo Text Font Size setting
+  - Mobile-optimized with responsive design
+  - ESC key closes note menus
+  - Real-time sync across devices
+
+## Previous Version: v.005 (October 26, 2025)
+
+### Features (v.005) - Launch Page & Timer Mute
 
 - **Launch Page** (`/launch` and `/about` routes)
   - Comprehensive feature showcase with navigation sidebar
   - Demo video on intro section
-  - Screenshot galleries for themes, timer, and mobile views
+  - Screenshot galleries for themes, timer, mobile, and full-page notes
   - Image modal with keyboard navigation
   - Mobile-responsive design with hamburger menu
   - Call-to-action buttons for GitHub and app access
