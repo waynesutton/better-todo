@@ -1733,6 +1733,8 @@ button:active,
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border-color);
+  position: relative;
+  z-index: 1;
 }
 
 .note-item {
@@ -1744,6 +1746,8 @@ button:active,
   transition: all 0.15s ease;
   width: 90%;
   max-width: 100%;
+  position: relative;
+  overflow: visible;
 }
 
 .note-header {
@@ -1811,6 +1815,8 @@ button:active,
 
 .note-content-wrapper {
   margin-top: 8px;
+  position: relative;
+  width: 100%;
 }
 
 .note-tabs {
@@ -1845,6 +1851,8 @@ button:active,
   position: relative;
   background-color: transparent;
   border-radius: 4px;
+  overflow: hidden;
+  min-height: 100px;
 }
 
 .note-resize-handle {
@@ -1881,6 +1889,8 @@ button:active,
   font-size: 13px;
   line-height: 1.5;
   min-width: 40px;
+  overflow: hidden;
+  position: relative;
 }
 
 .note-line-numbers .line-number {
