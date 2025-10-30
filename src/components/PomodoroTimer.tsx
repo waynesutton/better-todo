@@ -334,19 +334,6 @@ export function PomodoroTimer() {
           <div className="pomodoro-modal" onClick={(e) => e.stopPropagation()}>
             <button
               className="pomodoro-modal-close"
-              onClick={handleToggleMute}
-              title={isMuted ? "Unmute" : "Mute"}
-              style={{ right: "3.5rem" }}
-            >
-              {isMuted ? (
-                <VolumeOff width={18} height={18} />
-              ) : (
-                <Volume2 width={18} height={18} />
-              )}
-            </button>
-
-            <button
-              className="pomodoro-modal-close"
               onClick={() => setIsModalOpen(false)}
               title="Close"
             >
@@ -406,6 +393,17 @@ export function PomodoroTimer() {
                     title="Reset"
                   >
                     <ResetIcon width={24} height={24} />
+                  </button>
+                  <button
+                    className="pomodoro-control-button"
+                    onClick={handleToggleMute}
+                    title={isMuted ? "Unmute" : "Mute"}
+                  >
+                    {isMuted ? (
+                      <VolumeOff width={24} height={24} />
+                    ) : (
+                      <Volume2 width={24} height={24} />
+                    )}
                   </button>
                   <button
                     className="pomodoro-control-button danger"

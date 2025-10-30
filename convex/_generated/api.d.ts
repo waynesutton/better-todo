@@ -19,6 +19,7 @@ import type * as monthGroups from "../monthGroups.js";
 import type * as notes from "../notes.js";
 import type * as pomodoro from "../pomodoro.js";
 import type * as search from "../search.js";
+import type * as stats from "../stats.js";
 import type * as todos from "../todos.js";
 import type * as unsplash from "../unsplash.js";
 import type * as users from "../users.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   notes: typeof notes;
   pomodoro: typeof pomodoro;
   search: typeof search;
+  stats: typeof stats;
   todos: typeof todos;
   unsplash: typeof unsplash;
   users: typeof users;

@@ -83,6 +83,20 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.008 - 2025-10-30)
+
+- [x] **Cloud Theme** - Fourth theme option with minimal grayscale design
+  - Primary background: #EDEDED (light gray)
+  - Secondary background: #E8E8E8 (slightly darker gray)
+  - Text colors: #171717 (near black)
+  - Interactive accent: #171717 (consistent dark gray)
+  - Minimal color palette for distraction-free focus
+  - Radix Half2 icon for cloud theme indicator
+  - Full support for all app features including Clerk modals
+  - Theme persists across sessions and devices
+  - Cycle through all four themes with half-moon icon in sidebar
+  - Mobile responsive with consistent design
+
 ## Completed Tasks (v.006 - 2025-10-26)
 
 - [x] **Folders Renamed to Projects**

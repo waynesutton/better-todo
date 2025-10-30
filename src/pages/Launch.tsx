@@ -14,7 +14,7 @@ export function Launch() {
     { id: "fullpage-notes", title: "Full-page notes" },
     { id: "projects", title: "Organize with projects" },
     { id: "developers", title: "Built for developers" },
-    { id: "themes", title: "Three beautiful themes" },
+    { id: "themes", title: "Four beautiful themes" },
     { id: "timer", title: "Built-in Pomodoro timer" },
     { id: "mobile", title: "Works on mobile" },
     { id: "realtime", title: "Real-time sync with Convex" },
@@ -184,7 +184,9 @@ export function Launch() {
             <li>Daily notes with syntax-highlighted code blocks</li>
             <li>Drag and drop reordering with intuitive handles</li>
             <li>Full-text search across all todos and notes</li>
-            <li>Three themes: Dark, Light, and Tan with smooth transitions</li>
+            <li>
+              Four themes: Dark, Light, Tan, and Cloud with smooth transitions
+            </li>
             <li>Mobile-optimized with touch-friendly interface</li>
             <li>Archive and bulk actions for easy management</li>
             <li>Built-in Pomodoro timer for productivity</li>
@@ -194,22 +196,25 @@ export function Launch() {
         <section id="fullpage-notes" className="launch-section">
           <h2 className="section-title">Full-page notes</h2>
           <p>
-            Create unlimited full-page notes for each date with dedicated editing
-            space, line numbers, and markdown support. Perfect for detailed
-            documentation, code snippets, meeting notes, or planning sessions.
+            Create unlimited full-page notes for each date with dedicated
+            editing space, line numbers, and markdown support. Perfect for
+            detailed documentation, code snippets, meeting notes, or planning
+            sessions.
           </p>
           <p>
             Each note opens in a Chrome-style tab interface with syntax
             highlighting for multiple languages, auto-save, and the ability to
-            quickly switch between notes. Notes are organized in the sidebar under
-            each date, making it easy to find and access your work.
+            quickly switch between notes. Notes are organized in the sidebar
+            under each date, making it easy to find and access your work.
           </p>
           <div className="launch-screenshots">
             {imageGalleries.fullpageNotes.map((img, idx) => (
               <div
                 key={idx}
                 className="screenshot-item"
-                onClick={() => openImageModal(imageGalleries.fullpageNotes, idx)}
+                onClick={() =>
+                  openImageModal(imageGalleries.fullpageNotes, idx)
+                }
               >
                 <img src={img} alt={`Full-page notes ${idx + 1}`} />
               </div>
@@ -248,18 +253,19 @@ export function Launch() {
         </section>
 
         <section id="themes" className="launch-section">
-          <h2 className="section-title">Three beautiful themes</h2>
+          <h2 className="section-title">Four beautiful themes</h2>
           <p>
-            Choose between Dark mode with deep grays and green accents for
+            Choose between Dark mode with deep grays and blue accents for
             comfortable low-light viewing, Light mode with crisp whites and blue
-            accents for bright environments, or Tan mode with warm beige tones
-            and orange accents designed specifically to reduce eye strain during
-            long work sessions.
+            accents for bright environments, Tan mode with warm beige tones and
+            orange accents designed to reduce eye strain during long work
+            sessions, or Cloud mode with minimal grayscale palette for
+            distraction-free focus.
           </p>
           <p>
-            All three themes support full feature parity with smooth
-            transitions, letting you switch based on your environment and
-            preference without losing any functionality.
+            All four themes support full feature parity with smooth transitions,
+            letting you switch based on your environment and preference without
+            losing any functionality.
           </p>
         </section>
 

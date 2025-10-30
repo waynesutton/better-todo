@@ -6,6 +6,15 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { Id } from "../../convex/_generated/dataModel";
 import { useTheme } from "../context/ThemeContext";
 
+// Helper function to normalize hex color to 6-digit format
+function normalizeHexColor(hex: string): string {
+  if (hex.length === 4) {
+    // Convert #RGB to #RRGGBB
+    return `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`.toUpperCase();
+  }
+  return hex.toUpperCase();
+}
+
 // Cursor Dark Theme colors for syntax highlighting
 const cursorDarkTheme: { [key: string]: React.CSSProperties } = {
   'code[class*="language-"]': {
@@ -150,6 +159,78 @@ const cursorLightTheme: { [key: string]: React.CSSProperties } = {
   decorator: { color: "#795e26" },
 };
 
+// Cursor Cloud Theme colors for syntax highlighting
+const cursorCloudTheme: { [key: string]: React.CSSProperties } = {
+  'code[class*="language-"]': {
+    color: "#171717",
+    background: "#ededed",
+    fontFamily:
+      "SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New, monospace",
+    fontSize: "13px",
+    textAlign: "left" as const,
+    whiteSpace: "pre" as const,
+    wordSpacing: "normal",
+    wordBreak: "normal" as const,
+    wordWrap: "normal" as const,
+    lineHeight: "1.5",
+    tabSize: 4,
+    hyphens: "none" as const,
+  },
+  'pre[class*="language-"]': {
+    color: "#171717",
+    background: "#ededed",
+    fontFamily:
+      "SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New, monospace",
+    fontSize: "13px",
+    textAlign: "left" as const,
+    whiteSpace: "pre" as const,
+    wordSpacing: "normal",
+    wordBreak: "normal" as const,
+    wordWrap: "normal" as const,
+    lineHeight: "1.5",
+    tabSize: 4,
+    hyphens: "none" as const,
+    padding: "1em",
+    margin: "0",
+    overflow: "auto" as const,
+  },
+  comment: { color: "#6a9955", fontStyle: "italic" },
+  prolog: { color: "#6a9955" },
+  doctype: { color: "#6a9955" },
+  cdata: { color: "#6a9955" },
+  punctuation: { color: "#171717" },
+  property: { color: "#001080" },
+  tag: { color: "#0000ff" },
+  boolean: { color: "#0000ff" },
+  number: { color: "#098658" },
+  constant: { color: "#0070c1" },
+  symbol: { color: "#0070c1" },
+  deleted: { color: "#e51400" },
+  selector: { color: "#a31515" },
+  "attr-name": { color: "#0451a5" },
+  string: { color: "#a31515" },
+  char: { color: "#a31515" },
+  builtin: { color: "#0000ff" },
+  inserted: { color: "#008000" },
+  operator: { color: "#171717" },
+  entity: { color: "#795e26" },
+  url: { color: "#001080", textDecoration: "underline" },
+  variable: { color: "#001080" },
+  atrule: { color: "#0000ff" },
+  "attr-value": { color: "#a31515" },
+  function: { color: "#795e26" },
+  "function-variable": { color: "#795e26" },
+  keyword: { color: "#0000ff" },
+  regex: { color: "#811f3f" },
+  important: { color: "#0000ff", fontWeight: "bold" },
+  bold: { fontWeight: "bold" },
+  italic: { fontStyle: "italic" },
+  namespace: { opacity: 0.7 },
+  "class-name": { color: "#267f99" },
+  parameter: { color: "#001080" },
+  decorator: { color: "#795e26" },
+};
+
 // Types for parsed content blocks
 type ContentBlock =
   | { type: "text"; content: string }
@@ -213,6 +294,8 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
   const cursorPositionRef = useRef<number | null>(null);
   const [textareaHeight, setTextareaHeight] = useState<number>(400);
   const isResizingRef = useRef(false);
+  const codeBlockRefs = useRef<Map<number, HTMLPreElement>>(new Map());
+  const codeBlockWrapperRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   // Update local state when note prop changes
   useEffect(() => {
@@ -346,6 +429,110 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
     }
   }, [contentInput, isEditMode]);
 
+  // Post-process CSS code blocks to add color swatches next to hex codes
+  useEffect(() => {
+    if (isEditMode) return;
+
+    const processCodeBlock = (codeElement: HTMLPreElement, index: number) => {
+      const blocks = parseContentBlocks(contentInput);
+      const block = blocks[index];
+      if (!block || block.type !== "code" || block.language !== "css") {
+        return;
+      }
+
+      // Skip if already processed
+      if (codeElement.querySelector(".hex-color-swatch")) {
+        return;
+      }
+
+      // Process all text nodes recursively
+      const processNode = (node: Node): void => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const textNode = node as Text;
+          const text = textNode.textContent || "";
+          const hexPattern = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})\b/g;
+          const matches = Array.from(text.matchAll(hexPattern));
+
+          if (matches.length > 0 && textNode.parentNode) {
+            const fragment = document.createDocumentFragment();
+            let lastIndex = 0;
+
+            matches.forEach((match) => {
+              const hexCode = match[0];
+              const matchIndex = match.index!;
+
+              // Add text before match
+              if (matchIndex > lastIndex) {
+                fragment.appendChild(
+                  document.createTextNode(text.slice(lastIndex, matchIndex))
+                );
+              }
+
+              // Create wrapper with hex code and swatch
+              const wrapper = document.createElement("span");
+              wrapper.className = "hex-color-wrapper";
+              wrapper.style.display = "inline-block";
+
+              wrapper.appendChild(document.createTextNode(hexCode));
+
+              const swatch = document.createElement("span");
+              swatch.className = "hex-color-swatch";
+              swatch.style.cssText = `
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                margin-left: 4px;
+                vertical-align: middle;
+                border: 1px solid var(--border-color);
+                border-radius: 2px;
+                background-color: ${normalizeHexColor(hexCode)};
+              `;
+              swatch.setAttribute("data-hex", hexCode);
+              wrapper.appendChild(swatch);
+
+              fragment.appendChild(wrapper);
+              lastIndex = matchIndex + hexCode.length;
+            });
+
+            // Add remaining text
+            if (lastIndex < text.length) {
+              fragment.appendChild(
+                document.createTextNode(text.slice(lastIndex))
+              );
+            }
+
+            // Replace text node with fragment
+            textNode.parentNode.replaceChild(fragment, textNode);
+          }
+        } else {
+          // Process child nodes
+          const childNodes = Array.from(node.childNodes);
+          childNodes.forEach(processNode);
+        }
+      };
+
+      processNode(codeElement);
+    };
+
+    // Process all code blocks after a short delay to ensure rendering is complete
+    const timeoutId = setTimeout(() => {
+      // Try to find pre elements from wrapper refs first
+      codeBlockWrapperRefs.current.forEach((wrapper, index) => {
+        const preElement = wrapper.querySelector("pre");
+        if (preElement) {
+          codeBlockRefs.current.set(index, preElement);
+        }
+      });
+
+      // Process all code blocks
+      codeBlockRefs.current.forEach((codeElement, index) => {
+        processCodeBlock(codeElement, index);
+      });
+    }, 150);
+
+    return () => clearTimeout(timeoutId);
+  }, [contentInput, isEditMode]);
+
   if (!note) {
     return (
       <div className="fullpage-note-view">
@@ -410,7 +597,16 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
                   {block.type === "text" ? (
                     <pre className="note-text-block">{block.content}</pre>
                   ) : (
-                    <div className="note-code-block-wrapper">
+                    <div
+                      className="note-code-block-wrapper"
+                      ref={(el) => {
+                        if (el) {
+                          codeBlockWrapperRefs.current.set(index, el);
+                        } else {
+                          codeBlockWrapperRefs.current.delete(index);
+                        }
+                      }}
+                    >
                       <div className="note-code-block-header">
                         <span className="note-code-language">
                           {block.language}
@@ -433,7 +629,15 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
                       <SyntaxHighlighter
                         language={block.language}
                         style={
-                          theme === "dark" ? cursorDarkTheme : cursorLightTheme
+                          theme === "dark"
+                            ? cursorDarkTheme
+                            : theme === "light"
+                              ? cursorLightTheme
+                              : theme === "tan"
+                                ? cursorLightTheme
+                                : theme === "cloud"
+                                  ? cursorCloudTheme
+                                  : cursorDarkTheme
                         }
                         customStyle={{
                           margin: 0,

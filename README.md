@@ -38,10 +38,11 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 
 - **Resizable sidebar** - drag to adjust width (200px - 500px)
 - **Collapsible sidebar** - compact date view (MM/DD format) with 60px width
-- **Three theme options** - Dark, Light, and Tan with smooth transitions
+- **Four theme options** - Dark, Light, Tan, and Cloud with smooth transitions
   - Dark mode: Sublime Text-inspired dark theme
   - Light mode: Apple Notes-inspired clean theme
-  - Tan mode: Warm document-focused theme for ecosystem strain reduction
+  - Tan mode: Warm document-focused theme for eye strain reduction
+  - Cloud mode: Minimal grayscale theme for distraction-free focus
 - **Sharp font rendering** - optimized text display across all browsers and devices
 - **Mobile-optimized** with auto-hide sidebar and touch-friendly interface
   - Visible add button ("+") on mobile devices for easy todo creation
@@ -246,13 +247,14 @@ At the bottom of each date's todo list:
 
 ### Themes
 
-Toggle between dark, light, and tan modes using the **half-moon icon** at the bottom of the sidebar (above the login link). The login/user icons automatically switch between dark, light, and tan variants based on the current theme.
+Toggle between dark, light, tan, and cloud modes using the **half-moon icon** at the bottom of the sidebar (above the login link). The login/user icons automatically switch between variants based on the current theme.
 
 **Theme Options:**
 
 - **Dark Mode** - Sublime Text-inspired dark theme (#2E3842 background) with blue accents (#4a9eff)
-- **Light Mode** - Apple Notes-inspired clean theme (#f5f5f7 background) with blue accents (#007aff)
-- **Tan Mode** - Warm document-focused theme (#faf8f5 background) with orange accents (#EB5601) for ecosystem strain reduction
+- **Light Mode** - Apple Notes-inspired clean theme (#ffffff background) with blue accents (#007aff)
+- **Tan Mode** - Warm document-focused theme (#faf8f5 background) with orange accents (#EB5601) for eye strain reduction
+- **Cloud Mode** - Minimal grayscale theme (#EDEDED background) with dark gray accents (#171717) for distraction-free focus
 
 ### Install as App (PWA)
 
@@ -375,6 +377,15 @@ The app uses CSS variables for easy theming. Key colors:
 - `--bg-secondary: #f5f3f0` - Slightly darker tan
 - `--text-primary: #1a1a1a` - Soft black text
 - `--text-secondary: #6b6b6b` - Warm gray text
+
+**Cloud Mode:**
+
+- `--accent: #e8e8e8` - General accent color
+- `--primary-accent: #171717` - Primary action color (checkboxes, buttons, active states)
+- `--bg-primary: #ededed` - Light gray background
+- `--bg-secondary: #e8e8e8` - Slightly darker gray
+- `--text-primary: #171717` - Near black text
+- `--text-secondary: #171717` - Consistent dark gray text
 
 ## Development
 

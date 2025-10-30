@@ -16,9 +16,15 @@ import { FullPageNoteTabs } from "./components/FullPageNoteTabs";
 import { Launch } from "./pages/Launch";
 import { Changelog } from "./pages/Changelog";
 import { NotFound } from "./pages/NotFound";
+import { Stats } from "./pages/Stats";
 import { format } from "date-fns";
 import { Search, Menu, X } from "lucide-react";
-import { CopyIcon, CheckIcon, ExternalLinkIcon, FileTextIcon } from "@radix-ui/react-icons";
+import {
+  CopyIcon,
+  CheckIcon,
+  ExternalLinkIcon,
+  FileTextIcon,
+} from "@radix-ui/react-icons";
 import { Id } from "../convex/_generated/dataModel";
 import { useTheme } from "./context/ThemeContext";
 import { triggerSelectionHaptic, triggerSuccessHaptic } from "./lib/haptics";
@@ -652,9 +658,36 @@ function App() {
   // Clerk appearance customization
   const clerkAppearance = {
     variables: {
-      colorPrimary: theme === "dark" ? "#ffffff" : "#000000",
-      colorBackground: theme === "dark" ? "#2E3842" : "#ffffff",
-      colorText: theme === "dark" ? "#ffffff" : "#000000",
+      colorPrimary:
+        theme === "dark"
+          ? "#ffffff"
+          : theme === "light"
+            ? "#000000"
+            : theme === "tan"
+              ? "#1a1a1a"
+              : theme === "cloud"
+                ? "#171717"
+                : "#000000",
+      colorBackground:
+        theme === "dark"
+          ? "#2E3842"
+          : theme === "light"
+            ? "#ffffff"
+            : theme === "tan"
+              ? "#faf8f5"
+              : theme === "cloud"
+                ? "#ededed"
+                : "#ffffff",
+      colorText:
+        theme === "dark"
+          ? "#ffffff"
+          : theme === "light"
+            ? "#000000"
+            : theme === "tan"
+              ? "#1a1a1a"
+              : theme === "cloud"
+                ? "#171717"
+                : "#000000",
       borderRadius: "4px",
     },
   };
@@ -748,7 +781,7 @@ function App() {
                 className="search-button"
                 onClick={() => {
                   triggerSelectionHaptic();
-                  
+
                   // If on full-page note view, copy the note content
                   if (showFullPageNotes && selectedFullPageNoteId) {
                     const currentNote = fullPageNotes?.find(
@@ -817,7 +850,10 @@ function App() {
                       if (fullPageNotes && fullPageNotes.length > 0) {
                         const firstNote = fullPageNotes[0];
                         if (!openFullPageNoteTabs.includes(firstNote._id)) {
-                          setOpenFullPageNoteTabs((prev) => [...prev, firstNote._id]);
+                          setOpenFullPageNoteTabs((prev) => [
+                            ...prev,
+                            firstNote._id,
+                          ]);
                         }
                         setSelectedFullPageNoteId(firstNote._id);
                         setShowFullPageNotes(true);
@@ -1150,7 +1186,9 @@ function App() {
             // If a full-page note was selected, open it
             if (fullPageNoteId) {
               setOpenFullPageNoteTabs((prev) =>
-                prev.includes(fullPageNoteId) ? prev : [...prev, fullPageNoteId],
+                prev.includes(fullPageNoteId)
+                  ? prev
+                  : [...prev, fullPageNoteId],
               );
               setSelectedFullPageNoteId(fullPageNoteId);
               setShowFullPageNotes(true);
@@ -1448,6 +1486,7 @@ function AppRouter() {
       <Route path="/launch" element={<Launch />} />
       <Route path="/about" element={<Launch />} />
       <Route path="/changelog" element={<Changelog />} />
+      <Route path="/stats" element={<Stats />} />
       <Route path="/" element={<App />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

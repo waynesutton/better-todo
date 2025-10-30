@@ -4,6 +4,48 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.008] - 2025-10-30 - READY FOR NETLIFY DEPLOYMENT
+
+### Added
+
+- **Cloud Theme** - Fourth theme option with minimal grayscale design
+  - Primary background: #EDEDED (light gray)
+  - Secondary background: #E8E8E8 (slightly darker gray)
+  - Text colors: #171717 (near black)
+  - Interactive accent: #171717 (consistent dark gray)
+  - Minimal color palette for distraction-free focus
+  - Cycle through all four themes with half-moon icon in sidebar
+  - Theme persists across sessions and devices
+  - Radix Half2 icon for cloud theme indicator
+  - Full support for all app features including Clerk modals
+  - Mobile responsive with consistent design
+
+### Frontend Changes
+
+- **Theme Context** (`src/context/ThemeContext.tsx`)
+  - Added "cloud" to Theme type union
+  - Updated meta theme color for cloud theme (#171717)
+  - Extended toggleTheme rotation to include cloud theme
+- **Sidebar Component** (`src/components/Sidebar.tsx`)
+  - Imported Half2Icon from @radix-ui/react-icons for cloud theme
+  - Updated theme icon conditional to display half-moon for cloud theme
+  - Updated tooltip text to cycle through all four themes
+- **Syntax Highlighting** (`src/components/FullPageNoteView.tsx`, `src/components/NotesSection.tsx`)
+  - Added cursorCloudTheme syntax highlighting color scheme
+  - Grayscale code highlighting matching cloud theme palette
+- **App Component** (`src/App.tsx`)
+  - Extended Clerk appearance customization for cloud theme
+  - Color primary, background, and text values for cloud theme
+
+### Styling Changes
+
+- **Global CSS** (`src/styles/global.css`)
+  - Added `:root[data-theme="cloud"]` CSS variable block
+  - Cloud theme colors throughout app components
+  - Clerk modal overrides for cloud theme
+  - Interactive accent color overrides for checkboxes, buttons, and active states
+  - Mobile responsive styles for cloud theme
+
 ## [v.007] - 2025-10-29 - READY FOR NETLIFY DEPLOYMENT
 
 ### Added

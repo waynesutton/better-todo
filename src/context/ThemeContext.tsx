@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-type Theme = "dark" | "light" | "tan";
+type Theme = "dark" | "light" | "tan" | "cloud";
 
 interface ThemeContextType {
   theme: Theme;
@@ -29,6 +29,7 @@ const updateMetaThemeColor = (theme: Theme) => {
     dark: "#2e3842",
     light: "#ffffff",
     tan: "#faf8f5",
+    cloud: "#171717",
   };
   const metaThemeColor = document.querySelector('meta[name="theme-color"]');
   if (metaThemeColor) {
@@ -50,10 +51,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   const toggleTheme = () => {
-    // Three-way rotation: dark → light → tan → dark
+    // Four-way rotation: dark → light → tan → cloud → dark
     setTheme((prev) => {
       if (prev === "dark") return "light";
       if (prev === "light") return "tan";
+      if (prev === "tan") return "cloud";
       return "dark";
     });
   };

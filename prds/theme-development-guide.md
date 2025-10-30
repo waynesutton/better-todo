@@ -2,7 +2,20 @@
 
 ## Overview
 
-This guide provides a comprehensive framework for creating and implementing new themes in the application. It covers the complete process from design to implementation, ensuring consistency and maintainability.
+This guide provides a comprehensive framework for creating and implementing new themes in the application. It covers the complete process from design to implementation, ensuring consistency and maintainability across all components including full-page notes, launch page, changelog page, and all UI elements.
+
+## Theme System Architecture
+
+### Core Theme Files
+
+The theme system is implemented across these key files:
+
+1. **`src/context/ThemeContext.tsx`**: Theme state management and persistence
+2. **`src/styles/global.css`**: CSS variable definitions and theme-specific overrides
+3. **`src/components/Sidebar.tsx`**: Theme switcher UI with icons
+4. **`src/components/FullPageNoteView.tsx`**: Syntax highlighting theme selection
+5. **`src/components/NotesSection.tsx`**: Syntax highlighting theme selection
+6. **`src/App.tsx`**: Clerk appearance customization based on theme
 
 ## Theme Color Reference
 
@@ -19,6 +32,7 @@ Quick reference for all three themes and their key colors:
 | **Text Secondary**       | #b8bcc2 (Light Gray)  | #666666 (Gray)       | #6b6b6b (Warm Gray)   |
 | **Border Color**         | #3a4350 (Gray)        | #d1d1d6 (Light Gray) | #e6e4e1 (Tan)         |
 | **Checkbox Background**  | #1a1f26 (Dark)        | #fafafa (Light)      | #f5f3f0 (Tan)         |
+| **Archive Background**   | #1f252d (Dark)        | #fafafa (Light)      | #f5f3f0 (Tan)         |
 | **Mobile Add Button**    | #27a561 (Green)       | #0076c6 (Blue)       | #eb5601 (Orange)      |
 | **Mobile Add Hover**     | #229350 (Dark Green)  | #0065ad (Dark Blue)  | #d14a01 (Dark Orange) |
 
@@ -26,133 +40,48 @@ Quick reference for all three themes and their key colors:
 
 Elements using the interactive accent color in each theme:
 
+**Core Interactive States:**
+
 - ✅ Checked checkboxes (background and border)
 - ✅ Active date states (sidebar)
-- ✅ Focused checkbox borders
+- ✅ Collapsed sidebar date active states
+- ✅ Focused checkbox borders (including hover states)
 - ✅ Menu hover states
+- ✅ Menu button base color (some themes)
+
+**Buttons and Actions:**
+
 - ✅ Primary buttons
 - ✅ Confirm dialog buttons
 - ✅ Feature showcase buttons
-- ✅ Font size option active state
-- ✅ Search highlights
 - ✅ Date picker buttons
+- ✅ Date picker cancel buttons
 - ✅ Add folder save buttons
 - ✅ Clerk authentication buttons
-- ✅ Collapsed/expanded active dates
 
-## Theme Architecture
+**UI Components:**
 
-### 1. CSS Variable System
+- ✅ Font size option active state
+- ✅ Search highlights
+- ✅ Active full-page note in sidebar (`.notes-folder-item.active`)
+- ✅ Date hover backgrounds (some themes use interactive accent)
+- ✅ Date menu button hover states
 
-All themes use a centralized CSS variable system for consistent theming:
+**Additional Styling:**
+
+- ✅ Code block backgrounds (when they differ from primary background)
+
+## Complete Theme Implementation Locations
+
+### 1. CSS Variables (`src/styles/global.css`)
+
+**Location**: Lines 2-63 (approximately)
+
+Each theme requires a complete CSS variable block:
 
 ```css
 :root[data-theme="theme-name"] {
   /* Core Colors */
-  --bg-primary: #ffffff; /* Main background */
-  --bg-secondary: #f8f9fa; /* Secondary panels, sidebar */
-  --bg-hover: #e9ecef; /* Hover states */
-
-  /* Text Colors */
-  --text-primary: #000000; /* Primary text */
-  --text-secondary: #6c757d; /* Secondary text, labels */
-
-  /* Interactive Elements */
-  --border-color: #dee2e6; /* Borders, dividers */
-  --accent: #007bff; /* Primary accent color */
-
-  /* Component Specific */
-  --checkbox-bg: #f8f9fa; /* Checkbox background */
-  --archive-bg: #f8f9fa; /* Archive section background */
-}
-```
-
-### 2. Theme Implementation Pattern
-
-#### Step 1: Define Base Variables
-
-```css
-:root[data-theme="new-theme"] {
-  /* Copy and modify the variable system above */
-  --bg-primary: #your-color;
-  --bg-secondary: #your-color;
-  /* ... continue for all variables */
-}
-```
-
-#### Step 2: Component Overrides
-
-Identify elements that need specific color overrides:
-
-```css
-/* Example: Custom button colors */
-:root[data-theme="new-theme"] .custom-button {
-  background-color: #custom-color;
-  border-color: #custom-color;
-}
-
-:root[data-theme="new-theme"] .custom-button:hover {
-  background-color: #custom-hover-color;
-}
-```
-
-#### Step 3: Interactive States
-
-Ensure all interactive states are defined:
-
-```css
-/* Hover states */
-:root[data-theme="new-theme"] .interactive-element:hover {
-  background-color: var(--bg-hover);
-}
-
-/* Focus states */
-:root[data-theme="new-theme"] .interactive-element:focus {
-  border-color: var(--accent);
-  outline-color: var(--accent);
-}
-
-/* Active states */
-:root[data-theme="new-theme"] .interactive-element.active {
-  background-color: var(--accent);
-  color: white;
-}
-```
-
-## Theme Development Process
-
-### Phase 1: Design and Planning
-
-#### 1.1 Color Palette Selection
-
-- **Primary Background**: Main app background color
-- **Secondary Background**: Sidebar, cards, panels
-- **Text Colors**: Ensure sufficient contrast (WCAG AA minimum)
-- **Accent Color**: Primary interactive color
-- **Hover States**: Subtle darkening of base colors
-- **Borders**: Subtle, non-distracting
-
-#### 1.2 Accessibility Considerations
-
-- **Contrast Ratios**: Minimum 4.5:1 for normal text, 3:1 for large text
-- **Color Blindness**: Don't rely solely on color for information
-- **Focus Indicators**: Clear visual focus states
-- **Interactive Elements**: Obvious clickable/tappable areas
-
-#### 1.3 Design Principles
-
-- **Consistency**: Use the same color for similar functions
-- **Hierarchy**: Clear visual hierarchy through color
-- **Readability**: Text must be easily readable
-- **Professional**: Appropriate for business use
-
-### Phase 2: Implementation
-
-#### 2.1 CSS Variable Definition
-
-```css
-:root[data-theme="theme-name"] {
-  /* Core theme variables */
   --bg-primary: #color;
   --bg-secondary: #color;
   --bg-hover: #color;
@@ -162,8 +91,10 @@ Ensure all interactive states are defined:
   --accent: #color;
   --checkbox-bg: #color;
   --archive-bg: #color;
+  --mobile-add-button-bg: #color;
+  --mobile-add-button-hover: #color;
 
-  /* Font sizes (inherit from base) */
+  /* Font sizes */
   --font-app-name: 14px;
   --font-sidebar: 13px;
   --font-todo: 14px;
@@ -172,140 +103,532 @@ Ensure all interactive states are defined:
 }
 ```
 
-#### 2.2 Component-Specific Overrides
+### 2. Clerk Component Overrides (`src/styles/global.css`)
 
-Identify components that need custom colors:
+**Location**: After CSS variables, around lines 82-290
 
-```css
-/* Buttons */
-:root[data-theme="theme-name"] .button-primary {
-  background-color: #custom-color;
-  border-color: #custom-color;
-}
+Three sections required for each theme:
 
-/* Checkboxes */
-:root[data-theme="theme-name"] .todo-checkbox.checked {
-  background-color: #custom-color;
-  border-color: #custom-color;
-}
+- Clerk UserProfile overrides
+- Clerk SignIn/SignUp overrides
+- Clerk form inputs and buttons
 
-/* Form Elements */
-:root[data-theme="theme-name"] .form-input {
-  background-color: var(--bg-primary);
-  border-color: var(--border-color);
-  color: var(--text-primary);
-}
-
-/* Navigation */
-:root[data-theme="theme-name"] .nav-item.active {
-  background-color: var(--accent);
-  color: white;
-}
-```
-
-#### 2.3 Third-Party Component Theming
+Pattern:
 
 ```css
-/* Clerk Authentication */
-:root[data-theme="theme-name"] .cl-signIn,
-:root[data-theme="theme-name"] .cl-signUp {
+:root[data-theme="theme-name"] .cl-card,
+:root[data-theme="theme-name"] .cl-userProfile-card {
   background-color: var(--bg-primary) !important;
   color: var(--text-primary) !important;
 }
+```
 
-:root[data-theme="theme-name"] .cl-formButtonPrimary {
-  background-color: var(--accent) !important;
-  border-color: var(--accent) !important;
-  color: white !important;
+### 3. Interactive Accent Color Overrides (`src/styles/global.css`)
+
+**Location**: Throughout the CSS file
+
+These elements use hardcoded interactive accent colors that need theme-specific overrides:
+
+**Core Interactive Elements:**
+
+- `.todo-checkbox.checked` - uses interactive accent
+- `.date-item-container.active` - uses interactive accent
+- `.date-item-collapsed.active` - uses interactive accent (collapsed sidebar dates)
+- `.confirm-dialog-button-confirm.dangerous` - uses interactive accent
+- Focus states on checkboxes (`.todo-item-wrapper.focused .todo-checkbox`, `.todo-item.focused .todo-checkbox`, `.todo-checkbox:hover`)
+- Active sidebar date items
+
+**Hover and Interactive States:**
+
+- `.date-item-container:hover:not(.active)` - date hover background
+- `.date-menu-button:hover` - date menu button hover background
+- `.menu-button` - menu button base color
+- `.todo-item:hover .menu-button:hover` - menu button hover state (uses interactive accent)
+- `.date-picker-button` - date picker button background
+- `.date-picker-button.cancel` - date picker cancel button background
+
+**Additional UI Elements:**
+
+- `.font-size-option.active` - font size selector active state
+- `.notes-folder-item.active` - active full-page note in sidebar
+- Code block backgrounds (`.note-code-block-wrapper pre`, `.note-code-block-wrapper code`)
+
+**Pattern for adding overrides:**
+
+```css
+/* Theme mode specific override */
+:root[data-theme="theme-name"] .selector {
+  property: #interactive-accent-color;
 }
 ```
 
-### Phase 3: Testing and Validation
+### 4. Theme Context (`src/context/ThemeContext.tsx`)
 
-#### 3.1 Visual Testing Checklist
+**Changes Required**:
 
-- [ ] All backgrounds use theme colors
-- [ ] Text is readable and has proper contrast
-- [ ] Interactive elements are clearly visible
-- [ ] Hover states work correctly
-- [ ] Focus indicators are visible
-- [ ] Active states are distinct
-- [ ] Borders and dividers are subtle but present
-
-#### 3.2 Accessibility Testing
-
-- [ ] Color contrast meets WCAG AA standards
-- [ ] Focus indicators are keyboard accessible
-- [ ] Color is not the only way to convey information
-- [ ] Interactive elements have sufficient touch targets
-- [ ] Text remains readable at different zoom levels
-
-#### 3.3 Cross-Browser Testing
-
-- [ ] Chrome/Chromium browsers
-- [ ] Firefox
-- [ ] Safari
-- [ ] Edge
-- [ ] Mobile browsers (iOS Safari, Chrome Mobile)
-
-#### 3.4 Component Coverage
-
-- [ ] Sidebar and navigation
-- [ ] Todo items and lists
-- [ ] Forms and inputs
-- [ ] Modals and dialogs
-- [ ] Search functionality
-- [ ] Archive sections
-- [ ] Authentication flows
-- [ ] Mobile responsive design
-
-## Theme Integration
-
-### 1. Context Integration
-
-Update `src/context/ThemeContext.tsx`:
+1. **Type Definition** (line 3):
 
 ```typescript
 type Theme = "dark" | "light" | "tan" | "new-theme";
+```
 
-const toggleTheme = () => {
-  setTheme((prev) => {
-    // Add new theme to rotation
-    if (prev === "dark") return "light";
-    if (prev === "light") return "tan";
-    if (prev === "tan") return "new-theme";
-    return "dark";
-  });
+2. **Initial Theme** (line 16):
+
+```typescript
+return (saved as Theme) || "tan"; // Default theme
+```
+
+3. **Meta Theme Color** (lines 28-32):
+
+```typescript
+const colors = {
+  dark: "#2e3842",
+  light: "#ffffff",
+  tan: "#faf8f5",
+  "new-theme": "#your-color", // Add meta theme color
 };
 ```
 
-### 2. Sidebar Integration
-
-Update `src/components/Sidebar.tsx`:
+4. **Toggle Function** (lines 54-58):
 
 ```typescript
-import { Moon, Sun, Cloud, NewIcon } from "lucide-react";
+setTheme((prev) => {
+  if (prev === "dark") return "light";
+  if (prev === "light") return "tan";
+  if (prev === "tan") return "new-theme";
+  return "dark";
+});
+```
 
-// In theme toggle button:
+### 5. Sidebar Theme Switcher (`src/components/Sidebar.tsx`)
+
+**Changes Required**:
+
+1. **Import Icon** (lines 12-14):
+
+```typescript
+import {
+  Moon,
+  Sun,
+  Cloud,
+  NewIcon, // Add new icon import
+} from "lucide-react";
+```
+
+2. **Theme Icon Display** (lines 1998-2004):
+
+```typescript
 {theme === "dark" ? (
-  <Moon size={16} />
-) : theme === "light" ? (
   <Sun size={16} />
-) : theme === "tan" ? (
+) : theme === "light" ? (
   <Cloud size={16} />
+) : theme === "tan" ? (
+  <NewIcon size={16} /> // Add new theme icon
 ) : (
-  <NewIcon size={16} />
+  <Moon size={16} />
 )}
 ```
 
-### 3. Icon Selection
+3. **Tooltip Text** (line 2008):
 
-Choose appropriate icons from [Lucide Icons](https://lucide.dev):
+```typescript
+{
+  `Switch to ${theme === "dark" ? "light" : theme === "light" ? "tan" : theme === "tan" ? "new-theme" : "dark"} mode`;
+}
+```
 
-- **Dark Mode**: Moon (🌙)
-- **Light Mode**: Sun (☀️)
-- **Tan Mode**: Cloud (☁️)
-- **New Theme**: Choose relevant icon
+### 6. Syntax Highlighting Themes
+
+**Two locations require updates**:
+
+#### A. FullPageNoteView.tsx (lines 10-151)
+
+Create a new theme object:
+
+```typescript
+const cursorNewTheme: { [key: string]: React.CSSProperties } = {
+  'code[class*="language-"]': {
+    color: "#color",
+    background: "#color",
+    // ... copy structure from cursorDarkTheme or cursorLightTheme
+  },
+  // ... rest of syntax highlighting colors
+};
+```
+
+Update usage (line 436):
+
+```typescript
+style={
+  theme === "dark" ? cursorDarkTheme
+  : theme === "light" ? cursorLightTheme
+  : theme === "tan" ? cursorNewTheme // Add new theme
+  : cursorDarkTheme // default fallback
+}
+```
+
+#### B. NotesSection.tsx (lines 19-160)
+
+Same pattern as FullPageNoteView.tsx:
+
+- Create `cursorNewTheme` object
+- Update ternary condition around line 612
+
+### 7. App.tsx Clerk Appearance (`src/App.tsx`)
+
+**Location**: Lines 653-660
+
+Update Clerk appearance customization:
+
+```typescript
+const clerkAppearance = {
+  variables: {
+    colorPrimary:
+      theme === "dark"
+        ? "#ffffff"
+        : theme === "light"
+          ? "#000000"
+          : theme === "tan"
+            ? "#1a1a1a"
+            : "#your-color", // Add new theme color
+    colorBackground:
+      theme === "dark"
+        ? "#2E3842"
+        : theme === "light"
+          ? "#ffffff"
+          : theme === "tan"
+            ? "#faf8f5"
+            : "#your-bg-color", // Add new theme background
+    colorText:
+      theme === "dark"
+        ? "#ffffff"
+        : theme === "light"
+          ? "#000000"
+          : theme === "tan"
+            ? "#1a1a1a"
+            : "#your-text-color", // Add new theme text color
+    borderRadius: "4px",
+  },
+};
+```
+
+### 8. Conditional Image Assets (`src/components/Sidebar.tsx`)
+
+**Location**: Lines 1943, 1967, 2046
+
+Update conditional image paths:
+
+```typescript
+// User icon (line 1943)
+theme === "dark"
+  ? "/user-light.svg"
+  : theme === "light"
+    ? "/user-dark.svg"
+    : theme === "tan"
+      ? "/user-dark.svg" // Decide based on theme
+      : "/user-dark.svg"; // Default for new theme
+
+// Convex logo (line 2046)
+theme === "dark"
+  ? "/convex-white.svg"
+  : theme === "light"
+    ? "/convex-black.svg"
+    : theme === "tan"
+      ? "/convex-black.svg"
+      : "/convex-black.svg"; // Default for new theme
+```
+
+## Step-by-Step: Adding a New Theme
+
+### Step 1: Choose Theme Name and Colors
+
+Decide on:
+
+- Theme name (e.g., "ocean", "forest", "purple")
+- Color palette (see color reference above)
+- Interactive accent color
+- General accent color
+
+### Step 2: Update ThemeContext.tsx
+
+1. Add theme name to `Theme` type union
+2. Add meta theme color to `colors` object
+3. Update `toggleTheme` function to include new theme in rotation
+
+### Step 3: Add CSS Variables
+
+In `src/styles/global.css`:
+
+1. Add `:root[data-theme="new-theme"]` block with all CSS variables
+2. Copy Clerk overrides section for new theme
+3. Add component-specific overrides using interactive accent color:
+   - `.todo-checkbox.checked`
+   - `.date-item-container.active`
+   - `.date-item-collapsed.active`
+   - Focused checkbox states (`.todo-item-wrapper.focused .todo-checkbox`, `.todo-checkbox:hover`)
+   - `.date-menu-button:hover`
+   - `.menu-button` (if needed)
+   - `.todo-item:hover .menu-button:hover`
+   - `.date-picker-button` and `.date-picker-button.cancel`
+   - `.font-size-option.active`
+   - `.notes-folder-item.active`
+   - Code block backgrounds if different from primary
+   - Date hover states if using interactive accent
+
+### Step 4: Update Sidebar Theme Switcher
+
+1. Import new icon from lucide-react
+2. Add conditional to icon display logic
+3. Update tooltip text
+
+### Step 5: Add Syntax Highlighting Theme
+
+1. Create new theme object in `FullPageNoteView.tsx`
+2. Create new theme object in `NotesSection.tsx`
+3. Update ternary conditions in both files
+
+### Step 6: Update App.tsx
+
+1. Add new theme colors to Clerk appearance customization
+
+### Step 7: Update Conditional Assets
+
+1. Determine which images to use for new theme
+2. Update conditional image paths in Sidebar.tsx
+
+### Step 8: Test Thoroughly
+
+- [ ] Theme switches correctly
+- [ ] All components use correct colors
+- [ ] Syntax highlighting works in notes
+- [ ] Clerk modals match theme
+- [ ] Interactive elements use correct accent colors
+- [ ] Focus states are visible
+- [ ] Hover states work correctly
+- [ ] Mobile responsive design works
+- [ ] Full-page notes display correctly
+- [ ] Launch page displays correctly
+- [ ] Changelog page displays correctly
+
+## Theme Icon Selection
+
+### Current Icons
+
+- **Dark Mode**: `Moon` from lucide-react
+- **Light Mode**: `Sun` from lucide-react
+- **Tan Mode**: `Cloud` from lucide-react
+
+### Choosing an Icon
+
+1. Browse [Lucide Icons](https://lucide.dev)
+2. Choose an icon that represents your theme concept
+3. Import it in `Sidebar.tsx`:
+   ```typescript
+   import { Moon, Sun, Cloud, YourIcon } from "lucide-react";
+   ```
+4. Add it to the conditional rendering:
+   ```typescript
+   {theme === "dark" ? (
+     <Sun size={16} />
+   ) : theme === "light" ? (
+     <Cloud size={16} />
+   ) : theme === "tan" ? (
+     <YourIcon size={16} />
+   ) : (
+     <Moon size={16} />
+   )}
+   ```
+
+### Icon Suggestions by Theme Type
+
+- **Ocean/Blue**: `Waves`, `Droplet`, `Fish`
+- **Forest/Green**: `Trees`, `Leaf`, `Flower`
+- **Purple**: `Sparkles`, `Stars`, `Gem`
+- **High Contrast**: `Circle`, `Square`, `Hexagon`
+- **Night**: `Star`, `Moon`, `Compass`
+
+## Cursor Prompt Template
+
+Use this prompt template when adding a new theme:
+
+```
+Add a new theme called "[THEME_NAME]" to the application with the following color palette:
+
+**Theme Colors:**
+- Primary Background: #[BG_PRIMARY]
+- Secondary Background: #[BG_SECONDARY]
+- Hover Background: #[BG_HOVER]
+- Text Primary: #[TEXT_PRIMARY]
+- Text Secondary: #[TEXT_SECONDARY]
+- Border Color: #[BORDER_COLOR]
+- General Accent: #[ACCENT]
+- Interactive Accent: #[INTERACTIVE_ACCENT] (for checkboxes, active states, buttons)
+- Checkbox Background: #[CHECKBOX_BG]
+- Archive Background: #[ARCHIVE_BG]
+- Mobile Add Button: #[MOBILE_ADD_BG]
+- Mobile Add Hover: #[MOBILE_ADD_HOVER]
+- Meta Theme Color: #[META_COLOR] (for browser theme-color meta tag)
+
+**Icon:** Use [ICON_NAME] from lucide-react for the theme switcher
+
+**Syntax Highlighting:**
+- Code background: #[CODE_BG]
+- Code text: #[CODE_TEXT]
+- Primary accent: #[CODE_ACCENT]
+- Secondary accent: #[CODE_ACCENT_2]
+(Provide full syntax highlighting color palette if needed)
+
+**Update all theme locations:**
+1. ThemeContext.tsx - Add theme to type, meta colors, and toggle rotation
+2. global.css - Add CSS variables block and Clerk overrides
+3. Sidebar.tsx - Add icon import, update icon conditional, update tooltip
+4. FullPageNoteView.tsx - Create syntax highlighting theme and update usage
+5. NotesSection.tsx - Create syntax highlighting theme and update usage
+6. App.tsx - Update Clerk appearance variables
+7. Sidebar.tsx - Update conditional image paths for user icons and logos
+
+**Interactive Accent Usage:**
+The interactive accent color (#[INTERACTIVE_ACCENT]) should be used for:
+
+**Core Interactive States:**
+- Checked checkboxes (background and border)
+- Active date states in sidebar (`.date-item-container.active`)
+- Collapsed sidebar date active states (`.date-item-collapsed.active`)
+- Focused checkbox borders (`.todo-item-wrapper.focused .todo-checkbox`, `.todo-item.focused .todo-checkbox`, `.todo-checkbox:hover`)
+- Menu hover states (`.todo-item:hover .menu-button:hover`)
+- Menu button base color (`.menu-button` - some themes only)
+
+**Buttons and Actions:**
+- Primary buttons
+- Confirm dialog buttons
+- Date picker buttons (`.date-picker-button`)
+- Date picker cancel buttons (`.date-picker-button.cancel`)
+- Add folder save buttons
+- Clerk authentication buttons
+
+**UI Components:**
+- Font size option active state (`.font-size-option.active`)
+- Search highlights
+- Active full-page note in sidebar (`.notes-folder-item.active`)
+- Date hover backgrounds (`.date-item-container:hover:not(.active)` - if using interactive accent)
+- Date menu button hover (`.date-menu-button:hover`)
+- Code block backgrounds (`.note-code-block-wrapper pre`, `.note-code-block-wrapper code` - if different from primary background)
+
+Ensure all existing themes continue to work correctly and test thoroughly.
+```
+
+**Example Usage:**
+
+```
+Add a new theme called "cloud" to the application with the following color palette:
+
+**Theme Colors:**
+- Primary Background: #EDEDED
+- Secondary Background: #E8E8E8
+- Hover Background: #E8E8E8
+- Text Primary: #171717
+- Text Secondary: #171717
+- Border Color: #E8E8E8
+- General Accent: #E8E8E8
+- Interactive Accent: #171717 (for checkboxes, active states, buttons)
+- Checkbox Background: #171717
+- Archive Background: #171717
+- Mobile Add Button: #171717
+- Mobile Add Hover: #171717
+- Meta Theme Color: #171717
+
+**Icon:** Use half2 icon from https://www.radix-ui.com/icons for the theme switcher
+
+**Syntax Highlighting:**
+- Code background: #EDEDED
+- Code text: #171717
+- Primary accent: #E8E8E8
+- Secondary accent: #E8E8E8
+
+Update all theme locations as specified in the guide.
+```
+
+## Complete File Checklist
+
+When adding a new theme, verify these files are updated:
+
+- [ ] `src/context/ThemeContext.tsx`
+  - [ ] Theme type union
+  - [ ] Meta theme color
+  - [ ] Toggle rotation
+
+- [ ] `src/styles/global.css`
+  - [ ] CSS variables block
+  - [ ] Clerk UserProfile overrides
+  - [ ] Clerk SignIn/SignUp overrides
+  - [ ] Clerk form overrides
+  - [ ] Interactive accent color overrides:
+    - [ ] `.todo-checkbox.checked`
+    - [ ] `.date-item-container.active`
+    - [ ] `.date-item-collapsed.active`
+    - [ ] `.todo-item-wrapper.focused .todo-checkbox` and `.todo-checkbox:hover`
+    - [ ] `.date-item-container:hover:not(.active)` (if using interactive accent)
+    - [ ] `.date-menu-button:hover`
+    - [ ] `.menu-button` (base color if needed)
+    - [ ] `.todo-item:hover .menu-button:hover`
+    - [ ] `.date-picker-button`
+    - [ ] `.date-picker-button.cancel`
+    - [ ] `.font-size-option.active`
+    - [ ] `.notes-folder-item.active`
+    - [ ] `.note-code-block-wrapper pre` and `code` backgrounds (if different from primary)
+
+- [ ] `src/components/Sidebar.tsx`
+  - [ ] Icon import
+  - [ ] Icon conditional rendering
+  - [ ] Tooltip text
+  - [ ] Conditional image paths
+
+- [ ] `src/components/FullPageNoteView.tsx`
+  - [ ] Syntax highlighting theme object
+  - [ ] Theme conditional in SyntaxHighlighter
+
+- [ ] `src/components/NotesSection.tsx`
+  - [ ] Syntax highlighting theme object
+  - [ ] Theme conditional in SyntaxHighlighter
+
+- [ ] `src/App.tsx`
+  - [ ] Clerk appearance colorPrimary
+  - [ ] Clerk appearance colorBackground
+  - [ ] Clerk appearance colorText
+
+## Testing Checklist
+
+After implementing a new theme:
+
+- [ ] Theme appears in theme switcher
+- [ ] Theme icon displays correctly
+- [ ] Theme switches correctly when clicked
+- [ ] Theme persists after page refresh
+- [ ] All backgrounds use correct colors
+- [ ] All text is readable with sufficient contrast
+- [ ] Checkboxes use interactive accent color
+- [ ] Active sidebar dates use interactive accent color
+- [ ] Collapsed sidebar dates use interactive accent when active
+- [ ] Focused checkbox borders use interactive accent
+- [ ] Date hover states work correctly
+- [ ] Date menu button hover states work correctly
+- [ ] Menu button colors are correct
+- [ ] Menu button hover states use interactive accent
+- [ ] Date picker buttons use interactive accent
+- [ ] Date picker cancel buttons use interactive accent
+- [ ] Font size selector active state uses interactive accent
+- [ ] Active full-page note in sidebar uses correct background
+- [ ] Code block backgrounds match theme
+- [ ] Hover states work correctly
+- [ ] Focus states are visible
+- [ ] Buttons use correct colors
+- [ ] Clerk modals match theme
+- [ ] Syntax highlighting in notes works correctly
+- [ ] Full-page notes display correctly
+- [ ] Launch page displays correctly
+- [ ] Changelog page displays correctly
+- [ ] Mobile responsive design works
+- [ ] All existing themes still work
 
 ## Best Practices
 
@@ -313,21 +636,20 @@ Choose appropriate icons from [Lucide Icons](https://lucide.dev):
 
 - **Start with base colors**: Background, text, accent
 - **Test contrast ratios**: Use tools like WebAIM Contrast Checker
-- **Consider color psychology**: Different colors evoke different emotions
 - **Maintain consistency**: Use the same color for similar functions
+- **Consider accessibility**: WCAG AA minimum contrast ratios
 
 ### 2. CSS Organization
 
+- **Use CSS variables**: All colors should be defined as CSS variables
 - **Group by component**: Keep related styles together
-- **Use meaningful names**: Make selectors self-documenting
-- **Minimize specificity**: Avoid `!important` when possible
+- **Minimize overrides**: Leverage base variables when possible
 - **Comment complex rules**: Explain non-obvious styling decisions
 
 ### 3. Performance
 
 - **Use CSS variables**: Efficient theme switching
-- **Minimize overrides**: Leverage base variables when possible
-- **Optimize selectors**: Use efficient CSS selectors
+- **Minimize specificity**: Avoid `!important` when possible
 - **Test performance**: Ensure theme switching is smooth
 
 ### 4. Maintenance
@@ -339,110 +661,33 @@ Choose appropriate icons from [Lucide Icons](https://lucide.dev):
 
 ## Common Pitfalls
 
-### 1. Contrast Issues
+### 1. Forgetting Clerk Overrides
 
-- **Problem**: Text not readable against background
-- **Solution**: Test all color combinations for sufficient contrast
+**Problem**: Clerk components don't match theme
+**Solution**: Always add Clerk overrides section in global.css
 
-### 2. Inconsistent Colors
+### 2. Missing Syntax Highlighting Theme
 
-- **Problem**: Same function uses different colors
-- **Solution**: Create a color reference guide and stick to it
+**Problem**: Code blocks look wrong in new theme
+**Solution**: Create syntax highlighting theme objects in both FullPageNoteView.tsx and NotesSection.tsx
 
-### 3. Missing States
+### 3. Not Updating Toggle Rotation
 
-- **Problem**: Hover/focus/active states not defined
-- **Solution**: Systematically test all interactive elements
+**Problem**: Theme doesn't cycle correctly
+**Solution**: Update toggleTheme function in ThemeContext.tsx
 
-### 4. Third-Party Components
+### 4. Missing Interactive Accent Overrides
 
-- **Problem**: External components don't match theme
-- **Solution**: Use specific selectors and `!important` when necessary
+**Problem**: Checkboxes and active states don't use interactive accent
+**Solution**: Add theme-specific overrides for `.todo-checkbox.checked` and `.date-item-container.active`
 
-## Theme Examples
+### 5. Forgetting Meta Theme Color
 
-### Current Themes
-
-#### Dark Mode
-
-- **Base**: Dark grays and blacks
-- **Accent**: Green (#27A561) for interactive elements, Blue (#4a9eff) for general accents
-- **Text**: White and light gray
-- **Use Case**: Low-light environments, developer preference
-- **Key Overrides**:
-  - Checked checkboxes use #27A561
-  - Active states use #27A561
-  - Primary buttons use #27A561
-  - Focused elements use #27A561
-  - Menu hover states use #27A561
-
-#### Light Mode
-
-- **Base**: Whites and light grays
-- **Accent**: Blue (#007aff)
-- **Text**: Black and dark gray
-- **Use Case**: Bright environments, traditional preference
-
-#### Tan Mode
-
-- **Base**: Warm tans and beiges
-- **Accent**: Orange (#EB5601)
-- **Text**: Dark colors for contrast
-- **Use Case**: Eye strain reduction, document-focused work
-- **Key Overrides**:
-  - Checked checkboxes use #EB5601
-  - Active states use #EB5601
-  - Primary buttons use #EB5601
-  - Focused elements use #EB5601
-
-### Future Theme Ideas
-
-#### High Contrast Mode
-
-- **Purpose**: Accessibility for visually impaired users
-- **Colors**: Maximum contrast ratios
-- **Features**: Larger focus indicators, bold borders
-
-#### Night Mode
-
-- **Purpose**: True dark mode with minimal blue light
-- **Colors**: Deep blacks, warm accents
-- **Features**: Reduced brightness, warm color temperature
-
-#### Colorful Mode
-
-- **Purpose**: Fun, engaging interface
-- **Colors**: Vibrant, saturated colors
-- **Features**: Colorful accents, playful interactions
-
-## Documentation Requirements
-
-### 1. Theme Documentation
-
-Each theme should include:
-
-- **Color palette**: Complete list of colors used
-- **Rationale**: Why these colors were chosen
-- **Use cases**: When to use this theme
-- **Accessibility notes**: Any special considerations
-- **Implementation notes**: Special overrides or considerations
-
-### 2. Testing Documentation
-
-- **Visual testing**: Screenshots of all major components
-- **Accessibility testing**: Contrast ratio measurements
-- **Browser testing**: Compatibility notes
-- **Performance testing**: Theme switching speed
-
-### 3. Maintenance Documentation
-
-- **Update procedures**: How to modify theme colors
-- **Troubleshooting**: Common issues and solutions
-- **Dependencies**: Any external dependencies
-- **Version history**: Changes over time
+**Problem**: Browser theme color doesn't match
+**Solution**: Add theme color to colors object in ThemeContext.tsx
 
 ## Conclusion
 
-This guide provides a comprehensive framework for theme development. By following these practices, new themes can be created efficiently while maintaining consistency, accessibility, and performance. The key is to start with a solid foundation using CSS variables and systematically test all components and states.
+This guide provides a comprehensive framework for theme development. By following these practices and using the provided prompt template, new themes can be created efficiently while maintaining consistency, accessibility, and performance across all components including full-page notes, launch page, and changelog page.
 
 Remember: Good themes enhance the user experience without compromising functionality or accessibility. Always prioritize usability over aesthetics.

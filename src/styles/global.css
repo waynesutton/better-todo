@@ -62,6 +62,27 @@
   --font-header-date: 14px;
 }
 
+:root[data-theme="cloud"] {
+  --bg-primary: #ededed;
+  --bg-secondary: #e8e8e8;
+  --bg-hover: #e8e8e8;
+  --text-primary: #171717;
+  --text-secondary: #171717;
+  --border-color: #e8e8e8;
+  --accent: #e8e8e8;
+  --checkbox-bg: #171717;
+  --archive-bg: #171717;
+  --mobile-add-button-bg: #171717;
+  --mobile-add-button-hover: #171717;
+
+  /* Font sizes */
+  --font-app-name: 14px;
+  --font-sidebar: 13px;
+  --font-todo: 14px;
+  --font-archive: 13px;
+  --font-header-date: 14px;
+}
+
 /* Clerk modal container */
 .clerk-modal-container {
   position: relative;
@@ -354,6 +375,102 @@
 /* Tan mode Clerk page scroll box */
 :root[data-theme="tan"] .cl-pageScrollBox {
   background-color: #faf8f6 !important;
+}
+
+/* Clerk UserProfile Theme Overrides for Cloud Mode */
+:root[data-theme="cloud"] .cl-card,
+:root[data-theme="cloud"] .cl-userProfile-card,
+:root[data-theme="cloud"] .cl-navbar,
+:root[data-theme="cloud"] .cl-profilePage {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="cloud"] .cl-profileSection,
+:root[data-theme="cloud"] .cl-profileSectionPrimaryButton,
+:root[data-theme="cloud"] .cl-accordionTriggerButton {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+:root[data-theme="cloud"] .cl-profileSectionTitle,
+:root[data-theme="cloud"] .cl-profileSectionTitleText,
+:root[data-theme="cloud"] .cl-accordionTriggerButton,
+:root[data-theme="cloud"] .cl-accordionTriggerButton__open,
+:root[data-theme="cloud"] .cl-headerTitle,
+:root[data-theme="cloud"] .cl-navbarItem,
+:root[data-theme="cloud"] .cl-userButtonTrigger,
+:root[data-theme="cloud"] .cl-formFieldLabel,
+:root[data-theme="cloud"] .cl-internal-b3fm6y {
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="cloud"] .cl-profileSectionSubtitle,
+:root[data-theme="cloud"] .cl-profileSectionContent__emailAddresses p,
+:root[data-theme="cloud"] .cl-profileSectionContent__connectedAccounts p,
+:root[data-theme="cloud"] .cl-badge {
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme="cloud"] .cl-badge {
+  background-color: var(--bg-hover) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+:root[data-theme="cloud"] .cl-formFieldInput,
+:root[data-theme="cloud"] .cl-input {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Clerk SignIn/SignUp Modal Overrides - Cloud Mode */
+:root[data-theme="cloud"] .cl-signIn,
+:root[data-theme="cloud"] .cl-signUp {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="cloud"] .cl-signIn .cl-card,
+:root[data-theme="cloud"] .cl-signUp .cl-card {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="cloud"] .cl-signIn .cl-headerTitle,
+:root[data-theme="cloud"] .cl-signUp .cl-headerTitle,
+:root[data-theme="cloud"] .cl-signIn .cl-formFieldLabel,
+:root[data-theme="cloud"] .cl-signUp .cl-formFieldLabel {
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="cloud"] .cl-signIn .cl-formFieldInput,
+:root[data-theme="cloud"] .cl-signUp .cl-formFieldInput,
+:root[data-theme="cloud"] .cl-signIn .cl-input,
+:root[data-theme="cloud"] .cl-signUp .cl-input {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+:root[data-theme="cloud"] .cl-signIn .cl-formButtonPrimary,
+:root[data-theme="cloud"] .cl-signUp .cl-formButtonPrimary {
+  background-color: #171717 !important;
+  border-color: #171717 !important;
+  color: white !important;
+}
+
+:root[data-theme="cloud"] .cl-signIn .cl-socialButtonsBlockButton,
+:root[data-theme="cloud"] .cl-signUp .cl-socialButtonsBlockButton {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Cloud mode Clerk page scroll box */
+:root[data-theme="cloud"] .cl-pageScrollBox {
+  background-color: #ededed !important;
 }
 
 /* Additional Clerk styling for buttons and interactive elements (neutral) */
@@ -918,6 +1035,10 @@ button:active,
   background-color: #eb5601;
 }
 
+/* cloud mode collapsed date active */
+:root[data-theme="cloud"] .date-item-collapsed.active {
+  background-color: #171717;
+}
 .date-item-container {
   display: flex;
   flex-direction: column;
@@ -950,6 +1071,11 @@ button:active,
   background-color: rgba(139, 115, 85, 0.08);
 }
 
+/* cloud mode date hover */
+:root[data-theme="cloud"] .date-item-container:hover:not(.active) {
+  background-color: rgba(139, 115, 85, 0.08);
+}
+
 :root[data-theme="tan"] .date-item-container:hover:not(.active) .date-item {
   color: var(--text-secondary);
 }
@@ -972,6 +1098,11 @@ button:active,
 /* Tan mode active date */
 :root[data-theme="tan"] .date-item-container.active {
   background-color: #eb5601;
+  color: white;
+}
+
+:root[data-theme="cloud"] .date-item-container.active {
+  background-color: #171717;
   color: white;
 }
 
@@ -1084,6 +1215,9 @@ button:active,
 :root[data-theme="tan"] .date-menu-button:hover {
   background-color: rgba(139, 115, 85, 0.1);
 }
+:root[data-theme="cloud"] .date-menu-button:hover {
+  background-color: #171717;
+}
 
 .date-menu-dropdown {
   position: absolute;
@@ -1148,14 +1282,42 @@ button:active,
   background-color: #27a561;
 }
 
-/* Light mode date picker button */
-:root[data-theme="light"] .date-picker-button {
-  background-color: #0076c6;
-}
-
 /* Tan mode date picker button */
 :root[data-theme="tan"] .date-picker-button {
   background-color: #eb5601;
+  color: #fff;
+}
+/* light mode date picker button */
+:root[data-theme="light"] .date-picker-button {
+  background-color: #0076c6;
+  color: #fff;
+}
+/* cloud mode date picker button */
+:root[data-theme="cloud"] .date-picker-button {
+  background-color: #171717;
+  color: #fff;
+}
+/* date-picker-button cancel */
+:root[data-theme="light"] .date-picker-button.cancel {
+  background-color: #0076c6;
+  color: #fff;
+}
+:root[data-theme="tan"] .date-picker-button.cancel {
+  background-color: #eb5601;
+  color: #fff;
+}
+:root[data-theme="cloud"] .date-picker-button.cancel {
+  background-color: #171717;
+  color: #fff;
+}
+:root[data-theme="dark"] .date-picker-button.cancel {
+  background-color: #27a561;
+  color: #fff;
+}
+/* dark mode date picker button */
+:root[data-theme="dark"] .date-picker-button {
+  background-color: #27a561;
+  color: #fff;
 }
 
 .date-picker-button:hover {
@@ -2064,11 +2226,44 @@ button:active,
   background-color: #f5f3f0 !important;
 }
 
+/* Cloud mode code block background */
+:root[data-theme="cloud"] .note-code-block-wrapper pre {
+  background: #ededed !important;
+  background-color: #ededed !important;
+}
+
+:root[data-theme="cloud"] .note-code-block-wrapper code {
+  background: #ededed !important;
+  background-color: #ededed !important;
+}
+
 .note-code-block-wrapper code {
   font-family:
     "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New",
     monospace !important;
   font-size: 13px !important;
+}
+
+/* Hex color swatch styles for CSS code blocks */
+.hex-color-wrapper {
+  display: inline-block;
+  position: relative;
+}
+
+.hex-color-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 4px;
+  vertical-align: middle;
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Ensure swatches don't break syntax highlighting */
+.hex-color-wrapper .token {
+  display: inline;
 }
 
 /* Cursor Dark Theme syntax highlighting colors */
@@ -2647,7 +2842,8 @@ button:active,
 
 /* Dark mode focused checkbox */
 :root[data-theme="dark"] .todo-item-wrapper.focused .todo-checkbox,
-:root[data-theme="dark"] .todo-item.focused .todo-checkbox {
+:root[data-theme="dark"] .todo-item.focused .todo-checkbox,
+:root[data-theme="dark"] .todo-checkbox:hover {
   border-color: #27a561 !important;
 }
 
@@ -2657,10 +2853,25 @@ button:active,
   border-color: #0076c6 !important;
 }
 
+:root[data-theme="light"] .todo-checkbox:hover {
+  border-color: #0076c6 !important;
+}
+
 /* Tan mode focused checkbox */
 :root[data-theme="tan"] .todo-item-wrapper.focused .todo-checkbox,
-:root[data-theme="tan"] .todo-item.focused .todo-checkbox {
+:root[data-theme="tan"] .todo-item.focused .todo-checkbox,
+:root[data-theme="tan"] .todo-checkbox:hover {
   border-color: #eb5601 !important;
+}
+
+/* Cloud mode focused checkbox */
+:root[data-theme="cloud"] .todo-item-wrapper.focused .todo-checkbox,
+:root[data-theme="cloud"] .todo-checkbox:hover {
+  border-color: #171717 !important;
+}
+
+:root[data-theme="cloud"] .todo-item.focused .todo-checkbox {
+  border-color: #171717 !important;
 }
 
 .todo-item:hover {
@@ -2728,6 +2939,12 @@ button:active,
 :root[data-theme="tan"] .todo-checkbox.checked {
   background-color: #eb5601;
   border-color: #eb5601;
+}
+
+/* Cloud mode checked checkbox */
+:root[data-theme="cloud"] .todo-checkbox.checked {
+  background-color: #171717;
+  border-color: #171717;
 }
 
 .todo-content {
@@ -2799,6 +3016,10 @@ button:active,
   color: rgba(139, 115, 85, 0.3);
 }
 
+[data-theme="cloud"] .menu-button {
+  color: #171717;
+}
+
 .todo-item:hover .menu-button {
   color: rgba(0, 0, 0, 0.45);
 }
@@ -2843,6 +3064,10 @@ button:active,
   color: rgba(255, 255, 255, 0.95);
 }
 
+[data-theme="cloud"] .todo-item:hover .menu-button:hover {
+  background-color: #171717;
+  color: rgba(255, 255, 255, 0.95);
+}
 .menu-dropdown {
   position: absolute;
   right: 0;
@@ -4390,6 +4615,12 @@ button:active,
   border-color: #27a561;
 }
 
+/* cloud mode font size option active */
+:root[data-theme="cloud"] .font-size-option.active {
+  background: #171717;
+  border-color: #171717;
+}
+
 /* Tan mode font size option active */
 :root[data-theme="tan"] .font-size-option.active {
   background: #eb5601;
@@ -5713,7 +5944,10 @@ button:active,
 .notes-folder-item.active {
   background-color: rgba(0, 0, 0, 0.2);
 }
-
+/* Active state for selected full-page note */
+:root[data-theme="cloud"] .notes-folder-item.active {
+  background-color: #414141;
+}
 .notes-folder-item-title {
   flex: 1;
   overflow: hidden;
@@ -5759,5 +5993,185 @@ button:active,
 
   .fullpage-note-tab-title-input {
     font-size: 12px;
+  }
+}
+
+/* Stats Page Styles */
+.stats-page {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 0;
+}
+
+.stats-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 60px 48px;
+}
+
+.stats-header {
+  margin-bottom: 48px;
+}
+
+.stats-title {
+  font-size: 32px;
+  font-weight: 400;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.stats-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.stats-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+.stats-card:hover {
+  border-color: var(--bg-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.stats-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stats-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stats-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.stats-card-value {
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.stats-card-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.stats-summary {
+  margin-top: 48px;
+}
+
+.stats-summary-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 32px;
+}
+
+.stats-summary-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 24px 0;
+  letter-spacing: -0.01em;
+}
+
+.stats-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 32px;
+}
+
+.stats-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-summary-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.stats-summary-value {
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* Mobile responsive styles for stats page */
+@media (max-width: 768px) {
+  .stats-container {
+    padding: 40px 20px;
+  }
+
+  .stats-title {
+    font-size: 28px;
+  }
+
+  .stats-subtitle {
+    font-size: 14px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stats-card {
+    padding: 20px;
+  }
+
+  .stats-card-value {
+    font-size: 28px;
+  }
+
+  .stats-summary-card {
+    padding: 24px;
+  }
+
+  .stats-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .stats-summary-value {
+    font-size: 20px;
   }
 }

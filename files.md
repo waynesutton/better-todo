@@ -4,14 +4,14 @@ This document describes the structure and purpose of each file in the Better Tod
 
 ## Root Configuration
 
-- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, @dnd-kit)
+- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, @dnd-kit, Radix UI)
 - `tsconfig.json` - TypeScript configuration for React app
 - `tsconfig.node.json` - TypeScript configuration for Vite
 - `vite.config.ts` - Vite bundler configuration with React plugin
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (v1.0.0 to v1.8.3)
+- `changelog.md` - Version history with all features (v.008 - Cloud Theme added)
 - `files.md` - This file, project structure documentation
 - `TASKS.md` - Project tasks and development tracking
 
@@ -459,7 +459,7 @@ This document describes the structure and purpose of each file in the Better Tod
 ### Context (`src/context/`)
 
 - `ThemeContext.tsx` - Theme management:
-  - Three theme toggle (dark, light, tan)
+  - Four theme toggle (dark, light, tan, cloud)
   - Persists preference to localStorage
   - Smooth color transitions
   - CSS variable-based theming
@@ -488,6 +488,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Dark mode: Sublime Text-inspired (#2E3842 background) with green accents (#27A561 for interactive elements, #4a9eff for general accents)
   - Light mode: Apple Notes-inspired (#f5f5f7 background) with blue accents (#0076C6 for interactive elements, #007aff for general accents)
   - Tan mode: Warm document-focused theme (#faf8f5 background) with orange accents (#EB5601)
+  - Cloud mode: Minimal grayscale theme (#EDEDED background) with dark gray accents (#171717) for distraction-free focus
   - Custom font size variables (--font-app-name, --font-sidebar, --font-todo, --font-archive)
   - Color system:
     - Dark mode interactive accent: #27A561 green (v.004 update)

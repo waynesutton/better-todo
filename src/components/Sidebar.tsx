@@ -15,7 +15,7 @@ import {
   Scroll,
   ChevronRight,
 } from "lucide-react";
-import { KeyboardIcon, InfoCircledIcon } from "@radix-ui/react-icons";
+import { KeyboardIcon, InfoCircledIcon, Half2Icon } from "@radix-ui/react-icons";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
 import {
@@ -1940,7 +1940,13 @@ export function Sidebar({
                 >
                   <img
                     src={
-                      theme === "dark" ? "/user-light.svg" : "/user-dark.svg"
+                      theme === "dark"
+                        ? "/user-light.svg"
+                        : theme === "light"
+                          ? "/user-dark.svg"
+                          : theme === "tan"
+                            ? "/user-dark.svg"
+                            : "/user-dark.svg"
                     }
                     alt="User profile"
                     width="18"
@@ -1999,13 +2005,15 @@ export function Sidebar({
                   <Sun size={16} />
                 ) : theme === "light" ? (
                   <Cloud size={16} />
+                ) : theme === "tan" ? (
+                  <Half2Icon style={{ width: 16, height: 16 }} />
                 ) : (
                   <Moon size={16} />
                 )}
               </button>
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8}>
-              {`Switch to ${theme === "dark" ? "light" : theme === "light" ? "tan" : "dark"} mode`}
+              {`Switch to ${theme === "dark" ? "light" : theme === "light" ? "tan" : theme === "tan" ? "cloud" : "dark"} mode`}
             </TooltipContent>
           </Tooltip>
 
@@ -2043,7 +2051,13 @@ export function Sidebar({
               >
                 <img
                   src={
-                    theme === "dark" ? "/convex-white.svg" : "/convex-black.svg"
+                    theme === "dark"
+                      ? "/convex-white.svg"
+                      : theme === "light"
+                        ? "/convex-black.svg"
+                        : theme === "tan"
+                          ? "/convex-black.svg"
+                          : "/convex-black.svg"
                   }
                   alt="Convex"
                   width="18"
