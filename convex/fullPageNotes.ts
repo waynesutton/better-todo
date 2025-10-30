@@ -99,7 +99,7 @@ export const createFullPageNote = mutation({
         ? Math.max(...existingNotes.map((n) => n.order))
         : -1;
 
-    return await ctx.db.insert("fullPageNotes", {
+    const noteId = await ctx.db.insert("fullPageNotes", {
       userId: userId,
       date: args.date,
       title: "Untitled",
@@ -107,6 +107,24 @@ export const createFullPageNote = mutation({
       order: maxOrder + 1,
       collapsed: false,
     });
+
+    // Increment global statistics counter for full-page notes created
+    const stat = await ctx.db
+      .query("statistics")
+      .withIndex("by_key", (q) => q.eq("key", "fullPageNotesCreated"))
+      .unique();
+
+    if (stat) {
+      await ctx.db.patch(stat._id, { value: stat.value + 1 });
+    } else {
+      // First time creating a full-page note, initialize the counter
+      await ctx.db.insert("statistics", {
+        key: "fullPageNotesCreated",
+        value: 1,
+      });
+    }
+
+    return noteId;
   },
 });
 

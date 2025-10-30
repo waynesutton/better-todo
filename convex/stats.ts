@@ -46,9 +46,12 @@ export const getStats = query({
     const allNotes = await ctx.db.query("notes").collect();
     const totalNotes = allNotes.length;
 
-    // Get all full-page notes (count only)
-    const allFullPageNotes = await ctx.db.query("fullPageNotes").collect();
-    const totalFullPageNotes = allFullPageNotes.length;
+    // Get cumulative full-page notes created (even if deleted)
+    const fullPageNotesStat = await ctx.db
+      .query("statistics")
+      .withIndex("by_key", (q) => q.eq("key", "fullPageNotesCreated"))
+      .unique();
+    const totalFullPageNotes = fullPageNotesStat?.value || 0;
 
     // Get all pomodoro sessions (count only)
     const allPomodoroSessions = await ctx.db.query("pomodoroSessions").collect();

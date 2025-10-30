@@ -153,4 +153,10 @@ export default defineSchema({
       searchField: "title",
       filterFields: ["userId"],
     }),
+
+  // Global statistics - tracks cumulative counts across the application
+  statistics: defineTable({
+    key: v.string(), // Unique key for the statistic (e.g., "fullPageNotesCreated")
+    value: v.number(), // The cumulative count
+  }).index("by_key", ["key"]),
 });
