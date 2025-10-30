@@ -2062,7 +2062,7 @@ button:active,
     monospace;
   font-size: 13px;
   line-height: 1.5;
-  min-width: 40px;
+  min-width: 30px;
   overflow: hidden;
   position: relative;
 }
@@ -3259,7 +3259,7 @@ button:active,
   font-size: var(--font-todo);
   resize: none;
   outline: none;
-  padding: 6px 0;
+  padding: 5px 1px 1px 20px;
   line-height: 1.5;
   min-height: 24px;
   max-height: 200px;
@@ -5812,8 +5812,7 @@ button:active,
 
 .fullpage-note-textarea {
   flex: 1;
-  padding: 12px;
-  padding-left: 8px;
+  padding: 12px 12px 12px 5px;
   font-size: var(--font-todo);
   font-family: inherit;
   color: var(--text-primary);
@@ -5835,7 +5834,7 @@ button:active,
 .fullpage-note-display-mode {
   cursor: pointer;
   min-height: 400px;
-  padding: 12px;
+  padding: 5 px;
   border: none;
 }
 
