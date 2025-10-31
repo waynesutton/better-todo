@@ -1041,7 +1041,8 @@ button:active,
 }
 .date-item-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   transition: background-color 0.15s ease;
   position: relative;
 }
@@ -1217,6 +1218,7 @@ button:active,
 }
 :root[data-theme="cloud"] .date-menu-button:hover {
   background-color: #171717;
+  color: #e8e8e8;
 }
 
 .date-menu-dropdown {
@@ -1351,7 +1353,7 @@ button:active,
 }
 
 .sidebar-archive-section > .sidebar-archive-header {
-  width: calc(100% - 00px);
+  width: calc(100% - 40px);
 }
 
 .sidebar-archive-section > .date-menu {
@@ -1391,13 +1393,24 @@ button:active,
 /* Apply reduced opacity to folder dates for visual hierarchy */
 /* Don't apply opacity to container - it affects dropdowns */
 
+.sidebar-archive-dates .date-item-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
 .sidebar-archive-dates .date-item {
   opacity: 0.7;
   transition: opacity 0.15s ease;
+  flex: 1;
 }
 
 .sidebar-archive-dates .date-item-container:hover:not(.active) .date-item {
   opacity: 0.9;
+}
+
+.sidebar-archive-dates .date-menu {
+  flex-shrink: 0;
 }
 
 .sidebar-archive-dates .date-menu-button {
@@ -1501,6 +1514,11 @@ button:active,
   border-color: #d14a01;
 }
 
+/* cloud mode add folder input focus */
+:root[data-theme="cloud"] .add-folder-input:focus {
+  border-color: #171717;
+}
+
 /* Dark mode add folder input focus */
 :root[data-theme="dark"] .add-folder-input:focus {
   border-color: #27a561;
@@ -1533,6 +1551,10 @@ button:active,
   background-color: #27a561;
 }
 
+/* cloud mode add folder save button */
+:root[data-theme="cloud"] .add-folder-save-button {
+  background-color: #171717;
+}
 /* Tan mode add folder save button */
 :root[data-theme="tan"] .add-folder-save-button {
   background-color: #eb5601;
