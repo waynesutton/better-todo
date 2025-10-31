@@ -99,16 +99,19 @@ export function SearchModal({
   const handleSelectResult = (result: any) => {
     // Navigate to the date of the selected result
     // If it's a note, pass the note ID so it can be expanded
+    // For folder notes without dates, pass empty string
+    const dateToNavigate = result.date || "";
+    
     if (result.type === "note") {
-      onSelectDate(result.date, result._id as Id<"notes">, undefined);
+      onSelectDate(dateToNavigate, result._id as Id<"notes">, undefined);
     } else if (result.type === "fullPageNote") {
       onSelectDate(
-        result.date,
+        dateToNavigate,
         undefined,
         result._id as Id<"fullPageNotes">,
       );
     } else {
-      onSelectDate(result.date);
+      onSelectDate(dateToNavigate);
     }
     onClose();
   };
@@ -232,9 +235,14 @@ export function SearchModal({
                           ? "Full-Page Note"
                           : "Note"}
                     </span>
-                    <span className="search-result-date">
-                      {formatDate(result.date)}
-                    </span>
+                    {result.date && (
+                      <span className="search-result-date">
+                        {formatDate(result.date)}
+                      </span>
+                    )}
+                    {!result.date && result.type === "fullPageNote" && (
+                      <span className="search-result-date">In Folder</span>
+                    )}
                     {result.completed && (
                       <span className="search-result-badge">Completed</span>
                     )}

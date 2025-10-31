@@ -15,7 +15,11 @@ import {
   Scroll,
   ChevronRight,
 } from "lucide-react";
-import { KeyboardIcon, InfoCircledIcon, Half2Icon } from "@radix-ui/react-icons";
+import {
+  KeyboardIcon,
+  InfoCircledIcon,
+  Half2Icon,
+} from "@radix-ui/react-icons";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
 import {
@@ -35,6 +39,9 @@ function NotesForDate({
   showMenuForNoteId,
   setShowMenuForNoteId,
   selectedNoteId,
+  folders,
+  onMoveNoteToFolder,
+  onMoveNoteToDate,
 }: {
   date: string;
   expanded: boolean;
@@ -43,6 +50,12 @@ function NotesForDate({
   showMenuForNoteId: Id<"fullPageNotes"> | null;
   setShowMenuForNoteId: (noteId: Id<"fullPageNotes"> | null) => void;
   selectedNoteId: Id<"fullPageNotes"> | null | undefined;
+  folders: any[];
+  onMoveNoteToFolder: (
+    noteId: Id<"fullPageNotes">,
+    folderId: Id<"folders">,
+  ) => void;
+  onMoveNoteToDate: (noteId: Id<"fullPageNotes">, date: string) => void;
 }) {
   const { isAuthenticated } = useConvexAuth();
   const updateFullPageNote = useMutation(api.fullPageNotes.updateFullPageNote);
@@ -52,6 +65,11 @@ function NotesForDate({
   const [renameInput, setRenameInput] = useState("");
   const [confirmDeleteNoteId, setConfirmDeleteNoteId] =
     useState<Id<"fullPageNotes"> | null>(null);
+  const [showProjectSelector, setShowProjectSelector] =
+    useState<Id<"fullPageNotes"> | null>(null);
+  const [showDatePicker, setShowDatePicker] =
+    useState<Id<"fullPageNotes"> | null>(null);
+  const [customDate, setCustomDate] = useState("");
 
   // Fetch full-page notes for this date when folder is expanded
   const notes = useQuery(
@@ -160,6 +178,26 @@ function NotesForDate({
                       >
                         Rename Note
                       </div>
+                      {folders.length > 0 && (
+                        <div
+                          className="menu-item"
+                          onClick={() => {
+                            setShowProjectSelector(note._id);
+                            setShowMenuForNoteId(null);
+                          }}
+                        >
+                          Move to Project...
+                        </div>
+                      )}
+                      <div
+                        className="menu-item"
+                        onClick={() => {
+                          setShowDatePicker(note._id);
+                          setShowMenuForNoteId(null);
+                        }}
+                      >
+                        Move to Date...
+                      </div>
                       <div
                         className="menu-item danger"
                         onClick={() => {
@@ -169,6 +207,354 @@ function NotesForDate({
                       >
                         Delete Note
                       </div>
+                    </div>
+                  )}
+
+                  {/* Project Selector Modal */}
+                  {showProjectSelector === note._id && (
+                    <div className="folder-selector-modal">
+                      <div className="folder-selector-header">
+                        Move to Project
+                      </div>
+                      <div className="folder-selector-list">
+                        {folders.map((folder: any) => (
+                          <div
+                            key={folder._id}
+                            className="folder-selector-item"
+                            onClick={() => {
+                              onMoveNoteToFolder(note._id, folder._id);
+                              setShowProjectSelector(null);
+                            }}
+                          >
+                            {folder.name}
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        className="folder-selector-cancel"
+                        onClick={() => setShowProjectSelector(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Date Picker Modal */}
+                  {showDatePicker === note._id && (
+                    <div className="date-picker-modal">
+                      <input
+                        type="date"
+                        value={customDate}
+                        onChange={(e) => setCustomDate(e.target.value)}
+                        className="date-picker-input"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && customDate) {
+                            onMoveNoteToDate(note._id, customDate);
+                            setShowDatePicker(null);
+                            setCustomDate("");
+                          } else if (e.key === "Escape") {
+                            setShowDatePicker(null);
+                            setCustomDate("");
+                          }
+                        }}
+                      />
+                      <button
+                        className="date-picker-button"
+                        onClick={() => {
+                          if (customDate) {
+                            onMoveNoteToDate(note._id, customDate);
+                            setShowDatePicker(null);
+                            setCustomDate("");
+                          }
+                        }}
+                        disabled={!customDate}
+                      >
+                        Move
+                      </button>
+                      <button
+                        className="date-picker-button cancel"
+                        onClick={() => {
+                          setShowDatePicker(null);
+                          setCustomDate("");
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDeleteNoteId !== null}
+        title="Delete Full-Page Note"
+        message="Are you sure you want to delete this note? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteNote}
+        onCancel={() => setConfirmDeleteNoteId(null)}
+        isDangerous={true}
+      />
+    </div>
+  );
+}
+
+// Component to display notes for a specific folder
+function NotesForFolder({
+  folderId,
+  expanded,
+  onToggle,
+  onOpenNote,
+  showMenuForNoteId,
+  setShowMenuForNoteId,
+  selectedNoteId,
+  folders,
+  onMoveNoteToFolder,
+  onMoveNoteToDate,
+}: {
+  folderId: Id<"folders">;
+  expanded: boolean;
+  onToggle: () => void;
+  onOpenNote: (noteId: Id<"fullPageNotes">) => void;
+  showMenuForNoteId: Id<"fullPageNotes"> | null;
+  setShowMenuForNoteId: (noteId: Id<"fullPageNotes"> | null) => void;
+  selectedNoteId: Id<"fullPageNotes"> | null | undefined;
+  folders: any[];
+  onMoveNoteToFolder: (
+    noteId: Id<"fullPageNotes">,
+    folderId: Id<"folders">,
+  ) => void;
+  onMoveNoteToDate: (noteId: Id<"fullPageNotes">, date: string) => void;
+}) {
+  const { isAuthenticated } = useConvexAuth();
+  const updateFullPageNote = useMutation(api.fullPageNotes.updateFullPageNote);
+  const deleteFullPageNote = useMutation(api.fullPageNotes.deleteFullPageNote);
+  const [renamingNoteId, setRenamingNoteId] =
+    useState<Id<"fullPageNotes"> | null>(null);
+  const [renameInput, setRenameInput] = useState("");
+  const [confirmDeleteNoteId, setConfirmDeleteNoteId] =
+    useState<Id<"fullPageNotes"> | null>(null);
+  const [showProjectSelector, setShowProjectSelector] =
+    useState<Id<"fullPageNotes"> | null>(null);
+  const [showDatePicker, setShowDatePicker] =
+    useState<Id<"fullPageNotes"> | null>(null);
+  const [customDate, setCustomDate] = useState("");
+
+  // Fetch full-page notes for this folder when expanded
+  const notes = useQuery(
+    api.fullPageNotes.getFullPageNotesByFolder,
+    isAuthenticated && expanded ? { folderId } : "skip",
+  );
+
+  const handleRenameNote = async (noteId: Id<"fullPageNotes">) => {
+    if (renameInput.trim()) {
+      await updateFullPageNote({ id: noteId, title: renameInput.trim() });
+      setRenamingNoteId(null);
+      setRenameInput("");
+    }
+  };
+
+  const handleDeleteNote = async () => {
+    if (confirmDeleteNoteId) {
+      await deleteFullPageNote({ id: confirmDeleteNoteId });
+      setShowMenuForNoteId(null);
+      setConfirmDeleteNoteId(null);
+    }
+  };
+
+  return (
+    <div className="notes-folder-section">
+      <div className="notes-folder-header" onClick={onToggle}>
+        <ChevronRight
+          size={14}
+          className={`notes-folder-arrow ${expanded ? "expanded" : ""}`}
+        />
+        <span className="notes-folder-title">Notes</span>
+      </div>
+      {expanded && notes && notes.length > 0 && (
+        <div className="notes-folder-items">
+          {notes.map((note) => (
+            <div key={note._id} className="notes-folder-item-container">
+              {renamingNoteId === note._id ? (
+                <div className="date-picker-modal">
+                  <input
+                    type="text"
+                    value={renameInput}
+                    onChange={(e) => setRenameInput(e.target.value)}
+                    placeholder="Enter note name..."
+                    className="date-picker-input"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && renameInput.trim()) {
+                        handleRenameNote(note._id);
+                      } else if (e.key === "Escape") {
+                        setRenamingNoteId(null);
+                        setRenameInput("");
+                      }
+                    }}
+                  />
+                  <button
+                    className="date-picker-button"
+                    onClick={() => handleRenameNote(note._id)}
+                    disabled={!renameInput.trim()}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="date-picker-button cancel"
+                    onClick={() => {
+                      setRenamingNoteId(null);
+                      setRenameInput("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div
+                    className={`notes-folder-item ${selectedNoteId === note._id ? "active" : ""}`}
+                    onClick={() => {
+                      triggerSelectionHaptic();
+                      onOpenNote(note._id);
+                    }}
+                  >
+                    <span className="notes-folder-item-title">
+                      {note.title || "Untitled"}
+                    </span>
+                  </div>
+                  <button
+                    className="date-menu-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenuForNoteId(
+                        showMenuForNoteId === note._id ? null : note._id,
+                      );
+                    }}
+                  >
+                    ⋯
+                  </button>
+                  {showMenuForNoteId === note._id && (
+                    <div className="date-menu-dropdown">
+                      <div
+                        className="menu-item"
+                        onClick={() => {
+                          setRenamingNoteId(note._id);
+                          setRenameInput(note.title || "");
+                          setShowMenuForNoteId(null);
+                        }}
+                      >
+                        Rename Note
+                      </div>
+                      {folders.length > 0 && (
+                        <div
+                          className="menu-item"
+                          onClick={() => {
+                            setShowProjectSelector(note._id);
+                            setShowMenuForNoteId(null);
+                          }}
+                        >
+                          Move to Project...
+                        </div>
+                      )}
+                      <div
+                        className="menu-item"
+                        onClick={() => {
+                          setShowDatePicker(note._id);
+                          setShowMenuForNoteId(null);
+                        }}
+                      >
+                        Move to Date...
+                      </div>
+                      <div
+                        className="menu-item danger"
+                        onClick={() => {
+                          setConfirmDeleteNoteId(note._id);
+                          setShowMenuForNoteId(null);
+                        }}
+                      >
+                        Delete Note
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Project Selector Modal */}
+                  {showProjectSelector === note._id && (
+                    <div className="folder-selector-modal">
+                      <div className="folder-selector-header">
+                        Move to Project
+                      </div>
+                      <div className="folder-selector-list">
+                        {folders.map((folder: any) => (
+                          <div
+                            key={folder._id}
+                            className="folder-selector-item"
+                            onClick={() => {
+                              onMoveNoteToFolder(note._id, folder._id);
+                              setShowProjectSelector(null);
+                            }}
+                          >
+                            {folder.name}
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        className="folder-selector-cancel"
+                        onClick={() => setShowProjectSelector(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Date Picker Modal */}
+                  {showDatePicker === note._id && (
+                    <div className="date-picker-modal">
+                      <input
+                        type="date"
+                        value={customDate}
+                        onChange={(e) => setCustomDate(e.target.value)}
+                        className="date-picker-input"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && customDate) {
+                            onMoveNoteToDate(note._id, customDate);
+                            setShowDatePicker(null);
+                            setCustomDate("");
+                          } else if (e.key === "Escape") {
+                            setShowDatePicker(null);
+                            setCustomDate("");
+                          }
+                        }}
+                      />
+                      <button
+                        className="date-picker-button"
+                        onClick={() => {
+                          if (customDate) {
+                            onMoveNoteToDate(note._id, customDate);
+                            setShowDatePicker(null);
+                            setCustomDate("");
+                          }
+                        }}
+                        disabled={!customDate}
+                      >
+                        Move
+                      </button>
+                      <button
+                        className="date-picker-button cancel"
+                        onClick={() => {
+                          setShowDatePicker(null);
+                          setCustomDate("");
+                        }}
+                      >
+                        Cancel
+                      </button>
                     </div>
                   )}
                 </>
@@ -288,9 +674,18 @@ export function Sidebar({
       api.fullPageNotes.getFullPageNoteCounts,
       isAuthenticated ? undefined : "skip",
     ) || {};
+  const fullPageNoteCountsByFolder =
+    useQuery(
+      api.fullPageNotes.getFullPageNoteCountsByFolder,
+      isAuthenticated ? undefined : "skip",
+    ) || {};
 
   // State to track which dates have notes folder expanded
   const [expandedNotesFor, setExpandedNotesFor] = useState<Set<string>>(
+    new Set(),
+  );
+  // State to track which folders have notes expanded
+  const [expandedFolderNotes, setExpandedFolderNotes] = useState<Set<string>>(
     new Set(),
   );
 
@@ -302,6 +697,19 @@ export function Sidebar({
         next.delete(date);
       } else {
         next.add(date);
+      }
+      return next;
+    });
+  };
+
+  // Helper to toggle notes folder for a folder
+  const toggleFolderNotes = (folderId: string) => {
+    setExpandedFolderNotes((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
       }
       return next;
     });
@@ -331,6 +739,27 @@ export function Sidebar({
     api.archivedDates.deleteAllArchivedDates,
   );
   const setBacklogLabel = useMutation(api.backlogLabel.setBacklogLabel);
+  const moveFullPageNoteToFolder = useMutation(
+    api.fullPageNotes.moveFullPageNoteToFolder,
+  );
+  const moveFullPageNoteToDate = useMutation(
+    api.fullPageNotes.moveFullPageNoteToDate,
+  );
+
+  // Handlers for moving full-page notes
+  const handleMoveNoteToFolder = async (
+    noteId: Id<"fullPageNotes">,
+    folderId: Id<"folders">,
+  ) => {
+    await moveFullPageNoteToFolder({ noteId, folderId });
+  };
+
+  const handleMoveNoteToDate = async (
+    noteId: Id<"fullPageNotes">,
+    date: string,
+  ) => {
+    await moveFullPageNoteToDate({ noteId, date });
+  };
 
   // Create a map of date to label for quick lookup
   const dateLabels = new Map(
@@ -1234,6 +1663,9 @@ export function Sidebar({
                   showMenuForNoteId={showMenuForNoteId}
                   setShowMenuForNoteId={setShowMenuForNoteId}
                   selectedNoteId={selectedFullPageNoteId}
+                  folders={folders.filter((f) => !f.archived)}
+                  onMoveNoteToFolder={handleMoveNoteToFolder}
+                  onMoveNoteToDate={handleMoveNoteToDate}
                 />
               )}
             </div>
@@ -1321,7 +1753,15 @@ export function Sidebar({
                 >
                   ▼
                 </span>
-                <span>{folder.name}</span>
+                <span>
+                  {folder.name}
+                  {fullPageNoteCountsByFolder[folder._id.toString()] > 0 && (
+                    <span className="folder-notes-count">
+                      {" "}
+                      {fullPageNoteCountsByFolder[folder._id.toString()]}
+                    </span>
+                  )}
+                </span>
               </div>
               <div className="date-menu">
                 <button
@@ -1451,6 +1891,28 @@ export function Sidebar({
                   ))}
                 </div>
               )}
+
+              {/* Notes folder for this folder - show if folder has full-page notes */}
+              {expandedFolders.has(folder._id) &&
+                fullPageNoteCountsByFolder[folder._id.toString()] > 0 && (
+                  <NotesForFolder
+                    folderId={folder._id}
+                    expanded={expandedFolderNotes.has(folder._id)}
+                    onToggle={() => toggleFolderNotes(folder._id)}
+                    onOpenNote={(noteId) => {
+                      if (onOpenFullPageNote) {
+                        // For folder notes, we don't have a date, so pass empty string or handle differently
+                        onOpenFullPageNote(noteId, "");
+                      }
+                    }}
+                    showMenuForNoteId={showMenuForNoteId}
+                    setShowMenuForNoteId={setShowMenuForNoteId}
+                    selectedNoteId={selectedFullPageNoteId}
+                    folders={folders.filter((f) => !f.archived)}
+                    onMoveNoteToFolder={handleMoveNoteToFolder}
+                    onMoveNoteToDate={handleMoveNoteToDate}
+                  />
+                )}
             </div>
           ))}
 
@@ -1796,9 +2258,38 @@ export function Sidebar({
                           key={folder._id}
                           className="sidebar-archive-section"
                         >
-                          <div className="sidebar-archive-header">
-                            <span>{folder.name}</span>
-                            <span className="folder-date-count">(empty)</span>
+                          <div
+                            className="sidebar-archive-header"
+                            onClick={() => toggleFolder(folder._id)}
+                          >
+                            {fullPageNoteCountsByFolder[folder._id.toString()] >
+                            0 ? (
+                              <>
+                                <span
+                                  className={`collapse-icon ${expandedFolders.has(folder._id) ? "" : "collapsed"}`}
+                                >
+                                  ▼
+                                </span>
+                                <span>
+                                  {folder.name}
+                                  <span className="folder-notes-count">
+                                    {" "}
+                                    {
+                                      fullPageNoteCountsByFolder[
+                                        folder._id.toString()
+                                      ]
+                                    }
+                                  </span>
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <span>{folder.name}</span>
+                                <span className="folder-date-count">
+                                  (empty)
+                                </span>
+                              </>
+                            )}
                           </div>
                           <div className="date-menu">
                             <button
@@ -1884,6 +2375,28 @@ export function Sidebar({
                               </button>
                             </div>
                           )}
+
+                          {/* Notes folder for this folder in Manage Projects */}
+                          {expandedFolders.has(folder._id) &&
+                            fullPageNoteCountsByFolder[folder._id.toString()] >
+                              0 && (
+                              <NotesForFolder
+                                folderId={folder._id}
+                                expanded={expandedFolderNotes.has(folder._id)}
+                                onToggle={() => toggleFolderNotes(folder._id)}
+                                onOpenNote={(noteId) => {
+                                  if (onOpenFullPageNote) {
+                                    onOpenFullPageNote(noteId, "");
+                                  }
+                                }}
+                                showMenuForNoteId={showMenuForNoteId}
+                                setShowMenuForNoteId={setShowMenuForNoteId}
+                                selectedNoteId={selectedFullPageNoteId}
+                                folders={folders.filter((f) => !f.archived)}
+                                onMoveNoteToFolder={handleMoveNoteToFolder}
+                                onMoveNoteToDate={handleMoveNoteToDate}
+                              />
+                            )}
                         </div>
                       ))}
                   </div>

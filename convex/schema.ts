@@ -137,7 +137,8 @@ export default defineSchema({
   // Full page notes - stores full-page notes with Chrome-style tabs
   fullPageNotes: defineTable({
     userId: v.string(),
-    date: v.string(), // Format: YYYY-MM-DD
+    date: v.optional(v.string()), // Format: YYYY-MM-DD (optional when note is in a folder)
+    folderId: v.optional(v.id("folders")), // Optional folder association
     title: v.optional(v.string()), // Note title (defaults to "Untitled")
     content: v.string(), // Note content with markdown/code block support
     order: v.number(), // Order for sorting tabs left-to-right
@@ -145,6 +146,7 @@ export default defineSchema({
     pinnedToTop: v.optional(v.boolean()), // For future pin functionality
   })
     .index("by_user_and_date", ["userId", "date"])
+    .index("by_user_and_folder", ["userId", "folderId"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],

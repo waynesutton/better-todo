@@ -83,6 +83,21 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.009.2 - 2025-11-01)
+
+- [x] **Move Full-Page Notes to Projects and Dates** - Flexible note organization
+  - Added "Move to Project..." and "Move to Date..." menu options for full-page notes
+  - Made date field optional in fullPageNotes schema (notes can exist in projects without dates)
+  - Added folderId field for project association
+  - Created getFullPageNotesByFolder and getFullPageNoteCountsByFolder queries
+  - Implemented moveFullPageNoteToFolder and moveFullPageNoteToDate mutations
+  - Added NotesForFolder component to display notes in projects
+  - Added note count badges on project folders
+  - Updated search to handle notes with or without dates
+  - Project selector modal matches sidebar UI design
+  - Notes maintain proper order when moved between dates and projects
+  - Projects are fully decoupled from dates - notes can exist independently
+
 ## Completed Tasks (v.009 - 2025-10-31)
 
 - [x] **Full Markdown Support in Notes** - Comprehensive markdown rendering

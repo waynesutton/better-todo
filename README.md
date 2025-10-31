@@ -15,6 +15,8 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **Real-time synchronization** across browsers using Convex
 - **Notion-style inline input** - type directly to add todos (no button needed)
 - **Daily notes section** with line numbers, Edit/Preview tabs, and syntax-highlighted code blocks
+- **Full-page notes** - dedicated workspace for each date with Chrome-style tabs, line numbers, and markdown support
+- **Move notes to projects** - organize full-page notes in project folders, decoupled from dates
 - **Smart keyboard shortcuts**: Enter for new lines, Shift+Enter to create/save
 - **Drag and drop** todo reordering with intuitive handles
 - **Daily organization** with date-based views
@@ -165,6 +167,29 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
 - **Delete button** - remove notes with confirmation
 - **Auto-saves** when you type (debounced for smooth experience)
 
+### Full-Page Notes
+
+- **Dedicated workspace** for each date with Chrome-style tabbed interface
+- **FileText icon** in header to access full-page notes view
+- **FilePlus icon** to create new notes within full-page notes page
+- **Checkbox icon** to return to todos from full-page notes
+- **Unlimited notes per date** with individual titles
+- **Single-click to edit** - automatic edit mode for immediate typing
+- **Double-click tab titles** to rename notes
+- **Line numbers** that scale with font size (code editor style)
+- **Full markdown support** with syntax highlighting for code blocks
+- **Auto-save** on content changes
+- **Copy button** for note content
+- **X button** closes tab without deleting note
+- **Notes folder in sidebar** shows all note titles for each date
+- **Click sidebar note title** to open that note
+- **Active state indicator** for currently selected notes
+- **Three-dot menu** for rename, delete, move to project, and move to date
+- **Move to projects** - organize notes in project folders (decoupled from dates)
+- **Move to dates** - move notes from projects back to any date
+- **Note count badges** show on project folders when they contain notes
+- **Real-time sync** across devices
+
 ### Organizing by Date
 
 - **Click any date** in the sidebar to view that day's todos
@@ -179,6 +204,8 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
   - "Manage Projects" section below archived list shows all projects (including empty ones)
   - Rename, archive, and delete projects via three-dot menu in each section
   - Empty projects can be deleted from "Manage Projects" section
+  - Full-page notes can be moved to projects and appear under project folders in sidebar
+  - Note count badges show on project folders when they contain full-page notes
 - **Auto-grouped months** - completed months automatically group into collapsible sections
   - Named by month and year (e.g., "January 2025")
   - Only displays after a full month has passed

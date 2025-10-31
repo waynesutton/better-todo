@@ -57,9 +57,10 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user`
   - **userPreferences**: Stores per-user settings including todoFontSize
     - Index: `by_user`
-  - **fullPageNotes**: Stores full-page notes with userId, date, title, content, order, collapsed, and pinnedToTop
-    - Index: `by_user_and_date`
+  - **fullPageNotes**: Stores full-page notes with userId, optional date, optional folderId, title, content, order, collapsed, and pinnedToTop
+    - Index: `by_user_and_date` (for notes with dates), `by_user_and_folder` (for notes in projects)
     - Search indexes: `search_content` on content field, `search_title` on title field
+    - Notes can exist independently in projects (decoupled from dates)
 
 ### Functions
 
@@ -89,16 +90,21 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `fullPageNotes.ts` - Queries and mutations for full-page notes:
   - `getFullPageNotesByDate` - Get all full-page notes for a specific date
+  - `getFullPageNotesByFolder` - Get all full-page notes for a specific project folder
   - `getFullPageNote` - Get single full-page note by ID
-  - `getFullPageNoteCounts` - Get count of full-page notes per date for sidebar
+  - `getFullPageNoteCounts` - Get count of full-page notes per date for sidebar (only counts notes with dates)
+  - `getFullPageNoteCountsByFolder` - Get count of full-page notes per project folder for sidebar badges
   - `createFullPageNote` - Create new full-page note with auto-ordering
   - `updateFullPageNote` - Update note title or content (idempotent, no pre-read)
   - `deleteFullPageNote` - Permanently remove a full-page note
   - `reorderFullPageNotes` - Update order with parallel updates
+  - `moveFullPageNoteToFolder` - Move note to project folder (removes date association, sets folderId, maintains order)
+  - `moveFullPageNoteToDate` - Move note to date (removes folder association, sets date, maintains order)
 
 - `search.ts` - Full-text search functionality using Convex search indexes:
-  - `searchAll` - Search across todos (by content) and notes (by title and content)
-  - Returns top 30 most relevant results with type, date, and status
+  - `searchAll` - Search across todos (by content) and notes (by title and content) and full-page notes
+  - Returns top 30 most relevant results with type, date (optional), and status
+  - Handles full-page notes with or without dates (notes in projects don't have dates)
   - Supports real-time search with keyboard navigation
 
 - `dates.ts` - Date management mutations:
@@ -281,8 +287,13 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Full-page notes folders** - Collapsible "Notes" folder under dates with full-page notes
     - Shows all note titles for that date
     - Click note title to open that note
-    - Three-dot menu for rename/delete actions
+    - Three-dot menu for rename, delete, move to project, and move to date actions
     - Active state indicator (dark transparent overlay) for selected note
+  - **NotesForFolder component** - Displays full-page notes within project folders
+    - Shows notes that are associated with projects (decoupled from dates)
+    - Click note title to open that note without navigating to a date
+    - Three-dot menu for rename, delete, move to project, and move to date actions
+    - Note count badges on project folders show when they contain notes
   - Collapsible view with compact date format (MM/DD) via panel icon in header
   - Collapse button next to "better todo" title (PanelLeft icon)
   - Smooth animated transitions between full (260px) and collapsed (60px) states
@@ -449,6 +460,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Copy button for note content
   - Font size respects user preferences
   - Automatic edit mode for new/empty notes
+  - Works for notes associated with dates or projects (handles optional date parameter)
 
 - `FullPageNoteTabs.tsx` - Chrome-style tab interface for full-page notes:
   - Horizontal tab navigation with smooth scrolling
@@ -529,9 +541,24 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.009 (October 31, 2025)
+## Current Version: v.009.2 (November 1, 2025)
 
-### Latest Features (v.009) - Full Markdown Support in Notes
+### Latest Features (v.009.2) - Move Full-Page Notes to Projects and Dates
+
+- **Move Full-Page Notes to Projects and Dates** - Flexible note organization
+  - Move any full-page note to a project folder via "Move to Project..." menu option
+  - Move notes from projects back to any date via "Move to Date..." menu option
+  - Notes can exist independently in projects (decoupled from dates)
+  - Notes in projects appear in sidebar under the project folder
+  - Note count badges show on project folders when they contain notes
+  - Moving a note to a date automatically shows the notes toggle dropdown for that date
+  - Schema updated with optional date and optional folderId fields
+  - New queries: getFullPageNotesByFolder, getFullPageNoteCountsByFolder
+  - New mutations: moveFullPageNoteToFolder, moveFullPageNoteToDate
+  - NotesForFolder component added to Sidebar for displaying notes in projects
+  - Search updated to handle notes with or without dates
+
+### Previous Features (v.009) - Full Markdown Support in Notes
 
 - **Full Markdown Support** - Comprehensive markdown rendering in all notes
   - All text content now supports markdown formatting (bold, italic, headers, lists, links, tables, blockquotes)

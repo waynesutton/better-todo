@@ -722,7 +722,11 @@ function App() {
             onShowInfo={() => setShowInfoModal(true)}
             onOpenFullPageNote={(noteId, date) => {
               // Navigate to the date and open the full-page note
-              setSelectedDate(date);
+              // If date is provided (note is attached to a date), navigate to it
+              if (date) {
+                setSelectedDate(date);
+              }
+              // If no date (note is in a folder), just open the note without changing date
               setOpenFullPageNoteTabs((prev) =>
                 prev.includes(noteId) ? prev : [...prev, noteId],
               );
@@ -1182,7 +1186,10 @@ function App() {
           isOpen={searchModalOpen}
           onClose={() => setSearchModalOpen(false)}
           onSelectDate={(date, noteId, fullPageNoteId) => {
-            setSelectedDate(date);
+            // Only set date if it's not empty (folder notes have empty date)
+            if (date) {
+              setSelectedDate(date);
+            }
             // If a full-page note was selected, open it
             if (fullPageNoteId) {
               setOpenFullPageNoteTabs((prev) =>

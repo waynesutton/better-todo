@@ -7,7 +7,7 @@ const searchResultValidator = v.object({
   type: v.union(v.literal("todo"), v.literal("note"), v.literal("fullPageNote")),
   content: v.string(),
   title: v.optional(v.string()),
-  date: v.string(),
+  date: v.optional(v.string()),
   completed: v.optional(v.boolean()),
   archived: v.optional(v.boolean()),
 });
@@ -35,7 +35,7 @@ export const searchAll = query({
       type: "todo" | "note" | "fullPageNote";
       content: string;
       title?: string;
-      date: string;
+      date?: string;
       completed?: boolean;
       archived?: boolean;
     }> = [];

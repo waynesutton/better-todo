@@ -207,6 +207,14 @@ export function Launch() {
             quickly switch between notes. Notes are organized in the sidebar
             under each date, making it easy to find and access your work.
           </p>
+          <p>
+            Organize your notes flexibly by moving them to project folders or
+            back to any date. Notes in projects are decoupled from dates,
+            allowing you to group related documentation together regardless of
+            when they were created. Note count badges show on project folders
+            when they contain notes, making it easy to see at a glance where
+            your documentation lives.
+          </p>
           <div className="launch-screenshots">
             {imageGalleries.fullpageNotes.map((img, idx) => (
               <div

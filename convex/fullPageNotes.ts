@@ -11,7 +11,8 @@ export const getFullPageNotesByDate = query({
       _id: v.id("fullPageNotes"),
       _creationTime: v.number(),
       userId: v.string(),
-      date: v.string(),
+      date: v.optional(v.string()),
+      folderId: v.optional(v.id("folders")),
       title: v.optional(v.string()),
       content: v.string(),
       order: v.number(),
@@ -48,7 +49,8 @@ export const getFullPageNote = query({
       _id: v.id("fullPageNotes"),
       _creationTime: v.number(),
       userId: v.string(),
-      date: v.string(),
+      date: v.optional(v.string()),
+      folderId: v.optional(v.id("folders")),
       title: v.optional(v.string()),
       content: v.string(),
       order: v.number(),
@@ -70,6 +72,44 @@ export const getFullPageNote = query({
     }
 
     return note;
+  },
+});
+
+// Get all full-page notes for a specific folder
+export const getFullPageNotesByFolder = query({
+  args: {
+    folderId: v.id("folders"),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("fullPageNotes"),
+      _creationTime: v.number(),
+      userId: v.string(),
+      date: v.optional(v.string()),
+      folderId: v.optional(v.id("folders")),
+      title: v.optional(v.string()),
+      content: v.string(),
+      order: v.number(),
+      collapsed: v.optional(v.boolean()),
+      pinnedToTop: v.optional(v.boolean()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+    const userId = identity.subject;
+
+    const notes = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .collect();
+    
+    // Sort by order field
+    return notes.sort((a, b) => a.order - b.order);
   },
 });
 
@@ -211,13 +251,131 @@ export const getFullPageNoteCounts = query({
       .filter((q) => q.eq(q.field("userId"), userId))
       .collect();
 
-    // Group notes by date and count them
+    // Group notes by date and count them (only count notes with dates)
     const counts: Record<string, number> = {};
     for (const note of notes) {
-      counts[note.date] = (counts[note.date] || 0) + 1;
+      if (note.date) {
+        counts[note.date] = (counts[note.date] || 0) + 1;
+      }
     }
 
     return counts;
+  },
+});
+
+// Get counts of full-page notes grouped by folder (for sidebar display)
+export const getFullPageNoteCountsByFolder = query({
+  args: {},
+  returns: v.record(v.string(), v.number()),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return {};
+    }
+    const userId = identity.subject;
+
+    const notes = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+
+    // Group notes by folder and count them (only count notes with folders)
+    const counts: Record<string, number> = {};
+    for (const note of notes) {
+      if (note.folderId) {
+        // Convert ID to string for consistent key access
+        const folderIdStr = note.folderId.toString();
+        counts[folderIdStr] = (counts[folderIdStr] || 0) + 1;
+      }
+    }
+
+    return counts;
+  },
+});
+
+// Move a full-page note to a folder
+export const moveFullPageNoteToFolder = mutation({
+  args: {
+    noteId: v.id("fullPageNotes"),
+    folderId: v.id("folders"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
+      throw new Error("Note not found or unauthorized");
+    }
+
+    // Get the highest order number for this folder
+    const existingNotes = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .collect();
+
+    const maxOrder =
+      existingNotes.length > 0
+        ? Math.max(...existingNotes.map((n) => n.order))
+        : -1;
+
+    // Move note to folder (remove date association, set proper order)
+    await ctx.db.patch(args.noteId, {
+      folderId: args.folderId,
+      date: undefined,
+      order: maxOrder + 1,
+    });
+
+    return null;
+  },
+});
+
+// Move a full-page note to a date
+export const moveFullPageNoteToDate = mutation({
+  args: {
+    noteId: v.id("fullPageNotes"),
+    date: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
+      throw new Error("Note not found or unauthorized");
+    }
+
+    // Get the highest order number for this date
+    const existingNotes = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_user_and_date", (q) =>
+        q.eq("userId", userId).eq("date", args.date),
+      )
+      .collect();
+
+    const maxOrder =
+      existingNotes.length > 0
+        ? Math.max(...existingNotes.map((n) => n.order))
+        : -1;
+
+    // Move note to date (remove folder association)
+    await ctx.db.patch(args.noteId, {
+      date: args.date,
+      folderId: undefined,
+      order: maxOrder + 1,
+    });
+
+    return null;
   },
 });
 
