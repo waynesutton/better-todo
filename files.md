@@ -4,14 +4,14 @@ This document describes the structure and purpose of each file in the Better Tod
 
 ## Root Configuration
 
-- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, @dnd-kit, Radix UI)
+- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, @dnd-kit, Radix UI, react-markdown, remark-gfm)
 - `tsconfig.json` - TypeScript configuration for React app
 - `tsconfig.node.json` - TypeScript configuration for Vite
 - `vite.config.ts` - Vite bundler configuration with React plugin
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (v.008 - Cloud Theme added)
+- `changelog.md` - Version history with all features (v.009 - Full Markdown Support in Notes)
 - `files.md` - This file, project structure documentation
 - `TASKS.md` - Project tasks and development tracking
 
@@ -351,18 +351,20 @@ This document describes the structure and purpose of each file in the Better Tod
   - Accessible via ? key or keyboard shortcuts button
   - Theme-aware styling matching app design
 
-- `NotesSection.tsx` - Daily notes feature with Cursor Dark Theme syntax highlighting:
+- `NotesSection.tsx` - Daily notes feature with full markdown support:
   - Multiple notes per date with drag-and-drop reordering using @dnd-kit
   - Each note has editable title (click to edit, auto-save on blur)
+  - **Full markdown support** with react-markdown and remark-gfm:
+    - Write markdown naturally without needing ```md wrapper
+    - Supports bold, italic, headers, lists, links, tables, blockquotes
+    - Code blocks with triple backticks and language identifiers (```js, ```css, etc.)
+    - GitHub Flavored Markdown support (tables, task lists, strikethrough)
+    - Markdown renders in display mode, edit mode shows plain text with markdown syntax
   - **Code syntax highlighting** with Cursor Dark Theme colors:
-    - Write code blocks using triple backticks with language identifiers (e.g., ``css`, ``js`, ````ts`)
     - Supports JavaScript, TypeScript, CSS, HTML, JSON, Python, Go, Rust, and more
     - Uses exact Cursor Dark Theme colors for accurate editor-like appearance
-    - Theme-aware (dark/light mode) with proper color switching
-    - Display mode shows syntax-highlighted code with proper theme support
-    - Edit mode provides plain textarea for writing markdown-style code blocks
+    - Theme-aware (dark/light/tan/cloud mode) with proper color switching
     - Individual copy buttons for each code block with confirmation
-    - Custom Cursor Dark Theme syntax highlighting with exact color matching
     - Clean code block headers showing language name
     - Line numbers in code blocks for easy reference
     - Security-first with plain text storage and client-side rendering only
@@ -439,8 +441,10 @@ This document describes the structure and purpose of each file in the Better Tod
 - `FullPageNoteView.tsx` - Full-page note editing and display component:
   - Dual-mode rendering (edit/display) with single-click to start typing
   - Line numbers that scale with font size (1.5 ratio)
-  - Markdown rendering in display mode
-  - Syntax highlighting for code blocks
+  - **Full markdown rendering** in display mode with react-markdown and remark-gfm
+  - Markdown works naturally without needing ```md wrapper
+  - Supports all markdown features (bold, italic, headers, lists, links, tables, blockquotes)
+  - Syntax highlighting for code blocks with Cursor Dark Theme colors
   - Auto-save on content changes
   - Copy button for note content
   - Font size respects user preferences
@@ -525,9 +529,37 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.006 (October 29, 2025)
+## Current Version: v.009 (October 31, 2025)
 
-### Latest Features (v.006) - Full-Page Notes
+### Latest Features (v.009) - Full Markdown Support in Notes
+
+- **Full Markdown Support** - Comprehensive markdown rendering in all notes
+  - All text content now supports markdown formatting (bold, italic, headers, lists, links, tables, blockquotes)
+  - Works automatically without needing ```md wrapper - just write markdown and it renders
+  - Code blocks continue to work with triple backticks (```js, ```css, etc.)
+  - Preserves existing code block syntax highlighting functionality
+  - Uses react-markdown and remark-gfm for GitHub Flavored Markdown support
+  - Markdown renders in display mode, edit mode shows plain text with markdown syntax
+  - Applied to both NotesSection and FullPageNoteView components
+  - Updated KeyboardShortcutsModal to mention markdown support
+  - Comprehensive CSS styling for all markdown elements (headers, lists, links, blockquotes, tables, images)
+  - All styles respect theme variables (light, dark, tan, cloud)
+
+### Previous Features (v.008) - Cloud Theme
+
+- **Cloud Theme** - Fourth theme option with minimal grayscale design
+  - Primary background: #EDEDED (light gray)
+  - Secondary background: #E8E8E8 (slightly darker gray)
+  - Text colors: #171717 (near black)
+  - Interactive accent: #171717 (consistent dark gray)
+  - Minimal color palette for distraction-free focus
+  - Cycle through all four themes with half-moon icon in sidebar
+  - Theme persists across sessions and devices
+  - Radix Half2 icon for cloud theme indicator
+  - Full support for all app features including Clerk modals
+  - Mobile responsive with consistent design
+
+### Previous Features (v.007) - Full-Page Notes
 
 - **Full-Page Notes** - Dedicated note-taking workspace for each date
   - Create unlimited full-page notes per date

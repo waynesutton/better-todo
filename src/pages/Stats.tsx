@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
@@ -10,8 +11,10 @@ import {
   Timer,
   Archive,
 } from "lucide-react";
+import { DashboardIcon, GridIcon } from "@radix-ui/react-icons";
 
 export function Stats() {
+  const [viewMode, setViewMode] = useState<"grid" | "dashboard">("grid");
   const stats = useQuery(api.stats.getStats);
 
   // Format large numbers with commas
@@ -103,60 +106,179 @@ export function Stats() {
     <div className="stats-page" data-theme="tan">
       <div className="stats-container">
         <header className="stats-header">
-          <h1 className="stats-title">Better Todo Statistics</h1>
-          <p className="stats-subtitle">
-            Aggregate statistics across all users. No personal data is shown.
-          </p>
+          <div className="stats-header-content">
+            <div>
+              <h1 className="stats-title">Better Todo Statistics</h1>
+              <p className="stats-subtitle">
+                Aggregate statistics across all users. No personal data is shown.
+              </p>
+            </div>
+            <button
+              className="stats-view-toggle"
+              onClick={() => setViewMode(viewMode === "grid" ? "dashboard" : "grid")}
+              aria-label={viewMode === "grid" ? "Switch to dashboard view" : "Switch to grid view"}
+            >
+              {viewMode === "grid" ? (
+                <DashboardIcon width={20} height={20} />
+              ) : (
+                <GridIcon width={20} height={20} />
+              )}
+            </button>
+          </div>
         </header>
 
-        <div className="stats-grid">
-          {statCards.map((card, index) => {
-            const Icon = card.icon;
-            return (
-              <div key={index} className="stats-card">
-                <div className="stats-card-header">
-                  <div
-                    className="stats-card-icon"
-                    style={{ backgroundColor: `${card.color}15` }}
-                  >
-                    <Icon size={20} color={card.color} />
+        {viewMode === "grid" ? (
+          <>
+            <div className="stats-grid">
+              {statCards.map((card, index) => {
+                const Icon = card.icon;
+                return (
+                  <div key={index} className="stats-card">
+                    <div className="stats-card-header">
+                      <div
+                        className="stats-card-icon"
+                        style={{ backgroundColor: `${card.color}15` }}
+                      >
+                        <Icon size={20} color={card.color} />
+                      </div>
+                      <div className="stats-card-title">{card.title}</div>
+                    </div>
+                    <div className="stats-card-value">{card.value}</div>
+                    <div className="stats-card-description">{card.description}</div>
                   </div>
-                  <div className="stats-card-title">{card.title}</div>
-                </div>
-                <div className="stats-card-value">{card.value}</div>
-                <div className="stats-card-description">{card.description}</div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
 
-        {stats && (
-          <div className="stats-summary">
-            <div className="stats-summary-card">
-              <h3 className="stats-summary-title">Summary</h3>
-              <div className="stats-summary-grid">
-                <div className="stats-summary-item">
-                  <span className="stats-summary-label">Total Items</span>
-                  <span className="stats-summary-value">
-                    {formatNumber(
-                      (stats.totalTodos || 0) +
-                        (stats.totalNotes || 0) +
-                        (stats.totalFullPageNotes || 0),
-                    )}
-                  </span>
+            {stats && (
+              <div className="stats-summary">
+                <div className="stats-summary-card">
+                  <h3 className="stats-summary-title">Summary</h3>
+                  <div className="stats-summary-grid">
+                    <div className="stats-summary-item">
+                      <span className="stats-summary-label">Total Items</span>
+                      <span className="stats-summary-value">
+                        {formatNumber(
+                          (stats.totalTodos || 0) +
+                            (stats.totalNotes || 0) +
+                            (stats.totalFullPageNotes || 0),
+                        )}
+                      </span>
+                    </div>
+                    <div className="stats-summary-item">
+                      <span className="stats-summary-label">Completion Rate</span>
+                      <span className="stats-summary-value">
+                        {calculatePercentage(stats.completedTodos, stats.totalTodos)}%
+                      </span>
+                    </div>
+                    <div className="stats-summary-item">
+                      <span className="stats-summary-label">Active Rate</span>
+                      <span className="stats-summary-value">
+                        {calculatePercentage(stats.activeTodos, stats.totalTodos)}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="stats-summary-item">
-                  <span className="stats-summary-label">Completion Rate</span>
-                  <span className="stats-summary-value">
-                    {calculatePercentage(stats.completedTodos, stats.totalTodos)}%
-                  </span>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="stats-dashboard">
+            <div className="stats-dashboard-left">
+              <div className="stats-dashboard-card">
+                <div className="stats-dashboard-label">Total Users</div>
+                <div className="stats-dashboard-value">{formatNumber(stats?.totalUsers)}</div>
+                <div className="stats-dashboard-unit">users</div>
+              </div>
+              <div className="stats-dashboard-card">
+                <div className="stats-dashboard-label">Todos Created</div>
+                <div className="stats-dashboard-value">{formatNumber(stats?.totalTodos)}</div>
+                <div className="stats-dashboard-unit">todos</div>
+              </div>
+              <div className="stats-dashboard-card">
+                <div className="stats-dashboard-label">Todos Completed</div>
+                <div className="stats-dashboard-value">{formatNumber(stats?.completedTodos)}</div>
+                <div className="stats-dashboard-unit">todos</div>
+              </div>
+              <div className="stats-dashboard-card">
+                <div className="stats-dashboard-label">Active Todos</div>
+                <div className="stats-dashboard-value">{formatNumber(stats?.activeTodos)}</div>
+                <div className="stats-dashboard-unit">todos</div>
+              </div>
+            </div>
+
+            <div className="stats-dashboard-center">
+              <div className="stats-dashboard-compass">
+                <div className="stats-dashboard-compass-title">STATISTICS</div>
+                <div className="stats-dashboard-compass-value">
+                  {formatNumber(
+                    stats
+                      ? (stats.totalTodos || 0) +
+                          (stats.totalNotes || 0) +
+                          (stats.totalFullPageNotes || 0)
+                      : 0,
+                  )}
                 </div>
-                <div className="stats-summary-item">
-                  <span className="stats-summary-label">Active Rate</span>
-                  <span className="stats-summary-value">
-                    {calculatePercentage(stats.activeTodos, stats.totalTodos)}%
-                  </span>
+                <div className="stats-dashboard-compass-label">Total Items</div>
+                <div className="stats-dashboard-compass-ring">
+                  <div className="stats-dashboard-compass-mark" style={{ top: "0", left: "50%" }}>
+                    N
+                  </div>
+                  <div className="stats-dashboard-compass-mark" style={{ top: "50%", right: "0" }}>
+                    E
+                  </div>
+                  <div className="stats-dashboard-compass-mark" style={{ bottom: "0", left: "50%" }}>
+                    S
+                  </div>
+                  <div className="stats-dashboard-compass-mark" style={{ top: "50%", left: "0" }}>
+                    W
+                  </div>
+                  {[30, 60, 120, 150, 210, 240, 300, 330].map((angle, i) => {
+                    const rad = ((angle - 90) * Math.PI) / 180;
+                    const radius = 35;
+                    const x = 50 + radius * Math.cos(rad);
+                    const y = 50 + radius * Math.sin(rad);
+                    return (
+                      <div
+                        key={i}
+                        className="stats-dashboard-compass-mark small"
+                        style={{
+                          top: `${y}%`,
+                          left: `${x}%`,
+                        }}
+                      >
+                        {angle}
+                      </div>
+                    );
+                  })}
                 </div>
+              </div>
+            </div>
+
+            <div className="stats-dashboard-right">
+              <div className="stats-dashboard-card">
+                <div className="stats-dashboard-label">Completion Rate</div>
+                <div className="stats-dashboard-value">
+                  {calculatePercentage(stats?.completedTodos, stats?.totalTodos)}%
+                </div>
+                <div className="stats-dashboard-unit">percent</div>
+              </div>
+              <div className="stats-dashboard-card">
+                <div className="stats-dashboard-label">Active Rate</div>
+                <div className="stats-dashboard-value">
+                  {calculatePercentage(stats?.activeTodos, stats?.totalTodos)}%
+                </div>
+                <div className="stats-dashboard-unit">percent</div>
+              </div>
+              <div className="stats-dashboard-card">
+                <div className="stats-dashboard-label">Pinned Todos</div>
+                <div className="stats-dashboard-value">{formatNumber(stats?.pinnedTodos)}</div>
+                <div className="stats-dashboard-unit">todos</div>
+              </div>
+              <div className="stats-dashboard-card">
+                <div className="stats-dashboard-label">Archived Todos</div>
+                <div className="stats-dashboard-value">{formatNumber(stats?.archivedTodos)}</div>
+                <div className="stats-dashboard-unit">todos</div>
               </div>
             </div>
           </div>
@@ -165,4 +287,3 @@ export function Stats() {
     </div>
   );
 }
-

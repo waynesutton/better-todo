@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v008");
+  const [activeSection, setActiveSection] = useState("v009");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sections = [
+    { id: "v009", title: "v.009 - Oct 31, 2025" },
     { id: "v008", title: "v.008 - Oct 30, 2025" },
     { id: "v007", title: "v.007 - Oct 29, 2025" },
     { id: "v006", title: "v.006 - Oct 26, 2025" },
@@ -76,12 +77,49 @@ export function Changelog() {
       </nav>
 
       <div className="launch-container">
-        <section id="v008">
+        <section id="v009">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">v.009 - October 31, 2025</h2>
+          <p className="changelog-subtitle">Full Markdown Support in Notes</p>
+          <p>
+            Added comprehensive markdown rendering in all notes with GitHub
+            Flavored Markdown support.
+          </p>
+          <ul className="feature-list">
+            <li>
+              All text content now supports markdown formatting (bold, italic,
+              headers, lists, links, tables, blockquotes)
+            </li>
+            <li>
+              Works automatically without needing ```md wrapper - just write
+              markdown and it renders
+            </li>
+            <li>
+              Code blocks continue to work with triple backticks (```js, ```css,
+              etc.)
+            </li>
+            <li>Preserves existing code block syntax highlighting</li>
+            <li>Added react-markdown and remark-gfm for GFM support</li>
+            <li>
+              Markdown renders in display mode, edit mode shows plain text with
+              markdown syntax
+            </li>
+            <li>
+              Applied to both NotesSection and FullPageNoteView components
+            </li>
+            <li>
+              Comprehensive CSS styling for all markdown elements (headers,
+              lists, links, blockquotes, tables, images)
+            </li>
+            <li>All styles respect theme variables (light, dark, tan, cloud)</li>
+          </ul>
+        </section>
+
+        <section id="v008" className="launch-section">
           <h2 className="section-title">v.008 - October 30, 2025</h2>
           <p className="changelog-subtitle">Cloud Theme</p>
           <p>
@@ -89,8 +127,8 @@ export function Changelog() {
             distraction-free focus.
           </p>
           <ul className="feature-list">
-            <li>Minimal grayscale color palette (#EDEDED background)</li>
-            <li>Near-black text (#171717) for maximum clarity</li>
+            <li>Minimal grayscale color palette with #EDEDED background</li>
+            <li>Near-black text for maximum clarity</li>
             <li>Consistent dark gray interactive elements</li>
             <li>Radix Half2 icon for cloud theme indicator</li>
             <li>Cycle through all four themes with sidebar icon</li>

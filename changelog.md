@@ -4,6 +4,69 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.009] - 2025-10-31 - READY FOR NETLIFY DEPLOYMENT
+
+### Added
+
+- **Full Markdown Support in Notes** - Comprehensive markdown rendering in notes and full-page notes
+  - All text content now supports markdown formatting (bold, italic, headers, lists, links, tables, blockquotes)
+  - Works automatically without needing to type ````md` - just write markdown and it renders
+  - Code blocks continue to work with triple backticks (````js`, ````css`, etc.)
+  - Preserves existing code block syntax highlighting functionality
+  - Added `react-markdown` and `remark-gfm` for GitHub Flavored Markdown support
+  - Markdown renders in display mode, edit mode shows plain text with markdown syntax
+
+### Frontend Changes
+
+- **NotesSection Component** (`src/components/NotesSection.tsx`)
+  - Replaced plain text rendering with ReactMarkdown component
+  - Added remarkGfm plugin for enhanced markdown features (tables, task lists, strikethrough)
+  - Updated placeholder text to mention markdown support
+  - Text blocks now use `.note-markdown-block` class for styling
+  
+- **FullPageNoteView Component** (`src/components/FullPageNoteView.tsx`)
+  - Replaced plain text rendering with ReactMarkdown component
+  - Added remarkGfm plugin for enhanced markdown features
+  - Updated placeholder text to mention markdown support
+  - Text blocks now use `.note-markdown-block` class for styling
+  
+- **KeyboardShortcutsModal Component** (`src/components/KeyboardShortcutsModal.tsx`)
+  - Added ````md` and ````markdown` to code blocks section
+  - Updated section title to "Markdown & Code Blocks in Notes"
+  - Updated description to mention default markdown support
+
+### Styling Changes
+
+- **Global CSS** (`src/styles/global.css`)
+  - Added comprehensive `.note-markdown-block` styling for all markdown elements
+  - Styled headers (h1-h6) with proper sizing and borders
+  - Styled lists (ul, ol) with proper indentation and bullet styles
+  - Styled links with accent color and hover effects
+  - Styled blockquotes with left border and italic text
+  - Styled inline code with background and monospace font
+  - Styled tables with borders and header background
+  - Styled images with max-width and border-radius
+  - Styled horizontal rules with border styling
+  - All styles respect theme variables (light, dark, tan, cloud)
+
+### Dependencies
+
+- Added `react-markdown@^9.0.1` for markdown parsing and rendering
+- Added `remark-gfm@^4.0.0` for GitHub Flavored Markdown support (tables, task lists, strikethrough)
+
+### How It Works
+
+Users can now write notes with markdown syntax naturally:
+- `**bold text**` renders as **bold**
+- `*italic text*` renders as *italic*
+- `# Header` renders as header
+- `- list item` renders as bullet list
+- `[link](url)` renders as clickable link
+- Tables, blockquotes, and more all supported
+- Code blocks continue using triple backticks with language tags
+
+No need to wrap content in ````md` blocks - markdown works by default for all text content!
+
 ## [v.008] - 2025-10-30 - READY FOR NETLIFY DEPLOYMENT
 
 ### Added

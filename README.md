@@ -66,6 +66,8 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **@dnd-kit** - Smooth drag and drop
 - **date-fns** - Date manipulation and formatting
 - **lucide-react** - Clean, consistent icons
+- **react-markdown** - Markdown rendering
+- **remark-gfm** - GitHub Flavored Markdown support
 
 ## Getting Started
 
@@ -151,6 +153,10 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
 ### Daily Notes
 
 - **Add unlimited notes** per date with the plus button
+- **Full markdown support** - Write markdown naturally (bold, italic, headers, lists, links, tables, blockquotes)
+- **No markdown wrapper needed** - Just write markdown and it renders automatically
+- **Code blocks** - Use ```language for syntax highlighting with Cursor Dark Theme colors
+- **Supported languages** - CSS, JavaScript, TypeScript, HTML, JSON, Python, Go, Rust, and more
 - **Line numbers** - code editor style line numbers on the left (not copied with text)
 - **Custom titles** - give each note its own name
 - **Collapsible notes** - expand/collapse individual notes
@@ -158,8 +164,6 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
 - **Copy button** - copy note content to clipboard
 - **Delete button** - remove notes with confirmation
 - **Auto-saves** when you type (debounced for smooth experience)
-- **Syntax highlighting** - Use ```language for code blocks with Cursor Dark Theme colors
-- **Supported languages** - CSS, JavaScript, TypeScript, HTML, JSON, Python, Go, Rust, and more
 
 ### Organizing by Date
 

@@ -3,6 +3,8 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Copy, Check } from "lucide-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Id } from "../../convex/_generated/dataModel";
 import { useTheme } from "../context/ThemeContext";
 
@@ -464,7 +466,7 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
               // Add text before match
               if (matchIndex > lastIndex) {
                 fragment.appendChild(
-                  document.createTextNode(text.slice(lastIndex, matchIndex))
+                  document.createTextNode(text.slice(lastIndex, matchIndex)),
                 );
               }
 
@@ -497,7 +499,7 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
             // Add remaining text
             if (lastIndex < text.length) {
               fragment.appendChild(
-                document.createTextNode(text.slice(lastIndex))
+                document.createTextNode(text.slice(lastIndex)),
               );
             }
 
@@ -562,7 +564,7 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
             <textarea
               ref={textareaRef}
               className="fullpage-note-textarea"
-              placeholder="Write your note here... Use ```language for code blocks. Supported: css, js, javascript, typescript, ts, html, json, python, py, go, rust, and more."
+              placeholder="Write your note with markdown support (bold, italic, lists, links). Use ```language for code blocks (css, js, ts, html, json, python, go, rust, etc.)."
               value={contentInput}
               onChange={(e) => {
                 handleContentChange(e.target.value);
@@ -595,7 +597,11 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
               parseContentBlocks(contentInput).map((block, index) => (
                 <div key={index} className="note-content-block">
                   {block.type === "text" ? (
-                    <pre className="note-text-block">{block.content}</pre>
+                    <div className="note-markdown-block">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {block.content}
+                      </ReactMarkdown>
+                    </div>
                   ) : (
                     <div
                       className="note-code-block-wrapper"
@@ -664,4 +670,3 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
     </div>
   );
 }
-

@@ -83,6 +83,21 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.009 - 2025-10-31)
+
+- [x] **Full Markdown Support in Notes** - Comprehensive markdown rendering
+  - Added react-markdown and remark-gfm packages
+  - Updated NotesSection component to use ReactMarkdown
+  - Updated FullPageNoteView component to use ReactMarkdown
+  - Updated KeyboardShortcutsModal to mention markdown support
+  - Added comprehensive CSS styling for all markdown elements
+  - Markdown works naturally without needing ```md wrapper
+  - Code blocks continue to work with triple backticks
+  - All styles respect theme variables (light, dark, tan, cloud)
+  - Markdown renders in display mode, edit shows plain text
+  - Supports bold, italic, headers, lists, links, tables, blockquotes
+  - GitHub Flavored Markdown support (tables, task lists, strikethrough)
+
 ## Completed Tasks (v.008 - 2025-10-30)
 
 - [x] **Cloud Theme** - Fourth theme option with minimal grayscale design

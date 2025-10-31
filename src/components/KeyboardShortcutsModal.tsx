@@ -49,6 +49,7 @@ export function KeyboardShortcutsModal({
   };
 
   const codeLanguages = [
+    { code: "```md", label: "Markdown", alt: "```markdown" },
     { code: "```css", label: "CSS" },
     { code: "```js", label: "JavaScript", alt: "```javascript" },
     { code: "```ts", label: "TypeScript", alt: "```typescript" },
@@ -103,9 +104,9 @@ export function KeyboardShortcutsModal({
   ];
 
   const codeBlocksInfo = {
-    category: "Code Blocks in Notes",
+    category: "Markdown & Code Blocks in Notes",
     description:
-      "Use ```language to create syntax-highlighted code blocks. Click to copy:",
+      "Notes support full markdown (bold, italic, lists, links) by default. Use ```language for syntax-highlighted code blocks. Click to copy:",
   };
 
   return createPortal(
