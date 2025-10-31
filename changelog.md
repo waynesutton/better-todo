@@ -4,6 +4,37 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.009.1] - 2025-10-31
+
+### Fixed
+
+- **Text Wrapping in Notes** - Plain text now wraps properly in notes and full-page notes
+  - Added `white-space: pre-wrap` and `word-wrap: break-word` to `.note-markdown-block` CSS
+  - Prevents long lines of text from overflowing horizontally
+  - Maintains proper text flow and readability
+
+- **ESC Key and Click-Outside Behavior** - Notes now exit edit mode immediately
+  - Removed 100ms setTimeout delay when exiting edit mode
+  - Added immediate ESC key handler to save and exit edit mode instantly
+  - Applies to both todo notes and full-page notes
+  - Improved user experience with instant response to ESC key and clicking outside
+
+- **CSS Typo** - Fixed spacing issue in `.fullpage-note-display-mode` padding property
+
+### Technical Details
+
+- **NotesSection Component** (`src/components/NotesSection.tsx`)
+  - Removed setTimeout delay in handleContentBlur function
+  - Added onKeyDown handler for immediate ESC key response
+  
+- **FullPageNoteView Component** (`src/components/FullPageNoteView.tsx`)
+  - Removed setTimeout delay in handleContentBlur function
+  - Added onKeyDown handler for immediate ESC key response
+  
+- **Global CSS** (`src/styles/global.css`)
+  - Updated `.note-markdown-block` with text wrapping properties
+  - Fixed padding syntax in `.fullpage-note-display-mode`
+
 ## [v.009] - 2025-10-31 - READY FOR NETLIFY DEPLOYMENT
 
 ### Added

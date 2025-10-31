@@ -1405,45 +1405,47 @@ export function Sidebar({
                       key={date}
                       className={`date-item-container ${date === selectedDate ? "active" : ""}`}
                     >
-                      <div
-                        className="date-item"
-                        onClick={() => onSelectDate(date)}
-                      >
-                        {formatDate(date)}
-                        {uncompletedCounts[date] > 0 && (
-                          <span className="todo-count">
-                            {uncompletedCounts[date]}
-                          </span>
-                        )}
-                      </div>
-                      <div className="date-menu">
-                        <button
-                          className="date-menu-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMenuForDate(
-                              showMenuForDate === date ? null : date,
-                            );
-                          }}
+                      <div className="date-item-container-row">
+                        <div
+                          className="date-item"
+                          onClick={() => onSelectDate(date)}
                         >
-                          ⋯
-                        </button>
-                        {showMenuForDate === date && (
-                          <div className="date-menu-dropdown">
-                            <div
-                              className="menu-item"
-                              onClick={() => handleRemoveDateFromFolder(date)}
-                            >
-                              Remove from Project
+                          {formatDate(date)}
+                          {uncompletedCounts[date] > 0 && (
+                            <span className="todo-count">
+                              {uncompletedCounts[date]}
+                            </span>
+                          )}
+                        </div>
+                        <div className="date-menu">
+                          <button
+                            className="date-menu-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowMenuForDate(
+                                showMenuForDate === date ? null : date,
+                              );
+                            }}
+                          >
+                            ⋯
+                          </button>
+                          {showMenuForDate === date && (
+                            <div className="date-menu-dropdown">
+                              <div
+                                className="menu-item"
+                                onClick={() => handleRemoveDateFromFolder(date)}
+                              >
+                                Remove from Project
+                              </div>
+                              <div
+                                className="menu-item"
+                                onClick={() => handleArchiveDate(date)}
+                              >
+                                Archive Date
+                              </div>
                             </div>
-                            <div
-                              className="menu-item"
-                              onClick={() => handleArchiveDate(date)}
-                            >
-                              Archive Date
-                            </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -1041,8 +1041,7 @@ button:active,
 }
 .date-item-container {
   display: flex;
-  flex-direction: row;
-  align-items: center;
+  flex-direction: column;
   transition: background-color 0.15s ease;
   position: relative;
 }
@@ -1393,24 +1392,13 @@ button:active,
 /* Apply reduced opacity to folder dates for visual hierarchy */
 /* Don't apply opacity to container - it affects dropdowns */
 
-.sidebar-archive-dates .date-item-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
 .sidebar-archive-dates .date-item {
   opacity: 0.7;
   transition: opacity 0.15s ease;
-  flex: 1;
 }
 
 .sidebar-archive-dates .date-item-container:hover:not(.active) .date-item {
   opacity: 0.9;
-}
-
-.sidebar-archive-dates .date-menu {
-  flex-shrink: 0;
 }
 
 .sidebar-archive-dates .date-menu-button {
@@ -2181,6 +2169,9 @@ button:active,
   font-size: var(--font-todo);
   color: var(--text-primary);
   line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .note-markdown-block h1,
@@ -6017,7 +6008,7 @@ button:active,
 .fullpage-note-display-mode {
   cursor: pointer;
   min-height: 400px;
-  padding: 5 px;
+  padding: 5px;
   border: none;
 }
 

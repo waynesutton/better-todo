@@ -379,10 +379,8 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
     // Mark typing as done
     isTypingRef.current = false;
     updateNote({ id: noteId, content: contentInput });
-    // Exit edit mode after saving
-    setTimeout(() => {
-      setIsEditMode(false);
-    }, 100);
+    // Exit edit mode immediately
+    setIsEditMode(false);
   };
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
@@ -570,6 +568,22 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
                 handleContentChange(e.target.value);
               }}
               onBlur={handleContentBlur}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  // Save and exit immediately
+                  if (contentTimeoutRef.current) {
+                    clearTimeout(contentTimeoutRef.current);
+                  }
+                  isTypingRef.current = false;
+                  updateNote({ id: noteId, content: contentInput });
+                  setIsEditMode(false);
+                  // Remove focus
+                  if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
+                }
+              }}
               spellCheck={true}
               data-gramm="false"
               data-gramm_editor="false"
