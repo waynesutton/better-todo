@@ -1191,12 +1191,12 @@ export function Sidebar({
     monthGroup.dates.forEach((d) => datesInFoldersOrGroups.add(d)),
   );
 
-  // Filter active dates to exclude archived, those in folders/groups, and those with no uncompleted todos
+  // Filter active dates to exclude archived, those in folders/groups, and those with no uncompleted todos or full-page notes
   const activeDates = dates.filter(
     (date) =>
       !archivedDates.includes(date) &&
       !datesInFoldersOrGroups.has(date) &&
-      (uncompletedCounts[date] || 0) > 0,
+      ((uncompletedCounts[date] || 0) > 0 || (fullPageNoteCounts[date] || 0) > 0),
   );
 
   // Separate active and archived folders
