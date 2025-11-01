@@ -141,6 +141,18 @@ export default defineSchema({
     folderId: v.optional(v.id("folders")), // Optional folder association
     title: v.optional(v.string()), // Note title (defaults to "Untitled")
     content: v.string(), // Note content with markdown/code block support
+    format: v.optional(v.union(
+      v.literal("plaintext"),
+      v.literal("markdown"),
+      v.literal("css"),
+      v.literal("javascript"),
+      v.literal("typescript"),
+      v.literal("html"),
+      v.literal("json"),
+      v.literal("python"),
+      v.literal("go"),
+      v.literal("rust"),
+    )), // Format type for syntax highlighting and code wrapping
     order: v.number(), // Order for sorting tabs left-to-right
     collapsed: v.optional(v.boolean()), // For future collapsible functionality
     pinnedToTop: v.optional(v.boolean()), // For future pin functionality

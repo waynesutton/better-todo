@@ -15,7 +15,7 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **Real-time synchronization** across browsers using Convex
 - **Notion-style inline input** - type directly to add todos (no button needed)
 - **Daily notes section** with line numbers, Edit/Preview tabs, and syntax-highlighted code blocks
-- **Full-page notes** - dedicated workspace for each date with Chrome-style tabs, line numbers, and markdown support
+- **Full-page notes** - dedicated workspace for each date with Chrome-style tabs, line numbers, markdown support, and instant loading with Convex real-time sync
 - **Move notes to projects** - organize full-page notes in project folders, decoupled from dates
 - **Smart keyboard shortcuts**: Enter for new lines, Shift+Enter to create/save
 - **Drag and drop** todo reordering with intuitive handles

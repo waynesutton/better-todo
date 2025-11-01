@@ -118,6 +118,7 @@ function App() {
   >([]);
   const [selectedFullPageNoteId, setSelectedFullPageNoteId] =
     useState<Id<"fullPageNotes"> | null>(null);
+  const [isFullscreenNotes, setIsFullscreenNotes] = useState(false);
 
   // Apply user's custom font size to todo text and full-page notes
   useEffect(() => {
@@ -154,6 +155,7 @@ function App() {
   }, [userPreferences?.todoFontSize]);
 
   // Mutations for footer actions
+  const createTodo = useMutation(api.todos.createTodo);
   const archiveAllTodos = useMutation(api.todos.archiveAllTodos);
   const deleteAllTodos = useMutation(api.todos.deleteAllTodos);
   const deleteAllArchivedTodos = useMutation(api.todos.deleteAllArchivedTodos);
@@ -205,6 +207,60 @@ function App() {
       // Current date will be created when first todo is added
     }
   }, [availableDates, selectedDate]);
+
+  // Create default first todo for blank dates
+  useEffect(() => {
+    const createDefaultTodo = async () => {
+      // Only for authenticated users on regular dates (not pinned/backlog)
+      if (
+        !isAuthenticated ||
+        selectedDate === "pinned" ||
+        selectedDate === "backlog"
+      ) {
+        return;
+      }
+
+      // Check if date is blank (no todos)
+      if (todos && todos.length === 0) {
+        try {
+          await createTodo({
+            date: selectedDate,
+            content: "what's the priority?",
+            type: "todo",
+          });
+        } catch (error) {
+          console.error("Failed to create default todo:", error);
+        }
+      }
+    };
+
+    createDefaultTodo();
+  }, [todos, selectedDate, isAuthenticated, createTodo]);
+
+  // Auto-delete default todo when user adds other todos
+  useEffect(() => {
+    const deleteDefaultTodo = async () => {
+      if (!isAuthenticated || !todos || todos.length <= 1) {
+        return;
+      }
+
+      // Check if there's a default todo and other todos exist
+      const defaultTodo = todos.find(
+        (t) => t.content === "what's the priority?" && !t.completed,
+      );
+
+      // If default todo exists and there are other todos, delete the default one
+      if (defaultTodo && todos.length > 1) {
+        try {
+          await deleteTodo({ id: defaultTodo._id });
+        } catch (error) {
+          console.error("Failed to delete default todo:", error);
+        }
+      }
+    };
+
+    deleteDefaultTodo();
+  }, [todos, isAuthenticated, deleteTodo]);
 
   // Show all dates including today if not in list
   const allDates = React.useMemo(() => {
@@ -697,14 +753,16 @@ function App() {
       <div
         className={`app-container ${sidebarHidden ? "sidebar-hidden" : ""} ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}
       >
-        <div
-          ref={sidebarRef}
-          className="sidebar"
-          style={{
-            width: sidebarCollapsed ? "60px" : `${sidebarWidth}px`,
-            transform: sidebarHidden ? "translateX(-100%)" : "translateX(0)",
-          }}
-        >
+        {/* Hide sidebar when in fullscreen mode */}
+        {!isFullscreenNotes && (
+          <div
+            ref={sidebarRef}
+            className="sidebar"
+            style={{
+              width: sidebarCollapsed ? "60px" : `${sidebarWidth}px`,
+              transform: sidebarHidden ? "translateX(-100%)" : "translateX(0)",
+            }}
+          >
           <Sidebar
             dates={allDates}
             selectedDate={selectedDate}
@@ -739,8 +797,9 @@ function App() {
             }}
             selectedFullPageNoteId={selectedFullPageNoteId}
           />
-        </div>
-        {!sidebarHidden && !sidebarCollapsed && (
+          </div>
+        )}
+        {!isFullscreenNotes && !sidebarHidden && !sidebarCollapsed && (
           <div
             className="sidebar-resizer"
             onMouseDown={() => setIsResizing(true)}
@@ -764,8 +823,10 @@ function App() {
               </div>
             </div>
           )}
-          <div className="main-header">
-            <div className="main-header-left">
+          {/* Hide header when in fullscreen mode */}
+          {!isFullscreenNotes && (
+            <div className="main-header">
+              <div className="main-header-left">
               {sidebarHidden && (
                 <button
                   className="hamburger-button"
@@ -895,7 +956,8 @@ function App() {
                 <Search size={18} />
               </button>
             </div>
-          </div>
+            </div>
+          )}
 
           {!authIsLoading && !isAuthenticated && (
             <div
@@ -1062,7 +1124,7 @@ function App() {
                 </div>
               </div>
             ) : showFullPageNotes && selectedFullPageNoteId ? (
-              <>
+              <div className={isFullscreenNotes ? "fullscreen-mode" : ""}>
                 {/* Full-page notes tabs */}
                 <FullPageNoteTabs
                   notes={fullPageNotes || []}
@@ -1083,6 +1145,7 @@ function App() {
                       } else {
                         setShowFullPageNotes(false);
                         setSelectedFullPageNoteId(null);
+                        setIsFullscreenNotes(false);
                       }
                     }
                     // Note: X button only closes the tab, does NOT delete the note
@@ -1098,11 +1161,14 @@ function App() {
                   onBackToTodos={() => {
                     setShowFullPageNotes(false);
                     setSelectedFullPageNoteId(null);
+                    setIsFullscreenNotes(false);
                   }}
+                  isFullscreen={isFullscreenNotes}
+                  onToggleFullscreen={() => setIsFullscreenNotes(!isFullscreenNotes)}
                 />
                 {/* Full-page note view */}
                 <FullPageNoteView noteId={selectedFullPageNoteId} />
-              </>
+              </div>
             ) : (
               <TodoList
                 ref={todoListRef}

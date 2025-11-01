@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
-import { CheckboxIcon, FilePlusIcon } from "@radix-ui/react-icons";
-import { X } from "lucide-react";
+import { CheckboxIcon, FilePlusIcon, EnterFullScreenIcon, ExitFullScreenIcon } from "@radix-ui/react-icons";
+import { X, Copy, Check } from "lucide-react";
 import { Id } from "../../convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -10,6 +10,7 @@ interface FullPageNoteTabsProps {
     _id: Id<"fullPageNotes">;
     title?: string;
     order: number;
+    content?: string;
   }>;
   openTabIds: Array<Id<"fullPageNotes">>;
   selectedNoteId: Id<"fullPageNotes"> | null;
@@ -17,6 +18,8 @@ interface FullPageNoteTabsProps {
   onCloseTab: (noteId: Id<"fullPageNotes">) => void;
   onCreateNote: () => void;
   onBackToTodos: () => void;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
 }
 
 export function FullPageNoteTabs({
@@ -27,6 +30,8 @@ export function FullPageNoteTabs({
   onCloseTab,
   onCreateNote,
   onBackToTodos,
+  isFullscreen,
+  onToggleFullscreen,
 }: FullPageNoteTabsProps) {
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const selectedTabRef = useRef<HTMLDivElement>(null);
@@ -34,6 +39,7 @@ export function FullPageNoteTabs({
   const [titleInput, setTitleInput] = useState("");
   const titleInputRef = useRef<HTMLInputElement>(null);
   const updateNote = useMutation(api.fullPageNotes.updateFullPageNote);
+  const [copied, setCopied] = useState(false);
 
   // Scroll to selected tab when it changes
   useEffect(() => {
@@ -87,6 +93,20 @@ export function FullPageNoteTabs({
       e.preventDefault();
       setEditingNoteId(null);
       setTitleInput("");
+    }
+  };
+
+  // Handle copy note content
+  const handleCopyContent = async () => {
+    const selectedNote = notes.find((n) => n._id === selectedNoteId);
+    if (selectedNote && selectedNote.content) {
+      try {
+        await navigator.clipboard.writeText(selectedNote.content);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error("Failed to copy:", err);
+      }
     }
   };
 
@@ -160,6 +180,29 @@ export function FullPageNoteTabs({
         >
           <FilePlusIcon style={{ width: 16, height: 16 }} />
         </button>
+
+        {/* Action buttons - copy and fullscreen */}
+        <div className="fullpage-note-tab-actions">
+          <button
+            className="fullpage-note-tab-action-button"
+            onClick={handleCopyContent}
+            title="Copy note content"
+          >
+            {copied ? <Check size={16} /> : <Copy size={16} />}
+          </button>
+          
+          <button
+            className="fullpage-note-tab-action-button"
+            onClick={onToggleFullscreen}
+            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          >
+            {isFullscreen ? (
+              <ExitFullScreenIcon style={{ width: 16, height: 16 }} />
+            ) : (
+              <EnterFullScreenIcon style={{ width: 16, height: 16 }} />
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

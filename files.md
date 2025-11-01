@@ -456,10 +456,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - Markdown works naturally without needing ```md wrapper
   - Supports all markdown features (bold, italic, headers, lists, links, tables, blockquotes)
   - Syntax highlighting for code blocks with Cursor Dark Theme colors
-  - Auto-save on content changes
+  - Auto-save on content changes (500ms debounce)
   - Copy button for note content
   - Font size respects user preferences
   - Automatic edit mode for new/empty notes
+  - Instant loading with Convex real-time sync (no loading states)
+  - Simplified interface focused on core editing and markdown rendering
   - Works for notes associated with dates or projects (handles optional date parameter)
 
 - `FullPageNoteTabs.tsx` - Chrome-style tab interface for full-page notes:
@@ -541,9 +543,19 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.009.2 (November 1, 2025)
+## Current Version: v.011 (November 1, 2025)
 
-### Latest Features (v.009.2) - Move Full-Page Notes to Projects and Dates
+### Latest Features (v.011) - Simplified Full-Page Notes
+
+- **Simplified Full-Page Notes** - Streamlined interface for better focus and performance
+  - Removed format toggle dropdown for cleaner interface
+  - Removed markdown split-screen preview - focus on core editing
+  - Removed image upload functionality
+  - Instant note loading with Convex real-time sync (no loading states)
+  - Full-page notes now focus on core editing and markdown rendering
+  - Improved user experience with seamless, instant note loading
+
+### Previous Features (v.009.2) - Move Full-Page Notes to Projects and Dates
 
 - **Move Full-Page Notes to Projects and Dates** - Flexible note organization
   - Move any full-page note to a project folder via "Move to Project..." menu option

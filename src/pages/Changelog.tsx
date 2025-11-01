@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v009");
+  const [activeSection, setActiveSection] = useState("v011");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sections = [
+    { id: "v011", title: "v.011 - Nov 1, 2025" },
+    { id: "v010", title: "v.010 - Nov 1, 2025" },
     { id: "v009", title: "v.009 - Oct 31, 2025" },
     { id: "v008", title: "v.008 - Oct 30, 2025" },
     { id: "v007", title: "v.007 - Oct 29, 2025" },
@@ -77,10 +79,40 @@ export function Changelog() {
       </nav>
 
       <div className="launch-container">
-        <section id="v009">
+        <section id="v011">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
+          </p>
+
+          <h2 className="section-title">v.011 - November 1, 2025</h2>
+          <p className="changelog-subtitle">Simplified Full-Page Notes</p>
+          <p>
+            Streamlined full-page notes interface for better focus and
+            performance with instant loading.
+          </p>
+          <ul className="feature-list">
+            <li>
+              Removed format toggle dropdown for cleaner, simpler interface
+            </li>
+            <li>
+              Removed markdown split-screen preview - focus on core editing
+            </li>
+            <li>Removed image upload functionality</li>
+            <li>
+              Instant note loading with Convex real-time sync (no loading
+              states)
+            </li>
+            <li>
+              Full-page notes now focus on core editing and markdown rendering
+            </li>
+          </ul>
+
+          <h2 className="section-title">v.010 - November 1, 2025</h2>
+          <p className="changelog-subtitle">Stats Page User Count Fix</p>
+          <p>
+            Fixed stats page to read total user count from Clerk instead of
+            Convex database for accurate user statistics.
           </p>
 
           <h2 className="section-title">v.009 - October 31, 2025</h2>

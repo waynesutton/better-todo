@@ -205,9 +205,11 @@ export function Launch() {
           <p>
             Each note opens in a Chrome-style tab interface with syntax
             highlighting for multiple languages (JavaScript, TypeScript, CSS,
-            HTML, Python, Go, Rust), auto-save, and the ability to quickly
-            switch between notes. Notes are organized in the sidebar under each
-            date, making it easy to find and access your work.
+            HTML, Python, Go, Rust), auto-save, and instant loading with Convex
+            real-time sync. Notes are organized in the sidebar under each date,
+            making it easy to find and access your work. The streamlined
+            interface focuses on core editing and markdown rendering for a
+            distraction-free writing experience.
           </p>
           <p>
             Organize your notes flexibly by moving them to project folders or

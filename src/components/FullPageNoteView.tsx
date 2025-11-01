@@ -92,7 +92,7 @@ const cursorDarkTheme: { [key: string]: React.CSSProperties } = {
 // Cursor Light Theme colors for syntax highlighting
 const cursorLightTheme: { [key: string]: React.CSSProperties } = {
   'code[class*="language-"]': {
-    color: "#000000",
+    color: "#171717",
     background: "#ffffff",
     fontFamily:
       "SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New, monospace",
@@ -107,7 +107,7 @@ const cursorLightTheme: { [key: string]: React.CSSProperties } = {
     hyphens: "none" as const,
   },
   'pre[class*="language-"]': {
-    color: "#000000",
+    color: "#171717",
     background: "#ffffff",
     fontFamily:
       "SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New, monospace",
@@ -128,81 +128,9 @@ const cursorLightTheme: { [key: string]: React.CSSProperties } = {
   prolog: { color: "#008000" },
   doctype: { color: "#008000" },
   cdata: { color: "#008000" },
-  punctuation: { color: "#000000" },
-  property: { color: "#001080" },
-  tag: { color: "#0000ff" },
-  boolean: { color: "#0000ff" },
-  number: { color: "#098658" },
-  constant: { color: "#0070c1" },
-  symbol: { color: "#0070c1" },
-  deleted: { color: "#e51400" },
-  selector: { color: "#a31515" },
-  "attr-name": { color: "#0451a5" },
-  string: { color: "#a31515" },
-  char: { color: "#a31515" },
-  builtin: { color: "#0000ff" },
-  inserted: { color: "#008000" },
-  operator: { color: "#000000" },
-  entity: { color: "#795e26" },
-  url: { color: "#001080", textDecoration: "underline" },
-  variable: { color: "#001080" },
-  atrule: { color: "#0000ff" },
-  "attr-value": { color: "#a31515" },
-  function: { color: "#795e26" },
-  "function-variable": { color: "#795e26" },
-  keyword: { color: "#0000ff" },
-  regex: { color: "#811f3f" },
-  important: { color: "#0000ff", fontWeight: "bold" },
-  bold: { fontWeight: "bold" },
-  italic: { fontStyle: "italic" },
-  namespace: { opacity: 0.7 },
-  "class-name": { color: "#267f99" },
-  parameter: { color: "#001080" },
-  decorator: { color: "#795e26" },
-};
-
-// Cursor Cloud Theme colors for syntax highlighting
-const cursorCloudTheme: { [key: string]: React.CSSProperties } = {
-  'code[class*="language-"]': {
-    color: "#171717",
-    background: "#ededed",
-    fontFamily:
-      "SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New, monospace",
-    fontSize: "13px",
-    textAlign: "left" as const,
-    whiteSpace: "pre" as const,
-    wordSpacing: "normal",
-    wordBreak: "normal" as const,
-    wordWrap: "normal" as const,
-    lineHeight: "1.5",
-    tabSize: 4,
-    hyphens: "none" as const,
-  },
-  'pre[class*="language-"]': {
-    color: "#171717",
-    background: "#ededed",
-    fontFamily:
-      "SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas, Courier New, monospace",
-    fontSize: "13px",
-    textAlign: "left" as const,
-    whiteSpace: "pre" as const,
-    wordSpacing: "normal",
-    wordBreak: "normal" as const,
-    wordWrap: "normal" as const,
-    lineHeight: "1.5",
-    tabSize: 4,
-    hyphens: "none" as const,
-    padding: "1em",
-    margin: "0",
-    overflow: "auto" as const,
-  },
-  comment: { color: "#6a9955", fontStyle: "italic" },
-  prolog: { color: "#6a9955" },
-  doctype: { color: "#6a9955" },
-  cdata: { color: "#6a9955" },
   punctuation: { color: "#171717" },
   property: { color: "#001080" },
-  tag: { color: "#0000ff" },
+  tag: { color: "#800000" },
   boolean: { color: "#0000ff" },
   number: { color: "#098658" },
   constant: { color: "#0070c1" },
@@ -372,28 +300,28 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
   };
 
   const handleContentBlur = () => {
-    // Clear timeout and save immediately on blur
+    // Force immediate save on blur
     if (contentTimeoutRef.current) {
       clearTimeout(contentTimeoutRef.current);
     }
-    // Mark typing as done
-    isTypingRef.current = false;
     updateNote({ id: noteId, content: contentInput });
-    // Exit edit mode to render markdown
-    setIsEditMode(false);
+    setTimeout(() => {
+      isTypingRef.current = false;
+    }, 100);
   };
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     isResizingRef.current = true;
+
     const startY = e.clientY;
     const startHeight = textareaHeight;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!isResizingRef.current) return;
       const deltaY = moveEvent.clientY - startY;
-      const newHeight = Math.max(200, startHeight + deltaY);
+      const newHeight = Math.max(200, Math.min(1200, startHeight + deltaY));
       setTextareaHeight(newHeight);
     };
 
@@ -407,7 +335,7 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
     document.addEventListener("mouseup", handleMouseUp);
   };
 
-  // Cleanup timeout on unmount
+  // Clean up timeout on unmount
   useEffect(() => {
     return () => {
       if (contentTimeoutRef.current) {
@@ -416,7 +344,7 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
     };
   }, []);
 
-  // Restore cursor position after updates to prevent jumping
+  // Restore cursor position after React updates
   useEffect(() => {
     if (
       isEditMode &&
@@ -424,129 +352,53 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
       cursorPositionRef.current !== null &&
       isTypingRef.current
     ) {
-      const position = cursorPositionRef.current;
-      textareaRef.current.setSelectionRange(position, position);
+      textareaRef.current.setSelectionRange(
+        cursorPositionRef.current,
+        cursorPositionRef.current,
+      );
     }
   }, [contentInput, isEditMode]);
 
-  // Post-process CSS code blocks to add color swatches next to hex codes
+  // Effect for code block styling (only in display mode)
   useEffect(() => {
     if (isEditMode) return;
 
     const processCodeBlock = (codeElement: HTMLPreElement, index: number) => {
-      const blocks = parseContentBlocks(contentInput);
-      const block = blocks[index];
-      if (!block || block.type !== "code" || block.language !== "css") {
-        return;
+      const code = codeElement.querySelector("code");
+      if (!code) return;
+
+      const wrapper = codeBlockWrapperRefs.current.get(index);
+      if (!wrapper) return;
+
+      // Get background color from computed style
+      const computedStyle = window.getComputedStyle(code);
+      const bgColor = computedStyle.backgroundColor;
+
+      // Parse RGB to hex
+      const rgb = bgColor.match(/\d+/g);
+      if (rgb) {
+        const hex = normalizeHexColor(
+          `#${parseInt(rgb[0]).toString(16).padStart(2, "0")}${parseInt(rgb[1]).toString(16).padStart(2, "0")}${parseInt(rgb[2]).toString(16).padStart(2, "0")}`,
+        );
+        wrapper.style.setProperty("--code-bg-color", hex);
       }
-
-      // Skip if already processed
-      if (codeElement.querySelector(".hex-color-swatch")) {
-        return;
-      }
-
-      // Process all text nodes recursively
-      const processNode = (node: Node): void => {
-        if (node.nodeType === Node.TEXT_NODE) {
-          const textNode = node as Text;
-          const text = textNode.textContent || "";
-          const hexPattern = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})\b/g;
-          const matches = Array.from(text.matchAll(hexPattern));
-
-          if (matches.length > 0 && textNode.parentNode) {
-            const fragment = document.createDocumentFragment();
-            let lastIndex = 0;
-
-            matches.forEach((match) => {
-              const hexCode = match[0];
-              const matchIndex = match.index!;
-
-              // Add text before match
-              if (matchIndex > lastIndex) {
-                fragment.appendChild(
-                  document.createTextNode(text.slice(lastIndex, matchIndex)),
-                );
-              }
-
-              // Create wrapper with hex code and swatch
-              const wrapper = document.createElement("span");
-              wrapper.className = "hex-color-wrapper";
-              wrapper.style.display = "inline-block";
-
-              wrapper.appendChild(document.createTextNode(hexCode));
-
-              const swatch = document.createElement("span");
-              swatch.className = "hex-color-swatch";
-              swatch.style.cssText = `
-                display: inline-block;
-                width: 12px;
-                height: 12px;
-                margin-left: 4px;
-                vertical-align: middle;
-                border: 1px solid var(--border-color);
-                border-radius: 2px;
-                background-color: ${normalizeHexColor(hexCode)};
-              `;
-              swatch.setAttribute("data-hex", hexCode);
-              wrapper.appendChild(swatch);
-
-              fragment.appendChild(wrapper);
-              lastIndex = matchIndex + hexCode.length;
-            });
-
-            // Add remaining text
-            if (lastIndex < text.length) {
-              fragment.appendChild(
-                document.createTextNode(text.slice(lastIndex)),
-              );
-            }
-
-            // Replace text node with fragment
-            textNode.parentNode.replaceChild(fragment, textNode);
-          }
-        } else {
-          // Process child nodes
-          const childNodes = Array.from(node.childNodes);
-          childNodes.forEach(processNode);
-        }
-      };
-
-      processNode(codeElement);
     };
 
-    // Process all code blocks after a short delay to ensure rendering is complete
-    const timeoutId = setTimeout(() => {
-      // Try to find pre elements from wrapper refs first
-      codeBlockWrapperRefs.current.forEach((wrapper, index) => {
-        const preElement = wrapper.querySelector("pre");
-        if (preElement) {
-          codeBlockRefs.current.set(index, preElement);
-        }
-      });
-
-      // Process all code blocks
-      codeBlockRefs.current.forEach((codeElement, index) => {
-        processCodeBlock(codeElement, index);
-      });
-    }, 150);
-
-    return () => clearTimeout(timeoutId);
-  }, [contentInput, isEditMode]);
+    // Process all code blocks
+    codeBlockRefs.current.forEach((codeElement, index) => {
+      processCodeBlock(codeElement, index);
+    });
+  }, [isEditMode, contentInput, theme]);
 
   if (!note) {
-    return (
-      <div className="fullpage-note-view">
-        <div style={{ padding: "24px", textAlign: "center" }}>
-          Loading note...
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
     <div className="fullpage-note-view">
       <div className="fullpage-note-content-wrapper">
         {isEditMode ? (
+          // Edit mode
           <div className="fullpage-note-editor-container">
             <div
               className="note-line-numbers"
@@ -590,86 +442,78 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
             />
           </div>
         ) : (
+          // Display mode with markdown rendering
           <div
-            className="fullpage-note-display-mode"
-            onClick={() => {
-              setIsEditMode(true);
-              // Focus the textarea after a brief delay to ensure it's rendered
-              setTimeout(() => {
-                textareaRef.current?.focus();
-              }, 50);
+            className="fullpage-note-display-content"
+            onClick={() => setIsEditMode(true)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setIsEditMode(true);
+              }
             }}
           >
-            {contentInput ? (
-              parseContentBlocks(contentInput).map((block, index) => (
-                <div key={index} className="note-content-block">
-                  {block.type === "text" ? (
-                    <div className="note-markdown-block">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {block.content}
-                      </ReactMarkdown>
-                    </div>
-                  ) : (
-                    <div
-                      className="note-code-block-wrapper"
-                      ref={(el) => {
-                        if (el) {
-                          codeBlockWrapperRefs.current.set(index, el);
-                        } else {
-                          codeBlockWrapperRefs.current.delete(index);
-                        }
+            {parseContentBlocks(contentInput).map((block, index) =>
+              block.type === "code" ? (
+                <div
+                  key={index}
+                  className="note-code-block-wrapper"
+                  ref={(el) => {
+                    if (el) codeBlockWrapperRefs.current.set(index, el);
+                  }}
+                >
+                  <div className="code-block-header">
+                    <span className="code-block-language">
+                      {block.language}
+                    </span>
+                    <button
+                      className="code-block-copy-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopyCodeBlock(block.content, index);
                       }}
+                      title="Copy code"
                     >
-                      <div className="note-code-block-header">
-                        <span className="note-code-language">
-                          {block.language}
-                        </span>
-                        <button
-                          className="note-code-copy-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyCodeBlock(block.content, index);
-                          }}
-                          title="Copy code"
-                        >
-                          {copiedBlockIndex === index ? (
-                            <Check size={14} />
-                          ) : (
-                            <Copy size={14} />
-                          )}
-                        </button>
-                      </div>
-                      <SyntaxHighlighter
-                        language={block.language}
-                        style={
-                          theme === "dark"
-                            ? cursorDarkTheme
-                            : theme === "light"
-                              ? cursorLightTheme
-                              : theme === "tan"
-                                ? cursorLightTheme
-                                : theme === "cloud"
-                                  ? cursorCloudTheme
-                                  : cursorDarkTheme
-                        }
-                        customStyle={{
-                          margin: 0,
-                          borderRadius: "0 0 4px 4px",
-                          fontSize: "13px",
+                      {copiedBlockIndex === index ? (
+                        <Check size={14} />
+                      ) : (
+                        <Copy size={14} />
+                      )}
+                    </button>
+                  </div>
+                  <SyntaxHighlighter
+                    language={block.language}
+                    style={
+                      theme === "dark" ? cursorDarkTheme : cursorLightTheme
+                    }
+                    showLineNumbers={true}
+                    wrapLines={true}
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: "0 0 4px 4px",
+                      fontSize: "13px",
+                    }}
+                    PreTag={(props) => (
+                      <pre
+                        {...props}
+                        ref={(el) => {
+                          if (el) codeBlockRefs.current.set(index, el);
                         }}
-                        showLineNumbers={true}
-                        wrapLines={true}
-                      >
-                        {block.content}
-                      </SyntaxHighlighter>
-                    </div>
-                  )}
+                      />
+                    )}
+                  >
+                    {block.content}
+                  </SyntaxHighlighter>
                 </div>
-              ))
-            ) : (
-              <div className="fullpage-note-empty-state">
-                Click to start writing...
-              </div>
+              ) : (
+                <div key={index} className="note-markdown-block">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {block.content}
+                  </ReactMarkdown>
+                </div>
+              ),
             )}
           </div>
         )}

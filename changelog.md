@@ -4,6 +4,36 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.011] - 2025-11-01
+
+### Changed
+
+- **Simplified Full-Page Notes** - Streamlined full-page notes interface for better focus and performance
+  - Removed format toggle dropdown (format selection feature)
+  - Removed markdown split-screen preview (edit and preview side-by-side)
+  - Removed image upload functionality
+  - Removed hide/show preview toggle
+  - Full-page notes now focus on core editing and markdown rendering
+  - Instant loading with Convex real-time sync (no loading states)
+
+### Fixed
+
+- **Instant Note Loading** - Full-page notes now load instantly without showing "Loading note..." message
+  - Leverages Convex real-time synchronization for instant data display
+  - Improved user experience with seamless note loading
+
+### Frontend Changes
+
+- **FullPageNoteView Component** (`src/components/FullPageNoteView.tsx`)
+  - Removed format toggle UI and related state management
+  - Removed split-screen preview functionality
+  - Removed image upload handlers and file input
+  - Removed preview visibility toggle
+  - Simplified component to focus on core editing and markdown rendering
+  - Removed unused imports (TriangleRightIcon, TriangleDownIcon, ImageIcon, EyeNoneIcon, EyeOpenIcon, Keyboard)
+  - Removed format-related mutations (generateUploadUrl, getImageUrl)
+  - Changed loading state to return `null` instead of loading message for instant display
+
 ## [v.010] - 2025-11-01
 
 ### Fixed

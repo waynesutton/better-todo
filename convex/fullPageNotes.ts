@@ -15,6 +15,18 @@ export const getFullPageNotesByDate = query({
       folderId: v.optional(v.id("folders")),
       title: v.optional(v.string()),
       content: v.string(),
+      format: v.optional(v.union(
+        v.literal("plaintext"),
+        v.literal("markdown"),
+        v.literal("css"),
+        v.literal("javascript"),
+        v.literal("typescript"),
+        v.literal("html"),
+        v.literal("json"),
+        v.literal("python"),
+        v.literal("go"),
+        v.literal("rust"),
+      )),
       order: v.number(),
       collapsed: v.optional(v.boolean()),
       pinnedToTop: v.optional(v.boolean()),
@@ -53,6 +65,18 @@ export const getFullPageNote = query({
       folderId: v.optional(v.id("folders")),
       title: v.optional(v.string()),
       content: v.string(),
+      format: v.optional(v.union(
+        v.literal("plaintext"),
+        v.literal("markdown"),
+        v.literal("css"),
+        v.literal("javascript"),
+        v.literal("typescript"),
+        v.literal("html"),
+        v.literal("json"),
+        v.literal("python"),
+        v.literal("go"),
+        v.literal("rust"),
+      )),
       order: v.number(),
       collapsed: v.optional(v.boolean()),
       pinnedToTop: v.optional(v.boolean()),
@@ -89,6 +113,18 @@ export const getFullPageNotesByFolder = query({
       folderId: v.optional(v.id("folders")),
       title: v.optional(v.string()),
       content: v.string(),
+      format: v.optional(v.union(
+        v.literal("plaintext"),
+        v.literal("markdown"),
+        v.literal("css"),
+        v.literal("javascript"),
+        v.literal("typescript"),
+        v.literal("html"),
+        v.literal("json"),
+        v.literal("python"),
+        v.literal("go"),
+        v.literal("rust"),
+      )),
       order: v.number(),
       collapsed: v.optional(v.boolean()),
       pinnedToTop: v.optional(v.boolean()),
@@ -174,6 +210,18 @@ export const updateFullPageNote = mutation({
     id: v.id("fullPageNotes"),
     title: v.optional(v.string()),
     content: v.optional(v.string()),
+    format: v.optional(v.union(
+      v.literal("plaintext"),
+      v.literal("markdown"),
+      v.literal("css"),
+      v.literal("javascript"),
+      v.literal("typescript"),
+      v.literal("html"),
+      v.literal("json"),
+      v.literal("python"),
+      v.literal("go"),
+      v.literal("rust"),
+    )),
     collapsed: v.optional(v.boolean()),
     pinnedToTop: v.optional(v.boolean()),
   },
@@ -183,6 +231,7 @@ export const updateFullPageNote = mutation({
     const updates: Record<string, any> = {};
     if (args.title !== undefined) updates.title = args.title;
     if (args.content !== undefined) updates.content = args.content;
+    if (args.format !== undefined) updates.format = args.format;
     if (args.collapsed !== undefined) updates.collapsed = args.collapsed;
     if (args.pinnedToTop !== undefined) updates.pinnedToTop = args.pinnedToTop;
 
@@ -376,6 +425,44 @@ export const moveFullPageNoteToDate = mutation({
     });
 
     return null;
+  },
+});
+
+// Generate upload URL for image uploads
+export const generateUploadUrl = mutation({
+  args: {},
+  returns: v.string(),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    // Generate and return the upload URL
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+// Get storage URL for an uploaded file
+export const getStorageUrl = query({
+  args: {
+    storageId: v.id("_storage"),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    // Get the URL for the storage ID
+    return await ctx.storage.getUrl(args.storageId);
+  },
+});
+
+// Helper mutation to get storage URL after upload (for use in actions/mutations)
+export const getImageUrl = mutation({
+  args: {
+    storageId: v.id("_storage"),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    // Get the URL for the storage ID
+    return await ctx.storage.getUrl(args.storageId);
   },
 });
 
