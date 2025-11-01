@@ -1142,13 +1142,6 @@ button:active,
   color: white;
 }
 
-.folder-notes-count {
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 500;
-  opacity: 0.8;
-}
-
 .date-menu {
   position: relative;
   padding: 6px 8px 6px 0;
@@ -1224,7 +1217,6 @@ button:active,
 }
 :root[data-theme="cloud"] .date-menu-button:hover {
   background-color: #171717;
-  color: #e8e8e8;
 }
 
 .date-menu-dropdown {
@@ -1359,7 +1351,7 @@ button:active,
 }
 
 .sidebar-archive-section > .sidebar-archive-header {
-  width: calc(100% - 40px);
+  width: calc(100% - 00px);
 }
 
 .sidebar-archive-section > .date-menu {
@@ -1509,11 +1501,6 @@ button:active,
   border-color: #d14a01;
 }
 
-/* cloud mode add folder input focus */
-:root[data-theme="cloud"] .add-folder-input:focus {
-  border-color: #171717;
-}
-
 /* Dark mode add folder input focus */
 :root[data-theme="dark"] .add-folder-input:focus {
   border-color: #27a561;
@@ -1546,10 +1533,6 @@ button:active,
   background-color: #27a561;
 }
 
-/* cloud mode add folder save button */
-:root[data-theme="cloud"] .add-folder-save-button {
-  background-color: #171717;
-}
 /* Tan mode add folder save button */
 :root[data-theme="tan"] .add-folder-save-button {
   background-color: #eb5601;
@@ -1583,34 +1566,24 @@ button:active,
 }
 
 /* Folder Selector Modal */
-.folder-selector-modal {
-  position: absolute;
-  right: 0;
-  top: 100%;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  padding: 0;
-  z-index: 101;
-  margin-top: 4px;
+.date-picker-modal.folder-selector {
   min-width: 200px;
   max-width: 250px;
-  overflow: hidden;
 }
 
-.folder-selector-header {
+.folder-selector-title {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
-  padding: 12px 12px 10px 12px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border-color);
 }
 
 .folder-selector-list {
   max-height: 200px;
   overflow-y: auto;
-  padding: 4px;
+  margin-bottom: 8px;
 }
 
 .folder-selector-item {
@@ -1635,27 +1608,6 @@ button:active,
 
 :root[data-theme="tan"] .folder-selector-item:hover {
   background-color: #ebe9e6;
-}
-
-:root[data-theme="cloud"] .folder-selector-item:hover {
-  background-color: #e0e0e0;
-}
-
-.folder-selector-cancel {
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  border-top: 1px solid var(--border-color);
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--font-sidebar);
-  font-family: inherit;
-  transition: background-color 0.15s ease;
-}
-
-.folder-selector-cancel:hover {
-  background-color: var(--bg-hover);
 }
 
 .sidebar-footer {
@@ -2207,9 +2159,6 @@ button:active,
   font-size: var(--font-todo);
   color: var(--text-primary);
   line-height: 1.6;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
 }
 
 .note-markdown-block h1,
@@ -2312,14 +2261,8 @@ button:active,
   background-color: var(--bg-secondary);
   padding: 0.2em 0.4em;
   border-radius: 3px;
-  font-family:
-    SF Mono,
-    Monaco,
-    Cascadia Code,
-    Roboto Mono,
-    Consolas,
-    Courier New,
-    monospace;
+  font-family: SF Mono, Monaco, Cascadia Code, Roboto Mono, Consolas,
+    Courier New, monospace;
   font-size: 0.9em;
   color: var(--text-primary);
 }
@@ -6013,7 +5956,7 @@ button:active,
 .fullpage-note-content-wrapper {
   flex: 1;
   overflow-y: auto;
-  padding: 5px 0px 0px 19px;
+  padding: 5px;
 }
 
 .fullpage-note-editor-container {
@@ -6046,7 +5989,7 @@ button:active,
 .fullpage-note-display-mode {
   cursor: pointer;
   min-height: 400px;
-  padding: 5px;
+  padding: 5 px;
   border: none;
 }
 
@@ -6159,12 +6102,6 @@ button:active,
 :root[data-theme="cloud"] .notes-folder-item.active {
   background-color: #414141;
 }
-
-/* Cloud mode: selected notes in projects (folders) */
-:root[data-theme="cloud"] .notes-folder-item.active .notes-folder-item-title {
-  color: #ededed;
-}
-
 .notes-folder-item-title {
   flex: 1;
   overflow: hidden;
@@ -6185,7 +6122,7 @@ button:active,
   }
 
   .fullpage-note-content-wrapper {
-    padding: 5px;
+    padding: 12px;
   }
 
   .fullpage-note-tab {

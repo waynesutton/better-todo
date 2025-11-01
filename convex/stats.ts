@@ -1,5 +1,6 @@
-import { query } from "./_generated/server";
+import { query, action } from "./_generated/server";
 import { v } from "convex/values";
+import { api } from "./_generated/api";
 
 /**
  * Get aggregate statistics for the entire application.
@@ -20,9 +21,8 @@ export const getStats = query({
     totalFolders: v.number(),
   }),
   handler: async (ctx) => {
-    // Get all users (count only)
-    const allUsers = await ctx.db.query("users").collect();
-    const totalUsers = allUsers.length;
+    // Get total users from Clerk via backend action
+    const totalUsers: number = await ctx.runAction(api.stats.getUserCountFromClerk);
 
     // Get all todos (count only)
     const allTodos = await ctx.db.query("todos").collect();
@@ -73,6 +73,43 @@ export const getStats = query({
       pomodoroSessions,
       totalFolders,
     };
+  },
+});
+
+/**
+ * Get the total number of users from Clerk.
+ * This action calls Clerk's backend API to get an accurate count.
+ */
+export const getUserCountFromClerk = action({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+    if (!clerkSecretKey) {
+      console.error("CLERK_SECRET_KEY not found in environment variables");
+      return 0;
+    }
+
+    try {
+      const response = await fetch("https://api.clerk.com/v1/users/count", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${clerkSecretKey}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        console.error("Failed to fetch user count from Clerk:", response.statusText);
+        return 0;
+      }
+
+      const data = await response.json() as { object: string; total_count: number };
+      return data.total_count;
+    } catch (error) {
+      console.error("Error fetching user count from Clerk:", error);
+      return 0;
+    }
   },
 });
 

@@ -4,101 +4,22 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [v.009.2] - 2025-11-01
-
-### Added
-
-- **Move Full-Page Notes to Projects and Dates** - Flexible note organization across dates and projects
-  - Move any full-page note to a project folder via "Move to Project..." menu option
-  - Move notes from projects back to any date via "Move to Date..." menu option
-  - Notes can exist independently in projects (decoupled from dates)
-  - Notes in projects appear in sidebar under the project folder
-  - Note count badges show on project folders when they contain notes
-  - Moving a note to a date automatically shows the notes toggle dropdown for that date
-  - Moving a note to a project doesn't create a date association - notes are fully decoupled
-  - Project selector modal matches sidebar UI design for consistency
-  - Date picker works identically to "move todo date" functionality
-
-### Backend Changes
-
-- **Schema update** (`convex/schema.ts`)
-  - Made `date` field optional in `fullPageNotes` table
-  - Added optional `folderId` field for project association
-  - Added `by_user_and_folder` index for efficient querying of notes in projects
-- **New queries** (`convex/fullPageNotes.ts`)
-  - `getFullPageNotesByFolder` - Get all full-page notes for a specific project
-  - `getFullPageNoteCountsByFolder` - Get count of notes per project for sidebar badges
-- **New mutations** (`convex/fullPageNotes.ts`)
-  - `moveFullPageNoteToFolder` - Move note to project (removes date, sets folderId, maintains order)
-  - `moveFullPageNoteToDate` - Move note to date (removes folderId, sets date, maintains order)
-- **Updated queries** (`convex/fullPageNotes.ts`)
-  - `getFullPageNotesByDate` - Updated return type to reflect optional `date` and `folderId`
-  - `getFullPageNote` - Updated return type to reflect optional `date` and `folderId`
-  - `getFullPageNoteCounts` - Modified to only count notes that have a `date` (excludes folder notes)
-
-### Frontend Changes
-
-- **Sidebar component** (`src/components/Sidebar.tsx`)
-  - Added `NotesForFolder` component to display full-page notes within projects
-  - Added note count badges to project folders (shows count when > 0)
-  - Added "Move to Project..." and "Move to Date..." options to full-page note menu
-  - Added project selector modal matching sidebar UI design
-  - Added date picker modal for moving notes to dates
-  - Added `expandedFolderNotes` state for toggling notes visibility in projects
-  - Added `handleMoveNoteToFolder` and `handleMoveNoteToDate` mutation handlers
-  - Updated `onOpenFullPageNote` to handle notes without dates (folder notes)
-- **App component** (`src/App.tsx`)
-  - Updated `onOpenFullPageNote` prop to handle optional `date` parameter
-  - Notes in folders can be opened without navigating to a date
-- **Search modal** (`src/components/SearchModal.tsx`)
-  - Updated to handle full-page notes that might not have a `date` (folder notes)
-  - Shows "In Folder" badge for notes without dates
-- **Search query** (`convex/search.ts`)
-  - Updated `searchAll` to handle optional `date` field for full-page notes
-
-### Styling Changes
-
-- **Global CSS** (`src/styles/global.css`)
-  - Added `.folder-selector-modal` styling to match sidebar UI
-  - Added `.folder-notes-count` badge styling matching todo count badges
-  - Added cloud mode styling for selected notes in projects (#EDEDED text on #414141 background)
-
-### Technical Details
-
-- Notes maintain proper order when moved between dates and projects
-- Order is recalculated based on existing notes in destination location
-- Projects are fully decoupled from dates - notes can exist in projects without any date association
-- Search results correctly handle notes with or without dates
-- UI consistently matches existing design patterns throughout the app
-
-## [v.009.1] - 2025-10-31
+## [v.010] - 2025-11-01
 
 ### Fixed
 
-- **Text Wrapping in Notes** - Plain text now wraps properly in notes and full-page notes
-  - Added `white-space: pre-wrap` and `word-wrap: break-word` to `.note-markdown-block` CSS
-  - Prevents long lines of text from overflowing horizontally
-  - Maintains proper text flow and readability
+- **Stats Page User Count** - Fixed stats page to read total user count from Clerk instead of Convex database
+  - Updated `getStats` query to call Clerk's backend API via `getUserCountFromClerk` action
+  - Added `getUserCountFromClerk` action that fetches user count from Clerk API
+  - Now shows accurate count of all registered users from Clerk authentication system
+  - Requires `CLERK_SECRET_KEY` environment variable in Convex settings
 
-- **ESC Key and Click-Outside Behavior** - Notes now exit edit mode immediately
-  - Removed 100ms setTimeout delay when exiting edit mode
-  - Added immediate ESC key handler to save and exit edit mode instantly
-  - Applies to both todo notes and full-page notes
-  - Improved user experience with instant response to ESC key and clicking outside
+### Backend Changes
 
-- **CSS Typo** - Fixed spacing issue in `.fullpage-note-display-mode` padding property
-
-### Technical Details
-
-- **NotesSection Component** (`src/components/NotesSection.tsx`)
-  - Removed setTimeout delay in handleContentBlur function
-  - Added onKeyDown handler for immediate ESC key response
-- **FullPageNoteView Component** (`src/components/FullPageNoteView.tsx`)
-  - Removed setTimeout delay in handleContentBlur function
-  - Added onKeyDown handler for immediate ESC key response
-- **Global CSS** (`src/styles/global.css`)
-  - Updated `.note-markdown-block` with text wrapping properties
-  - Fixed padding syntax in `.fullpage-note-display-mode`
+- **Stats Module** (`convex/stats.ts`)
+  - Added `getUserCountFromClerk` action to fetch user count from Clerk API
+  - Updated `getStats` query to use Clerk API instead of querying local users table
+  - Added proper error handling for missing API keys or failed requests
 
 ## [v.009] - 2025-10-31 - READY FOR NETLIFY DEPLOYMENT
 
@@ -119,15 +40,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Added remarkGfm plugin for enhanced markdown features (tables, task lists, strikethrough)
   - Updated placeholder text to mention markdown support
   - Text blocks now use `.note-markdown-block` class for styling
+  - **Exit edit mode on blur or ESC** - Clicking outside note or pressing ESC now renders markdown immediately
 - **FullPageNoteView Component** (`src/components/FullPageNoteView.tsx`)
   - Replaced plain text rendering with ReactMarkdown component
   - Added remarkGfm plugin for enhanced markdown features
   - Updated placeholder text to mention markdown support
   - Text blocks now use `.note-markdown-block` class for styling
+  - **Exit edit mode on blur or ESC** - Clicking outside note or pressing ESC now renders markdown immediately
 - **KeyboardShortcutsModal Component** (`src/components/KeyboardShortcutsModal.tsx`)
   - Added ``md` and ``markdown` to code blocks section
   - Updated section title to "Markdown & Code Blocks in Notes"
   - Updated description to mention default markdown support
+
+- **Launch Page** (`src/pages/Launch.tsx`)
+  - Updated "Key features" list to mention full markdown support
+  - Enhanced "Full-page notes" section with detailed markdown capabilities (bold, italic, headers, lists, links, tables, blockquotes)
+  - Expanded "Built for developers" section with comprehensive markdown and code block details
+  - Listed supported languages (JavaScript, TypeScript, CSS, HTML, Python, Go, Rust)
 
 ### Styling Changes
 

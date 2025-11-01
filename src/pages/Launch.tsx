@@ -181,7 +181,7 @@ export function Launch() {
             <li>No AI assistants - just your todos and focus</li>
             <li>Real-time synchronization across all your devices</li>
             <li>Notion-style inline input - type directly to add todos</li>
-            <li>Daily notes with syntax-highlighted code blocks</li>
+            <li>Daily notes with full markdown support and syntax-highlighted code blocks</li>
             <li>Drag and drop reordering with intuitive handles</li>
             <li>Full-text search across all todos and notes</li>
             <li>
@@ -197,15 +197,17 @@ export function Launch() {
           <h2 className="section-title">Full-page notes</h2>
           <p>
             Create unlimited full-page notes for each date with dedicated
-            editing space, line numbers, and markdown support. Perfect for
-            detailed documentation, code snippets, meeting notes, or planning
-            sessions.
+            editing space, line numbers, and full markdown support. Write with
+            bold, italic, headers, lists, links, tables, and blockquotes that
+            render beautifully. Perfect for detailed documentation, code
+            snippets, meeting notes, or planning sessions.
           </p>
           <p>
             Each note opens in a Chrome-style tab interface with syntax
-            highlighting for multiple languages, auto-save, and the ability to
-            quickly switch between notes. Notes are organized in the sidebar
-            under each date, making it easy to find and access your work.
+            highlighting for multiple languages (JavaScript, TypeScript, CSS,
+            HTML, Python, Go, Rust), auto-save, and the ability to quickly
+            switch between notes. Notes are organized in the sidebar under each
+            date, making it easy to find and access your work.
           </p>
           <p>
             Organize your notes flexibly by moving them to project folders or
@@ -249,9 +251,13 @@ export function Launch() {
         <section id="developers" className="launch-section">
           <h2 className="section-title">Built for developers</h2>
           <p>
-            Better-todo supports code blocks with syntax highlighting for
-            JavaScript, TypeScript, CSS, HTML, JSON, Python, Go, and Rust. Take
-            notes with actual code snippets in your daily workflow.
+            Better-todo supports full markdown rendering in notes with code
+            blocks featuring syntax highlighting for JavaScript, TypeScript,
+            CSS, HTML, JSON, Python, Go, and Rust. Write markdown naturally
+            with bold, italic, headers, lists, links, and tables - no special
+            syntax needed. Code blocks use triple backticks with language tags
+            for beautiful syntax highlighting. Take notes with actual code
+            snippets in your daily workflow.
           </p>
           <p>
             Every feature is designed to get out of your way and let you focus

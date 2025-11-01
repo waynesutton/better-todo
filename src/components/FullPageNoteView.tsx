@@ -379,7 +379,7 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
     // Mark typing as done
     isTypingRef.current = false;
     updateNote({ id: noteId, content: contentInput });
-    // Exit edit mode immediately
+    // Exit edit mode to render markdown
     setIsEditMode(false);
   };
 
@@ -571,14 +571,7 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
                   e.preventDefault();
-                  // Save and exit immediately
-                  if (contentTimeoutRef.current) {
-                    clearTimeout(contentTimeoutRef.current);
-                  }
-                  isTypingRef.current = false;
-                  updateNote({ id: noteId, content: contentInput });
                   setIsEditMode(false);
-                  // Remove focus
                   if (document.activeElement instanceof HTMLElement) {
                     document.activeElement.blur();
                   }
