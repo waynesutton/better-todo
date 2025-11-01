@@ -1,15 +1,14 @@
-import { query, action } from "./_generated/server";
+import { action, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 /**
- * Get aggregate statistics for the entire application.
- * Returns counts only - no user-specific data.
+ * Internal query to get database statistics.
+ * Returns counts only - no user data.
  */
-export const getStats = query({
+export const getDatabaseStats = internalQuery({
   args: {},
   returns: v.object({
-    totalUsers: v.number(),
     totalTodos: v.number(),
     completedTodos: v.number(),
     pinnedTodos: v.number(),
@@ -21,9 +20,6 @@ export const getStats = query({
     totalFolders: v.number(),
   }),
   handler: async (ctx) => {
-    // Get total users from Clerk via backend action
-    const totalUsers: number = await ctx.runAction(api.stats.getUserCountFromClerk);
-
     // Get all todos (count only)
     const allTodos = await ctx.db.query("todos").collect();
     const totalTodos = allTodos.length;
@@ -62,7 +58,6 @@ export const getStats = query({
     const totalFolders = allFolders.length;
 
     return {
-      totalUsers,
       totalTodos,
       completedTodos,
       pinnedTodos,
@@ -77,13 +72,55 @@ export const getStats = query({
 });
 
 /**
+ * Get aggregate statistics for the entire application.
+ * Returns counts only - no user-specific data.
+ */
+export const getStats = action({
+  args: {},
+  returns: v.object({
+    totalUsers: v.number(),
+    totalTodos: v.number(),
+    completedTodos: v.number(),
+    pinnedTodos: v.number(),
+    totalNotes: v.number(),
+    totalFullPageNotes: v.number(),
+    activeTodos: v.number(),
+    archivedTodos: v.number(),
+    pomodoroSessions: v.number(),
+    totalFolders: v.number(),
+  }),
+  handler: async (ctx) => {
+    // Get total users from Clerk via backend action
+    const totalUsers: number = await ctx.runAction(api.stats.getUserCountFromClerk);
+
+    // Get database statistics via internal query
+    const dbStats: {
+      totalTodos: number;
+      completedTodos: number;
+      pinnedTodos: number;
+      totalNotes: number;
+      totalFullPageNotes: number;
+      activeTodos: number;
+      archivedTodos: number;
+      pomodoroSessions: number;
+      totalFolders: number;
+    } = await ctx.runQuery(internal.stats.getDatabaseStats);
+
+    return {
+      totalUsers,
+      ...dbStats,
+    };
+  },
+});
+
+/**
  * Get the total number of users from Clerk.
  * This action calls Clerk's backend API to get an accurate count.
  */
 export const getUserCountFromClerk = action({
   args: {},
   returns: v.number(),
-  handler: async (ctx) => {
+  handler: async (_ctx) => {
     const clerkSecretKey = process.env.CLERK_SECRET_KEY;
     if (!clerkSecretKey) {
       console.error("CLERK_SECRET_KEY not found in environment variables");

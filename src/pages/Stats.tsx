@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useState, useEffect } from "react";
+import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
   Users,
@@ -13,9 +13,39 @@ import {
 } from "lucide-react";
 import { DashboardIcon, GridIcon } from "@radix-ui/react-icons";
 
+type Stats = {
+  totalUsers: number;
+  totalTodos: number;
+  completedTodos: number;
+  pinnedTodos: number;
+  totalNotes: number;
+  totalFullPageNotes: number;
+  activeTodos: number;
+  archivedTodos: number;
+  pomodoroSessions: number;
+  totalFolders: number;
+};
+
 export function Stats() {
   const [viewMode, setViewMode] = useState<"grid" | "dashboard">("grid");
-  const stats = useQuery(api.stats.getStats);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const getStats = useAction(api.stats.getStats);
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        setLoading(true);
+        const result = await getStats();
+        setStats(result);
+      } catch (error) {
+        console.error("Failed to load stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadStats();
+  }, [getStats]);
 
   // Format large numbers with commas
   const formatNumber = (num: number | undefined) => {
@@ -101,6 +131,23 @@ export function Stats() {
       description: "Organizational folders",
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="stats-page" data-theme="tan">
+        <div className="stats-container">
+          <header className="stats-header">
+            <div className="stats-header-content">
+              <div>
+                <h1 className="stats-title">Better Todo Statistics</h1>
+                <p className="stats-subtitle">Loading statistics...</p>
+              </div>
+            </div>
+          </header>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="stats-page" data-theme="tan">
