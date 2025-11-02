@@ -150,7 +150,23 @@ export const archiveFolder = mutation({
       throw new Error("Folder not found");
     }
 
+    // Archive the folder
     await ctx.db.patch(args.folderId, { archived: true });
+
+    // Archive all full-page notes in this folder
+    const folderNotes = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .collect();
+
+    // Archive all notes in parallel
+    const archivePromises = folderNotes.map((note) =>
+      ctx.db.patch(note._id, { archived: true }),
+    );
+    await Promise.all(archivePromises);
+
     return null;
   },
 });
@@ -168,7 +184,23 @@ export const unarchiveFolder = mutation({
       throw new Error("Folder not found");
     }
 
+    // Unarchive the folder
     await ctx.db.patch(args.folderId, { archived: false });
+
+    // Unarchive all full-page notes in this folder
+    const folderNotes = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .collect();
+
+    // Unarchive all notes in parallel
+    const unarchivePromises = folderNotes.map((note) =>
+      ctx.db.patch(note._id, { archived: false }),
+    );
+    await Promise.all(unarchivePromises);
+
     return null;
   },
 });
@@ -196,6 +228,18 @@ export const deleteFolder = mutation({
 
     for (const fd of folderDates) {
       await ctx.db.delete(fd._id);
+    }
+
+    // Delete all full-page notes in this folder
+    const folderNotes = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .collect();
+
+    for (const note of folderNotes) {
+      await ctx.db.delete(note._id);
     }
 
     // Delete the folder

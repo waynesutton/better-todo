@@ -4,7 +4,7 @@ This document describes the structure and purpose of each file in the Better Tod
 
 ## Root Configuration
 
-- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, @dnd-kit, Radix UI, react-markdown, remark-gfm)
+- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, @dnd-kit, Radix UI, react-markdown, remark-gfm, remark-breaks)
 - `tsconfig.json` - TypeScript configuration for React app
 - `tsconfig.node.json` - TypeScript configuration for Vite
 - `vite.config.ts` - Vite bundler configuration with React plugin
@@ -57,10 +57,12 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user`
   - **userPreferences**: Stores per-user settings including todoFontSize
     - Index: `by_user`
-  - **fullPageNotes**: Stores full-page notes with userId, optional date, optional folderId, title, content, order, collapsed, and pinnedToTop
+  - **fullPageNotes**: Stores full-page notes with userId, optional date, optional folderId, title, content, order, collapsed, pinnedToTop, and archived status
     - Index: `by_user_and_date` (for notes with dates), `by_user_and_folder` (for notes in projects)
     - Search indexes: `search_content` on content field, `search_title` on title field
     - Notes can exist independently in projects (decoupled from dates)
+    - Notes can be archived with their parent project or independently
+    - Archived notes are excluded from active counts and listings
 
 ### Functions
 
@@ -89,17 +91,18 @@ This document describes the structure and purpose of each file in the Better Tod
   - `reorderNotes` - Update order after drag-and-drop
 
 - `fullPageNotes.ts` - Queries and mutations for full-page notes:
-  - `getFullPageNotesByDate` - Get all full-page notes for a specific date
-  - `getFullPageNotesByFolder` - Get all full-page notes for a specific project folder
+  - `getFullPageNotesByIds` - Get multiple full-page notes by ID array (for open tabs)
+  - `getFullPageNotesByDate` - Get all full-page notes for a specific date (excludes archived)
+  - `getFullPageNotesByFolder` - Get all full-page notes for a specific project folder (with includeArchived option)
   - `getFullPageNote` - Get single full-page note by ID
-  - `getFullPageNoteCounts` - Get count of full-page notes per date for sidebar (only counts notes with dates)
-  - `getFullPageNoteCountsByFolder` - Get count of full-page notes per project folder for sidebar badges
-  - `createFullPageNote` - Create new full-page note with auto-ordering
+  - `getFullPageNoteCounts` - Get count of full-page notes per date for sidebar (excludes archived)
+  - `getFullPageNoteCountsByFolder` - Get count of full-page notes per project folder for sidebar badges (excludes archived)
+  - `createFullPageNote` - Create new full-page note with auto-ordering (accepts date OR folderId)
   - `updateFullPageNote` - Update note title or content (idempotent, no pre-read)
   - `deleteFullPageNote` - Permanently remove a full-page note
   - `reorderFullPageNotes` - Update order with parallel updates
-  - `moveFullPageNoteToFolder` - Move note to project folder (removes date association, sets folderId, maintains order)
-  - `moveFullPageNoteToDate` - Move note to date (removes folder association, sets date, maintains order)
+  - `moveFullPageNoteToFolder` - Move note to project (removes date, sets folderId)
+  - `moveFullPageNoteToDate` - Move note to date (removes folderId, sets date)
 
 - `search.ts` - Full-text search functionality using Convex search indexes:
   - `searchAll` - Search across todos (by content) and notes (by title and content) and full-page notes
@@ -130,9 +133,9 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getFolderForDate` - Check if a date belongs to a project
   - `createFolder` - Create new project with custom name
   - `renameFolder` - Update project name
-  - `archiveFolder` - Archive a project
-  - `unarchiveFolder` - Restore archived project
-  - `deleteFolder` - Delete project and all associations
+  - `archiveFolder` - Archive a project and all its full-page notes in parallel
+  - `unarchiveFolder` - Restore archived project and all its full-page notes in parallel
+  - `deleteFolder` - Delete project, all associations, and all its full-page notes
   - `addDateToFolder` - Associate a date with a project
   - `removeDateFromFolder` - Remove date from project
 

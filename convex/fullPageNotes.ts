@@ -1,6 +1,63 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+// Get full-page notes by their IDs (for tabs)
+export const getFullPageNotesByIds = query({
+  args: {
+    noteIds: v.array(v.id("fullPageNotes")),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("fullPageNotes"),
+      _creationTime: v.number(),
+      userId: v.string(),
+      date: v.optional(v.string()),
+      folderId: v.optional(v.id("folders")),
+      title: v.optional(v.string()),
+      content: v.string(),
+      format: v.optional(v.union(
+        v.literal("plaintext"),
+        v.literal("markdown"),
+        v.literal("css"),
+        v.literal("javascript"),
+        v.literal("typescript"),
+        v.literal("html"),
+        v.literal("json"),
+        v.literal("python"),
+        v.literal("go"),
+        v.literal("rust"),
+      )),
+      order: v.number(),
+      collapsed: v.optional(v.boolean()),
+      pinnedToTop: v.optional(v.boolean()),
+      archived: v.optional(v.boolean()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+    const userId = identity.subject;
+
+    // Fetch notes by IDs and filter by userId
+    const notes = await Promise.all(
+      args.noteIds.map(async (noteId) => {
+        const note = await ctx.db.get(noteId);
+        if (note && note.userId === userId) {
+          return note;
+        }
+        return null;
+      }),
+    );
+
+    // Filter out nulls and sort by order
+    return notes
+      .filter((note): note is NonNullable<typeof note> => note !== null)
+      .sort((a, b) => a.order - b.order);
+  },
+});
+
 // Get all full-page notes for a specific date
 export const getFullPageNotesByDate = query({
   args: {
@@ -30,6 +87,7 @@ export const getFullPageNotesByDate = query({
       order: v.number(),
       collapsed: v.optional(v.boolean()),
       pinnedToTop: v.optional(v.boolean()),
+      archived: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -46,8 +104,10 @@ export const getFullPageNotesByDate = query({
       )
       .collect();
     
-    // Sort by order field
-    return notes.sort((a, b) => a.order - b.order);
+    // Filter out archived notes and sort by order field
+    return notes
+      .filter((note) => !note.archived)
+      .sort((a, b) => a.order - b.order);
   },
 });
 
@@ -80,6 +140,7 @@ export const getFullPageNote = query({
       order: v.number(),
       collapsed: v.optional(v.boolean()),
       pinnedToTop: v.optional(v.boolean()),
+      archived: v.optional(v.boolean()),
     }),
     v.null(),
   ),
@@ -103,6 +164,7 @@ export const getFullPageNote = query({
 export const getFullPageNotesByFolder = query({
   args: {
     folderId: v.id("folders"),
+    includeArchived: v.optional(v.boolean()),
   },
   returns: v.array(
     v.object({
@@ -128,6 +190,7 @@ export const getFullPageNotesByFolder = query({
       order: v.number(),
       collapsed: v.optional(v.boolean()),
       pinnedToTop: v.optional(v.boolean()),
+      archived: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -144,15 +207,21 @@ export const getFullPageNotesByFolder = query({
       )
       .collect();
     
+    // Filter out archived notes unless includeArchived is true
+    const filteredNotes = args.includeArchived
+      ? notes
+      : notes.filter((note) => !note.archived);
+    
     // Sort by order field
-    return notes.sort((a, b) => a.order - b.order);
+    return filteredNotes.sort((a, b) => a.order - b.order);
   },
 });
 
 // Create a new full-page note
 export const createFullPageNote = mutation({
   args: {
-    date: v.string(),
+    date: v.optional(v.string()),
+    folderId: v.optional(v.id("folders")),
   },
   returns: v.id("fullPageNotes"),
   handler: async (ctx, args) => {
@@ -162,26 +231,53 @@ export const createFullPageNote = mutation({
     }
     const userId = identity.subject;
 
-    // Get the highest order number for this date
-    const existingNotes = await ctx.db
-      .query("fullPageNotes")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", args.date),
-      )
-      .collect();
+    // Validate that either date or folderId is provided, but not both
+    if (!args.date && !args.folderId) {
+      throw new Error("Either date or folderId must be provided");
+    }
+    if (args.date && args.folderId) {
+      throw new Error("Cannot provide both date and folderId");
+    }
 
-    const maxOrder =
-      existingNotes.length > 0
-        ? Math.max(...existingNotes.map((n) => n.order))
-        : -1;
+    let maxOrder = -1;
+
+    if (args.folderId) {
+      // Get the highest order number for this folder
+      const existingNotes = await ctx.db
+        .query("fullPageNotes")
+        .withIndex("by_user_and_folder", (q) =>
+          q.eq("userId", userId).eq("folderId", args.folderId),
+        )
+        .collect();
+
+      maxOrder =
+        existingNotes.length > 0
+          ? Math.max(...existingNotes.map((n) => n.order))
+          : -1;
+    } else if (args.date) {
+      // Get the highest order number for this date
+      const existingNotes = await ctx.db
+        .query("fullPageNotes")
+        .withIndex("by_user_and_date", (q) =>
+          q.eq("userId", userId).eq("date", args.date),
+        )
+        .collect();
+
+      maxOrder =
+        existingNotes.length > 0
+          ? Math.max(...existingNotes.map((n) => n.order))
+          : -1;
+    }
 
     const noteId = await ctx.db.insert("fullPageNotes", {
       userId: userId,
       date: args.date,
+      folderId: args.folderId,
       title: "Untitled",
       content: "",
       order: maxOrder + 1,
       collapsed: false,
+      archived: false,
     });
 
     // Increment global statistics counter for full-page notes created
@@ -300,10 +396,10 @@ export const getFullPageNoteCounts = query({
       .filter((q) => q.eq(q.field("userId"), userId))
       .collect();
 
-    // Group notes by date and count them (only count notes with dates)
+    // Group notes by date and count them (only count notes with dates, exclude archived)
     const counts: Record<string, number> = {};
     for (const note of notes) {
-      if (note.date) {
+      if (note.date && !note.archived) {
         counts[note.date] = (counts[note.date] || 0) + 1;
       }
     }
@@ -328,10 +424,10 @@ export const getFullPageNoteCountsByFolder = query({
       .filter((q) => q.eq(q.field("userId"), userId))
       .collect();
 
-    // Group notes by folder and count them (only count notes with folders)
+    // Group notes by folder and count them (only count notes with folders, exclude archived)
     const counts: Record<string, number> = {};
     for (const note of notes) {
-      if (note.folderId) {
+      if (note.folderId && !note.archived) {
         // Convert ID to string for consistent key access
         const folderIdStr = note.folderId.toString();
         counts[folderIdStr] = (counts[folderIdStr] || 0) + 1;

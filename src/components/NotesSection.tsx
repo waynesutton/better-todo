@@ -6,6 +6,7 @@ import { DrawingPinIcon, DrawingPinFilledIcon } from "@radix-ui/react-icons";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import {
   DndContext,
   closestCenter,
@@ -666,7 +667,7 @@ function NoteItem({
                 <div key={index} className="note-content-block">
                   {block.type === "text" ? (
                     <div className="note-markdown-block">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                         {block.content}
                       </ReactMarkdown>
                     </div>

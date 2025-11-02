@@ -196,6 +196,17 @@ function App() {
       : "skip",
   );
 
+  // Fetch full-page notes for all open tabs (including folder notes)
+  const openTabNotes = useQuery(
+    api.fullPageNotes.getFullPageNotesByIds,
+    isAuthenticated && openFullPageNoteTabs.length > 0
+      ? { noteIds: openFullPageNoteTabs }
+      : "skip",
+  );
+
+  // Combine notes from date and open tabs, prioritizing open tabs
+  const allFullPageNotes = openTabNotes || fullPageNotes || [];
+
   // Ensure current date is always available
   useEffect(() => {
     const today = format(new Date(), "yyyy-MM-dd");
@@ -601,6 +612,13 @@ function App() {
         setShowKeyboardShortcuts(false);
         setSearchModalOpen(false);
         setShowInfoModal(false);
+        // Close full-page notes view if open
+        if (showFullPageNotes) {
+          setShowFullPageNotes(false);
+          setSelectedFullPageNoteId(null);
+          setOpenFullPageNoteTabs([]);
+          setIsFullscreenNotes(false);
+        }
         // Clear todo focus when pressing Escape
         setFocusedTodoIndex(-1);
       }
@@ -608,7 +626,7 @@ function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeTodos, focusedTodoIndex, lastCompletedTodo, isAuthenticated]);
+  }, [activeTodos, focusedTodoIndex, lastCompletedTodo, isAuthenticated, showFullPageNotes]);
 
   // Reset focused index when todos change
   useEffect(() => {
@@ -784,7 +802,7 @@ function App() {
               if (date) {
                 setSelectedDate(date);
               }
-              // If no date (note is in a folder), just open the note without changing date
+              // Add the note as a tab if it's not already open, otherwise just select it
               setOpenFullPageNoteTabs((prev) =>
                 prev.includes(noteId) ? prev : [...prev, noteId],
               );
@@ -849,7 +867,7 @@ function App() {
 
                   // If on full-page note view, copy the note content
                   if (showFullPageNotes && selectedFullPageNoteId) {
-                    const currentNote = fullPageNotes?.find(
+                    const currentNote = allFullPageNotes.find(
                       (note) => note._id === selectedFullPageNoteId,
                     );
                     if (currentNote && currentNote.content) {
@@ -1127,7 +1145,7 @@ function App() {
               <div className={isFullscreenNotes ? "fullscreen-mode" : ""}>
                 {/* Full-page notes tabs */}
                 <FullPageNoteTabs
-                  notes={fullPageNotes || []}
+                  notes={allFullPageNotes}
                   openTabIds={openFullPageNoteTabs}
                   selectedNoteId={selectedFullPageNoteId}
                   onSelectNote={(noteId) => {
@@ -1152,11 +1170,31 @@ function App() {
                     // The note remains in the database and sidebar
                   }}
                   onCreateNote={async () => {
-                    const newNoteId = await createFullPageNote({
-                      date: selectedDate,
-                    });
-                    setOpenFullPageNoteTabs((prev) => [...prev, newNoteId]);
-                    setSelectedFullPageNoteId(newNoteId);
+                    // Determine if we're creating a note in a folder or for a date
+                    const selectedNote = allFullPageNotes.find(
+                      (note) => note._id === selectedFullPageNoteId,
+                    );
+                    
+                    // Block creation if note is in an archived folder
+                    if (selectedNote?.folderId && selectedNote.archived) {
+                      return; // Don't allow creating notes in archived folders
+                    }
+                    
+                    if (selectedNote?.folderId) {
+                      // Create note in the same folder
+                      const newNoteId = await createFullPageNote({
+                        folderId: selectedNote.folderId,
+                      });
+                      setOpenFullPageNoteTabs((prev) => [...prev, newNoteId]);
+                      setSelectedFullPageNoteId(newNoteId);
+                    } else {
+                      // Create note for the selected date
+                      const newNoteId = await createFullPageNote({
+                        date: selectedDate,
+                      });
+                      setOpenFullPageNoteTabs((prev) => [...prev, newNoteId]);
+                      setSelectedFullPageNoteId(newNoteId);
+                    }
                   }}
                   onBackToTodos={() => {
                     setShowFullPageNotes(false);
@@ -1167,7 +1205,9 @@ function App() {
                   onToggleFullscreen={() => setIsFullscreenNotes(!isFullscreenNotes)}
                 />
                 {/* Full-page note view */}
-                <FullPageNoteView noteId={selectedFullPageNoteId} />
+                {selectedFullPageNoteId && (
+                  <FullPageNoteView key={selectedFullPageNoteId} noteId={selectedFullPageNoteId} />
+                )}
               </div>
             ) : (
               <TodoList

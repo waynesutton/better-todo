@@ -4,6 +4,95 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.012] - 2025-11-02
+
+### Added
+
+- **Full-Page Notes in Projects** - Projects (folders) can now contain full-page notes
+  - Full-page notes can be moved to projects and disconnected from dates
+  - Each project can have multiple full-page notes with their own tabs
+  - Notes show "Notes" folder in sidebar when project is expanded
+  - Notes moved to project remove date association, notes moved to date remove folder association
+  - Archive support: archived projects show their notes but prevent creating new ones
+
+- **Project Deletion Warnings** - Added confirmation dialog when deleting projects
+  - Shows count of full-page notes that will be deleted
+  - Warning message: "This will permanently delete all X full-page note(s) in this project..."
+  - Matches existing confirmation dialog design system
+
+- **Archive Support for Project Notes** - Full-page notes archive with their projects
+  - When archiving a project, all notes in it are archived
+  - When unarchiving a project, all notes are unarchived
+  - Archived projects show their notes in read-only mode
+  - Cannot create new notes in archived projects
+
+### Fixed
+
+- **Line Breaks in Notes** - Fixed line breaks in full-page notes and todo notes
+  - Added `remark-breaks` plugin to preserve single line breaks in markdown
+  - Line breaks now render correctly in plain/normal mode and all mode
+  
+- **Tab Switching for Folder Notes** - Fixed content not updating when switching between full-page note tabs from projects
+  - Added `getFullPageNotesByIds` query to fetch notes for all open tabs
+  - Tab switching now works for both date-based and folder-based notes
+  - Added key prop to `FullPageNoteView` to force remount on tab switch
+
+- **Archived Dates in Sidebar** - Fixed bug where archived dates appeared in both active and archived sections
+  - Active folders now filter out archived dates
+  - Active month groups now filter out archived dates
+  - Archived dates only show in "Archived" section
+
+### Changed
+
+- **Full-Page Note Creation** - Updated note creation to support both dates and projects
+  - `createFullPageNote` mutation now accepts either `date` or `folderId` (not both)
+  - Create button detects current context and creates note in same folder or date
+  - Notes in projects maintain proper order within their folder
+
+### Backend Changes
+
+- **Schema Updates** (`convex/schema.ts`)
+  - Added `archived: v.optional(v.boolean())` field to `fullPageNotes` table
+  - Notes can be archived independently or with their parent project
+
+- **Full-Page Notes Module** (`convex/fullPageNotes.ts`)
+  - Added `getFullPageNotesByIds` query for fetching notes by ID array
+  - Updated `getFullPageNotesByDate` to filter out archived notes
+  - Updated `getFullPageNotesByFolder` to accept `includeArchived` parameter
+  - Updated `createFullPageNote` to support both date and folderId creation
+  - Added `archived` field to all query return validators
+  - Count queries now exclude archived notes from active counts
+
+- **Folders Module** (`convex/folders.ts`)
+  - Updated `deleteFolder` to delete all full-page notes in the folder
+  - Updated `archiveFolder` to archive all notes in parallel
+  - Updated `unarchiveFolder` to unarchive all notes in parallel
+
+### Frontend Changes
+
+- **App Component** (`src/App.tsx`)
+  - Added `getFullPageNotesByIds` query for open tabs
+  - Combined date-based and tab-based note fetching
+  - Updated note creation to detect folder context
+  - Blocks creating new notes in archived folders
+
+- **Sidebar Component** (`src/components/Sidebar.tsx`)
+  - Added `NotesForFolder` component with `isArchivedFolder` prop
+  - Updated folder deletion confirmation to show note count
+  - Added filtering of archived dates from active folders/month groups
+  - Archived folders show notes with `includeArchived: true`
+
+- **Full-Page Note View** (`src/components/FullPageNoteView.tsx`)
+  - Added `remark-breaks` plugin for line break preservation
+  - Removed code block headers (language label and copy button)
+
+- **Notes Section** (`src/components/NotesSection.tsx`)
+  - Added `remark-breaks` plugin for todo note line breaks
+
+### Dependencies
+
+- Added `remark-breaks` package for markdown line break support
+
 ## [v.011] - 2025-11-01
 
 ### Changed

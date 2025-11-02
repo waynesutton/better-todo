@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Copy, Check } from "lucide-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { Id } from "../../convex/_generated/dataModel";
 import { useTheme } from "../context/ThemeContext";
 
@@ -217,7 +217,6 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
 
   const [contentInput, setContentInput] = useState(note?.content || "");
   const [isEditMode, setIsEditMode] = useState(false);
-  const [copiedBlockIndex, setCopiedBlockIndex] = useState<number | null>(null);
   const contentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isTypingRef = useRef(false);
@@ -227,12 +226,19 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
   const codeBlockRefs = useRef<Map<number, HTMLPreElement>>(new Map());
   const codeBlockWrapperRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  // Update local state when note prop changes
+  // Update local state when note prop changes or noteId changes
   useEffect(() => {
     if (note && !isTypingRef.current && !isEditMode) {
       setContentInput(note.content);
     }
-  }, [note?.content, isEditMode]);
+  }, [note?.content, isEditMode, noteId]);
+
+  // Reset edit mode when noteId changes
+  useEffect(() => {
+    setIsEditMode(false);
+    isTypingRef.current = false;
+    cursorPositionRef.current = null;
+  }, [noteId]);
 
   // Auto-enter edit mode for new/empty notes
   useEffect(() => {
@@ -255,16 +261,6 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
       }
     }
   }, [isEditMode, contentInput]);
-
-  const handleCopyCodeBlock = async (content: string, index: number) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopiedBlockIndex(index);
-      setTimeout(() => setCopiedBlockIndex(null), 2000);
-    } catch (err) {
-      console.error("Failed to copy code block:", err);
-    }
-  };
 
   const handleContentChange = (value: string) => {
     // Mark that user is actively typing
@@ -464,25 +460,6 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
                     if (el) codeBlockWrapperRefs.current.set(index, el);
                   }}
                 >
-                  <div className="code-block-header">
-                    <span className="code-block-language">
-                      {block.language}
-                    </span>
-                    <button
-                      className="code-block-copy-button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCopyCodeBlock(block.content, index);
-                      }}
-                      title="Copy code"
-                    >
-                      {copiedBlockIndex === index ? (
-                        <Check size={14} />
-                      ) : (
-                        <Copy size={14} />
-                      )}
-                    </button>
-                  </div>
                   <SyntaxHighlighter
                     language={block.language}
                     style={
@@ -492,7 +469,7 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
                     wrapLines={true}
                     customStyle={{
                       margin: 0,
-                      borderRadius: "0 0 4px 4px",
+                      borderRadius: "4px",
                       fontSize: "13px",
                     }}
                     PreTag={(props) => (
@@ -509,7 +486,7 @@ export function FullPageNoteView({ noteId }: FullPageNoteViewProps) {
                 </div>
               ) : (
                 <div key={index} className="note-markdown-block">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                     {block.content}
                   </ReactMarkdown>
                 </div>

@@ -156,6 +156,7 @@ export default defineSchema({
     order: v.number(), // Order for sorting tabs left-to-right
     collapsed: v.optional(v.boolean()), // For future collapsible functionality
     pinnedToTop: v.optional(v.boolean()), // For future pin functionality
+    archived: v.optional(v.boolean()), // Whether note is archived
   })
     .index("by_user_and_date", ["userId", "date"])
     .index("by_user_and_folder", ["userId", "folderId"])
