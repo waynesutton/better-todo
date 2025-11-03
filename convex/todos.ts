@@ -169,6 +169,12 @@ export const getBacklogTodos = query({
 });
 
 // Get all available dates that have todos for the sidebar
+// Note: This query uses .collect() on all user todos to extract unique dates.
+// This is acceptable per Convex best practices because:
+// 1. Query is indexed by userId (efficient lookup)
+// 2. Most users have < 1000 todos, so .collect() is reasonable
+// 3. Alternative (separate date tracking table) adds complexity
+// 4. Loading state in UI prevents "pop-in" effect during query
 export const getAvailableDates = query({
   args: {},
   returns: v.array(v.string()),

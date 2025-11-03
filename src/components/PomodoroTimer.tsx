@@ -27,6 +27,7 @@ export function PomodoroTimer() {
   const hasCalledComplete = useRef(false);
   const hasFetchedImage = useRef(false);
   const activeAudioRef = useRef<HTMLAudioElement[]>([]);
+  const userStartedInThisSession = useRef(false);
 
   // Fetch current session from Convex
   const session = useQuery(api.pomodoro.getPomodoroSession);
@@ -49,14 +50,22 @@ export function PomodoroTimer() {
       if (type === "tick") {
         setDisplayTime(time);
 
-        // Play 5-second countdown sound when 5 seconds remain
-        if (time <= 5000 && time > 4000 && !hasPlayedCountdownSound.current) {
+        // Play 5-second countdown sound only if user started in this session
+        if (
+          time <= 5000 &&
+          time > 4000 &&
+          !hasPlayedCountdownSound.current &&
+          userStartedInThisSession.current
+        ) {
           playCountdownSound();
           hasPlayedCountdownSound.current = true;
         }
       } else if (type === "complete") {
         setDisplayTime(0);
-        playCompletionSound();
+        // Only play completion sound if user started in this session
+        if (userStartedInThisSession.current) {
+          playCompletionSound();
+        }
         setIsFullScreen(true);
         // Only call completePomodoro once per session
         if (session && !hasCalledComplete.current) {
@@ -81,6 +90,7 @@ export function PomodoroTimer() {
       hasPlayedCountdownSound.current = false;
       hasCalledComplete.current = false;
       hasFetchedImage.current = false;
+      userStartedInThisSession.current = false;
       if (workerRef.current) {
         workerRef.current.postMessage({ type: "stop" });
       }
@@ -95,15 +105,6 @@ export function PomodoroTimer() {
           type: "start",
           time: session.remainingTime,
         });
-      }
-
-      // Play start sound only once when timer starts
-      if (
-        !hasPlayedStartSound.current &&
-        session.remainingTime === 25 * 60 * 1000
-      ) {
-        playStartSound();
-        hasPlayedStartSound.current = true;
       }
 
       // Pre-fetch background image when timer starts
@@ -201,7 +202,12 @@ export function PomodoroTimer() {
     hasPlayedStartSound.current = false;
     hasPlayedCountdownSound.current = false;
     hasCalledComplete.current = false;
+    userStartedInThisSession.current = true;
     await startPomodoro();
+    // Play start sound only if not muted
+    if (!isMuted) {
+      playStartSound();
+    }
   };
 
   const handlePause = async () => {
@@ -235,7 +241,12 @@ export function PomodoroTimer() {
     hasPlayedStartSound.current = false;
     hasPlayedCountdownSound.current = false;
     hasCalledComplete.current = false;
+    userStartedInThisSession.current = true;
     await startPomodoro();
+    // Play start sound only if not muted
+    if (!isMuted) {
+      playStartSound();
+    }
   };
 
   const handleCloseFullScreen = async () => {

@@ -1142,6 +1142,59 @@ button:active,
   color: white;
 }
 
+/* Skeleton loading styles */
+.date-item-container.skeleton {
+  pointer-events: none;
+  cursor: default;
+}
+
+.date-item.skeleton-date {
+  padding: 6px 16px;
+}
+
+.skeleton-text {
+  height: 16px;
+  width: 120px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.date-item-collapsed.skeleton {
+  pointer-events: none;
+  cursor: default;
+}
+
+.skeleton-text-collapsed {
+  height: 12px;
+  width: 30px;
+  margin: 0 auto;
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 3px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .date-menu {
   position: relative;
   padding: 6px 8px 6px 0;

@@ -595,6 +595,7 @@ interface SidebarProps {
   onShowInfo?: () => void;
   onOpenFullPageNote?: (noteId: Id<"fullPageNotes">, date: string) => void;
   selectedFullPageNoteId?: Id<"fullPageNotes"> | null;
+  datesAreLoading?: boolean;
 }
 
 export function Sidebar({
@@ -609,6 +610,7 @@ export function Sidebar({
   onShowInfo,
   onOpenFullPageNote,
   selectedFullPageNoteId,
+  datesAreLoading = false,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
   const { isLoading: authIsLoading, isAuthenticated } = useConvexAuth();
@@ -1482,7 +1484,22 @@ export function Sidebar({
             </div>
           )}
 
-          {activeDates.map((date) => (
+          {/* Loading skeleton for dates */}
+          {datesAreLoading && (
+            <>
+              {[1, 2, 3].map((i) => (
+                <div key={`skeleton-${i}`} className="date-item-container skeleton">
+                  <div className="date-item-container-row">
+                    <div className="date-item skeleton-date">
+                      <div className="skeleton-text" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
+          {!datesAreLoading && activeDates.map((date) => (
             <div
               key={date}
               className={`date-item-container ${date === selectedDate ? "active" : ""}`}
@@ -2713,7 +2730,18 @@ export function Sidebar({
             </div>
           )}
 
-          {activeDates.map((date) => (
+          {/* Loading skeleton for collapsed dates */}
+          {datesAreLoading && (
+            <>
+              {[1, 2, 3].map((i) => (
+                <div key={`skeleton-collapsed-${i}`} className="date-item-collapsed skeleton">
+                  <div className="skeleton-text-collapsed" />
+                </div>
+              ))}
+            </>
+          )}
+
+          {!datesAreLoading && activeDates.map((date) => (
             <div
               key={date}
               className={`date-item-collapsed ${date === selectedDate ? "active" : ""}`}

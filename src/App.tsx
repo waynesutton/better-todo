@@ -284,6 +284,9 @@ function App() {
     return dates;
   }, [availableDates, authIsLoading, isAuthenticated]);
 
+  // Track if dates are still loading (undefined means query in flight)
+  const datesAreLoading = isAuthenticated && availableDates === undefined;
+
   // Handle keyboard shortcut for search (Cmd+K / Ctrl+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -814,6 +817,7 @@ function App() {
               }
             }}
             selectedFullPageNoteId={selectedFullPageNoteId}
+            datesAreLoading={datesAreLoading}
           />
           </div>
         )}
