@@ -290,7 +290,7 @@ export function Launch() {
           <p>
             Stay focused with the built-in Pomodoro timer. Features include
             audio notifications, full-screen mode with optional background
-            images, and customizable work intervals.
+            images, and customizable work intervals. Switch between 25-minute focus sessions and 90-minute flow state sessions with a single click.
           </p>
           <div className="launch-screenshots-timer">
             {imageGalleries.timer.map((img, idx) => (

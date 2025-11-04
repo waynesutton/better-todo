@@ -150,11 +150,11 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `pomodoro.ts` - Pomodoro timer functionality:
   - `getPomodoroSession` - Get current pomodoro session for user
-  - `createPomodoroSession` - Create new pomodoro session with custom intervals
-  - `updatePomodoroSession` - Update session settings (work/break durations)
-  - `completePomodoroSession` - Mark session as completed and track statistics
-  - `resetPomodoroSession` - Reset current session to start
-  - `getPomodoroStats` - Get user's pomodoro statistics and completed sessions
+  - `startPomodoro` - Create new pomodoro session with optional duration (defaults to 25 minutes, supports 90 minutes for flow state)
+  - `pausePomodoro` - Pause current session with remaining time
+  - `resumePomodoro` - Resume paused session
+  - `stopPomodoro` - Stop and delete current session
+  - `completePomodoro` - Mark session as completed (idempotent to prevent write conflicts)
   - `updateBackgroundImage` - Update session with Unsplash background image URL
 
 - `unsplash.ts` - Unsplash background image fetching:
@@ -431,13 +431,21 @@ This document describes the structure and purpose of each file in the Better Tod
     - Shows "Sign In to Search" modal when unauthenticated
 
 - `PomodoroTimer.tsx` - Built-in productivity timer with:
-  - 25-minute Pomodoro timer with visual countdown display (MM:SS format)
+  - **Duration toggle** - Switch between 25-minute focus sessions and 90-minute flow state sessions
+    - Waves icon to switch from 25 minutes to 90-minute flow state mode
+    - Clock icon to switch back from 90 minutes to 25-minute focus mode
+    - Toggle button appears next to Start button (only visible when timer is idle)
+    - All timer features work identically for both durations
+  - 25-minute or 90-minute Pomodoro timer with visual countdown display (MM:SS format)
   - **MP3-based audio notifications** for timer events:
-    - Start sound (`timer-start.mp3`) plays once when timer begins
-    - 5-second countdown sound (`5-second-coutdown.mp3`) plays at 5 seconds remaining
+    - Start sound (`timer-start.mp3`) plays once when timer begins (only if user started in current session)
+    - 5-second countdown sound (`5-second-coutdown.mp3`) plays at 5 seconds remaining (only if user started in current session)
     - Completion sounds rotate through 11 MP3 files (synth, epicboom, epci, deep, horns, computer, flute, pause, whoa, waves, done)
     - Pause sound (`pause.mp3`) plays when user pauses timer
     - All sounds at 70% volume
+  - **Sound auto-play prevention** - Sounds never play automatically when timer session is restored from previous page load
+    - Sounds only play when user explicitly clicks Start or Reset button in current session
+    - Prevents unexpected audio interruptions when navigating to app with active timer
   - **Mute/unmute controls** with volume button in modal and full-screen mode
     - Toggle to mute all timer sounds
     - Stops all currently playing audio when muting
@@ -449,7 +457,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Web Worker for accurate background timing
   - Session persistence via Convex (syncs across tabs)
   - Keyboard shortcuts (ESC to close full-screen, f to enter full-screen)
-  - Sound state tracking with refs (`hasPlayedStartSound`, `hasPlayedCountdownSound`, `lastEndSoundIndex`)
+  - Sound state tracking with refs (`hasPlayedStartSound`, `hasPlayedCountdownSound`, `lastEndSoundIndex`, `userStartedInThisSession`)
   - Accessible from timer icon in header
 
 - `FullPageNoteView.tsx` - Full-page note editing and display component:
@@ -546,9 +554,20 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.011 (November 1, 2025)
+## Current Version: v.013 (November 2, 2025)
 
-### Latest Features (v.011) - Simplified Full-Page Notes
+### Latest Features (v.013) - Pomodoro Timer Duration Toggle
+
+- **Duration Toggle** - Switch between 25-minute focus sessions and 90-minute flow state sessions
+  - Waves icon to switch to 90-minute flow state mode
+  - Clock icon to switch back to 25-minute focus mode
+  - Toggle button appears next to Start button (only visible when timer is idle)
+  - All timer features work identically for both durations
+- **Sound Auto-Play Prevention** - Fixed sounds playing automatically when timer session is restored from previous page load
+  - Sounds now only play when user explicitly clicks Start or Reset button in current session
+  - Prevents unexpected audio interruptions when navigating to app with active timer
+
+### Previous Features (v.011) - Simplified Full-Page Notes
 
 - **Simplified Full-Page Notes** - Streamlined interface for better focus and performance
   - Removed format toggle dropdown for cleaner interface

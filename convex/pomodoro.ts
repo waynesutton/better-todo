@@ -39,11 +39,11 @@ export const getPomodoroSession = query({
   },
 });
 
-// Start a new 25-minute pomodoro session
+// Start a new pomodoro session with custom duration (default 25 minutes)
 export const startPomodoro = mutation({
-  args: {},
+  args: { durationMinutes: v.optional(v.number()) },
   returns: v.id("pomodoroSessions"),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject;
 
@@ -59,9 +59,10 @@ export const startPomodoro = mutation({
       await ctx.db.delete(existingSession._id);
     }
 
-    // Create new session (25 minutes = 1500000 milliseconds)
+    // Create new session with custom duration (default 25 minutes)
     const now = Date.now();
-    const duration = 25 * 60 * 1000; // 25 minutes in milliseconds
+    const minutes = args.durationMinutes ?? 25;
+    const duration = minutes * 60 * 1000; // Convert minutes to milliseconds
 
     const sessionId = await ctx.db.insert("pomodoroSessions", {
       userId,

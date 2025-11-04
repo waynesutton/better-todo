@@ -4,6 +4,45 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.013] - 2025-11-02
+
+### Added
+
+- **Pomodoro Timer Duration Toggle** - Switch between 25-minute focus sessions and 90-minute flow state sessions
+  - Waves icon to switch from 25 minutes to 90-minute flow state mode
+  - Clock icon to switch back from 90 minutes to 25-minute focus mode
+  - Duration toggle button appears next to Start button in timer modal (only visible when timer is idle)
+  - All timer features work identically for both durations (audio, fullscreen, pause, resume, reset, stop)
+  - Selected duration persists when starting new timer sessions
+  - Display time updates immediately when switching durations
+
+### Fixed
+
+- **Pomodoro Timer Sound Auto-Play** - Fixed sounds playing automatically when timer session is restored from previous page load
+  - Sounds now only play when user explicitly clicks Start or Reset button in current session
+  - Countdown sound (5-second warning) only plays if user started timer in current session
+  - Completion sound only plays if user started timer in current session
+  - All sounds respect mute state regardless of when timer was started
+  - Prevents unexpected audio interruptions when navigating to app with active timer
+
+### Backend Changes
+
+- **Pomodoro Module** (`convex/pomodoro.ts`)
+  - Updated `startPomodoro` mutation to accept optional `durationMinutes` parameter (defaults to 25 if not provided)
+  - Supports flexible duration settings while maintaining backward compatibility
+
+### Frontend Changes
+
+- **PomodoroTimer Component** (`src/components/PomodoroTimer.tsx`)
+  - Added `durationMinutes` state to track selected duration (25 or 90 minutes)
+  - Added `userStartedInThisSession` ref to track if timer was started in current browser session
+  - Added `handleToggleDuration` function to switch between 25 and 90 minute durations
+  - Updated `handleStart` and `handleReset` to pass duration to mutation
+  - Added Waves and Clock icons from lucide-react for duration toggle
+  - Duration toggle button only visible when timer is idle (not running or paused)
+  - Updated sync effect to use `durationMinutes` for display time when no session exists
+  - Sounds only play when `userStartedInThisSession` is true (prevents auto-play on page reload)
+
 ## [v.012] - 2025-11-02
 
 ### Added
