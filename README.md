@@ -32,7 +32,7 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **Pin todos** - pin important todos with visual pin icons and sort them to the top
 - **Custom projects** - organize dates into collapsible projects with custom names
 - **Auto-grouped months** - completed months automatically group into collapsible sections
-- **Pomodoro timer** - built-in productivity timer with sound notifications and rotating completion sounds
+- **Pomodoro timer** - built-in productivity timer with duration toggle (25-minute focus sessions or 90-minute flow state sessions), sound notifications, and rotating completion sounds
 - **Unsplash background images** - Optional beautiful nature images in Pomodoro full-screen mode with glass morphism overlay
 - **Progressive Web App** - install on iOS or Android for native app experience with offline support
 
@@ -259,11 +259,17 @@ At the bottom of each date's todo list:
 ### Pomodoro Timer
 
 - **Built-in productivity timer** accessible from the timer icon in header
+- **Duration toggle** - Switch between 25-minute focus sessions and 90-minute flow state sessions
+  - Waves icon to switch from 25 minutes to 90-minute flow state mode
+  - Clock icon to switch back from 90 minutes to 25-minute focus mode
+  - Toggle button appears next to Start button (only visible when timer is idle)
+  - All timer features work identically for both durations
 - **Sound notifications** for timer events:
-  - Start sound plays when timer begins
-  - 5-second countdown sound plays when 5 seconds remain
+  - Start sound plays when timer begins (only if user started in current session)
+  - 5-second countdown sound plays when 5 seconds remain (only if user started in current session)
   - Completion sounds rotate through 11 different sounds (synth, epicboom, epci, deep, horns, computer, flute, pause, whoa, waves, done)
   - Pause sound plays when timer is paused
+  - Sounds never play automatically when timer session is restored from previous page load
 - **Mute/unmute controls** - toggle sound notifications on or off
 - **Full-screen completion mode** with "keep cooking!" message
 - **Modal and full-screen controls** - start, pause, resume, reset, and stop

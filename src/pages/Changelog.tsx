@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v011");
+  const [activeSection, setActiveSection] = useState("v013");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sections = [
+    { id: "v013", title: "v.013 - Nov 2, 2025" },
     { id: "v011", title: "v.011 - Nov 1, 2025" },
     { id: "v010", title: "v.010 - Nov 1, 2025" },
     { id: "v009", title: "v.009 - Oct 31, 2025" },
@@ -79,11 +80,40 @@ export function Changelog() {
       </nav>
 
       <div className="launch-container">
-        <section id="v011">
+        <section id="v013">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
+
+          <h2 className="section-title">v.013 - November 2, 2025</h2>
+          <p className="changelog-subtitle">Pomodoro Timer Duration Toggle</p>
+          <p>
+            Added ability to switch between 25-minute focus sessions and 90-minute flow state sessions, plus fixed sound auto-play issues.
+          </p>
+          <ul className="feature-list">
+            <li>
+              Duration toggle with Waves icon to switch to 90-minute flow state mode
+            </li>
+            <li>
+              Clock icon to switch back to 25-minute focus mode
+            </li>
+            <li>
+              Toggle button appears next to Start button (only visible when timer is idle)
+            </li>
+            <li>
+              All timer features work identically for both durations (audio, fullscreen, pause, resume, reset, stop)
+            </li>
+            <li>
+              Fixed sounds playing automatically when timer session is restored from previous page load
+            </li>
+            <li>
+              Sounds now only play when user explicitly clicks Start or Reset button in current session
+            </li>
+            <li>
+              All sounds respect mute state regardless of when timer was started
+            </li>
+          </ul>
 
           <h2 className="section-title">v.011 - November 1, 2025</h2>
           <p className="changelog-subtitle">Simplified Full-Page Notes</p>

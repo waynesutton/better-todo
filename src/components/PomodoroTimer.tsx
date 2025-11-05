@@ -12,7 +12,7 @@ import {
   EnterFullScreenIcon,
   ImageIcon,
 } from "@radix-ui/react-icons";
-import { Volume2, VolumeOff } from "lucide-react";
+import { Volume2, VolumeOff, Waves, Clock } from "lucide-react";
 
 interface PomodoroTimerProps {
   triggerData?: { todoId?: string; todoTitle?: string } | null;
@@ -24,6 +24,7 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
   const [displayTime, setDisplayTime] = useState(25 * 60 * 1000); // 25 minutes in ms
   const [showBackgroundImage, setShowBackgroundImage] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [durationMinutes, setDurationMinutes] = useState(25); // 25 or 90 minutes
   const workerRef = useRef<Worker | null>(null);
   const hasPlayedStartSound = useRef(false);
   const hasPlayedCountdownSound = useRef(false);
@@ -92,7 +93,7 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
   // Sync with Convex session
   useEffect(() => {
     if (!session) {
-      setDisplayTime(25 * 60 * 1000);
+      setDisplayTime(durationMinutes * 60 * 1000);
       hasPlayedStartSound.current = false;
       hasPlayedCountdownSound.current = false;
       hasCalledComplete.current = false;
@@ -127,7 +128,7 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
       setIsFullScreen(true);
       setDisplayTime(0);
     }
-  }, [session, fetchBackgroundImage]);
+  }, [session, fetchBackgroundImage, durationMinutes]);
 
   // List of end sounds to rotate through
   const endSounds = [
@@ -218,7 +219,11 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
     hasPlayedCountdownSound.current = false;
     hasCalledComplete.current = false;
     userStartedInThisSession.current = true;
-    await startPomodoro({});
+    await startPomodoro({
+  durationMinutes,
+  todoId: triggerData?.todoId,
+  todoTitle: triggerData?.todoTitle,
+});
     // Play start sound only if not muted
     if (!isMuted) {
       playStartSound();
@@ -257,7 +262,11 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
     hasPlayedCountdownSound.current = false;
     hasCalledComplete.current = false;
     userStartedInThisSession.current = true;
-    await startPomodoro({});
+    await startPomodoro({
+  durationMinutes,
+  todoId: triggerData?.todoId,
+  todoTitle: triggerData?.todoTitle,
+});
     // Play start sound only if not muted
     if (!isMuted) {
       playStartSound();
@@ -299,6 +308,12 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
       });
       activeAudioRef.current = [];
     }
+  };
+
+  const handleToggleDuration = () => {
+    const newDuration = durationMinutes === 25 ? 90 : 25;
+    setDurationMinutes(newDuration);
+    setDisplayTime(newDuration * 60 * 1000);
   };
 
   const handleClickTimer = () => {
@@ -382,13 +397,26 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
               )}
 
               {!isRunning && !isPaused && (
-                <button
-                  className="pomodoro-control-button"
-                  onClick={handleStart}
-                  title="Start"
-                >
-                  <PlayIcon width={24} height={24} />
-                </button>
+                <>
+                  <button
+                    className="pomodoro-control-button"
+                    onClick={handleToggleDuration}
+                    title={durationMinutes === 25 ? "Switch to 90 min flow state" : "Switch to 25 min focus"}
+                  >
+                    {durationMinutes === 25 ? (
+                      <Waves width={24} height={24} />
+                    ) : (
+                      <Clock width={24} height={24} />
+                    )}
+                  </button>
+                  <button
+                    className="pomodoro-control-button"
+                    onClick={handleStart}
+                    title="Start"
+                  >
+                    <PlayIcon width={24} height={24} />
+                  </button>
+                </>
               )}
 
               {isRunning && (
