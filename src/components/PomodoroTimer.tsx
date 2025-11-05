@@ -14,7 +14,11 @@ import {
 } from "@radix-ui/react-icons";
 import { Volume2, VolumeOff } from "lucide-react";
 
-export function PomodoroTimer() {
+interface PomodoroTimerProps {
+  triggerData?: { todoId?: string; todoTitle?: string } | null;
+}
+
+export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [displayTime, setDisplayTime] = useState(25 * 60 * 1000); // 25 minutes in ms
@@ -31,6 +35,9 @@ export function PomodoroTimer() {
 
   // Fetch current session from Convex
   const session = useQuery(api.pomodoro.getPomodoroSession);
+
+
+  const todoTitle = session?.todoTitle;
 
   // Mutations and Actions
   const startPomodoro = useMutation(api.pomodoro.startPomodoro);
@@ -145,7 +152,9 @@ export function PomodoroTimer() {
     activeAudioRef.current.push(audio);
     audio.play().catch(console.error);
     audio.onended = () => {
-      activeAudioRef.current = activeAudioRef.current.filter((a) => a !== audio);
+      activeAudioRef.current = activeAudioRef.current.filter(
+        (a) => a !== audio
+      );
     };
   };
 
@@ -157,7 +166,9 @@ export function PomodoroTimer() {
     activeAudioRef.current.push(audio);
     audio.play().catch(console.error);
     audio.onended = () => {
-      activeAudioRef.current = activeAudioRef.current.filter((a) => a !== audio);
+      activeAudioRef.current = activeAudioRef.current.filter(
+        (a) => a !== audio
+      );
     };
   };
 
@@ -169,7 +180,9 @@ export function PomodoroTimer() {
     activeAudioRef.current.push(audio);
     audio.play().catch(console.error);
     audio.onended = () => {
-      activeAudioRef.current = activeAudioRef.current.filter((a) => a !== audio);
+      activeAudioRef.current = activeAudioRef.current.filter(
+        (a) => a !== audio
+      );
     };
   };
 
@@ -182,7 +195,9 @@ export function PomodoroTimer() {
     activeAudioRef.current.push(audio);
     audio.play().catch(console.error);
     audio.onended = () => {
-      activeAudioRef.current = activeAudioRef.current.filter((a) => a !== audio);
+      activeAudioRef.current = activeAudioRef.current.filter(
+        (a) => a !== audio
+      );
     };
 
     // Move to next sound in rotation
@@ -203,7 +218,7 @@ export function PomodoroTimer() {
     hasPlayedCountdownSound.current = false;
     hasCalledComplete.current = false;
     userStartedInThisSession.current = true;
-    await startPomodoro();
+    await startPomodoro({});
     // Play start sound only if not muted
     if (!isMuted) {
       playStartSound();
@@ -242,7 +257,7 @@ export function PomodoroTimer() {
     hasPlayedCountdownSound.current = false;
     hasCalledComplete.current = false;
     userStartedInThisSession.current = true;
-    await startPomodoro();
+    await startPomodoro({});
     // Play start sound only if not muted
     if (!isMuted) {
       playStartSound();
@@ -275,7 +290,7 @@ export function PomodoroTimer() {
   const handleToggleMute = () => {
     const newMutedState = !isMuted;
     setIsMuted(newMutedState);
-    
+
     // Stop all currently playing audio when muting
     if (newMutedState) {
       activeAudioRef.current.forEach((audio) => {
@@ -443,7 +458,9 @@ export function PomodoroTimer() {
             <div
               className={`pomodoro-fullscreen-content${showBackgroundImage ? " with-glass-effect" : ""}`}
             >
-              <div className="pomodoro-fullscreen-message">keep cooking!</div>
+              <div className="pomodoro-fullscreen-message">
+                {todoTitle ? `Working on: ${todoTitle}` : "keep cooking!"}
+              </div>
 
               <div className="pomodoro-timer-display-large">
                 {formatTime(displayTime)}
@@ -522,7 +539,7 @@ export function PomodoroTimer() {
               </div>
             </div>
           </div>,
-          document.body,
+          document.body
         )}
     </>
   );

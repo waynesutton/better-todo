@@ -120,6 +120,9 @@ export default defineSchema({
     ),
     lastUpdated: v.number(), // Last update timestamp
     backgroundImageUrl: v.optional(v.string()), // Unsplash image URL for full-screen background
+    // 👇 new optional fields (safe, backward-compatible)
+  todoId: v.optional(v.id("todos")),
+  todoTitle: v.optional(v.string()),
   }).index("by_user", ["userId"]),
 
   // Custom backlog label - allows renaming the backlog section

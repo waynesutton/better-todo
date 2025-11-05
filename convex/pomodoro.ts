@@ -20,6 +20,10 @@ export const getPomodoroSession = query({
       ),
       lastUpdated: v.number(),
       backgroundImageUrl: v.optional(v.string()),
+      // new fields
+      todoId: v.optional(v.id("todos")),
+todoTitle: v.optional(v.string()),
+
     }),
     v.null(),
   ),
@@ -41,9 +45,12 @@ export const getPomodoroSession = query({
 
 // Start a new 25-minute pomodoro session
 export const startPomodoro = mutation({
-  args: {},
+  args: v.object({
+    todoId: v.optional(v.id("todos")),
+    todoTitle: v.optional(v.string()),
+  }),
   returns: v.id("pomodoroSessions"),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject;
 
@@ -70,6 +77,9 @@ export const startPomodoro = mutation({
       remainingTime: duration,
       status: "running",
       lastUpdated: now,
+     
+      todoId: args.todoId, // new field
+      todoTitle: args.todoTitle, // new field
     });
 
     return sessionId;

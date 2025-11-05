@@ -72,7 +72,7 @@ export function TodoItem({
     const checkMobile = () => {
       setIsMobile(
         window.innerWidth <= 768 ||
-          /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+          /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
       );
     };
     checkMobile();
@@ -102,6 +102,8 @@ export function TodoItem({
   const updateTodo = useMutation(api.todos.updateTodo);
   const deleteTodo = useMutation(api.todos.deleteTodo);
   const createSubtask = useMutation(api.todos.createSubtask);
+  // for start pomodoro option in dropdown
+  const startPomodoro = useMutation(api.pomodoro.startPomodoro);
 
   const {
     attributes,
@@ -434,17 +436,36 @@ export function TodoItem({
                     Delete
                   </div>
                 </div>,
-                document.body,
+                document.body
               )
             ) : (
               <div className="menu-dropdown" ref={menuDropdownRef}>
+                {/* Start Pomodoro */}
+                <div
+                  className="menu-item"
+                  onClick={async () => {
+                    triggerHaptic("light");
+                    if (!isAuthenticated && onRequireSignInForMenu) {
+                      setShowMenu(false);
+                      onRequireSignInForMenu();
+                      return;
+                    }
+                    setShowMenu(false);
+
+                    // Start Pomodoro for this todo
+                    await startPomodoro({ todoId: id, todoTitle: content });
+                    setPomodoroTriggered({ todoId: id, todoTitle: content }); // 👈 tell App to open modal
+                  }}
+                >
+                  Start Pomodoro
+                </div>
                 {/* Pin */}
                 {!completed && !isBacklogView && (
                   <div className="menu-item" onClick={handleTogglePin}>
                     {pinned ? "Unpin" : "Pin"}
                   </div>
                 )}
-                
+
                 {/* Add to Backlog */}
                 {!completed && !isPinnedView && (
                   <div className="menu-item" onClick={handleToggleBacklog}>
@@ -453,7 +474,7 @@ export function TodoItem({
                       : "Add to Backlog"}
                   </div>
                 )}
-                
+
                 {/* Add Subtask */}
                 {!completed && !isBacklogView && (
                   <div className="menu-item" onClick={handleAddSubtask}>
@@ -462,9 +483,7 @@ export function TodoItem({
                 )}
 
                 {/* Separator */}
-                {!isBacklogView && (
-                  <div className="menu-separator"></div>
-                )}
+                {!isBacklogView && <div className="menu-separator"></div>}
 
                 {/* Move options */}
                 {!isBacklogView && (
