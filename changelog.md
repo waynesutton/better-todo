@@ -4,6 +4,24 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.014] - 2025-01-XX
+
+### Changed
+
+- **Project Folder Organization** - Improved project folder display and organization in sidebar
+  - Removed "Manage Projects" section - all project folders now appear in main Folders section
+  - Project folders only appear when they have content (dates, todos, or notes)
+  - Project folders are sorted alphabetically for easier navigation
+  - Folders appear below dates and above "+ Add Project" button
+  - New folders appear immediately in main section when they receive their first content
+  - Removed "(empty)" label from folder display
+
+### Fixed
+
+- **TypeScript Build Errors** - Fixed type compatibility issues in TodoList component
+  - Converted `null` to `undefined` when passing `folderId` prop to TodoItem components
+  - Ensures proper type safety for folder associations
+
 ## [v.013] - 2025-11-02
 
 ### Added

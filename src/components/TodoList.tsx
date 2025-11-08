@@ -436,7 +436,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                       backlog={parent.backlog}
                       isPinnedView={isPinnedView}
                       isBacklogView={isBacklogView}
-                      folderId={folderId}
+                      folderId={folderId ?? undefined}
                       onMoveToPreviousDay={() =>
                         handleMoveToPreviousDay(parent._id)
                       }
@@ -483,7 +483,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                             backlog={child.backlog}
                             isPinnedView={isPinnedView}
                             isBacklogView={isBacklogView}
-                            folderId={folderId}
+                            folderId={folderId ?? undefined}
                             onMoveToPreviousDay={() =>
                               handleMoveToPreviousDay(child._id)
                             }

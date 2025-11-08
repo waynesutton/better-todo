@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v013");
+  const [activeSection, setActiveSection] = useState("v014");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sections = [
+    { id: "v014", title: "v.014 - Jan XX, 2025" },
     { id: "v013", title: "v.013 - Nov 2, 2025" },
     { id: "v011", title: "v.011 - Nov 1, 2025" },
     { id: "v010", title: "v.010 - Nov 1, 2025" },
@@ -80,12 +81,50 @@ export function Changelog() {
       </nav>
 
       <div className="launch-container">
-        <section id="v013">
+        <section id="v014">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">v.014 - January XX, 2025</h2>
+          <p className="changelog-subtitle">Project Folder Organization</p>
+          <p>
+            Improved project folder display and organization in sidebar, plus fixed TypeScript build errors.
+          </p>
+          <h3 className="subsection-title">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              Removed "Manage Projects" section - all project folders now appear in main Folders section
+            </li>
+            <li>
+              Project folders only appear when they have content (dates, todos, or notes)
+            </li>
+            <li>
+              Project folders are sorted alphabetically for easier navigation
+            </li>
+            <li>
+              Folders appear below dates and above "+ Add Project" button
+            </li>
+            <li>
+              New folders appear immediately in main section when they receive their first content
+            </li>
+            <li>
+              Removed "(empty)" label from folder display
+            </li>
+          </ul>
+          <h3 className="subsection-title">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              Fixed TypeScript build errors - converted null to undefined when passing folderId prop to TodoItem components
+            </li>
+            <li>
+              Ensures proper type safety for folder associations
+            </li>
+          </ul>
+        </section>
+
+        <section id="v013">
           <h2 className="section-title">v.013 - November 2, 2025</h2>
           <p className="changelog-subtitle">Pomodoro Timer Duration Toggle</p>
           <p>

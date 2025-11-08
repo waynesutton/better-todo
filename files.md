@@ -276,6 +276,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - Integrates NotesSection above archive
   - Tracks hovered todo for keyboard shortcuts
   - **Fixed keyboard navigation** - Proper index matching between keyboard shortcuts and rendered todos
+  - **Folder support** - Supports todos within project folders (folderId prop)
+  - **Move to folder functionality** - Handles moving todos to and from project folders
   - Clerk authentication integration:
     - Checks authentication status before allowing todo/note creation
     - Shows "Sign In Required" modal for unauthenticated users
@@ -301,7 +303,14 @@ This document describes the structure and purpose of each file in the Better Tod
   - Collapse button next to "better todo" title (PanelLeft icon)
   - Smooth animated transitions between full (260px) and collapsed (60px) states
   - Custom date labels (rename dates with any text while preserving chronological order)
-  - **Custom projects** for organizing dates (collapsible, renameable, archivable, deletable) - UI calls them "Projects"
+  - **Custom projects** for organizing dates, todos, and notes (collapsible, renameable, archivable, deletable) - UI calls them "Projects"
+    - Project folders only appear when they have content (dates, todos, or notes)
+    - Folders are sorted alphabetically for easier navigation
+    - Folders appear below dates and above "+ Add Project" button
+    - New folders appear immediately in main section when they receive their first content
+    - **TodosForFolder component** - Displays todos within project folders
+      - Shows todos that are associated with projects (decoupled from dates)
+      - Todo count badges on project folders show when they contain todos
   - **Auto-grouped month sections** for completed months (collapsible, archivable, deletable)
   - "+ Add Project" button at bottom (only shows when authenticated)
   - Active date highlighting (#0076C6 accent color)
@@ -371,7 +380,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Full markdown support** with react-markdown and remark-gfm:
     - Write markdown naturally without needing ```md wrapper
     - Supports bold, italic, headers, lists, links, tables, blockquotes
-    - Code blocks with triple backticks and language identifiers (```js, ```css, etc.)
+    - Code blocks with triple backticks and language identifiers (`js, `css, etc.)
     - GitHub Flavored Markdown support (tables, task lists, strikethrough)
     - Markdown renders in display mode, edit mode shows plain text with markdown syntax
   - **Code syntax highlighting** with Cursor Dark Theme colors:
@@ -597,7 +606,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - **Full Markdown Support** - Comprehensive markdown rendering in all notes
   - All text content now supports markdown formatting (bold, italic, headers, lists, links, tables, blockquotes)
   - Works automatically without needing ```md wrapper - just write markdown and it renders
-  - Code blocks continue to work with triple backticks (```js, ```css, etc.)
+  - Code blocks continue to work with triple backticks (`js, `css, etc.)
   - Preserves existing code block syntax highlighting functionality
   - Uses react-markdown and remark-gfm for GitHub Flavored Markdown support
   - Markdown renders in display mode, edit mode shows plain text with markdown syntax
@@ -787,15 +796,6 @@ This document describes the structure and purpose of each file in the Better Tod
 - **Pin icon for pinned todos**
   - Drawing pin filled icon from Radix UI appears before checkbox for pinned todos
   - Only shows on date pages (not in pinned section)
-
-- **Manage Folders section**
-  - New collapsible section below archived items shows all folders
-  - Displays empty folders that don't appear in main sidebar
-  - Shows folder date count badge when folder contains dates
-  - Full access to rename, archive, and delete operations
-  - Perfect alignment of three-dot menu buttons with folder names
-  - Uses theme-aware colors that adapt to light/dark mode
-  - Clean visual indicator without borders or background
 
 - **Pinned todos sorted to top**
   - Pinned todos automatically appear at the top of each date page
