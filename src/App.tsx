@@ -600,6 +600,18 @@ function App() {
         }
       }
 
+      // Jump to today with t
+      if (e.key === "t") {
+        e.preventDefault();
+        const today = format(new Date(), "yyyy-MM-dd");
+        setSelectedDate(today);
+        setSelectedFolder(null);
+        // Close sidebar on mobile
+        if (window.innerWidth <= 768) {
+          setSidebarHidden(false);
+        }
+      }
+
       // Scroll to top with cmd+up
       if (e.key === "ArrowUp" && e.metaKey) {
         e.preventDefault();
