@@ -265,7 +265,8 @@ export const getAvailableDates = query({
 // Create a new todo item
 export const createTodo = mutation({
   args: {
-    date: v.string(),
+    date: v.optional(v.string()),
+    folderId: v.optional(v.id("folders")),
     content: v.string(),
     type: v.union(
       v.literal("todo"),
@@ -283,13 +284,27 @@ export const createTodo = mutation({
     }
     const userId = identity.subject;
 
-    // Get the highest order number for this date
-    const existingTodos = await ctx.db
-      .query("todos")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", args.date),
-      )
-      .collect();
+    // Get the highest order number for this date or folder
+    let existingTodos: Array<{
+      _id: any;
+      _creationTime: number;
+      order: number;
+    }> = [];
+    if (args.folderId) {
+      existingTodos = await ctx.db
+        .query("todos")
+        .withIndex("by_user_and_folder", (q) =>
+          q.eq("userId", userId).eq("folderId", args.folderId),
+        )
+        .collect();
+    } else if (args.date) {
+      existingTodos = await ctx.db
+        .query("todos")
+        .withIndex("by_user_and_date", (q) =>
+          q.eq("userId", userId).eq("date", args.date),
+        )
+        .collect();
+    }
 
     const maxOrder =
       existingTodos.length > 0
@@ -299,6 +314,7 @@ export const createTodo = mutation({
     return await ctx.db.insert("todos", {
       userId: userId,
       date: args.date,
+      folderId: args.folderId,
       content: args.content,
       type: args.type,
       completed: false,
@@ -331,13 +347,28 @@ export const createSubtask = mutation({
     }
 
     // Get existing subtasks to determine order
-    const existingSubtasks = await ctx.db
-      .query("todos")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", parent.date),
-      )
-      .filter((q) => q.eq(q.field("parentId"), args.parentId))
-      .collect();
+    let existingSubtasks: Array<{
+      _id: any;
+      _creationTime: number;
+      order: number;
+    }> = [];
+    if (parent.folderId) {
+      existingSubtasks = await ctx.db
+        .query("todos")
+        .withIndex("by_user_and_folder", (q) =>
+          q.eq("userId", userId).eq("folderId", parent.folderId),
+        )
+        .filter((q) => q.eq(q.field("parentId"), args.parentId))
+        .collect();
+    } else if (parent.date) {
+      existingSubtasks = await ctx.db
+        .query("todos")
+        .withIndex("by_user_and_date", (q) =>
+          q.eq("userId", userId).eq("date", parent.date),
+        )
+        .filter((q) => q.eq(q.field("parentId"), args.parentId))
+        .collect();
+    }
 
     const maxOrder =
       existingSubtasks.length > 0
@@ -347,6 +378,7 @@ export const createSubtask = mutation({
     return await ctx.db.insert("todos", {
       userId,
       date: parent.date,
+      folderId: parent.folderId,
       content: args.content,
       type: "todo",
       completed: false,
@@ -422,11 +454,33 @@ export const deleteTodo = mutation({
     const userId = identity.subject;
 
     const todo = await ctx.db.get(args.id);
-    if (!todo || todo.userId !== userId) {
-      throw new Error("Todo not found or unauthorized");
+    
+    // If todo doesn't exist, return early (idempotent)
+    if (!todo) {
+      return null;
+    }
+    
+    // Check authorization
+    if (todo.userId !== userId) {
+      throw new Error("Not authorized to delete this todo");
     }
 
+    // Delete the todo
     await ctx.db.delete(args.id);
+    
+    // Delete all subtasks (children) if this is a header
+    if (todo.type !== "todo") {
+      const subtasks = await ctx.db
+        .query("todos")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .filter((q) => q.eq(q.field("parentId"), args.id))
+        .collect();
+      
+      for (const subtask of subtasks) {
+        await ctx.db.delete(subtask._id);
+      }
+    }
+    
     return null;
   },
 });

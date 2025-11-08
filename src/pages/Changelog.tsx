@@ -88,17 +88,52 @@ export function Changelog() {
           </p>
 
           <h2 className="section-title">v.014 - January XX, 2025</h2>
-          <p className="changelog-subtitle">Project Folder Organization</p>
+          <p className="changelog-subtitle">Todos in Project Folders & Enhanced Organization</p>
           <p>
-            Improved project folder display and organization in sidebar, plus fixed TypeScript build errors.
+            Projects can now contain todos directly alongside notes, with improved folder organization and navigation throughout the app.
           </p>
+          
+          <h3 className="subsection-title">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Todos in Project Folders</strong> - Projects can now contain todos directly
+            </li>
+            <li>
+              Todos can be moved to project folders and disconnected from dates
+            </li>
+            <li>
+              Each project can have multiple dateless todos organized independently
+            </li>
+            <li>
+              Todos show in expandable "Todos" section within project folders in sidebar
+            </li>
+            <li>
+              Project folder todos support all features: drag-and-drop reordering, subtasks, headers, completion, archiving
+            </li>
+            <li>
+              Creating new todos within a project folder automatically makes them dateless todos for that project
+            </li>
+            <li>
+              Paste multiple todos at once in project folders
+            </li>
+            <li>
+              <strong>Full-Page Notes Back Navigation</strong> - Added back button next to View full-page notes icon
+            </li>
+            <li>
+              Back button returns to appropriate location (date or today) depending on where user was
+            </li>
+            <li>
+              <strong>Empty Project Folders Visible</strong> - Project folders now show immediately when created
+            </li>
+          </ul>
+
           <h3 className="subsection-title">Changed</h3>
           <ul className="feature-list">
             <li>
-              Removed "Manage Projects" section - all project folders now appear in main Folders section
+              <strong>Project Folder Organization</strong> - Improved project folder display and organization in sidebar
             </li>
             <li>
-              Project folders only appear when they have content (dates, todos, or notes)
+              Removed "Manage Projects" section - all project folders now appear in main Folders section
             </li>
             <li>
               Project folders are sorted alphabetically for easier navigation
@@ -107,19 +142,41 @@ export function Changelog() {
               Folders appear below dates and above "+ Add Project" button
             </li>
             <li>
-              New folders appear immediately in main section when they receive their first content
+              Count badges show next to "Todos" and "Notes" toggles within folders, not on folder name
             </li>
             <li>
-              Removed "(empty)" label from folder display
+              Clicking "Todos" in a folder directly shows todos (no "View all todos" dropdown)
+            </li>
+            <li>
+              <strong>Full-Page Note Navigation</strong> - Opening a note from a folder now selects and expands that folder in sidebar
+            </li>
+            <li>
+              Auto-expands folder and notes section when note is selected
             </li>
           </ul>
+
           <h3 className="subsection-title">Fixed</h3>
           <ul className="feature-list">
             <li>
-              Fixed TypeScript build errors - converted null to undefined when passing folderId prop to TodoItem components
+              <strong>TypeScript Build Errors</strong> - Fixed type compatibility issues in TodoList component
             </li>
             <li>
-              Ensures proper type safety for folder associations
+              Converted null to undefined when passing folderId prop to TodoItem components
+            </li>
+            <li>
+              Added explicit types to existingTodos and existingSubtasks in createTodo and createSubtask mutations
+            </li>
+            <li>
+              <strong>Todo Deletion Robustness</strong> - Improved todo deletion handling
+            </li>
+            <li>
+              Made deleteTodo mutation idempotent (safe to call multiple times)
+            </li>
+            <li>
+              Returns null instead of throwing error if todo doesn't exist
+            </li>
+            <li>
+              Automatically deletes all subtasks when header is deleted (cascading delete)
             </li>
           </ul>
         </section>

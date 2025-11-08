@@ -24,6 +24,7 @@ import {
   CheckIcon,
   ExternalLinkIcon,
   FileTextIcon,
+  CheckboxIcon,
 } from "@radix-ui/react-icons";
 import { Id } from "../convex/_generated/dataModel";
 import { useTheme } from "./context/ThemeContext";
@@ -828,11 +829,16 @@ function App() {
             onOpenSignUp={() => setShowSignUpModal(true)}
             onOpenProfile={() => setShowProfileModal(true)}
             onShowInfo={() => setShowInfoModal(true)}
-            onOpenFullPageNote={(noteId, date) => {
-              // Navigate to the date and open the full-page note
+            onOpenFullPageNote={(noteId, date, folderId) => {
+              // Navigate to the date or folder and open the full-page note
               // If date is provided (note is attached to a date), navigate to it
               if (date) {
                 setSelectedDate(date);
+                setSelectedFolder(null);
+              } else if (folderId) {
+                // Note is in a folder - select the folder
+                setSelectedFolder(folderId);
+                setSelectedDate("");
               }
               // Add the note as a tab if it's not already open, otherwise just select it
               setOpenFullPageNoteTabs((prev) =>
@@ -955,8 +961,40 @@ function App() {
                   <CopyIcon style={{ width: 18, height: 18 }} />
                 )}
               </button>
+              {/* Back button - show when in full-page notes view */}
+              {showFullPageNotes && (
+                <button
+                  className="search-button"
+                  onClick={() => {
+                    triggerSelectionHaptic();
+                    // Navigate back to the appropriate location
+                    if (selectedFolder) {
+                      // If we're in a folder, go to today
+                      const today = format(new Date(), "yyyy-MM-dd");
+                      setSelectedDate(today);
+                      setSelectedFolder(null);
+                    } else if (selectedDate && selectedDate !== "pinned" && selectedDate !== "backlog") {
+                      // If we have a date, go back to that date
+                      setSelectedDate(selectedDate);
+                      setSelectedFolder(null);
+                    } else {
+                      // Otherwise, go to today
+                      const today = format(new Date(), "yyyy-MM-dd");
+                      setSelectedDate(today);
+                      setSelectedFolder(null);
+                    }
+                    // Close full-page notes view
+                    setShowFullPageNotes(false);
+                    setSelectedFullPageNoteId(null);
+                    setIsFullscreenNotes(false);
+                  }}
+                  title="Back to todos"
+                >
+                  <CheckboxIcon style={{ width: 18, height: 18 }} />
+                </button>
+              )}
               {/* Full-page notes icon - only show on regular date pages (not folders) */}
-              {selectedDate !== "pinned" && selectedDate !== "backlog" && !selectedFolder && (
+              {selectedDate !== "pinned" && selectedDate !== "backlog" && !selectedFolder && !showFullPageNotes && (
                 <button
                   className="search-button"
                   onClick={async () => {
@@ -1332,9 +1370,16 @@ function App() {
             // Only set date if it's not empty (folder notes have empty date)
             if (date) {
               setSelectedDate(date);
+              setSelectedFolder(null);
             }
             // If a full-page note was selected, open it
             if (fullPageNoteId) {
+              // Check if note is in a folder
+              const note = allFullPageNotes.find((n) => n._id === fullPageNoteId);
+              if (note?.folderId) {
+                setSelectedFolder(note.folderId);
+                setSelectedDate("");
+              }
               setOpenFullPageNoteTabs((prev) =>
                 prev.includes(fullPageNoteId)
                   ? prev

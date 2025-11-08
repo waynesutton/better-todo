@@ -247,7 +247,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
 
       try {
         await createTodo({
-          date,
+          date: folderId ? undefined : date,
+          folderId: folderId || undefined,
           content: content,
           type,
         });
@@ -322,7 +323,10 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       }
     };
 
-    const handleMoveToFolder = async (todoId: Id<"todos">, folderId: Id<"folders">) => {
+    const handleMoveToFolder = async (
+      todoId: Id<"todos">,
+      folderId: Id<"folders">,
+    ) => {
       try {
         await moveTodoToFolder({
           todoId,
@@ -559,7 +563,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                     try {
                       for (const line of lines) {
                         await createTodo({
-                          date,
+                          date: folderId ? undefined : date,
+                          folderId: folderId || undefined,
                           content: line.trim(),
                           type: "todo",
                         });

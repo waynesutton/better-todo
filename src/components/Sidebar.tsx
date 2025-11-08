@@ -7,7 +7,6 @@ import { format, addDays, subDays } from "date-fns";
 import {
   PanelLeft,
   Pin,
-  Folder,
   Plus,
   Moon,
   Sun,
@@ -33,20 +32,16 @@ import { triggerSelectionHaptic } from "../lib/haptics";
 // Component to display todos for a specific folder
 function TodosForFolder({
   folderId,
-  expanded,
-  onToggle,
   onSelectFolder,
   selectedFolder,
 }: {
   folderId: Id<"folders">;
-  expanded: boolean;
-  onToggle: () => void;
   onSelectFolder: (folderId: Id<"folders">) => void;
   selectedFolder: Id<"folders"> | null;
 }) {
   const { isAuthenticated } = useConvexAuth();
 
-  // Fetch todos for this folder (always fetch to show count even when collapsed)
+  // Fetch todos for this folder (always fetch to show count)
   const todos = useQuery(
     api.todos.getTodosByFolder,
     isAuthenticated ? { folderId } : "skip",
@@ -58,28 +53,17 @@ function TodosForFolder({
 
   return (
     <div className="notes-folder-section">
-      <div className="notes-folder-header" onClick={onToggle}>
-        <ChevronRight
-          size={14}
-          className={`notes-folder-arrow ${expanded ? "expanded" : ""}`}
-        />
+      <div
+        className={`notes-folder-header ${selectedFolder === folderId ? "active" : ""}`}
+        onClick={() => {
+          triggerSelectionHaptic();
+          onSelectFolder(folderId);
+        }}
+      >
         <span className="notes-folder-title">
           Todos {uncompletedCount > 0 && `(${uncompletedCount})`}
         </span>
       </div>
-      {expanded && uncompletedCount > 0 && (
-        <div className="notes-folder-items">
-          <div
-            className={`notes-folder-item ${selectedFolder === folderId ? "active" : ""}`}
-            onClick={() => {
-              triggerSelectionHaptic();
-              onSelectFolder(folderId);
-            }}
-          >
-            <span className="notes-folder-item-title">View all todos</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -402,10 +386,10 @@ function NotesForFolder({
     useState<Id<"fullPageNotes"> | null>(null);
   const [customDate, setCustomDate] = useState("");
 
-  // Fetch full-page notes for this folder when expanded
+  // Fetch full-page notes for this folder (always fetch to show count)
   const notes = useQuery(
     api.fullPageNotes.getFullPageNotesByFolder,
-    isAuthenticated && expanded
+    isAuthenticated
       ? { folderId, includeArchived: isArchivedFolder }
       : "skip",
   );
@@ -433,7 +417,9 @@ function NotesForFolder({
           size={14}
           className={`notes-folder-arrow ${expanded ? "expanded" : ""}`}
         />
-        <span className="notes-folder-title">Notes</span>
+        <span className="notes-folder-title">
+          Notes {notes && notes.length > 0 && `(${notes.length})`}
+        </span>
       </div>
       {expanded && notes && notes.length > 0 && (
         <div className="notes-folder-items">
@@ -649,7 +635,11 @@ interface SidebarProps {
   onOpenSignUp?: () => void;
   onOpenProfile?: () => void;
   onShowInfo?: () => void;
-  onOpenFullPageNote?: (noteId: Id<"fullPageNotes">, date: string) => void;
+  onOpenFullPageNote?: (
+    noteId: Id<"fullPageNotes">,
+    date: string,
+    folderId?: Id<"folders">,
+  ) => void;
   selectedFullPageNoteId?: Id<"fullPageNotes"> | null;
   datesAreLoading?: boolean;
 }
@@ -748,11 +738,6 @@ export function Sidebar({
       api.fullPageNotes.getFullPageNoteCountsByFolder,
       isAuthenticated ? undefined : "skip",
     ) || {};
-  const todoCountsByFolder =
-    useQuery(
-      api.todos.getTodoCountsByFolder,
-      isAuthenticated ? undefined : "skip",
-    ) || {};
 
   // State to track which dates have notes folder expanded
   const [expandedNotesFor, setExpandedNotesFor] = useState<Set<string>>(
@@ -760,10 +745,6 @@ export function Sidebar({
   );
   // State to track which folders have notes expanded
   const [expandedFolderNotes, setExpandedFolderNotes] = useState<Set<string>>(
-    new Set(),
-  );
-  // State to track which folders have todos expanded
-  const [expandedFolderTodos, setExpandedFolderTodos] = useState<Set<string>>(
     new Set(),
   );
 
@@ -783,19 +764,6 @@ export function Sidebar({
   // Helper to toggle notes folder for a folder
   const toggleFolderNotes = (folderId: string) => {
     setExpandedFolderNotes((prev) => {
-      const next = new Set(prev);
-      if (next.has(folderId)) {
-        next.delete(folderId);
-      } else {
-        next.add(folderId);
-      }
-      return next;
-    });
-  };
-
-  // Helper to toggle todos folder for a folder
-  const toggleFolderTodos = (folderId: string) => {
-    setExpandedFolderTodos((prev) => {
       const next = new Set(prev);
       if (next.has(folderId)) {
         next.delete(folderId);
@@ -1316,6 +1284,27 @@ export function Sidebar({
     }
   }, [selectedDate, folders, monthGroups]);
 
+  // Auto-expand folder and notes when a folder note is selected
+  useEffect(() => {
+    if (!selectedFullPageNoteId || !selectedFolder) {
+      return;
+    }
+
+    // Expand the folder
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      next.add(selectedFolder);
+      return next;
+    });
+
+    // Expand the notes section for this folder
+    setExpandedFolderNotes((prev) => {
+      const next = new Set(prev);
+      next.add(selectedFolder);
+      return next;
+    });
+  }, [selectedFullPageNoteId, selectedFolder]);
+
   // Calculate dates that are in folders or month groups
   const datesInFoldersOrGroups = new Set<string>();
   folders.forEach((folder) =>
@@ -1335,15 +1324,9 @@ export function Sidebar({
   );
 
   // Separate active and archived folders
-  // Show active folders that have dates OR todos OR notes (only folders with content)
+  // Show all active folders (including empty ones)
   const activeFolders = folders
-    .filter(
-      (f) =>
-        !f.archived &&
-        (f.dates.length > 0 ||
-          (todoCountsByFolder[f._id.toString()] || 0) > 0 ||
-          (fullPageNoteCountsByFolder[f._id.toString()] || 0) > 0),
-    )
+    .filter((f) => !f.archived)
     .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
   const archivedFolders = folders.filter((f) => f.archived);
 
@@ -1411,14 +1394,14 @@ export function Sidebar({
       const isInsideMenuDropdown = target.closest(".date-menu-dropdown");
       const isInsideMenuButton = target.closest(".date-menu-button");
       const isInsideDatePicker = target.closest(".date-picker-modal");
-      const isInsideProjectSelector = target.closest(".project-selector");
+      const isInsideFolderSelector = target.closest(".folder-selector-modal");
 
       // Close menus if clicking outside
       if (
         !isInsideMenuDropdown &&
         !isInsideMenuButton &&
         !isInsideDatePicker &&
-        !isInsideProjectSelector
+        !isInsideFolderSelector
       ) {
         if (showMenuForDate) {
           setShowMenuForDate(null);
@@ -1438,7 +1421,7 @@ export function Sidebar({
       }
 
       // Close project selector if clicking outside
-      if (!isInsideProjectSelector && showProjectSelector) {
+      if (!isInsideFolderSelector && showProjectSelector) {
         setShowProjectSelector(null);
       }
     };
@@ -1780,9 +1763,9 @@ export function Sidebar({
                       </div>
                     )}
                     {showProjectSelector === date && (
-                      <div className="date-picker-modal project-selector">
-                        <div className="folder-selector-title">
-                          Select Project
+                      <div className="folder-selector-modal">
+                        <div className="folder-selector-header">
+                          Move to Project
                         </div>
                         <div className="folder-selector-list">
                           {folders
@@ -1795,13 +1778,12 @@ export function Sidebar({
                                   handleAddDateToFolder(date, folder._id)
                                 }
                               >
-                                <Folder size={14} />
-                                <span>{folder.name}</span>
+                                {folder.name}
                               </div>
                             ))}
                         </div>
                         <button
-                          className="date-picker-button cancel"
+                          className="folder-selector-cancel"
                           onClick={() => setShowProjectSelector(null)}
                         >
                           Cancel
@@ -1819,7 +1801,7 @@ export function Sidebar({
                     onToggle={() => toggleNotesFolder(date)}
                     onOpenNote={(noteId) => {
                       if (onOpenFullPageNote) {
-                        onOpenFullPageNote(noteId, date);
+                        onOpenFullPageNote(noteId, date, undefined);
                       }
                     }}
                     showMenuForNoteId={showMenuForNoteId}
@@ -2076,9 +2058,9 @@ export function Sidebar({
                               </div>
                             )}
                             {showProjectSelector === date && (
-                              <div className="date-picker-modal project-selector">
-                                <div className="folder-selector-title">
-                                  Select Project
+                              <div className="folder-selector-modal">
+                                <div className="folder-selector-header">
+                                  Move to Project
                                 </div>
                                 <div className="folder-selector-list">
                                   {folders
@@ -2094,13 +2076,12 @@ export function Sidebar({
                                           )
                                         }
                                       >
-                                        <Folder size={14} />
-                                        <span>{folder.name}</span>
+                                        {folder.name}
                                       </div>
                                     ))}
                                 </div>
                                 <button
-                                  className="date-picker-button cancel"
+                                  className="folder-selector-cancel"
                                   onClick={() => setShowProjectSelector(null)}
                                 >
                                   Cancel
@@ -2118,7 +2099,7 @@ export function Sidebar({
                             onToggle={() => toggleNotesFolder(date)}
                             onOpenNote={(noteId) => {
                               if (onOpenFullPageNote) {
-                                onOpenFullPageNote(noteId, date);
+                                onOpenFullPageNote(noteId, date, undefined);
                               }
                             }}
                             showMenuForNoteId={showMenuForNoteId}
@@ -2148,21 +2129,7 @@ export function Sidebar({
                 >
                   ▼
                 </span>
-                <span>
-                  {folder.name}
-                  {fullPageNoteCountsByFolder[folder._id.toString()] > 0 && (
-                    <span className="folder-notes-count">
-                      {" "}
-                      {fullPageNoteCountsByFolder[folder._id.toString()]}
-                    </span>
-                  )}
-                  {todoCountsByFolder[folder._id.toString()] > 0 && (
-                    <span className="folder-notes-count">
-                      {" "}
-                      {todoCountsByFolder[folder._id.toString()]}
-                    </span>
-                  )}
-                </span>
+                <span>{folder.name}</span>
               </div>
               <div className="date-menu">
                 <button
@@ -2301,8 +2268,6 @@ export function Sidebar({
               {expandedFolders.has(folder._id) && (
                 <TodosForFolder
                   folderId={folder._id}
-                  expanded={expandedFolderTodos.has(folder._id)}
-                  onToggle={() => toggleFolderTodos(folder._id)}
                   onSelectFolder={handleSelectFolder}
                   selectedFolder={selectedFolder}
                 />
@@ -2317,8 +2282,8 @@ export function Sidebar({
                     onToggle={() => toggleFolderNotes(folder._id)}
                     onOpenNote={(noteId) => {
                       if (onOpenFullPageNote) {
-                        // For folder notes, we don't have a date, so pass empty string or handle differently
-                        onOpenFullPageNote(noteId, "");
+                        // For folder notes, pass empty string for date and folderId
+                        onOpenFullPageNote(noteId, "", folder._id);
                       }
                     }}
                     showMenuForNoteId={showMenuForNoteId}

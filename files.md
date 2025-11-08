@@ -35,9 +35,10 @@ This document describes the structure and purpose of each file in the Better Tod
 ### Database Schema
 
 - `schema.ts` - Database schema with tables:
-  - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, optional parentId, and pinned status
-    - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`
+  - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, optional parentId, optional folderId, and pinned status
+    - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`, `by_user_and_folder`
     - Search index: `search_content` on content field for full-text search
+    - Supports both date-based todos and dateless todos in project folders
   - **notes**: Stores multiple notes per date with optional title, content, order, and collapsed state
     - Index: `by_user_and_date`
     - Search indexes: `search_content` on content field, `search_title` on title field
@@ -67,16 +68,20 @@ This document describes the structure and purpose of each file in the Better Tod
 ### Functions
 
 - `todos.ts` - Queries and mutations for todo operations:
-  - `getAvailableDates` - Get all dates with todos
-  - `getTodosByDate` - Get todos for a specific date
-  - `getPinnedTodos` - Get all pinned todos for user (including their subtasks)
-  - `getUncompletedCounts` - Get count of uncompleted todos for each date (for sidebar badges)
-  - `createTodo` - Create new todo with auto-ordering
-  - `createSubtask` - Create a subtask under a parent todo
+  - `getAvailableDates` - Get all dates with todos (excludes folder-associated todos)
+  - `getTodosByDate` - Get todos for a specific date (excludes folder-associated todos)
+  - `getTodosByFolder` - Get todos for a specific project folder (including subtasks)
+  - `getTodoCountsByFolder` - Get count of uncompleted todos per folder for sidebar badges
+  - `getPinnedTodos` - Get all pinned todos for user (excluding folder-associated todos, including their subtasks)
+  - `getUncompletedCounts` - Get count of uncompleted todos for each date (excludes folder-associated todos, for sidebar badges)
+  - `createTodo` - Create new todo with auto-ordering (supports both date and folderId parameters)
+  - `createSubtask` - Create a subtask under a parent todo (inherits folderId from parent)
   - `updateTodo` - Update todo (auto-archives on complete, auto-unarchives on uncheck, supports pin/unpin)
-  - `deleteTodo` - Remove a todo
+  - `deleteTodo` - Remove a todo (idempotent, cascading delete for subtasks)
   - `reorderTodos` - Update order after drag-and-drop
   - `moveTodoToDate` - Move todo to different date
+  - `moveTodoToFolder` - Move todo to project folder (removes date association)
+  - `moveTodoFromFolderToDate` - Move todo from folder to specific date (removes folder association)
   - `copyTodosToDate` - Copy all non-archived todos to another date
   - `archiveAllTodos` - Archive all active todos for a specific date
   - `deleteAllTodos` - Delete all active todos for a specific date
@@ -216,7 +221,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - Collapsed sidebar shows compact MM/DD date format
   - Mobile detection and auto-hide on small screens (≤768px)
   - Date selection and navigation state (including special "pinned" view)
+  - **Folder selection state** - Support for viewing project folder todos and notes
+  - **Folder todos display** - Shows dateless todos when folder is selected
   - Pinned todos page handling with dedicated display
+  - **Back button navigation** - Back button (CheckboxIcon) next to View full-page notes icon
+    - Returns to appropriate location (date or today) depending on context
+    - Handles both date and folder contexts
   - Search modal integration (Cmd/Ctrl+K keyboard shortcut)
   - Theme context provider
   - Keyboard shortcuts:
@@ -228,6 +238,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - ? to show keyboard shortcuts modal with code block syntax reference
   - Hovered todo tracking for keyboard shortcuts
   - Auto-select hovered todo when not explicitly navigating
+  - **Full-page note folder handling** - Opens notes from folders and highlights folder in sidebar
   - Clerk authentication integration:
     - Conditional query execution based on authentication state
     - "Sign In Required" modal for unauthenticated users
@@ -296,21 +307,26 @@ This document describes the structure and purpose of each file in the Better Tod
     - Active state indicator (dark transparent overlay) for selected note
   - **NotesForFolder component** - Displays full-page notes within project folders
     - Shows notes that are associated with projects (decoupled from dates)
+    - Always fetches notes to display count badge next to "Notes" toggle
     - Click note title to open that note without navigating to a date
     - Three-dot menu for rename, delete, move to project, and move to date actions
-    - Note count badges on project folders show when they contain notes
+    - Note count badges show next to "Notes" toggle (e.g., "Notes (3)")
+  - **TodosForFolder component** - Displays todos within project folders
+    - Shows todos that are associated with projects (decoupled from dates)
+    - Always fetches todos to display count badge next to "Todos" toggle
+    - Clicking "Todos" directly selects the folder to show todos (no dropdown)
+    - Todo count badges show next to "Todos" toggle (e.g., "Todos (5)")
   - Collapsible view with compact date format (MM/DD) via panel icon in header
   - Collapse button next to "better todo" title (PanelLeft icon)
   - Smooth animated transitions between full (260px) and collapsed (60px) states
   - Custom date labels (rename dates with any text while preserving chronological order)
   - **Custom projects** for organizing dates, todos, and notes (collapsible, renameable, archivable, deletable) - UI calls them "Projects"
-    - Project folders only appear when they have content (dates, todos, or notes)
+    - All active project folders appear in main Folders section (no "Manage Projects" section)
+    - Project folders show immediately when created (including empty folders)
     - Folders are sorted alphabetically for easier navigation
     - Folders appear below dates and above "+ Add Project" button
-    - New folders appear immediately in main section when they receive their first content
-    - **TodosForFolder component** - Displays todos within project folders
-      - Shows todos that are associated with projects (decoupled from dates)
-      - Todo count badges on project folders show when they contain todos
+    - Count badges show next to "Todos" and "Notes" toggles within folders, not on folder name
+    - Auto-expands folders and sections when notes or todos are selected from them
   - **Auto-grouped month sections** for completed months (collapsible, archivable, deletable)
   - "+ Add Project" button at bottom (only shows when authenticated)
   - Active date highlighting (#0076C6 accent color)

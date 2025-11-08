@@ -6,21 +6,102 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [v.014] - 2025-01-XX
 
+### Added
+
+- **Todos in Project Folders** - Projects can now contain todos directly
+  - Todos can be moved to project folders and disconnected from dates
+  - Each project can have multiple dateless todos organized independently
+  - Todos show in expandable "Todos" section within project folders in sidebar
+  - Todos moved to project remove date association, todos moved to date remove folder association
+  - Project folder todos support all features: drag-and-drop reordering, subtasks, headers, completion, archiving
+  - Creating new todos within a project folder automatically makes them dateless todos for that project
+  - Paste multiple todos at once in project folders
+
+- **Full-Page Notes Back Navigation** - Added back button next to View full-page notes icon
+  - Back button returns to appropriate location (date or today) depending on where user was
+  - Shows only when viewing full-page notes
+  - Uses CheckboxIcon from Radix UI
+
+- **Empty Project Folders Visible** - Project folders now show immediately when created
+  - Empty folders appear in sidebar even without content
+  - Allows better organization and planning
+
 ### Changed
 
 - **Project Folder Organization** - Improved project folder display and organization in sidebar
   - Removed "Manage Projects" section - all project folders now appear in main Folders section
-  - Project folders only appear when they have content (dates, todos, or notes)
   - Project folders are sorted alphabetically for easier navigation
   - Folders appear below dates and above "+ Add Project" button
-  - New folders appear immediately in main section when they receive their first content
   - Removed "(empty)" label from folder display
+  - Count badges show next to "Todos" and "Notes" toggles within folders, not on folder name
+  - Clicking "Todos" in a folder directly shows todos (no "View all todos" dropdown)
+
+- **Full-Page Note Navigation** - Improved note selection and folder highlighting
+  - Opening a note from a folder now selects and expands that folder in sidebar
+  - Auto-expands folder and notes section when note is selected
+  - Consistent sidebar highlighting across all navigation paths
 
 ### Fixed
 
 - **TypeScript Build Errors** - Fixed type compatibility issues in TodoList component
   - Converted `null` to `undefined` when passing `folderId` prop to TodoItem components
   - Ensures proper type safety for folder associations
+  - Added explicit types to `existingTodos` and `existingSubtasks` in createTodo and createSubtask mutations
+
+- **Todo Deletion Robustness** - Improved todo deletion handling
+  - Made deleteTodo mutation idempotent (safe to call multiple times)
+  - Returns null instead of throwing error if todo doesn't exist
+  - Automatically deletes all subtasks when header is deleted (cascading delete)
+  - Prevents orphaned subtasks and race condition errors
+
+### Backend Changes
+
+- **Todos Schema** (`convex/schema.ts`)
+  - Added `folderId` field to todos table for folder associations
+  - Added `by_user_and_folder` index for efficient folder-based queries
+
+- **Todos Module** (`convex/todos.ts`)
+  - Added `getTodosByFolder` query to fetch todos for specific folder (including subtasks)
+  - Added `getTodoCountsByFolder` query to get uncompleted todo counts per folder
+  - Added `moveTodoToFolder` mutation to move todos to project folders
+  - Added `moveTodoFromFolderToDate` mutation to move todos back to dates
+  - Updated `createTodo` to support both date and folderId parameters
+  - Updated `createSubtask` to inherit folderId from parent todo
+  - Updated `deleteTodo` to be idempotent and cascade delete subtasks
+  - Updated all date-based queries to exclude folder-associated todos
+
+### Frontend Changes
+
+- **Sidebar Component** (`src/components/Sidebar.tsx`)
+  - Added `TodosForFolder` component to display todos within folders
+  - Removed expand/collapse dropdown for folder todos
+  - Updated `NotesForFolder` to always fetch notes for count display
+  - Added count badges to "Todos" and "Notes" toggles within folders
+  - Updated `onOpenFullPageNote` callback to accept optional `folderId` parameter
+  - Added auto-expansion logic for folders when notes are selected
+  - Updated folder filtering to show all active folders (including empty ones)
+  - Removed "Manage Projects" section completely
+
+- **App Component** (`src/App.tsx`)
+  - Added `selectedFolder` state for folder-based navigation
+  - Added `folderTodos` query to fetch todos for selected folder
+  - Updated `displayTodos` logic to show folder todos when folder is selected
+  - Updated header to show folder name when viewing folder todos
+  - Added back button with CheckboxIcon next to View full-page notes icon
+  - Updated back button logic to handle both date and folder contexts
+  - Updated `onOpenFullPageNote` handler to set folder selection for folder notes
+
+- **TodoList Component** (`src/components/TodoList.tsx`)
+  - Added `folderId` prop support
+  - Updated `handleAddTodo` to create dateless todos in folders
+  - Updated paste handler to support creating folder todos
+  - Passes `folderId` to TodoItem components with proper type conversion
+
+- **TodoItem Component** (`src/components/TodoItem.tsx`)
+  - Added "Move to Project..." menu option
+  - Added "Move to Date..." menu option (when todo is in folder)
+  - Added folder selector modal for moving todos to projects
+  - Context-aware menu based on whether todo is in folder or date
 
 ## [v.013] - 2025-11-02
 
