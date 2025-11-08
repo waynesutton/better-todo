@@ -43,6 +43,8 @@ interface Todo {
 export interface TodoListProps {
   todos: Todo[];
   date: string;
+  folderId?: Id<"folders"> | null;
+  folders?: Array<{ _id: Id<"folders">; name: string; archived: boolean }>;
   expandedNoteId: string | null;
   onNoteExpanded: () => void;
   isPinnedView?: boolean;
@@ -71,6 +73,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
     {
       todos,
       date,
+      folderId = null,
+      folders = [],
       expandedNoteId,
       onNoteExpanded,
       isPinnedView = false,
@@ -113,6 +117,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
     const createTodo = useMutation(api.todos.createTodo);
     const reorderTodos = useMutation(api.todos.reorderTodos);
     const moveTodoToDate = useMutation(api.todos.moveTodoToDate);
+    const moveTodoToFolder = useMutation(api.todos.moveTodoToFolder);
     const createNote = useMutation(api.notes.createNote);
 
     const sensors = useSensors(
@@ -317,6 +322,17 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       }
     };
 
+    const handleMoveToFolder = async (todoId: Id<"todos">, folderId: Id<"folders">) => {
+      try {
+        await moveTodoToFolder({
+          todoId,
+          folderId,
+        });
+      } catch (error) {
+        console.error("Error moving todo to folder:", error);
+      }
+    };
+
     const handleMoveToCustomDate = async (
       todoId: Id<"todos">,
       newDate: string,
@@ -420,6 +436,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                       backlog={parent.backlog}
                       isPinnedView={isPinnedView}
                       isBacklogView={isBacklogView}
+                      folderId={folderId}
                       onMoveToPreviousDay={() =>
                         handleMoveToPreviousDay(parent._id)
                       }
@@ -429,6 +446,10 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                       onMoveToCustomDate={(date) =>
                         handleMoveToCustomDate(parent._id, date)
                       }
+                      onMoveToFolder={(folderId) =>
+                        handleMoveToFolder(parent._id, folderId)
+                      }
+                      folders={folders}
                       onHoverChange={onTodoHover}
                       openMenuTrigger={
                         openMenuForTodoId === parent._id
@@ -462,6 +483,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                             backlog={child.backlog}
                             isPinnedView={isPinnedView}
                             isBacklogView={isBacklogView}
+                            folderId={folderId}
                             onMoveToPreviousDay={() =>
                               handleMoveToPreviousDay(child._id)
                             }
@@ -475,6 +497,10 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                             onMoveToCustomDate={(date) =>
                               handleMoveToCustomDate(child._id, date)
                             }
+                            onMoveToFolder={(folderId) =>
+                              handleMoveToFolder(child._id, folderId)
+                            }
+                            folders={folders}
                             onHoverChange={onTodoHover}
                             openMenuTrigger={
                               openMenuForTodoId === child._id

@@ -44,6 +44,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useState<string>(
     format(new Date(), "yyyy-MM-dd"),
   );
+  const [selectedFolder, setSelectedFolder] = useState<Id<"folders"> | null>(null);
   // Check if mobile on initial load (hide sidebar completely by default on mobile)
   const isMobile = window.innerWidth <= 768;
   const [sidebarHidden, setSidebarHidden] = useState(isMobile);
@@ -181,9 +182,18 @@ function App() {
     api.todos.getBacklogTodos,
     isAuthenticated ? undefined : "skip",
   );
+  const folderTodos = useQuery(
+    api.todos.getTodosByFolder,
+    isAuthenticated && selectedFolder ? { folderId: selectedFolder } : "skip",
+  );
+  const folders = useQuery(
+    api.folders.getFolders,
+    isAuthenticated ? undefined : "skip",
+  );
+  const selectedFolderData = folders?.find((f) => f._id === selectedFolder);
   const todos = useQuery(
     api.todos.getTodosByDate,
-    isAuthenticated && selectedDate !== "pinned" && selectedDate !== "backlog"
+    isAuthenticated && selectedDate !== "pinned" && selectedDate !== "backlog" && !selectedFolder
       ? { date: selectedDate }
       : "skip",
   );
@@ -357,6 +367,10 @@ function App() {
       return "Backlog";
     }
 
+    if (selectedFolder && selectedFolderData) {
+      return selectedFolderData.name;
+    }
+
     const date = new Date(selectedDate + "T00:00:00");
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -393,7 +407,9 @@ function App() {
         ? pinnedTodos || []
         : selectedDate === "backlog"
           ? backlogTodos || []
-          : todos || []
+          : selectedFolder
+            ? folderTodos || []
+            : todos || []
       : demoTodos;
 
   // Separate archived and active todos, sort pinned to the top
@@ -789,7 +805,20 @@ function App() {
             selectedDate={selectedDate}
             onSelectDate={(date) => {
               setSelectedDate(date);
+              // Clear folder selection when selecting a date
+              setSelectedFolder(null);
               // Close full-page notes view when selecting a date
+              setShowFullPageNotes(false);
+              setSelectedFullPageNoteId(null);
+            }}
+            selectedFolder={selectedFolder}
+            onSelectFolder={(folderId) => {
+              setSelectedFolder(folderId);
+              // Clear date selection when selecting a folder (except pinned/backlog)
+              if (selectedDate !== "pinned" && selectedDate !== "backlog") {
+                setSelectedDate("");
+              }
+              // Close full-page notes view when selecting a folder
               setShowFullPageNotes(false);
               setSelectedFullPageNoteId(null);
             }}
@@ -926,8 +955,8 @@ function App() {
                   <CopyIcon style={{ width: 18, height: 18 }} />
                 )}
               </button>
-              {/* Full-page notes icon - only show on regular date pages */}
-              {selectedDate !== "pinned" && selectedDate !== "backlog" && (
+              {/* Full-page notes icon - only show on regular date pages (not folders) */}
+              {selectedDate !== "pinned" && selectedDate !== "backlog" && !selectedFolder && (
                 <button
                   className="search-button"
                   onClick={async () => {
@@ -1122,6 +1151,8 @@ function App() {
                     ref={todoListRef}
                     todos={displayTodos}
                     date={selectedDate}
+                    folderId={selectedFolder}
+                    folders={folders}
                     expandedNoteId={expandedNoteId}
                     onNoteExpanded={() => setExpandedNoteId(null)}
                     isPinnedView={selectedDate === "pinned"}
@@ -1218,6 +1249,8 @@ function App() {
                 ref={todoListRef}
                 todos={displayTodos}
                 date={selectedDate}
+                folderId={selectedFolder}
+                folders={folders}
                 expandedNoteId={expandedNoteId}
                 onNoteExpanded={() => setExpandedNoteId(null)}
                 isPinnedView={selectedDate === "pinned"}
