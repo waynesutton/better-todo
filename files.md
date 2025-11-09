@@ -275,7 +275,12 @@ This document describes the structure and purpose of each file in the Better Tod
 - `TodoList.tsx` - Todo list container with:
   - Drag-and-drop functionality using @dnd-kit
   - **Pinned todos sorted to top** - Automatically displays pinned todos first on each date page
-  - Notion-style inline input (type directly, no button)
+  - **Refined todo input UI** - Modern rounded container with ArrowUp submit button
+    - Max width of 650px on desktop with `var(--bg-secondary)` background
+    - ArrowUp icon button (24px, scales to 22px/20px/18px on smaller devices) from Radix UI
+    - No box shadows for cleaner design
+    - Button integrates with existing keyboard shortcuts (Enter/Shift+Enter)
+    - Disabled state (55% opacity) when input is empty
   - Mobile-friendly: visible "+" button appears when typing on mobile devices
   - Desktop: Shift+Enter to create, Mobile: tap "+" button
   - Enter for new lines in both desktop and mobile
@@ -579,9 +584,16 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.013 (November 2, 2025)
+## Current Version: v.014 (November 8, 2025)
 
-### Latest Features (v.013) - Pomodoro Timer Duration Toggle
+### Latest Features (v.014) - Project Todos & Note Navigation
+
+- **Todos inside projects** - Projects now accept todos directly, with sidebar folder toggles for Todos and Notes.
+- **Folder-aware navigation** - Opening full-page notes from a project auto-expands and highlights the correct folder.
+- **Back navigation** - FileText view now includes a checkbox back button that returns to the right date or Today context.
+- **Robust folder mutations** - New Convex helpers move todos between dates and folders, keep counts accurate, and cascade deletes safely.
+
+### Previous Features (v.013) - Pomodoro Timer Duration Toggle
 
 - **Duration Toggle** - Switch between 25-minute focus sessions and 90-minute flow state sessions
   - Waves icon to switch to 90-minute flow state mode
@@ -591,6 +603,15 @@ This document describes the structure and purpose of each file in the Better Tod
 - **Sound Auto-Play Prevention** - Fixed sounds playing automatically when timer session is restored from previous page load
   - Sounds now only play when user explicitly clicks Start or Reset button in current session
   - Prevents unexpected audio interruptions when navigating to app with active timer
+
+### Previous Features (v.012) - Project Full-Page Notes
+
+- **Full-page notes in projects** - Notes can live in project folders with tab support, counts, and archived-state respect.
+- **Project deletion safeguards** - Confirmation dialogs surface note counts before destructive actions.
+- **Shared archive semantics** - Archiving or unarchiving a project cascades to its notes; archived folders stay read-only.
+- **Remark breaks integration** - Single line breaks render consistently across full-page and inline notes.
+- **Convex updates** - Added `getFullPageNotesByIds`, folder-aware queries, and schema support for archived notes.
+- **Sidebar sync** - Selecting a note from a project expands the matching folder and keeps badges accurate.
 
 ### Previous Features (v.011) - Simplified Full-Page Notes
 

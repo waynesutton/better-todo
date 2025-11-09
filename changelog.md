@@ -4,7 +4,19 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [v.014] - 2025-01-XX
+## [Unreleased]
+
+### Changed
+
+- **Todo Input UI Redesign** - Refined the todo composer with a modern, compact interface
+  - New rounded container (650px max width on desktop) with background matching `var(--bg-secondary)`
+  - Added ArrowUp icon submit button (24px) from Radix UI for one-click todo creation
+  - Removed box shadows for cleaner visual design
+  - Responsive sizing across all breakpoints (22px on tablet, 20px on mobile, 18px on small devices)
+  - Button integrates seamlessly with existing keyboard shortcuts (Enter/Shift+Enter)
+  - Disabled state (55% opacity) when input is empty
+
+## [v.014] - 2025-11-08
 
 ### Added
 
@@ -694,7 +706,7 @@ No need to wrap content in ````md` blocks - markdown works by default for all te
   - Preview container with themed background
   - Mobile-responsive button layout
 
-## [2.2.6] - 2025-01-23 - v1.0 FINAL RELEASE
+## [2.2.6] - 2025-10-24 - v1.0 FINAL RELEASE
 
 ### Added
 
@@ -805,7 +817,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Dark mode: `var(--bg-secondary)` (matches menu dropdown items)
   - Consistent visual feedback across all interactive elements
 
-## [2.2.4] - 2025-01-23
+## [2.2.4] - 2025-10-23
 
 ### Added
 
@@ -838,7 +850,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Title remains "Untitled" by default, allowing immediate content entry
   - Improved workflow for quick note-taking
 
-## [2.2.3] - 2025-01-23
+## [2.2.3] - 2025-10-23
 
 ### Fixed
 
@@ -849,7 +861,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Prevents multiple concurrent calls to `completePomodoro` that were causing database write conflicts
   - Improved reliability when timer completes or during rapid state changes
 
-## [2.2.2] - 2025-01-22
+## [2.2.2] - 2025-10-22
 
 ### Added
 
@@ -873,7 +885,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Cleaner, more maintainable audio implementation
   - Better quality sounds with actual audio files
 
-## [2.2.1] - 2025-01-21
+## [2.2.1] - 2025-10-21
 
 ### Added
 
@@ -898,7 +910,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Improved language detection and tokenization
   - Enhanced user experience with better color contrast and readability
 
-## [2.2.0] - 2025-01-21
+## [2.2.0] - 2025-10-21
 
 ### Added
 
@@ -916,7 +928,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Clean code block headers showing language name
   - Security-first approach with plain text storage and client-side rendering only
 
-## [2.1.3] - 2025-01-21
+## [2.1.3] - 2025-10-21
 
 ### Added
 
@@ -935,7 +947,7 @@ The application is now stable, feature-rich, and ready for users to manage their
 
 - Updated keyboard shortcuts help modal to include "s" and "m" shortcuts
 
-## [2.1.2] - 2025-01-21
+## [2.1.2] - 2025-10-21
 
 ### Added
 
@@ -993,7 +1005,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Provides cleaner UX by eliminating extra step to remove from folder first
   - Date appears in main active dates section after unarchiving
 
-## [2.1.1] - 2025-01-20
+## [2.1.1] - 2025-10-20
 
 ### Added
 
@@ -1031,7 +1043,7 @@ The application is now stable, feature-rich, and ready for users to manage their
 - **Fixed three-dot menu alignment** - All three-dot menu buttons now have consistent width (30px min-width) and alignment across todo pages, sidebar dates, folders, and month groups
 - **Fixed subtask three-dot menu alignment** - Subtask menu buttons now align perfectly with parent todo menu buttons using negative margin compensation for the indentation
 
-## [2.1.0] - 2025-01-20
+## [2.1.0] - 2025-10-20
 
 ### Added
 
@@ -1082,7 +1094,7 @@ The application is now stable, feature-rich, and ready for users to manage their
 - Archived section now includes archived folders and month groups
 - ESC key now closes folder and month group menus and inputs
 
-## [2.0.1] - 2025-01-18
+## [2.0.1] - 2025-10-18
 
 ### Fixed
 
@@ -1097,7 +1109,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Applied same responsive layout and close button to SignIn and SignUp modals
   - Added mobile-specific CSS for SignIn/SignUp forms to prevent text cutoff
 
-## [2.0.0] - 2025-01-18
+## [2.0.0] - 2025-10-18
 
 ### Added
 
@@ -1160,7 +1172,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - `CLERK_SECRET_KEY` (Convex backend)
   - `VITE_CLERK_FRONTEND_API_URL` (Convex auth config)
 
-## [1.9.2] - 2025-01-18
+## [1.9.2] - 2025-10-18
 
 ### Fixed
 
@@ -1194,7 +1206,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Ensured `VITE_CONVEX_URL` uses production deployment URL, not development
   - Production Convex deployment now has correct `WORKOS_CLIENT_ID` environment variable
 
-## [1.9.1] - 2025-01-17
+## [1.9.1] - 2025-10-17
 
 ### Fixed
 
@@ -1214,7 +1226,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Common deployment issues and solutions
   - Security best practices for environment variables
 
-## [1.9.0] - 2025-01-17
+## [1.9.0] - 2025-10-17
 
 ### Added
 
@@ -1710,7 +1722,7 @@ The application is now stable, feature-rich, and ready for users to manage their
 - Fixed flashing when switching between dates with Convex
 - Improved real-time data loading for smoother transitions
 
-## [1.0.0] - 2025-01-16
+## [1.0.0] - 2025-10-16
 
 ### Added
 

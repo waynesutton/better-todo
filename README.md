@@ -207,7 +207,7 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
   - Full-page notes can be moved to projects and appear under project folders in sidebar
   - Note count badges show on project folders when they contain full-page notes
 - **Auto-grouped months** - completed months automatically group into collapsible sections
-  - Named by month and year (e.g., "January 2025")
+  - Named by month and year (e.g., "November 2025")
   - Only displays after a full month has passed
   - Archive, unarchive, and delete month groups
 - **Three-dot menu** next to dates with options to:

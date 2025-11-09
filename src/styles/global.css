@@ -3490,12 +3490,21 @@ button:active,
 /* Notion-like inline input */
 .inline-todo-input {
   margin-top: 12px;
-  min-height: 32px;
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
   width: 100%;
+  max-width: 650px;
+  position: relative;
+}
+
+.inline-todo-shell {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  padding: 12px 12px 12px 18px;
+  gap: 12px;
+  box-shadow: none;
 }
 
 .notion-input {
@@ -3507,7 +3516,7 @@ button:active,
   font-size: var(--font-todo);
   resize: none;
   outline: none;
-  padding: 5px 1px 1px 20px;
+  padding: 0;
   line-height: 1.5;
   min-height: 24px;
   max-height: 200px;
@@ -3520,6 +3529,49 @@ button:active,
   /* Larger cursor styling */
   caret-color: var(--text-primary);
   caret-shape: block;
+}
+
+.inline-todo-submit {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--mobile-add-button-bg);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+  box-shadow: none;
+}
+
+.inline-todo-submit svg {
+  width: 14px;
+  height: 14px;
+}
+
+.inline-todo-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.inline-todo-submit:not(:disabled):hover,
+.inline-todo-submit:not(:disabled):focus-visible {
+  background-color: var(
+    --mobile-add-button-bg-hover,
+    var(--mobile-add-button-bg)
+  );
+  transform: translateY(-1px);
+}
+
+.inline-todo-submit:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
 }
 
 /* Larger cursor when focused but not actively typing */
@@ -3807,12 +3859,28 @@ button:active,
   /* Reduce padding for inline input on mobile */
   .inline-todo-input {
     margin-top: 8px;
-    gap: 6px;
-    width: 90%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .inline-todo-shell {
+    padding: 10px 12px 10px 16px;
+    border-radius: 14px;
+  }
+
+  .inline-todo-submit {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+  }
+
+  .inline-todo-submit svg {
+    width: 13px;
+    height: 13px;
   }
 
   .notion-input {
-    padding: 4px 0;
+    padding: 0;
     /* Prevent iOS Safari auto-zoom on focus */
     font-size: 16px;
   }
@@ -3847,18 +3915,25 @@ button:active,
   }
 
   .inline-todo-input {
-    width: 95%;
-    gap: 4px;
+    width: 100%;
   }
 
-  .mobile-add-button {
-    min-width: 34px;
-    min-height: 34px;
-    padding: 7px;
+  .inline-todo-shell {
+    padding: 10px 10px 10px 14px;
+  }
+
+  .inline-todo-submit {
+    width: 20px;
+    height: 20px;
+  }
+
+  .inline-todo-submit svg {
+    width: 12px;
+    height: 12px;
   }
 
   .notion-input {
-    padding: 3px 0;
+    padding: 0;
     /* Keep 16px to prevent iOS zoom */
     font-size: 16px;
   }
@@ -3905,15 +3980,18 @@ button:active,
     padding: 4px 8px;
   }
 
-  .inline-todo-input {
-    width: 100%;
-    gap: 3px;
+  .inline-todo-shell {
+    padding: 10px 10px 10px 12px;
   }
 
-  .mobile-add-button {
-    min-width: 32px;
-    min-height: 32px;
-    padding: 6px;
+  .inline-todo-submit {
+    width: 18px;
+    height: 18px;
+  }
+
+  .inline-todo-submit svg {
+    width: 11px;
+    height: 11px;
   }
 
   .notion-input {

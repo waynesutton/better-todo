@@ -23,6 +23,7 @@ import {
 } from "./NotesSection";
 import { Id } from "../../convex/_generated/dataModel";
 import { format, addDays, subDays } from "date-fns";
+import { ArrowUpIcon } from "@radix-ui/react-icons";
 
 interface Todo {
   _id: Id<"todos">;
@@ -262,6 +263,14 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
         } else {
           alert("Failed to create todo. Please make sure you're signed in.");
         }
+      }
+    };
+
+    const handleSubmitNewTodo = async () => {
+      if (!newTodoContent.trim()) return;
+      await handleAddTodo();
+      if (todoInputRef.current) {
+        todoInputRef.current.style.height = "auto";
       }
     };
 
@@ -528,123 +537,111 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
         {/* Notion-like inline input - hide on pinned view and backlog view */}
         {!isPinnedView && !isBacklogView && (
           <div className="inline-todo-input">
-            <textarea
-              ref={todoInputRef}
-              className="notion-input"
-              placeholder={
-                isMobile
-                  ? " Type to add a todo..."
-                  : "Type to add a todo... (Shift+Enter for new lines, Enter to create)"
-              }
-              value={newTodoContent}
-              onChange={(e) => {
-                setNewTodoContent(e.target.value);
-                // Auto-resize textarea based on content
-                e.target.style.height = "auto";
-                e.target.style.height = e.target.scrollHeight + "px";
-              }}
-              onFocus={() => setFocusedInput(true)}
-              onPaste={(e) => {
-                const pastedText = e.clipboardData.getData("text");
-                const lines = pastedText
-                  .split("\n")
-                  .filter((line) => line.trim())
-                  .map((line) =>
-                    line
-                      .replace(/^[\s-*•]+/, "")
-                      .replace(/^\[[ x]\]\s*/, "")
-                      .trim(),
-                  )
-                  .filter((line) => line);
+            <div className="inline-todo-shell">
+              <textarea
+                ref={todoInputRef}
+                className="notion-input"
+                placeholder={
+                  isMobile
+                    ? "Type to add a todo..."
+                    : "Type to add a todo... (Shift+Enter for new lines, Enter to create)"
+                }
+                value={newTodoContent}
+                onChange={(e) => {
+                  setNewTodoContent(e.target.value);
+                  // Auto-resize textarea based on content
+                  e.target.style.height = "auto";
+                  e.target.style.height = e.target.scrollHeight + "px";
+                }}
+                onFocus={() => setFocusedInput(true)}
+                onPaste={(e) => {
+                  const pastedText = e.clipboardData.getData("text");
+                  const lines = pastedText
+                    .split("\n")
+                    .filter((line) => line.trim())
+                    .map((line) =>
+                      line
+                        .replace(/^[\s-*•]+/, "")
+                        .replace(/^\[[ x]\]\s*/, "")
+                        .trim(),
+                    )
+                    .filter((line) => line);
 
-                if (lines.length > 1) {
-                  e.preventDefault();
-                  (async () => {
-                    try {
-                      for (const line of lines) {
-                        await createTodo({
-                          date: folderId ? undefined : date,
-                          folderId: folderId || undefined,
-                          content: line.trim(),
-                          type: "todo",
-                        });
+                  if (lines.length > 1) {
+                    e.preventDefault();
+                    (async () => {
+                      try {
+                        for (const line of lines) {
+                          await createTodo({
+                            date: folderId ? undefined : date,
+                            folderId: folderId || undefined,
+                            content: line.trim(),
+                            type: "todo",
+                          });
+                        }
+                        setNewTodoContent("");
+                      } catch (err) {
+                        console.error("Error creating todos from paste:", err);
+                        if (onRequireSignIn) {
+                          onRequireSignIn();
+                        }
                       }
-                      setNewTodoContent("");
-                    } catch (err) {
-                      console.error("Error creating todos from paste:", err);
-                      if (onRequireSignIn) {
-                        onRequireSignIn();
-                      }
-                    }
-                  })();
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Tab") {
-                  // Tab to focus first todo
-                  e.preventDefault();
-                  if (activeTodos.length > 0 && onFocusFirstTodo) {
-                    // Blur the textarea first
-                    todoInputRef.current?.blur();
-                    // Call the callback to focus first todo
-                    onFocusFirstTodo(() => true);
-                  }
-                } else if (e.key === "Enter" && !e.shiftKey && !isMobile) {
-                  // On desktop: Enter saves the todo
-                  e.preventDefault();
-                  handleAddTodo();
-                  // Reset textarea height
-                  (e.target as HTMLTextAreaElement).style.height = "auto";
-                } else if (e.key === "Enter" && e.shiftKey && isMobile) {
-                  // On mobile: Shift+Enter saves the todo
-                  e.preventDefault();
-                  handleAddTodo();
-                  // Reset textarea height
-                  (e.target as HTMLTextAreaElement).style.height = "auto";
-                } else if (e.key === "Enter") {
-                  // Shift+Enter on desktop or Enter on mobile allows new lines
-                  return;
-                }
-              }}
-              autoFocus={focusedInput}
-              rows={1}
-              spellCheck={false}
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              data-gramm="false"
-              data-gramm_editor="false"
-              data-enable-grammarly="false"
-              data-1p-ignore
-              data-lpignore="true"
-              inputMode="text"
-            />
-            {isMobile && newTodoContent.trim() && (
-              <button
-                className="mobile-add-button"
-                onClick={() => {
-                  handleAddTodo();
-                  if (todoInputRef.current) {
-                    todoInputRef.current.style.height = "auto";
+                    })();
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Tab") {
+                    // Tab to focus first todo
+                    e.preventDefault();
+                    if (activeTodos.length > 0 && onFocusFirstTodo) {
+                      // Blur the textarea first
+                      todoInputRef.current?.blur();
+                      // Call the callback to focus first todo
+                      onFocusFirstTodo(() => true);
+                    }
+                  } else if (e.key === "Enter" && !e.shiftKey && !isMobile) {
+                    // On desktop: Enter saves the todo
+                    e.preventDefault();
+                    handleAddTodo();
+                    // Reset textarea height
+                    (e.target as HTMLTextAreaElement).style.height = "auto";
+                  } else if (e.key === "Enter" && e.shiftKey && isMobile) {
+                    // On mobile: Shift+Enter saves the todo
+                    e.preventDefault();
+                    handleAddTodo();
+                    // Reset textarea height
+                    (e.target as HTMLTextAreaElement).style.height = "auto";
+                  } else if (e.key === "Enter") {
+                    // Shift+Enter on desktop or Enter on mobile allows new lines
+                    return;
+                  }
+                }}
+                autoFocus={focusedInput}
+                rows={1}
+                spellCheck={false}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                data-gramm="false"
+                data-gramm_editor="false"
+                data-enable-grammarly="false"
+                data-1p-ignore
+                data-lpignore="true"
+                inputMode="text"
+              />
+              <button
+                type="button"
+                className="inline-todo-submit"
+                onClick={() => {
+                  void handleSubmitNewTodo();
+                }}
+                disabled={!newTodoContent.trim()}
+                aria-label="Add todo"
                 title="Add todo"
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                <ArrowUpIcon />
               </button>
-            )}
+            </div>
           </div>
         )}
 
