@@ -2659,6 +2659,23 @@ export function Sidebar({
                 {formatDateCollapsed(date)}
               </div>
             ))}
+
+          {/* Folders section in collapsed view */}
+          {activeFolders.map((folder) => (
+            <div
+              key={folder._id}
+              className={`date-item-collapsed ${selectedFolder === folder._id ? "active" : ""}`}
+              onClick={() => {
+                triggerSelectionHaptic();
+                if (onSelectFolder) {
+                  onSelectFolder(folder._id);
+                }
+              }}
+              title={folder.name}
+            >
+              {folder.name.charAt(0).toUpperCase()}
+            </div>
+          ))}
         </div>
       )}
 
