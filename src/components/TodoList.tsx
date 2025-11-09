@@ -23,7 +23,7 @@ import {
 } from "./NotesSection";
 import { Id } from "../../convex/_generated/dataModel";
 import { format, addDays, subDays } from "date-fns";
-import { ArrowUpIcon } from "@radix-ui/react-icons";
+import { ArrowUpIcon, PinLeftIcon, PinRightIcon } from "@radix-ui/react-icons";
 
 interface Todo {
   _id: Id<"todos">;
@@ -101,6 +101,11 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
     const internalTodoInputRef = React.useRef<HTMLTextAreaElement>(null);
     const todoInputRef = externalTodoInputRef || internalTodoInputRef;
     const [isMobile, setIsMobile] = React.useState(false);
+    const [isInputCentered, setIsInputCentered] = React.useState(() => {
+      // Load preference from localStorage, default to centered
+      const saved = localStorage.getItem("todoInputCentered");
+      return saved === null ? true : saved === "true";
+    });
 
     // Detect mobile device
     React.useEffect(() => {
@@ -114,6 +119,15 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       window.addEventListener("resize", checkMobile);
       return () => window.removeEventListener("resize", checkMobile);
     }, []);
+
+    // Toggle input position and save preference
+    const toggleInputPosition = () => {
+      setIsInputCentered((prev) => {
+        const newValue = !prev;
+        localStorage.setItem("todoInputCentered", String(newValue));
+        return newValue;
+      });
+    };
 
     const createTodo = useMutation(api.todos.createTodo);
     const reorderTodos = useMutation(api.todos.reorderTodos);
@@ -536,7 +550,10 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
 
         {/* Notion-like inline input - hide on pinned view and backlog view */}
         {!isPinnedView && !isBacklogView && (
-          <div className="inline-todo-input">
+          <div
+            className="inline-todo-input"
+            data-centered={isInputCentered ? "true" : "false"}
+          >
             <div className="inline-todo-shell">
               <textarea
                 ref={todoInputRef}
@@ -629,6 +646,21 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                 data-lpignore="true"
                 inputMode="text"
               />
+              {!isMobile && (
+                <button
+                  type="button"
+                  className="inline-todo-pin-toggle"
+                  onClick={toggleInputPosition}
+                  aria-label={
+                    isInputCentered ? "Move input to left" : "Center input"
+                  }
+                  title={
+                    isInputCentered ? "Move input to left" : "Center input"
+                  }
+                >
+                  {isInputCentered ? <PinLeftIcon /> : <PinRightIcon />}
+                </button>
+              )}
               <button
                 type="button"
                 className="inline-todo-submit"

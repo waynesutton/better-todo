@@ -52,25 +52,16 @@ export const createNote = mutation({
     }
     const userId = identity.subject;
 
-    // Get the highest order number
-    const existingNotes = await ctx.db
-      .query("notes")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", args.date),
-      )
-      .collect();
-
-    const maxOrder =
-      existingNotes.length > 0
-        ? Math.max(...existingNotes.map((n) => n.order ?? 0))
-        : -1;
+    // Use timestamp-based ordering instead of reading all notes
+    // This avoids write conflicts when creating multiple notes rapidly
+    const order = Date.now();
 
     return await ctx.db.insert("notes", {
       userId: userId,
       date: args.date,
       title: args.title,
       content: "",
-      order: maxOrder + 1,
+      order: order,
       collapsed: false,
     });
   },
@@ -114,9 +105,20 @@ export const deleteNote = mutation({
     }
     const userId = identity.subject;
 
-    const note = await ctx.db.get(args.id);
-    if (!note || note.userId !== userId) {
-      throw new Error("Note not found or unauthorized");
+    // Use indexed query to verify ownership without reading the document first
+    const note = await ctx.db
+      .query("notes")
+      .filter((q) => 
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.id)
+        )
+      )
+      .unique();
+    
+    if (!note) {
+      // Note doesn't exist or doesn't belong to user (idempotent)
+      return null;
     }
 
     await ctx.db.delete(args.id);

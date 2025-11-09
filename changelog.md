@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+No unreleased changes. Tracking resumes with the next commit.
+
+## [v.015] - 2025-11-08
+
 ### Changed
 
 - **Todo Input UI Redesign** - Refined the todo composer with a modern, compact interface

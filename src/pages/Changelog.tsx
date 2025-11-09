@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v014");
+  const [activeSection, setActiveSection] = useState("v015");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
     { id: "unreleased", title: "Unreleased" },
+    { id: "v015", title: "v.015 - Nov 8, 2025" },
     { id: "v014", title: "v.014 - Nov 8, 2025" },
     { id: "v013", title: "v.013 - Nov 2, 2025" },
     { id: "v012", title: "v.012 - Nov 2, 2025" },
@@ -92,29 +93,37 @@ export function Changelog() {
           </p>
 
           <h2 className="section-title">Unreleased</h2>
-          
+          <p className="changelog-subtitle">
+            No unreleased changes. Follow along with the most recent release below.
+          </p>
+        </section>
+
+        <section id="v015" className="launch-section">
+          <h2 className="section-title">v.015 - November 8, 2025</h2>
+          <p className="changelog-subtitle">Todo composer refresh</p>
+          <p>
+            The inline todo composer now matches the rest of the interface with a compact, keyboard-first layout that keeps you moving quickly.
+          </p>
+
           <h3 className="subsection-title">Changed</h3>
           <ul className="feature-list">
             <li>
-              <strong>Todo Input UI Redesign</strong> - Refined the todo composer with a modern, compact interface
+              <strong>Todo Input UI Redesign</strong> - Refined the todo composer with a modern, compact interface.
             </li>
             <li>
-              New rounded container (650px max width on desktop) with background matching var(--bg-secondary)
+              Rounded container (650px max width on desktop) uses <code>var(--bg-secondary)</code> so it blends with the current theme.
             </li>
             <li>
-              Added ArrowUp icon submit button (24px) from Radix UI for one-click todo creation
+              ArrowUp icon submit button (24px desktop, responsive down to 18px) delivers one-click todo creation.
             </li>
             <li>
-              Removed box shadows for cleaner visual design
+              Removed box shadows for a cleaner look aligned with the rest of the UI.
             </li>
             <li>
-              Responsive sizing across all breakpoints (22px on tablet, 20px on mobile, 18px on small devices)
+              Responsive sizing across breakpoints keeps touch targets comfortable everywhere.
             </li>
             <li>
-              Button integrates seamlessly with existing keyboard shortcuts (Enter/Shift+Enter)
-            </li>
-            <li>
-              Disabled state (55% opacity) when input is empty
+              Button integrates seamlessly with existing keyboard shortcuts (Enter/Shift+Enter) and shows a subtle disabled state at 55% opacity.
             </li>
           </ul>
         </section>

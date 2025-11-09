@@ -73,6 +73,21 @@ export const startPomodoro = mutation({
       lastUpdated: now,
     });
 
+    // Increment the global pomodoro sessions started counter
+    const stat = await ctx.db
+      .query("statistics")
+      .withIndex("by_key", (q) => q.eq("key", "pomodoroSessionsStarted"))
+      .unique();
+
+    if (stat) {
+      await ctx.db.patch(stat._id, { value: stat.value + 1 });
+    } else {
+      await ctx.db.insert("statistics", {
+        key: "pomodoroSessionsStarted",
+        value: 1,
+      });
+    }
+
     return sessionId;
   },
 });
@@ -137,15 +152,20 @@ export const completePomodoro = mutation({
   args: { sessionId: v.id("pomodoroSessions") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Check if session exists and is not already completed
-    const session = await ctx.db.get(args.sessionId);
-    if (!session) {
-      // Session already deleted, no-op
-      return null;
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    const userId = identity?.subject;
 
-    // If already completed, don't update again
-    if (session.status === "completed") {
+    // Use indexed query to check ownership and status in one operation
+    const session = await ctx.db
+      .query("pomodoroSessions")
+      .withIndex("by_user", (q) =>
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined),
+      )
+      .filter((q) => q.eq(q.field("_id"), args.sessionId))
+      .unique();
+    
+    // If session doesn't exist or already completed, no-op (idempotent)
+    if (!session || session.status === "completed") {
       return null;
     }
 
@@ -165,11 +185,28 @@ export const updateBackgroundImage = mutation({
   args: { sessionId: v.id("pomodoroSessions"), imageUrl: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const session = await ctx.db.get(args.sessionId);
+    const identity = await ctx.auth.getUserIdentity();
+    const userId = identity?.subject;
+
+    // Use indexed query to verify ownership
+    const session = await ctx.db
+      .query("pomodoroSessions")
+      .withIndex("by_user", (q) =>
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined),
+      )
+      .filter((q) => q.eq(q.field("_id"), args.sessionId))
+      .unique();
+    
     if (!session) {
       return null;
     }
 
+    // Only update if the image URL is different (idempotent)
+    if (session.backgroundImageUrl === args.imageUrl) {
+      return null;
+    }
+
+    // Patch directly without reading first
     await ctx.db.patch(args.sessionId, {
       backgroundImageUrl: args.imageUrl,
     });

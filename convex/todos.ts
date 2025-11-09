@@ -284,32 +284,9 @@ export const createTodo = mutation({
     }
     const userId = identity.subject;
 
-    // Get the highest order number for this date or folder
-    let existingTodos: Array<{
-      _id: any;
-      _creationTime: number;
-      order: number;
-    }> = [];
-    if (args.folderId) {
-      existingTodos = await ctx.db
-        .query("todos")
-        .withIndex("by_user_and_folder", (q) =>
-          q.eq("userId", userId).eq("folderId", args.folderId),
-        )
-        .collect();
-    } else if (args.date) {
-      existingTodos = await ctx.db
-        .query("todos")
-        .withIndex("by_user_and_date", (q) =>
-          q.eq("userId", userId).eq("date", args.date),
-        )
-        .collect();
-    }
-
-    const maxOrder =
-      existingTodos.length > 0
-        ? Math.max(...existingTodos.map((t) => t.order))
-        : -1;
+    // Use timestamp-based ordering instead of reading all todos
+    // This avoids write conflicts when creating multiple todos rapidly
+    const order = Date.now();
 
     return await ctx.db.insert("todos", {
       userId: userId,
@@ -319,7 +296,7 @@ export const createTodo = mutation({
       type: args.type,
       completed: false,
       archived: false,
-      order: maxOrder + 1,
+      order: order,
       parentId: args.parentId,
       collapsed: args.type !== "todo", // Headers start collapsed
     });
@@ -453,22 +430,19 @@ export const deleteTodo = mutation({
     }
     const userId = identity.subject;
 
-    const todo = await ctx.db.get(args.id);
+    // Use indexed query to verify ownership without reading the document first
+    const todo = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.id))
+      .unique();
     
-    // If todo doesn't exist, return early (idempotent)
+    // If todo doesn't exist or doesn't belong to user, return early (idempotent)
     if (!todo) {
       return null;
     }
-    
-    // Check authorization
-    if (todo.userId !== userId) {
-      throw new Error("Not authorized to delete this todo");
-    }
 
-    // Delete the todo
-    await ctx.db.delete(args.id);
-    
-    // Delete all subtasks (children) if this is a header
+    // Delete all subtasks (children) first if this is a header
     if (todo.type !== "todo") {
       const subtasks = await ctx.db
         .query("todos")
@@ -476,10 +450,12 @@ export const deleteTodo = mutation({
         .filter((q) => q.eq(q.field("parentId"), args.id))
         .collect();
       
-      for (const subtask of subtasks) {
-        await ctx.db.delete(subtask._id);
-      }
+      // Delete subtasks in parallel
+      await Promise.all(subtasks.map((subtask) => ctx.db.delete(subtask._id)));
     }
+
+    // Delete the todo
+    await ctx.db.delete(args.id);
     
     return null;
   },

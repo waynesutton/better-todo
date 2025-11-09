@@ -57,6 +57,7 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **Custom confirmation dialogs** matching site design (no browser defaults)
 - **Logged out demo mode** - Try creating up to 3 todos without signing up (data saved locally, lost on refresh)
 - **Feature showcase** - Welcome screen for unauthenticated users explaining app features
+- **Refined todo composer** - Rounded container with ArrowUp submit button keeps keyboard flow fast and responsive across every theme.
 
 ## Tech Stack
 

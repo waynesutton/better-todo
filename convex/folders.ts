@@ -100,18 +100,14 @@ export const createFolder = mutation({
     const userId = await getUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    // Get the highest order number
-    const folders = await ctx.db
-      .query("folders")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    const maxOrder = folders.reduce((max, f) => Math.max(max, f.order), -1);
+    // Use timestamp-based ordering instead of reading all folders
+    // This avoids write conflicts when creating multiple folders rapidly
+    const order = Date.now();
 
     const folderId = await ctx.db.insert("folders", {
       userId,
       name: args.name,
-      order: maxOrder + 1,
+      order: order,
       archived: false,
     });
 
@@ -127,9 +123,20 @@ export const renameFolder = mutation({
     const userId = await getUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const folder = await ctx.db.get(args.folderId);
-    if (!folder || folder.userId !== userId) {
+    // Use indexed query to verify ownership
+    const folder = await ctx.db
+      .query("folders")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.folderId))
+      .unique();
+
+    if (!folder) {
       throw new Error("Folder not found");
+    }
+
+    // Only update if name is different (idempotent)
+    if (folder.name === args.name) {
+      return null;
     }
 
     await ctx.db.patch(args.folderId, { name: args.name });
@@ -145,9 +152,20 @@ export const archiveFolder = mutation({
     const userId = await getUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const folder = await ctx.db.get(args.folderId);
-    if (!folder || folder.userId !== userId) {
+    // Use indexed query to verify ownership and check current state
+    const folder = await ctx.db
+      .query("folders")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.folderId))
+      .unique();
+
+    if (!folder) {
       throw new Error("Folder not found");
+    }
+
+    // Only update if not already archived (idempotent)
+    if (folder.archived) {
+      return null;
     }
 
     // Archive the folder
@@ -162,10 +180,11 @@ export const archiveFolder = mutation({
       .collect();
 
     // Archive all notes in parallel
-    const archivePromises = folderNotes.map((note) =>
-      ctx.db.patch(note._id, { archived: true }),
+    await Promise.all(
+      folderNotes.map((note) =>
+        ctx.db.patch(note._id, { archived: true }),
+      ),
     );
-    await Promise.all(archivePromises);
 
     return null;
   },
@@ -179,9 +198,20 @@ export const unarchiveFolder = mutation({
     const userId = await getUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const folder = await ctx.db.get(args.folderId);
-    if (!folder || folder.userId !== userId) {
+    // Use indexed query to verify ownership and check current state
+    const folder = await ctx.db
+      .query("folders")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.folderId))
+      .unique();
+
+    if (!folder) {
       throw new Error("Folder not found");
+    }
+
+    // Only update if currently archived (idempotent)
+    if (!folder.archived) {
+      return null;
     }
 
     // Unarchive the folder
@@ -196,10 +226,11 @@ export const unarchiveFolder = mutation({
       .collect();
 
     // Unarchive all notes in parallel
-    const unarchivePromises = folderNotes.map((note) =>
-      ctx.db.patch(note._id, { archived: false }),
+    await Promise.all(
+      folderNotes.map((note) =>
+        ctx.db.patch(note._id, { archived: false }),
+      ),
     );
-    await Promise.all(unarchivePromises);
 
     return null;
   },
@@ -213,9 +244,16 @@ export const deleteFolder = mutation({
     const userId = await getUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const folder = await ctx.db.get(args.folderId);
-    if (!folder || folder.userId !== userId) {
-      throw new Error("Folder not found");
+    // Use indexed query to verify ownership
+    const folder = await ctx.db
+      .query("folders")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.folderId))
+      .unique();
+
+    if (!folder) {
+      // Folder doesn't exist or doesn't belong to user (idempotent)
+      return null;
     }
 
     // Delete all folder-date associations
@@ -226,10 +264,6 @@ export const deleteFolder = mutation({
       )
       .collect();
 
-    for (const fd of folderDates) {
-      await ctx.db.delete(fd._id);
-    }
-
     // Delete all full-page notes in this folder
     const folderNotes = await ctx.db
       .query("fullPageNotes")
@@ -238,12 +272,13 @@ export const deleteFolder = mutation({
       )
       .collect();
 
-    for (const note of folderNotes) {
-      await ctx.db.delete(note._id);
-    }
+    // Delete all in parallel
+    await Promise.all([
+      ...folderDates.map((fd) => ctx.db.delete(fd._id)),
+      ...folderNotes.map((note) => ctx.db.delete(note._id)),
+      ctx.db.delete(args.folderId),
+    ]);
 
-    // Delete the folder
-    await ctx.db.delete(args.folderId);
     return null;
   },
 });
@@ -256,8 +291,14 @@ export const addDateToFolder = mutation({
     const userId = await getUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const folder = await ctx.db.get(args.folderId);
-    if (!folder || folder.userId !== userId) {
+    // Use indexed query to verify folder ownership
+    const folder = await ctx.db
+      .query("folders")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.folderId))
+      .unique();
+
+    if (!folder) {
       throw new Error("Folder not found");
     }
 
@@ -270,7 +311,10 @@ export const addDateToFolder = mutation({
       .first();
 
     if (existing) {
-      // Update to new folder
+      // Only update if folder is different (idempotent)
+      if (existing.folderId === args.folderId) {
+        return null;
+      }
       await ctx.db.patch(existing._id, { folderId: args.folderId });
     } else {
       // Create new association
