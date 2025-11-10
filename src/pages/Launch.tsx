@@ -78,11 +78,13 @@ export function Launch() {
     setModalOpen(false);
   };
 
-  const nextImage = () => {
+  const nextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentImageIndex((prev) => (prev + 1) % currentImageSet.length);
   };
 
-  const prevImage = () => {
+  const prevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentImageIndex(
       (prev) => (prev - 1 + currentImageSet.length) % currentImageSet.length,
     );

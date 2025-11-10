@@ -3527,7 +3527,7 @@ button:active,
   outline: none;
   padding: 0;
   line-height: 1.5;
-  min-height: 48px;
+  min-height: 24px;
   max-height: 200px;
   overflow-y: auto;
   -webkit-font-smoothing: antialiased;

@@ -676,10 +676,11 @@ export const archiveAllTodos = mutation({
       .filter((q) => q.eq(q.field("archived"), false))
       .collect();
 
-    // Archive each todo
-    for (const todo of todos) {
-      await ctx.db.patch(todo._id, { archived: true });
-    }
+    // Archive all todos in parallel to avoid write conflicts
+    const updates = todos.map((todo) =>
+      ctx.db.patch(todo._id, { archived: true }),
+    );
+    await Promise.all(updates);
 
     return null;
   },
@@ -707,10 +708,9 @@ export const deleteAllTodos = mutation({
       .filter((q) => q.eq(q.field("archived"), false))
       .collect();
 
-    // Delete each todo
-    for (const todo of todos) {
-      await ctx.db.delete(todo._id);
-    }
+    // Delete all todos in parallel to avoid write conflicts
+    const deletions = todos.map((todo) => ctx.db.delete(todo._id));
+    await Promise.all(deletions);
 
     return null;
   },
@@ -738,10 +738,101 @@ export const deleteAllArchivedTodos = mutation({
       .filter((q) => q.eq(q.field("archived"), true))
       .collect();
 
-    // Delete each archived todo
-    for (const todo of todos) {
-      await ctx.db.delete(todo._id);
+    // Delete all archived todos in parallel to avoid write conflicts
+    const deletions = todos.map((todo) => ctx.db.delete(todo._id));
+    await Promise.all(deletions);
+
+    return null;
+  },
+});
+
+// Archive all active todos for a specific folder
+export const archiveAllTodosInFolder = mutation({
+  args: {
+    folderId: v.id("folders"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
+
+    // Get all active (non-archived) todos for this folder
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .filter((q) => q.eq(q.field("archived"), false))
+      .collect();
+
+    // Archive all todos in parallel to avoid write conflicts
+    const updates = todos.map((todo) =>
+      ctx.db.patch(todo._id, { archived: true }),
+    );
+    await Promise.all(updates);
+
+    return null;
+  },
+});
+
+// Delete all active todos for a specific folder
+export const deleteAllTodosInFolder = mutation({
+  args: {
+    folderId: v.id("folders"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Get all active (non-archived) todos for this folder
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .filter((q) => q.eq(q.field("archived"), false))
+      .collect();
+
+    // Delete all todos in parallel to avoid write conflicts
+    const deletions = todos.map((todo) => ctx.db.delete(todo._id));
+    await Promise.all(deletions);
+
+    return null;
+  },
+});
+
+// Delete all archived todos for a specific folder
+export const deleteAllArchivedTodosInFolder = mutation({
+  args: {
+    folderId: v.id("folders"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Get all archived todos for this folder
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .filter((q) => q.eq(q.field("archived"), true))
+      .collect();
+
+    // Delete all archived todos in parallel to avoid write conflicts
+    const deletions = todos.map((todo) => ctx.db.delete(todo._id));
+    await Promise.all(deletions);
 
     return null;
   },
