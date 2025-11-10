@@ -250,14 +250,31 @@ export const getAvailableDates = query({
     }
     const userId = identity.subject;
 
+    // Get all todos with dates
     const todos = await ctx.db
       .query("todos")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
-    // Filter out folder todos and get unique dates
+    // Get all full page notes with dates
+    const fullPageNotes = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+
+    // Collect dates from todos (excluding folder todos)
     const dateTodos = todos.filter((todo) => !todo.folderId && todo.date);
-    const dates = Array.from(new Set(dateTodos.map((todo) => todo.date!)));
+    const todoDates = dateTodos.map((todo) => todo.date!);
+
+    // Collect dates from full page notes (excluding folder notes and archived notes)
+    const dateNotes = fullPageNotes.filter(
+      (note) => !note.folderId && note.date && !note.archived
+    );
+    const noteDates = dateNotes.map((note) => note.date!);
+
+    // Combine and get unique dates
+    const allDates = [...todoDates, ...noteDates];
+    const dates = Array.from(new Set(allDates));
     return dates.sort().reverse(); // Most recent first
   },
 });
