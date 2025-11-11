@@ -20,10 +20,10 @@ export const getPomodoroSession = query({
       ),
       lastUpdated: v.number(),
       backgroundImageUrl: v.optional(v.string()),
-      // new fields for goal 1
+      // New fields for goal 1
       todoId: v.optional(v.union(v.id("todos"), v.null())),
       todoTitle: v.optional(v.union(v.string(), v.null())),
-      // new fields for goal 2
+      // New fields for goal 2
       phase: v.union(v.literal("focus"), v.literal("break")),
       cycleIndex: v.number(),
       totalCycles: v.number(),
@@ -86,7 +86,7 @@ export const startPomodoro = mutation({
       userId,
       startTime: now,
       duration,
-      remainingTime: args.phaseDuration, // in wayne's it was duration
+      remainingTime: args.phaseDuration, // Changed duration to args.phaseDuration
       status: "running",
       lastUpdated: now,
       // for Goal 1
@@ -186,11 +186,11 @@ export const completePomodoro = mutation({
     const session = await ctx.db
       .query("pomodoroSessions")
       .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined),
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
       )
       .filter((q) => q.eq(q.field("_id"), args.sessionId))
       .unique();
-    
+
     // If session doesn't exist or already completed, no-op (idempotent)
     if (!session || session.status === "completed") {
       return null;
@@ -219,11 +219,11 @@ export const updateBackgroundImage = mutation({
     const session = await ctx.db
       .query("pomodoroSessions")
       .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined),
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
       )
       .filter((q) => q.eq(q.field("_id"), args.sessionId))
       .unique();
-    
+
     if (!session) {
       return null;
     }
@@ -242,17 +242,30 @@ export const updateBackgroundImage = mutation({
   },
 });
 
-// For Goal 2 new mutation to handle focus and breaks
+// 🆕 New: Mutation to handle focus/break cycle transitions (Goal 2)
 export const advancePomodoroPhase = mutation({
   args: {
     sessionId: v.id("pomodoroSessions"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const session = await ctx.db.get(args.sessionId);
-    if (!session) {
-      throw new Error("Session not found");
-    }
+    // Get the user's identity (if sessions are user-scoped)
+    const identity = await ctx.auth.getUserIdentity();
+    const userId = identity?.subject;
+
+    // Use indexed query instead of ctx.db.get()
+    const session = await ctx.db
+      .query("pomodoroSessions")
+      .withIndex("by_user", (q) =>
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
+      )
+      .filter((q) => q.eq(q.field("_id"), args.sessionId))
+      .unique();
+
+    if (!session) return null; // idempotent safety
+
+    // Idempotent phase handling
+    if (session.status === "completed") return null;
 
     if (session.phase === "focus") {
       await ctx.db.patch(session._id, {
@@ -265,6 +278,7 @@ export const advancePomodoroPhase = mutation({
     }
 
     const nextCycle = session.cycleIndex + 1;
+
     if (nextCycle >= session.totalCycles) {
       await ctx.db.patch(session._id, {
         status: "completed",

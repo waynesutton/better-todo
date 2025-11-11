@@ -34,7 +34,7 @@ interface TodoItemProps {
   onDemoToggle?: (id: Id<"todos">) => void;
   isAuthenticated?: boolean;
   onRequireSignInForMenu?: () => void;
-  setPomodoroTriggered: (data: { todoId?: string ; todoTitle?: string}) => void; // ✅ NEW
+  setPomodoroTriggered: (data: { todoId?: string; todoTitle?: string }) => void; // ✅ NEW
 }
 
 export function TodoItem({
@@ -461,8 +461,7 @@ export function TodoItem({
                     }
                     setShowMenu(false);
 
-                   
-                    setPomodoroTriggered({ todoId: id, todoTitle: content }); // 👈 tell App to open modal
+                    setPomodoroTriggered({ todoId: id, todoTitle: content }); // 🆕 New: tell App to open modal
                   }}
                 >
                   Start Pomodoro
@@ -586,7 +585,10 @@ export function TodoItem({
                               setShowMenu(false);
                               await onMoveToPreviousDay();
                             } catch (error) {
-                              console.error("Error moving to previous day:", error);
+                              console.error(
+                                "Error moving to previous day:",
+                                error
+                              );
                             }
                           }}
                         >

@@ -122,7 +122,7 @@ export default defineSchema({
     ),
     lastUpdated: v.number(), // Last update timestamp
     backgroundImageUrl: v.optional(v.string()), // Unsplash image URL for full-screen background
-    // 👇 new optional fields (safe, backward-compatible)
+    // New optional fields (safe, backward-compatible)
     todoId: v.optional(v.union(v.id("todos"), v.null())),
     todoTitle: v.optional(v.union(v.string(), v.null())),
     // Goal 2: Pomodoro phase metadata

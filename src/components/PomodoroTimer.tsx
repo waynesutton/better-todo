@@ -15,9 +15,10 @@ import {
 import { Volume2, VolumeOff, Waves, Clock, Activity } from "lucide-react";
 import { Id } from "../../convex/_generated/dataModel";
 
+//
 interface PomodoroTimerProps {
   triggerData?: { todoId?: string; todoTitle?: string } | null;
-  openOnTrigger?: boolean; // ✅ new optional prop
+  openOnTrigger?: boolean; // new optional prop
   onClearTrigger?: () => void;
 }
 
@@ -270,7 +271,7 @@ export function PomodoroTimer({
     90: { focus: 90, break: 30, cycles: 1 },
   };
 
-  // goal 2 pull out preset based on duration minutes
+  // New : Goal 2 - pull out preset based on duration minutes
   const activePreset = sessionPresets[durationMinutes] ?? sessionPresets[25];
 
   const handleStart = async () => {
@@ -389,7 +390,7 @@ export function PomodoroTimer({
     }
   };
 
-  // Presets and icons for the pomodoro timer
+  // 🆕 New: Presets and icons for the pomodoro timer
   const durationPresets = [25, 50, 90];
   const durationIcons: Record<number, JSX.Element> = {
     25: <Waves width={24} height={24} />,
@@ -487,11 +488,10 @@ export function PomodoroTimer({
             {session && (
               <div className="phase-badge-wrapper">
                 <div className={`phase-badge phase-${currentPhase}`}>
-                {currentPhase === "focus" ? "Focus" : "Break"} · Round{" "}
-                {session.cycleIndex + 1} of {session.totalCycles}
+                  {currentPhase === "focus" ? "Focus" : "Break"} · Round{" "}
+                  {session.cycleIndex + 1} of {session.totalCycles}
+                </div>
               </div>
-              </div>
-              
             )}
 
             <div className="pomodoro-timer-display">
@@ -516,12 +516,7 @@ export function PomodoroTimer({
                     onClick={handleToggleDuration}
                     title={durationLabels[durationMinutes]}
                   >
-                    {/* Wayne code */}
-                    {/* {durationMinutes === 25 ? (
-                      <Waves width={24} height={24} />
-                    ) : (
-                      <Clock width={24} height={24} />
-                    )} */}
+                     {/* 🧭 Modified: replaced Wayne’s single toggle logic with preset-based duration control (25, 50, 90 mins) */}
                     <span className="duration-icon">
                       {durationIcons[durationMinutes]}
                     </span>
@@ -600,12 +595,14 @@ export function PomodoroTimer({
               </div>
             )}
 
-            {/* Goal 2 : Change classname when background image is true i.e from blue or green to white  */}
+            {/* 🆕 New - Goal 2 : Change classname when background image is true i.e from blue or green to white  */}
             <div
               className={`pomodoro-fullscreen-content${showBackgroundImage ? " with-glass-effect" : ""}`}
             >
               {session && (
-                <div className={`phase-badge phase-${currentPhase} ${showBackgroundImage ? "phase-invert" : ""}`}>
+                <div
+                  className={`phase-badge phase-${currentPhase} ${showBackgroundImage ? "phase-invert" : ""}`}
+                >
                   {currentPhase === "focus" ? "Focus" : "Break"} · Round{" "}
                   {session.cycleIndex + 1} of {session.totalCycles}
                 </div>
