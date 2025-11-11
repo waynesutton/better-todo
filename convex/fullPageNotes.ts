@@ -239,35 +239,9 @@ export const createFullPageNote = mutation({
       throw new Error("Cannot provide both date and folderId");
     }
 
-    let maxOrder = -1;
-
-    if (args.folderId) {
-      // Get the highest order number for this folder
-      const existingNotes = await ctx.db
-        .query("fullPageNotes")
-        .withIndex("by_user_and_folder", (q) =>
-          q.eq("userId", userId).eq("folderId", args.folderId),
-        )
-        .collect();
-
-      maxOrder =
-        existingNotes.length > 0
-          ? Math.max(...existingNotes.map((n) => n.order))
-          : -1;
-    } else if (args.date) {
-      // Get the highest order number for this date
-      const existingNotes = await ctx.db
-        .query("fullPageNotes")
-        .withIndex("by_user_and_date", (q) =>
-          q.eq("userId", userId).eq("date", args.date),
-        )
-        .collect();
-
-      maxOrder =
-        existingNotes.length > 0
-          ? Math.max(...existingNotes.map((n) => n.order))
-          : -1;
-    }
+    // Use timestamp-based ordering instead of reading all notes
+    // This avoids write conflicts when creating multiple notes rapidly
+    const order = Date.now();
 
     const noteId = await ctx.db.insert("fullPageNotes", {
       userId: userId,
@@ -275,7 +249,7 @@ export const createFullPageNote = mutation({
       folderId: args.folderId,
       title: "Untitled",
       content: "",
-      order: maxOrder + 1,
+      order: order,
       collapsed: false,
       archived: false,
     });
@@ -351,9 +325,20 @@ export const deleteFullPageNote = mutation({
     }
     const userId = identity.subject;
 
-    const note = await ctx.db.get(args.id);
-    if (!note || note.userId !== userId) {
-      throw new Error("Note not found or unauthorized");
+    // Use indexed query to verify ownership without reading the document first
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.id)
+        )
+      )
+      .unique();
+
+    if (!note) {
+      // Note doesn't exist or doesn't belong to user (idempotent)
+      return null;
     }
 
     await ctx.db.delete(args.id);
@@ -452,29 +437,34 @@ export const moveFullPageNoteToFolder = mutation({
     }
     const userId = identity.subject;
 
-    const note = await ctx.db.get(args.noteId);
-    if (!note || note.userId !== userId) {
+    // Use indexed query to verify note ownership
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.noteId)
+        )
+      )
+      .unique();
+
+    if (!note) {
       throw new Error("Note not found or unauthorized");
     }
 
-    // Get the highest order number for this folder
-    const existingNotes = await ctx.db
-      .query("fullPageNotes")
-      .withIndex("by_user_and_folder", (q) =>
-        q.eq("userId", userId).eq("folderId", args.folderId),
-      )
-      .collect();
+    // Only update if folder is different (idempotent)
+    if (note.folderId === args.folderId) {
+      return null;
+    }
 
-    const maxOrder =
-      existingNotes.length > 0
-        ? Math.max(...existingNotes.map((n) => n.order))
-        : -1;
+    // Use timestamp-based ordering to avoid reading all notes
+    const order = Date.now();
 
     // Move note to folder (remove date association, set proper order)
     await ctx.db.patch(args.noteId, {
       folderId: args.folderId,
       date: undefined,
-      order: maxOrder + 1,
+      order: order,
     });
 
     return null;
@@ -495,29 +485,34 @@ export const moveFullPageNoteToDate = mutation({
     }
     const userId = identity.subject;
 
-    const note = await ctx.db.get(args.noteId);
-    if (!note || note.userId !== userId) {
+    // Use indexed query to verify note ownership
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.noteId)
+        )
+      )
+      .unique();
+
+    if (!note) {
       throw new Error("Note not found or unauthorized");
     }
 
-    // Get the highest order number for this date
-    const existingNotes = await ctx.db
-      .query("fullPageNotes")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", args.date),
-      )
-      .collect();
+    // Only update if date is different (idempotent)
+    if (note.date === args.date && !note.folderId) {
+      return null;
+    }
 
-    const maxOrder =
-      existingNotes.length > 0
-        ? Math.max(...existingNotes.map((n) => n.order))
-        : -1;
+    // Use timestamp-based ordering to avoid reading all notes
+    const order = Date.now();
 
     // Move note to date (remove folder association)
     await ctx.db.patch(args.noteId, {
       date: args.date,
       folderId: undefined,
-      order: maxOrder + 1,
+      order: order,
     });
 
     return null;

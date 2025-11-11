@@ -842,6 +842,7 @@ body {
   overflow-x: hidden;
   height: 100%;
   margin: 0;
+  padding: 0;
   /* Font rendering for sharp text across all browsers */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -852,11 +853,7 @@ body {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: none;
   touch-action: pan-y;
-  /* Apply safe area insets */
-  padding-top: var(--safe-area-top);
-  padding-bottom: var(--safe-area-bottom);
-  padding-left: var(--safe-area-left);
-  padding-right: var(--safe-area-right);
+  /* Safe area insets handled by .app-container on mobile to avoid double padding */
 }
 
 /* iOS Native Active States for Buttons */
@@ -1933,8 +1930,7 @@ button:active,
   position: sticky;
   bottom: 0;
   z-index: 10;
-  /* Apply safe area bottom padding */
-  padding-bottom: calc(12px + var(--safe-area-bottom));
+  /* Safe area bottom handled by .app-container on mobile */
 }
 
 .main-header {
@@ -2147,7 +2143,7 @@ button:active,
   font-family:
     "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New",
     monospace;
-  font-size: 13px;
+  font-size: var(--font-todo);
   line-height: 1.5;
   min-width: 30px;
   overflow: hidden;
@@ -2155,7 +2151,7 @@ button:active,
 }
 
 .note-line-numbers .line-number {
-  height: 21px;
+  line-height: 1.5;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -3490,12 +3486,34 @@ button:active,
 /* Notion-like inline input */
 .inline-todo-input {
   margin-top: 12px;
-  min-height: 32px;
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
   width: 100%;
+  max-width: 650px;
+  position: relative;
+  transition: margin 0.3s ease;
+}
+
+/* Centered state (default) */
+.inline-todo-input[data-centered="true"] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Left-aligned state */
+.inline-todo-input[data-centered="false"] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.inline-todo-shell {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  padding: 12px 12px 12px 18px;
+  gap: 12px;
+  box-shadow: none;
 }
 
 .notion-input {
@@ -3507,7 +3525,7 @@ button:active,
   font-size: var(--font-todo);
   resize: none;
   outline: none;
-  padding: 5px 1px 1px 20px;
+  padding: 0;
   line-height: 1.5;
   min-height: 24px;
   max-height: 200px;
@@ -3520,6 +3538,74 @@ button:active,
   /* Larger cursor styling */
   caret-color: var(--text-primary);
   caret-shape: block;
+}
+
+.inline-todo-pin-toggle {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  padding: 0;
+  opacity: 0.5;
+}
+
+.inline-todo-pin-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+
+.inline-todo-pin-toggle:hover {
+  opacity: 1;
+}
+
+.inline-todo-submit {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--mobile-add-button-bg);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+  box-shadow: none;
+}
+
+.inline-todo-submit svg {
+  width: 14px;
+  height: 14px;
+}
+
+.inline-todo-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.inline-todo-submit:not(:disabled):hover,
+.inline-todo-submit:not(:disabled):focus-visible {
+  background-color: var(
+    --mobile-add-button-bg-hover,
+    var(--mobile-add-button-bg)
+  );
+  transform: translateY(-1px);
+}
+
+.inline-todo-submit:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
 }
 
 /* Larger cursor when focused but not actively typing */
@@ -3670,20 +3756,26 @@ button:active,
     padding: 0;
   }
 
+  #root {
+    min-height: 100dvh;
+    height: 100dvh;
+  }
+
   .app-container {
     position: relative;
     height: 100dvh;
     overflow: hidden;
-    /* Apply safe area insets on mobile */
-    padding-top: var(--safe-area-top);
+    /* Apply safe area insets on mobile for notch/home indicator */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .sidebar {
     position: fixed !important;
     left: 0;
-    top: 0;
-    height: 100dvh;
-    max-height: 100dvh;
+    top: env(safe-area-inset-top);
+    height: calc(100dvh - env(safe-area-inset-top));
+    max-height: calc(100dvh - env(safe-area-inset-top));
     z-index: 1000;
     width: 280px !important;
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
@@ -3807,12 +3899,28 @@ button:active,
   /* Reduce padding for inline input on mobile */
   .inline-todo-input {
     margin-top: 8px;
-    gap: 6px;
-    width: 90%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .inline-todo-shell {
+    padding: 10px 12px 10px 16px;
+    border-radius: 7px;
+  }
+
+  .inline-todo-submit {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+  }
+
+  .inline-todo-submit svg {
+    width: 13px;
+    height: 13px;
   }
 
   .notion-input {
-    padding: 4px 0;
+    padding: 0;
     /* Prevent iOS Safari auto-zoom on focus */
     font-size: 16px;
   }
@@ -3847,18 +3955,26 @@ button:active,
   }
 
   .inline-todo-input {
-    width: 95%;
-    gap: 4px;
+    width: 100%;
   }
 
-  .mobile-add-button {
-    min-width: 34px;
-    min-height: 34px;
-    padding: 7px;
+  .inline-todo-shell {
+    padding: 10px 10px 10px 14px;
+    border-radius: 6px;
+  }
+
+  .inline-todo-submit {
+    width: 20px;
+    height: 20px;
+  }
+
+  .inline-todo-submit svg {
+    width: 12px;
+    height: 12px;
   }
 
   .notion-input {
-    padding: 3px 0;
+    padding: 0;
     /* Keep 16px to prevent iOS zoom */
     font-size: 16px;
   }
@@ -3905,15 +4021,19 @@ button:active,
     padding: 4px 8px;
   }
 
-  .inline-todo-input {
-    width: 100%;
-    gap: 3px;
+  .inline-todo-shell {
+    padding: 10px 10px 10px 12px;
+    border-radius: 6px;
   }
 
-  .mobile-add-button {
-    min-width: 32px;
-    min-height: 32px;
-    padding: 6px;
+  .inline-todo-submit {
+    width: 18px;
+    height: 18px;
+  }
+
+  .inline-todo-submit svg {
+    width: 11px;
+    height: 11px;
   }
 
   .notion-input {
@@ -6037,10 +6157,13 @@ button:active,
   background-color: var(--bg-primary);
   display: flex;
   flex-direction: column;
+  /* Handle safe areas in fullscreen mode */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .fullscreen-mode .fullpage-note-view {
-  height: 100vh;
+  height: 100%;
 }
 
 .fullpage-note-header {
@@ -6439,10 +6562,14 @@ button:active,
 @media (max-width: 768px) {
   .fullpage-note-tabs {
     padding: 0 8px;
+    /* Add safe area top padding on mobile for tabs under notch */
+    padding-top: calc(8px + env(safe-area-inset-top));
   }
 
   .fullpage-note-content-wrapper {
     padding: 12px;
+    /* Add safe area bottom padding on mobile for fullpage notes */
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
   }
 
   .fullpage-note-tab {

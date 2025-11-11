@@ -24,6 +24,7 @@ import {
   CheckIcon,
   ExternalLinkIcon,
   FileTextIcon,
+  CheckboxIcon,
 } from "@radix-ui/react-icons";
 import { Id } from "../convex/_generated/dataModel";
 import { useTheme } from "./context/ThemeContext";
@@ -43,6 +44,9 @@ function App() {
 
   const [selectedDate, setSelectedDate] = useState<string>(
     format(new Date(), "yyyy-MM-dd")
+  );
+  const [selectedFolder, setSelectedFolder] = useState<Id<"folders"> | null>(
+    null
   );
   // Check if mobile on initial load (hide sidebar completely by default on mobile)
   const isMobile = window.innerWidth <= 768;
@@ -101,7 +105,7 @@ function App() {
     useState<Id<"todos"> | null>(null);
   const [openMenuTrigger, setOpenMenuTrigger] = useState<number>(0);
 
-  // new useState
+  // new useState for opening pomodoro for respective todo
   const [pomodoroTriggered, setPomodoroTriggered] = useState<{
     todoId?: string;
     todoTitle?: string;
@@ -165,6 +169,13 @@ function App() {
   const archiveAllTodos = useMutation(api.todos.archiveAllTodos);
   const deleteAllTodos = useMutation(api.todos.deleteAllTodos);
   const deleteAllArchivedTodos = useMutation(api.todos.deleteAllArchivedTodos);
+  const archiveAllTodosInFolder = useMutation(
+    api.todos.archiveAllTodosInFolder
+  );
+  const deleteAllTodosInFolder = useMutation(api.todos.deleteAllTodosInFolder);
+  const deleteAllArchivedTodosInFolder = useMutation(
+    api.todos.deleteAllArchivedTodosInFolder
+  );
   const deleteTodo = useMutation(api.todos.deleteTodo);
   const reorderTodos = useMutation(api.todos.reorderTodos);
   const updateTodo = useMutation(api.todos.updateTodo);
@@ -187,9 +198,21 @@ function App() {
     api.todos.getBacklogTodos,
     isAuthenticated ? undefined : "skip"
   );
+  const folderTodos = useQuery(
+    api.todos.getTodosByFolder,
+    isAuthenticated && selectedFolder ? { folderId: selectedFolder } : "skip"
+  );
+  const folders = useQuery(
+    api.folders.getFolders,
+    isAuthenticated ? undefined : "skip"
+  );
+  const selectedFolderData = folders?.find((f) => f._id === selectedFolder);
   const todos = useQuery(
     api.todos.getTodosByDate,
-    isAuthenticated && selectedDate !== "pinned" && selectedDate !== "backlog"
+    isAuthenticated &&
+      selectedDate !== "pinned" &&
+      selectedDate !== "backlog" &&
+      !selectedFolder
       ? { date: selectedDate }
       : "skip"
   );
@@ -197,9 +220,18 @@ function App() {
   // Fetch full-page notes for selected date
   const fullPageNotes = useQuery(
     api.fullPageNotes.getFullPageNotesByDate,
-    isAuthenticated && selectedDate !== "pinned" && selectedDate !== "backlog"
+    isAuthenticated &&
+      selectedDate !== "pinned" &&
+      selectedDate !== "backlog" &&
+      !selectedFolder
       ? { date: selectedDate }
       : "skip"
+  );
+
+  // Fetch full-page notes for selected folder
+  const folderFullPageNotes = useQuery(
+    api.fullPageNotes.getFullPageNotesByFolder,
+    isAuthenticated && selectedFolder ? { folderId: selectedFolder } : "skip"
   );
 
   // Fetch full-page notes for all open tabs (including folder notes)
@@ -210,8 +242,9 @@ function App() {
       : "skip"
   );
 
-  // Combine notes from date and open tabs, prioritizing open tabs
-  const allFullPageNotes = openTabNotes || fullPageNotes || [];
+  // Combine notes from date, folder, and open tabs
+  const allFullPageNotes =
+    openTabNotes || folderFullPageNotes || fullPageNotes || [];
 
   // Ensure current date is always available
   useEffect(() => {
@@ -363,6 +396,10 @@ function App() {
       return "Backlog";
     }
 
+    if (selectedFolder && selectedFolderData) {
+      return selectedFolderData.name;
+    }
+
     const date = new Date(selectedDate + "T00:00:00");
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -399,7 +436,9 @@ function App() {
         ? pinnedTodos || []
         : selectedDate === "backlog"
           ? backlogTodos || []
-          : todos || []
+          : selectedFolder
+            ? folderTodos || []
+            : todos || []
       : demoTodos;
 
   // Separate archived and active todos, sort pinned to the top
@@ -426,14 +465,22 @@ function App() {
 
   // Footer action handlers
   const handleArchiveAllConfirm = async () => {
-    if (selectedDate !== "pinned" && selectedDate !== "backlog") {
+    if (selectedFolder) {
+      // Archive all todos in the selected folder
+      await archiveAllTodosInFolder({ folderId: selectedFolder });
+    } else if (selectedDate !== "pinned" && selectedDate !== "backlog") {
+      // Archive all todos for the selected date
       await archiveAllTodos({ date: selectedDate });
     }
     setConfirmArchiveAll(false);
   };
 
   const handleDeleteAllConfirm = async () => {
-    if (selectedDate !== "pinned" && selectedDate !== "backlog") {
+    if (selectedFolder) {
+      // Delete all todos in the selected folder
+      await deleteAllTodosInFolder({ folderId: selectedFolder });
+    } else if (selectedDate !== "pinned" && selectedDate !== "backlog") {
+      // Delete all todos for the selected date
       await deleteAllTodos({ date: selectedDate });
     }
     setConfirmDeleteAll(false);
@@ -444,7 +491,11 @@ function App() {
   };
 
   const handleDeleteAllArchived = async () => {
-    if (selectedDate !== "pinned" && selectedDate !== "backlog") {
+    if (selectedFolder) {
+      // Delete all archived todos in the selected folder
+      await deleteAllArchivedTodosInFolder({ folderId: selectedFolder });
+    } else if (selectedDate !== "pinned" && selectedDate !== "backlog") {
+      // Delete all archived todos for the selected date
       await deleteAllArchivedTodos({ date: selectedDate });
     }
   };
@@ -586,6 +637,18 @@ function App() {
         if (lastCompletedTodo) {
           updateTodo({ id: lastCompletedTodo, completed: false });
           setLastCompletedTodo(null);
+        }
+      }
+
+      // Jump to today with t
+      if (e.key === "t") {
+        e.preventDefault();
+        const today = format(new Date(), "yyyy-MM-dd");
+        setSelectedDate(today);
+        setSelectedFolder(null);
+        // Close sidebar on mobile
+        if (window.innerWidth <= 768) {
+          setSidebarHidden(false);
         }
       }
 
@@ -801,7 +864,20 @@ function App() {
               selectedDate={selectedDate}
               onSelectDate={(date) => {
                 setSelectedDate(date);
+                // Clear folder selection when selecting a date
+                setSelectedFolder(null);
                 // Close full-page notes view when selecting a date
+                setShowFullPageNotes(false);
+                setSelectedFullPageNoteId(null);
+              }}
+              selectedFolder={selectedFolder}
+              onSelectFolder={(folderId) => {
+                setSelectedFolder(folderId);
+                // Clear date selection when selecting a folder (except pinned/backlog)
+                if (selectedDate !== "pinned" && selectedDate !== "backlog") {
+                  setSelectedDate("");
+                }
+                // Close full-page notes view when selecting a folder
                 setShowFullPageNotes(false);
                 setSelectedFullPageNoteId(null);
               }}
@@ -811,11 +887,16 @@ function App() {
               onOpenSignUp={() => setShowSignUpModal(true)}
               onOpenProfile={() => setShowProfileModal(true)}
               onShowInfo={() => setShowInfoModal(true)}
-              onOpenFullPageNote={(noteId, date) => {
-                // Navigate to the date and open the full-page note
+              onOpenFullPageNote={(noteId, date, folderId) => {
+                // Navigate to the date or folder and open the full-page note
                 // If date is provided (note is attached to a date), navigate to it
                 if (date) {
                   setSelectedDate(date);
+                  setSelectedFolder(null);
+                } else if (folderId) {
+                  // Note is in a folder - select the folder
+                  setSelectedFolder(folderId);
+                  setSelectedDate("");
                 }
                 // Add the note as a tab if it's not already open, otherwise just select it
                 setOpenFullPageNoteTabs((prev) =>
@@ -938,43 +1019,73 @@ function App() {
                     <CopyIcon style={{ width: 18, height: 18 }} />
                   )}
                 </button>
-                {/* Full-page notes icon - only show on regular date pages */}
-                {selectedDate !== "pinned" && selectedDate !== "backlog" && (
+                {/* Back button - show when in full-page notes view */}
+                {showFullPageNotes && (
                   <button
                     className="search-button"
-                    onClick={async () => {
+                    onClick={() => {
                       triggerSelectionHaptic();
-                      if (!authIsLoading && isAuthenticated) {
-                        // If there are existing notes, open the first one
-                        if (fullPageNotes && fullPageNotes.length > 0) {
-                          const firstNote = fullPageNotes[0];
-                          if (!openFullPageNoteTabs.includes(firstNote._id)) {
-                            setOpenFullPageNoteTabs((prev) => [
-                              ...prev,
-                              firstNote._id,
-                            ]);
-                          }
-                          setSelectedFullPageNoteId(firstNote._id);
-                          setShowFullPageNotes(true);
-                        } else {
-                          // No notes exist, create a new one
-                          const newNoteId = await createFullPageNote({
-                            date: selectedDate,
-                          });
-                          setOpenFullPageNoteTabs([newNoteId]);
-                          setSelectedFullPageNoteId(newNoteId);
-                          setShowFullPageNotes(true);
-                        }
-                      } else {
-                        setShowSignInToNoteModal(true);
-                      }
+                      // Close full-page notes view and stay on the same date/folder
+                      // No need to navigate elsewhere - just hide the notes view
+                      setShowFullPageNotes(false);
+                      setSelectedFullPageNoteId(null);
+                      setIsFullscreenNotes(false);
                     }}
-                    title="View full-page notes"
+                    title="Back to todos"
                   >
-                    <FileTextIcon style={{ width: 18, height: 18 }} />
+                    <CheckboxIcon style={{ width: 18, height: 18 }} />
                   </button>
                 )}
-                <PomodoroTimer triggerData={pomodoroTriggered} openOnTrigger={true} onClearTrigger ={() => setPomodoroTriggered(null)}/>
+                {/* Full-page notes icon - show on regular date pages and folders */}
+                {selectedDate !== "pinned" &&
+                  selectedDate !== "backlog" &&
+                  !showFullPageNotes && (
+                    <button
+                      className="search-button"
+                      onClick={async () => {
+                        triggerSelectionHaptic();
+                        if (!authIsLoading && isAuthenticated) {
+                          // Get notes based on whether we're viewing a folder or a date
+                          const notesToView = selectedFolder
+                            ? folderFullPageNotes
+                            : fullPageNotes;
+
+                          // If there are existing notes, open the first one
+                          if (notesToView && notesToView.length > 0) {
+                            const firstNote = notesToView[0];
+                            if (!openFullPageNoteTabs.includes(firstNote._id)) {
+                              setOpenFullPageNoteTabs((prev) => [
+                                ...prev,
+                                firstNote._id,
+                              ]);
+                            }
+                            setSelectedFullPageNoteId(firstNote._id);
+                            setShowFullPageNotes(true);
+                          } else {
+                            // No notes exist, create a new one
+                            const newNoteId = await createFullPageNote(
+                              selectedFolder
+                                ? { folderId: selectedFolder }
+                                : { date: selectedDate }
+                            );
+                            setOpenFullPageNoteTabs([newNoteId]);
+                            setSelectedFullPageNoteId(newNoteId);
+                            setShowFullPageNotes(true);
+                          }
+                        } else {
+                          setShowSignInToNoteModal(true);
+                        }
+                      }}
+                      title="View full-page notes"
+                    >
+                      <FileTextIcon style={{ width: 18, height: 18 }} />
+                    </button>
+                  )}
+                <PomodoroTimer
+                  triggerData={pomodoroTriggered}
+                  openOnTrigger={true}
+                  onClearTrigger={() => setPomodoroTriggered(null)}
+                />
                 <button
                   className="search-button"
                   onClick={() => {
@@ -1134,6 +1245,8 @@ function App() {
                     ref={todoListRef}
                     todos={displayTodos}
                     date={selectedDate}
+                    folderId={selectedFolder}
+                    folders={folders}
                     expandedNoteId={expandedNoteId}
                     onNoteExpanded={() => setExpandedNoteId(null)}
                     isPinnedView={selectedDate === "pinned"}
@@ -1154,7 +1267,7 @@ function App() {
                     demoTodos={demoTodos}
                     setDemoTodos={setDemoTodos}
                     isAuthenticated={!authIsLoading && isAuthenticated}
-                    setPomodoroTriggered={setPomodoroTriggered} // ✅ NEW
+                    setPomodoroTriggered={setPomodoroTriggered} // New
                   />
                 </div>
               </div>
@@ -1236,6 +1349,8 @@ function App() {
                 ref={todoListRef}
                 todos={displayTodos}
                 date={selectedDate}
+                folderId={selectedFolder}
+                folders={folders}
                 expandedNoteId={expandedNoteId}
                 onNoteExpanded={() => setExpandedNoteId(null)}
                 isPinnedView={selectedDate === "pinned"}
@@ -1252,7 +1367,7 @@ function App() {
                 demoTodos={demoTodos}
                 setDemoTodos={setDemoTodos}
                 isAuthenticated={!authIsLoading && isAuthenticated}
-                setPomodoroTriggered={setPomodoroTriggered} // ✅ NEW
+                setPomodoroTriggered={setPomodoroTriggered} // New
               />
             )}
           </div>
@@ -1282,7 +1397,8 @@ function App() {
               activeTodos.length > 0 &&
               selectedDate !== "pinned" &&
               selectedDate !== "backlog" &&
-              isAuthenticated && (
+              isAuthenticated &&
+              (selectedFolder || selectedDate) && (
                 <div className="bulk-actions">
                   <button
                     className="bulk-action-button"
@@ -1318,9 +1434,18 @@ function App() {
             // Only set date if it's not empty (folder notes have empty date)
             if (date) {
               setSelectedDate(date);
+              setSelectedFolder(null);
             }
             // If a full-page note was selected, open it
             if (fullPageNoteId) {
+              // Check if note is in a folder
+              const note = allFullPageNotes.find(
+                (n) => n._id === fullPageNoteId
+              );
+              if (note?.folderId) {
+                setSelectedFolder(note.folderId);
+                setSelectedDate("");
+              }
               setOpenFullPageNoteTabs((prev) =>
                 prev.includes(fullPageNoteId) ? prev : [...prev, fullPageNoteId]
               );

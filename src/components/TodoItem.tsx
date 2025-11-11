@@ -20,11 +20,14 @@ interface TodoItemProps {
   backlog?: boolean;
   isPinnedView?: boolean;
   isBacklogView?: boolean;
+  folderId?: Id<"folders">;
   onMoveToPreviousDay: () => void;
   onMoveToNextDay: () => void;
   onMoveToTomorrow: () => void;
   onMoveToToday: () => void;
   onMoveToCustomDate: (date: string) => void;
+  onMoveToFolder?: (folderId: Id<"folders">) => void;
+  folders?: Array<{ _id: Id<"folders">; name: string; archived: boolean }>;
   onHoverChange?: (id: Id<"todos"> | null) => void;
   openMenuTrigger?: number;
   isDemoMode?: boolean;
@@ -44,11 +47,14 @@ export function TodoItem({
   backlog = false,
   isPinnedView = false,
   isBacklogView = false,
+  folderId,
   onMoveToPreviousDay,
   onMoveToNextDay,
   onMoveToTomorrow,
   onMoveToToday,
   onMoveToCustomDate,
+  onMoveToFolder,
+  folders = [],
   onHoverChange,
   openMenuTrigger,
   isDemoMode = false,
@@ -62,6 +68,7 @@ export function TodoItem({
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showProjectSelector, setShowProjectSelector] = useState(false);
   const [customDate, setCustomDate] = useState("");
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -489,97 +496,137 @@ export function TodoItem({
                 {/* Move options */}
                 {!isBacklogView && (
                   <>
-                    <div
-                      className="menu-item"
-                      onClick={async () => {
-                        try {
+                    {/* If todo is in a folder, only show Move to Date option */}
+                    {folderId ? (
+                      <div
+                        className="menu-item"
+                        onClick={() => {
                           triggerHaptic("light");
                           if (!isAuthenticated && onRequireSignInForMenu) {
                             setShowMenu(false);
                             onRequireSignInForMenu();
                             return;
                           }
+                          setShowDatePicker(true);
                           setShowMenu(false);
-                          await onMoveToToday();
-                        } catch (error) {
-                          console.error("Error moving to today:", error);
-                        }
-                      }}
-                    >
-                      Move to Today
-                    </div>
-                    <div
-                      className="menu-item"
-                      onClick={async () => {
-                        try {
-                          triggerHaptic("light");
-                          if (!isAuthenticated && onRequireSignInForMenu) {
+                        }}
+                      >
+                        Move to Date…
+                      </div>
+                    ) : (
+                      <>
+                        {/* Standard date move options when not in a folder */}
+                        <div
+                          className="menu-item"
+                          onClick={async () => {
+                            try {
+                              triggerHaptic("light");
+                              if (!isAuthenticated && onRequireSignInForMenu) {
+                                setShowMenu(false);
+                                onRequireSignInForMenu();
+                                return;
+                              }
+                              setShowMenu(false);
+                              await onMoveToToday();
+                            } catch (error) {
+                              console.error("Error moving to today:", error);
+                            }
+                          }}
+                        >
+                          Move to Today
+                        </div>
+                        <div
+                          className="menu-item"
+                          onClick={async () => {
+                            try {
+                              triggerHaptic("light");
+                              if (!isAuthenticated && onRequireSignInForMenu) {
+                                setShowMenu(false);
+                                onRequireSignInForMenu();
+                                return;
+                              }
+                              setShowMenu(false);
+                              await onMoveToTomorrow();
+                            } catch (error) {
+                              console.error("Error moving to tomorrow:", error);
+                            }
+                          }}
+                        >
+                          Move to Tomorrow
+                        </div>
+                        <div
+                          className="menu-item"
+                          onClick={async () => {
+                            try {
+                              triggerHaptic("light");
+                              if (!isAuthenticated && onRequireSignInForMenu) {
+                                setShowMenu(false);
+                                onRequireSignInForMenu();
+                                return;
+                              }
+                              setShowMenu(false);
+                              await onMoveToNextDay();
+                            } catch (error) {
+                              console.error("Error moving to next day:", error);
+                            }
+                          }}
+                        >
+                          Move to Next Day
+                        </div>
+                        <div
+                          className="menu-item"
+                          onClick={async () => {
+                            try {
+                              triggerHaptic("light");
+                              if (!isAuthenticated && onRequireSignInForMenu) {
+                                setShowMenu(false);
+                                onRequireSignInForMenu();
+                                return;
+                              }
+                              setShowMenu(false);
+                              await onMoveToPreviousDay();
+                            } catch (error) {
+                              console.error("Error moving to previous day:", error);
+                            }
+                          }}
+                        >
+                          Move to Previous Day
+                        </div>
+                        <div
+                          className="menu-item"
+                          onClick={() => {
+                            triggerHaptic("light");
+                            if (!isAuthenticated && onRequireSignInForMenu) {
+                              setShowMenu(false);
+                              onRequireSignInForMenu();
+                              return;
+                            }
+                            setShowDatePicker(true);
                             setShowMenu(false);
-                            onRequireSignInForMenu();
-                            return;
-                          }
-                          setShowMenu(false);
-                          await onMoveToTomorrow();
-                        } catch (error) {
-                          console.error("Error moving to tomorrow:", error);
-                        }
-                      }}
-                    >
-                      Move to Tomorrow
-                    </div>
-                    <div
-                      className="menu-item"
-                      onClick={async () => {
-                        try {
-                          triggerHaptic("light");
-                          if (!isAuthenticated && onRequireSignInForMenu) {
-                            setShowMenu(false);
-                            onRequireSignInForMenu();
-                            return;
-                          }
-                          setShowMenu(false);
-                          await onMoveToNextDay();
-                        } catch (error) {
-                          console.error("Error moving to next day:", error);
-                        }
-                      }}
-                    >
-                      Move to Next Day
-                    </div>
-                    <div
-                      className="menu-item"
-                      onClick={async () => {
-                        try {
-                          triggerHaptic("light");
-                          if (!isAuthenticated && onRequireSignInForMenu) {
-                            setShowMenu(false);
-                            onRequireSignInForMenu();
-                            return;
-                          }
-                          setShowMenu(false);
-                          await onMoveToPreviousDay();
-                        } catch (error) {
-                          console.error("Error moving to previous day:", error);
-                        }
-                      }}
-                    >
-                      Move to Previous Day
-                    </div>
-                    <div
-                      className="menu-item"
-                      onClick={() => {
-                        triggerHaptic("light");
-                        if (!isAuthenticated && onRequireSignInForMenu) {
-                          setShowMenu(false);
-                          onRequireSignInForMenu();
-                          return;
-                        }
-                        setShowDatePicker(true);
-                        setShowMenu(false);
-                      }}
-                    >
-                      Move to Date…
-                    </div>
+                          }}
+                        >
+                          Move to Date…
+                        </div>
+                        {/* Show Move to Project option only when not in a folder and there are folders */}
+                        {folders && folders.length > 0 && (
+                          <div
+                            className="menu-item"
+                            onClick={() => {
+                              triggerHaptic("light");
+                              if (!isAuthenticated && onRequireSignInForMenu) {
+                                setShowMenu(false);
+                                onRequireSignInForMenu();
+                                return;
+                              }
+                              setShowProjectSelector(true);
+                              setShowMenu(false);
+                            }}
+                          >
+                            Move to Project…
+                          </div>
+                        )}
+                      </>
+                    )}
                   </>
                 )}
 
@@ -628,6 +675,53 @@ export function TodoItem({
                 setShowDatePicker(false);
                 setCustomDate("");
               }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Project selector modal */}
+        {showProjectSelector && (
+          <div
+            className="folder-selector-modal"
+            style={{
+              position: "fixed",
+              top: isMobile
+                ? "50%"
+                : `${Math.min(menuPosition.top, window.innerHeight - 300)}px`,
+              left: isMobile ? "50%" : `${menuPosition.left}px`,
+              transform: isMobile ? "translate(-50%, -50%)" : "none",
+              zIndex: 10000,
+            }}
+          >
+            <div className="folder-selector-header">Move to Project</div>
+            <div className="folder-selector-list">
+              {folders
+                .filter((folder) => !folder.archived)
+                .map((folder) => (
+                  <div
+                    key={folder._id}
+                    className="folder-selector-item"
+                    onClick={async () => {
+                      try {
+                        triggerHaptic("light");
+                        if (onMoveToFolder) {
+                          await onMoveToFolder(folder._id);
+                        }
+                        setShowProjectSelector(false);
+                      } catch (error) {
+                        console.error("Error moving to project:", error);
+                      }
+                    }}
+                  >
+                    {folder.name}
+                  </div>
+                ))}
+            </div>
+            <button
+              className="folder-selector-cancel"
+              onClick={() => setShowProjectSelector(false)}
             >
               Cancel
             </button>

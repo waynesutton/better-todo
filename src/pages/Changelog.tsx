@@ -2,11 +2,16 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v013");
+  const [activeSection, setActiveSection] = useState("v015");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
+    { id: "unreleased", title: "Unreleased" },
+    { id: "v015", title: "v.015 - Nov 8, 2025" },
+    { id: "v014", title: "v.014 - Nov 8, 2025" },
     { id: "v013", title: "v.013 - Nov 2, 2025" },
+    { id: "v012", title: "v.012 - Nov 2, 2025" },
     { id: "v011", title: "v.011 - Nov 1, 2025" },
     { id: "v010", title: "v.010 - Nov 1, 2025" },
     { id: "v009", title: "v.009 - Oct 31, 2025" },
@@ -80,12 +85,145 @@ export function Changelog() {
       </nav>
 
       <div className="launch-container">
-        <section id="v013">
+        {/* Each section mirrors the markdown changelog so anchors stay in sync. */}
+        <section id="unreleased" className="launch-section">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">Unreleased</h2>
+          <p className="changelog-subtitle">
+            No unreleased changes. Follow along with the most recent release below.
+          </p>
+        </section>
+
+        <section id="v015" className="launch-section">
+          <h2 className="section-title">v.015 - November 8, 2025</h2>
+          <p className="changelog-subtitle">Todo composer refresh</p>
+          <p>
+            The inline todo composer now matches the rest of the interface with a compact, keyboard-first layout that keeps you moving quickly.
+          </p>
+
+          <h3 className="subsection-title">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Todo Input UI Redesign</strong> - Refined the todo composer with a modern, compact interface.
+            </li>
+            <li>
+              Rounded container (650px max width on desktop) uses <code>var(--bg-secondary)</code> so it blends with the current theme.
+            </li>
+            <li>
+              ArrowUp icon submit button (24px desktop, responsive down to 18px) delivers one-click todo creation.
+            </li>
+            <li>
+              Removed box shadows for a cleaner look aligned with the rest of the UI.
+            </li>
+            <li>
+              Responsive sizing across breakpoints keeps touch targets comfortable everywhere.
+            </li>
+            <li>
+              Button integrates seamlessly with existing keyboard shortcuts (Enter/Shift+Enter) and shows a subtle disabled state at 55% opacity.
+            </li>
+          </ul>
+        </section>
+
+        <section id="v014" className="launch-section">
+          <h2 className="section-title">v.014 - November 8, 2025</h2>
+          <p className="changelog-subtitle">Todos in Project Folders & Enhanced Organization</p>
+          <p>
+            Projects can now contain todos directly alongside notes, with improved folder organization and navigation throughout the app.
+          </p>
+          
+          <h3 className="subsection-title">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Todos in Project Folders</strong> - Projects can now contain todos directly
+            </li>
+            <li>
+              Todos can be moved to project folders and disconnected from dates
+            </li>
+            <li>
+              Each project can have multiple dateless todos organized independently
+            </li>
+            <li>
+              Todos show in expandable "Todos" section within project folders in sidebar
+            </li>
+            <li>
+              Project folder todos support all features: drag-and-drop reordering, subtasks, headers, completion, archiving
+            </li>
+            <li>
+              Creating new todos within a project folder automatically makes them dateless todos for that project
+            </li>
+            <li>
+              Paste multiple todos at once in project folders
+            </li>
+            <li>
+              <strong>Full-Page Notes Back Navigation</strong> - Added back button next to View full-page notes icon
+            </li>
+            <li>
+              Back button returns to appropriate location (date or today) depending on where user was
+            </li>
+            <li>
+              <strong>Empty Project Folders Visible</strong> - Project folders now show immediately when created
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Project Folder Organization</strong> - Improved project folder display and organization in sidebar
+            </li>
+            <li>
+              Removed "Manage Projects" section - all project folders now appear in main Folders section
+            </li>
+            <li>
+              Project folders are sorted alphabetically for easier navigation
+            </li>
+            <li>
+              Folders appear below dates and above "+ Add Project" button
+            </li>
+            <li>
+              Count badges show next to "Todos" and "Notes" toggles within folders, not on folder name
+            </li>
+            <li>
+              Clicking "Todos" in a folder directly shows todos (no "View all todos" dropdown)
+            </li>
+            <li>
+              <strong>Full-Page Note Navigation</strong> - Opening a note from a folder now selects and expands that folder in sidebar
+            </li>
+            <li>
+              Auto-expands folder and notes section when note is selected
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>TypeScript Build Errors</strong> - Fixed type compatibility issues in TodoList component
+            </li>
+            <li>
+              Converted null to undefined when passing folderId prop to TodoItem components
+            </li>
+            <li>
+              Added explicit types to existingTodos and existingSubtasks in createTodo and createSubtask mutations
+            </li>
+            <li>
+              <strong>Todo Deletion Robustness</strong> - Improved todo deletion handling
+            </li>
+            <li>
+              Made deleteTodo mutation idempotent (safe to call multiple times)
+            </li>
+            <li>
+              Returns null instead of throwing error if todo doesn't exist
+            </li>
+            <li>
+              Automatically deletes all subtasks when header is deleted (cascading delete)
+            </li>
+          </ul>
+        </section>
+
+        <section id="v013" className="launch-section">
           <h2 className="section-title">v.013 - November 2, 2025</h2>
           <p className="changelog-subtitle">Pomodoro Timer Duration Toggle</p>
           <p>
@@ -114,7 +252,93 @@ export function Changelog() {
               All sounds respect mute state regardless of when timer was started
             </li>
           </ul>
+        </section>
 
+        <section id="v012" className="launch-section">
+          <h2 className="section-title">v.012 - November 2, 2025</h2>
+          <p className="changelog-subtitle">Full-page notes in projects</p>
+          <p>
+            Projects can now host full-page notes with navigation, archive behavior, and warnings that match project state.
+          </p>
+
+          <h3 className="subsection-title">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Full-page notes in projects</strong> - Projects can now contain full-page notes that persist separately from date-based notes.
+            </li>
+            <li>
+              Notes can move between projects and dates, clearing the previous association automatically.
+            </li>
+            <li>
+              Each project surfaces its notes within a dedicated sidebar section with tab support.
+            </li>
+            <li>
+              Archive rules cascade so archived projects freeze their notes while keeping them readable.
+            </li>
+            <li>
+              <strong>Project deletion warnings</strong> - Confirmation dialogs now show how many notes will be removed when deleting a project.
+            </li>
+            <li>
+              <strong>Archive support for project notes</strong> - Archiving or unarchiving a project applies the same state to all linked notes.
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Line breaks in notes</strong> - Added remark-breaks so single line breaks render consistently across note views.
+            </li>
+            <li>
+              <strong>Tab switching for project notes</strong> - Switching tabs now refreshes content reliably, even for project-scoped notes.
+            </li>
+            <li>
+              <strong>Archived dates in sidebar</strong> - Archived dates no longer appear in both active and archived lists.
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Full-page note creation</strong> - Creating a note now respects the current context, targeting either the active date or selected project.
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Backend changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Schema updates</strong> - Added an <code>archived</code> flag to the <code>fullPageNotes</code> table for project-level archival.
+            </li>
+            <li>
+              <strong>Full-page notes module</strong> - New queries fetch notes by id collection and support archived filtering.
+            </li>
+            <li>
+              <strong>Folders module</strong> - Archiving or deleting a project now updates its notes in parallel to prevent orphaned content.
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Frontend changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>App state</strong> - Added project-aware note fetching, tab hydration, and creation guards for archived projects.
+            </li>
+            <li>
+              <strong>Sidebar</strong> - Folder deletion warnings include note counts and archived folders reveal read-only notes.
+            </li>
+            <li>
+              <strong>Full-page note view</strong> - Added remark-breaks integration and removed code block header chrome for a cleaner editor.
+            </li>
+            <li>
+              <strong>Notes section</strong> - Regular notes share the same remark-breaks behavior for single line breaks.
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Dependencies</h3>
+          <ul className="feature-list">
+            <li>Added <code>remark-breaks</code> to support single-line break rendering.</li>
+          </ul>
+        </section>
+
+        <section id="v011" className="launch-section">
           <h2 className="section-title">v.011 - November 1, 2025</h2>
           <p className="changelog-subtitle">Simplified Full-Page Notes</p>
           <p>
@@ -137,14 +361,18 @@ export function Changelog() {
               Full-page notes now focus on core editing and markdown rendering
             </li>
           </ul>
+        </section>
 
+        <section id="v010" className="launch-section">
           <h2 className="section-title">v.010 - November 1, 2025</h2>
           <p className="changelog-subtitle">Stats Page User Count Fix</p>
           <p>
             Fixed stats page to read total user count from Clerk instead of
             Convex database for accurate user statistics.
           </p>
+        </section>
 
+        <section id="v009" className="launch-section">
           <h2 className="section-title">v.009 - October 31, 2025</h2>
           <p className="changelog-subtitle">Full Markdown Support in Notes</p>
           <p>
@@ -170,9 +398,7 @@ export function Changelog() {
               Markdown renders in display mode, edit mode shows plain text with
               markdown syntax
             </li>
-            <li>
-              Applied to both NotesSection and FullPageNoteView components
-            </li>
+            <li>Applied to both NotesSection and FullPageNoteView components</li>
             <li>
               Comprehensive CSS styling for all markdown elements (headers,
               lists, links, blockquotes, tables, images)

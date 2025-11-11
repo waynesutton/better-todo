@@ -257,6 +257,201 @@ Check your Convex dashboard for:
 - [Mutation Functions](https://docs.convex.dev/functions/mutation-functions)
 - [Query Functions](https://docs.convex.dev/functions/query-functions)
 
+## Real-World Fixes Applied to Better Todo
+
+### Write Conflicts Fixed (November 2025)
+
+The following mutations were causing write conflicts and have been fixed:
+
+#### 1. `todos:createTodo` - Fixed timestamp-based ordering
+
+**Problem:** Reading all existing todos to calculate max order caused conflicts when creating multiple todos rapidly.
+
+**Solution:** Changed to timestamp-based ordering using `Date.now()` instead of reading all todos.
+
+```typescript
+// Before: Read all todos to find max order
+const existingTodos = await ctx.db
+  .query("todos")
+  .withIndex("by_user_and_date", (q) =>
+    q.eq("userId", userId).eq("date", args.date),
+  )
+  .collect();
+const maxOrder =
+  existingTodos.length > 0
+    ? Math.max(...existingTodos.map((t) => t.order))
+    : -1;
+
+// After: Use timestamp for ordering (no reads needed)
+const order = Date.now();
+```
+
+**Reference:** [Convex Error Documentation - Write Conflicts](https://docs.convex.dev/error#1)
+
+#### 2. `todos:deleteTodo` - Fixed with indexed queries and parallel deletes
+
+**Problem:** Using `ctx.db.get()` before deleting created a conflict window.
+
+**Solution:** Use indexed query to verify ownership, then delete subtasks in parallel.
+
+```typescript
+// Before: Read document first
+const todo = await ctx.db.get(args.id);
+if (!todo || todo.userId !== userId) {
+  throw new Error("Not authorized");
+}
+await ctx.db.delete(args.id);
+
+// After: Use indexed query + parallel deletes
+const todo = await ctx.db
+  .query("todos")
+  .withIndex("by_user", (q) => q.eq("userId", userId))
+  .filter((q) => q.eq(q.field("_id"), args.id))
+  .unique();
+
+if (!todo) return null; // Idempotent
+
+// Delete subtasks in parallel
+await Promise.all(subtasks.map((subtask) => ctx.db.delete(subtask._id)));
+await ctx.db.delete(args.id);
+```
+
+**Reference:** [Convex Best Practices - Minimize Data Reads](https://docs.convex.dev/understanding/best-practices/)
+
+#### 3. `pomodoro:completePomodoro` - Fixed with indexed queries
+
+**Problem:** Using `ctx.db.get()` before patching caused conflicts.
+
+**Solution:** Use indexed query to check ownership and status in one operation.
+
+```typescript
+// Before: Read document first
+const session = await ctx.db.get(args.sessionId);
+if (!session || session.status === "completed") {
+  return null;
+}
+await ctx.db.patch(args.sessionId, { status: "completed" });
+
+// After: Use indexed query for ownership + status check
+const session = await ctx.db
+  .query("pomodoroSessions")
+  .withIndex("by_user", (q) =>
+    userId ? q.eq("userId", userId) : q.eq("userId", undefined),
+  )
+  .filter((q) => q.eq(q.field("_id"), args.sessionId))
+  .unique();
+
+if (!session || session.status === "completed") {
+  return null; // Idempotent
+}
+await ctx.db.patch(args.sessionId, { status: "completed" });
+```
+
+**Reference:** [Convex Query Functions - Indexed Queries](https://docs.convex.dev/functions/query-functions)
+
+#### 4. `pomodoro:updateBackgroundImage` - Fixed with idempotent checks
+
+**Problem:** Reading before patching without checking if value changed.
+
+**Solution:** Add idempotent check - only update if imageUrl is different.
+
+```typescript
+// Before: Always patch even if value unchanged
+const session = await ctx.db.get(args.sessionId);
+if (!session) return null;
+await ctx.db.patch(args.sessionId, { backgroundImageUrl: args.imageUrl });
+
+// After: Check if value changed (idempotent)
+const session = await ctx.db
+  .query("pomodoroSessions")
+  .withIndex("by_user", (q) =>
+    userId ? q.eq("userId", userId) : q.eq("userId", undefined),
+  )
+  .filter((q) => q.eq(q.field("_id"), args.sessionId))
+  .unique();
+
+if (!session || session.backgroundImageUrl === args.imageUrl) {
+  return null; // Idempotent - no change needed
+}
+await ctx.db.patch(args.sessionId, { backgroundImageUrl: args.imageUrl });
+```
+
+**Reference:** [Convex Best Practices - Idempotent Mutations](https://docs.convex.dev/understanding/best-practices/)
+
+### Additional Proactive Fixes
+
+Similar patterns were fixed across the codebase:
+
+- **`notes:createNote`** - Timestamp-based ordering
+- **`notes:deleteNote`** - Indexed query without `ctx.db.get()`
+- **`folders:createFolder`** - Timestamp-based ordering
+- **`folders:renameFolder`** - Indexed query + idempotent check
+- **`folders:archiveFolder`** - Indexed query + parallel updates
+- **`folders:unarchiveFolder`** - Indexed query + parallel updates
+- **`folders:deleteFolder`** - Parallel deletes with `Promise.all()`
+- **`folders:addDateToFolder`** - Idempotent check for existing associations
+- **`fullPageNotes:createFullPageNote`** - Timestamp-based ordering
+- **`fullPageNotes:deleteFullPageNote`** - Indexed query without `ctx.db.get()`
+- **`fullPageNotes:moveFullPageNoteToFolder`** - Idempotent check for same folder
+- **`fullPageNotes:moveFullPageNoteToDate`** - Idempotent check for same date
+
+### Statistics Tracking Fix
+
+**Problem:** Pomodoro session counting was tracking all sessions instead of only when sessions start.
+
+**Solution:** Added global counter in `statistics` table that increments when `startPomodoro` is called.
+
+```typescript
+// In startPomodoro mutation
+const stat = await ctx.db
+  .query("statistics")
+  .withIndex("by_key", (q) => q.eq("key", "pomodoroSessionsStarted"))
+  .unique();
+
+if (stat) {
+  await ctx.db.patch(stat._id, { value: stat.value + 1 });
+} else {
+  await ctx.db.insert("statistics", {
+    key: "pomodoroSessionsStarted",
+    value: 1,
+  });
+}
+```
+
+**Reference:** [Convex Best Practices - Event Records Pattern](https://docs.convex.dev/understanding/best-practices/)
+
+## Key Takeaways for Future Features
+
+### Always Follow These Patterns:
+
+1. **Patch directly without reading first** - Use `ctx.db.patch()` directly. It throws if document doesn't exist.
+2. **Use indexed queries for ownership checks** - Don't use `ctx.db.get()` when you can use indexed queries.
+3. **Make mutations idempotent** - Check if update is needed before patching (early return if no change).
+4. **Use timestamp-based ordering** - For new items, use `Date.now()` instead of reading all items to find max order.
+5. **Parallel independent operations** - Use `Promise.all()` for multiple independent writes.
+6. **Use event records for counters** - Track events in separate documents, aggregate in queries.
+
+### What to Avoid:
+
+- ❌ Reading entire tables to calculate max order
+- ❌ Using `ctx.db.get()` before `ctx.db.patch()` when ownership can be verified via indexed query
+- ❌ Sequential loops for independent operations (use `Promise.all()`)
+- ❌ Updating counters on shared documents (use event records instead)
+- ❌ Patching without checking if value changed (not idempotent)
+
+### Monitoring Write Conflicts
+
+Check your Convex dashboard regularly for:
+
+- **Health / Insights** - Shows retries due to write conflicts
+- **Error Logs** - Permanent failures after retries
+- **Function Latency** - High latency may indicate frequent retries
+
+**Reference:** [Convex Dashboard - Monitoring](https://dashboard.convex.dev)
+
 ## Summary
 
 **Key Takeaway:** The less you read before writing, the fewer conflicts you'll have. Design your mutations to write directly when possible, and structure your data model to avoid concurrent writes to the same documents.
+
+**Single-Line Prompt for Cursor Models:**
+When creating Convex mutations, always patch directly without reading first, use indexed queries for ownership checks instead of `ctx.db.get()`, make mutations idempotent with early returns, use timestamp-based ordering for new items, and use `Promise.all()` for parallel independent operations to avoid write conflicts.

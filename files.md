@@ -11,7 +11,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (v.009 - Full Markdown Support in Notes)
+- `changelog.md` - Version history with all features (v.015 - Todo composer refresh)
 - `files.md` - This file, project structure documentation
 - `TASKS.md` - Project tasks and development tracking
 
@@ -23,6 +23,13 @@ This document describes the structure and purpose of each file in the Better Tod
   - Schema design best practices to minimize conflicts
   - Complete checklists for backend and frontend development
   - Applies to all Convex projects
+
+- `nowriteconflicts.md` - Write conflict prevention guide with real-world fixes applied to Better Todo
+  - Documents all write conflicts fixed in November 2025
+  - Includes before/after code examples for each fix
+  - References to Convex documentation for each pattern
+  - Key takeaways for future feature development
+  - Single-line prompt for Cursor models to avoid write conflicts
 - `dev2.mdc` - Full-stack AI Convex developer guidelines
 - `help.mdc` - Core development guidelines and reflection process
 - `clerk-auth-check.mdc` - Clerk authentication guidelines for React components
@@ -35,9 +42,10 @@ This document describes the structure and purpose of each file in the Better Tod
 ### Database Schema
 
 - `schema.ts` - Database schema with tables:
-  - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, optional parentId, and pinned status
-    - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`
+  - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, optional parentId, optional folderId, and pinned status
+    - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`, `by_user_and_folder`
     - Search index: `search_content` on content field for full-text search
+    - Supports both date-based todos and dateless todos in project folders
   - **notes**: Stores multiple notes per date with optional title, content, order, and collapsed state
     - Index: `by_user_and_date`
     - Search indexes: `search_content` on content field, `search_title` on title field
@@ -67,16 +75,20 @@ This document describes the structure and purpose of each file in the Better Tod
 ### Functions
 
 - `todos.ts` - Queries and mutations for todo operations:
-  - `getAvailableDates` - Get all dates with todos
-  - `getTodosByDate` - Get todos for a specific date
-  - `getPinnedTodos` - Get all pinned todos for user (including their subtasks)
-  - `getUncompletedCounts` - Get count of uncompleted todos for each date (for sidebar badges)
-  - `createTodo` - Create new todo with auto-ordering
-  - `createSubtask` - Create a subtask under a parent todo
+  - `getAvailableDates` - Get all dates with todos (excludes folder-associated todos)
+  - `getTodosByDate` - Get todos for a specific date (excludes folder-associated todos)
+  - `getTodosByFolder` - Get todos for a specific project folder (including subtasks)
+  - `getTodoCountsByFolder` - Get count of uncompleted todos per folder for sidebar badges
+  - `getPinnedTodos` - Get all pinned todos for user (excluding folder-associated todos, including their subtasks)
+  - `getUncompletedCounts` - Get count of uncompleted todos for each date (excludes folder-associated todos, for sidebar badges)
+  - `createTodo` - Create new todo with timestamp-based ordering (avoids write conflicts, supports both date and folderId parameters)
+  - `createSubtask` - Create a subtask under a parent todo (inherits folderId from parent)
   - `updateTodo` - Update todo (auto-archives on complete, auto-unarchives on uncheck, supports pin/unpin)
-  - `deleteTodo` - Remove a todo
+  - `deleteTodo` - Remove a todo (idempotent, uses indexed queries, parallel deletes for subtasks to avoid write conflicts)
   - `reorderTodos` - Update order after drag-and-drop
   - `moveTodoToDate` - Move todo to different date
+  - `moveTodoToFolder` - Move todo to project folder (removes date association)
+  - `moveTodoFromFolderToDate` - Move todo from folder to specific date (removes folder association)
   - `copyTodosToDate` - Copy all non-archived todos to another date
   - `archiveAllTodos` - Archive all active todos for a specific date
   - `deleteAllTodos` - Delete all active todos for a specific date
@@ -84,11 +96,11 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `notes.ts` - Queries and mutations for notes operations:
   - `getNotesByDate` - Get all notes for a specific date
-  - `createNote` - Create new note with title, content, and order
-  - `updateNote` - Update existing note content or title
-  - `deleteNote` - Remove a note by ID
+  - `createNote` - Create new note with timestamp-based ordering (avoids write conflicts)
+  - `updateNote` - Update existing note content or title (patches directly without reading first)
+  - `deleteNote` - Remove a note by ID (uses indexed queries, idempotent)
   - `updateNoteCollapsed` - Toggle note collapsed state
-  - `reorderNotes` - Update order after drag-and-drop
+  - `reorderNotes` - Update order after drag-and-drop (parallel updates with Promise.all)
 
 - `fullPageNotes.ts` - Queries and mutations for full-page notes:
   - `getFullPageNotesByIds` - Get multiple full-page notes by ID array (for open tabs)
@@ -97,12 +109,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getFullPageNote` - Get single full-page note by ID
   - `getFullPageNoteCounts` - Get count of full-page notes per date for sidebar (excludes archived)
   - `getFullPageNoteCountsByFolder` - Get count of full-page notes per project folder for sidebar badges (excludes archived)
-  - `createFullPageNote` - Create new full-page note with auto-ordering (accepts date OR folderId)
-  - `updateFullPageNote` - Update note title or content (idempotent, no pre-read)
-  - `deleteFullPageNote` - Permanently remove a full-page note
-  - `reorderFullPageNotes` - Update order with parallel updates
-  - `moveFullPageNoteToFolder` - Move note to project (removes date, sets folderId)
-  - `moveFullPageNoteToDate` - Move note to date (removes folderId, sets date)
+  - `createFullPageNote` - Create new full-page note with timestamp-based ordering (avoids write conflicts, accepts date OR folderId)
+  - `updateFullPageNote` - Update note title or content (patches directly without reading first, idempotent)
+  - `deleteFullPageNote` - Permanently remove a full-page note (uses indexed queries, idempotent)
+  - `reorderFullPageNotes` - Update order with parallel updates (Promise.all)
+  - `moveFullPageNoteToFolder` - Move note to project (removes date, sets folderId, idempotent check)
+  - `moveFullPageNoteToDate` - Move note to date (removes folderId, sets date, idempotent check)
 
 - `search.ts` - Full-text search functionality using Convex search indexes:
   - `searchAll` - Search across todos (by content) and notes (by title and content) and full-page notes
@@ -131,12 +143,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getFolders` - Get all projects with their associated dates
   - `getFolderDates` - Get dates for a specific project
   - `getFolderForDate` - Check if a date belongs to a project
-  - `createFolder` - Create new project with custom name
-  - `renameFolder` - Update project name
-  - `archiveFolder` - Archive a project and all its full-page notes in parallel
-  - `unarchiveFolder` - Restore archived project and all its full-page notes in parallel
-  - `deleteFolder` - Delete project, all associations, and all its full-page notes
-  - `addDateToFolder` - Associate a date with a project
+  - `createFolder` - Create new project with timestamp-based ordering (avoids write conflicts)
+  - `renameFolder` - Update project name (uses indexed queries, idempotent check)
+  - `archiveFolder` - Archive a project and all its full-page notes in parallel (uses indexed queries, idempotent)
+  - `unarchiveFolder` - Restore archived project and all its full-page notes in parallel (uses indexed queries, idempotent)
+  - `deleteFolder` - Delete project, all associations, and all its full-page notes (parallel deletes with Promise.all)
+  - `addDateToFolder` - Associate a date with a project (idempotent check for existing associations)
   - `removeDateFromFolder` - Remove date from project
 
 - `monthGroups.ts` - Auto-grouping for completed months:
@@ -150,12 +162,12 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `pomodoro.ts` - Pomodoro timer functionality:
   - `getPomodoroSession` - Get current pomodoro session for user
-  - `startPomodoro` - Create new pomodoro session with optional duration (defaults to 25 minutes, supports 90 minutes for flow state)
+  - `startPomodoro` - Create new pomodoro session with optional duration (defaults to 25 minutes, supports 90 minutes for flow state, increments global statistics counter)
   - `pausePomodoro` - Pause current session with remaining time
   - `resumePomodoro` - Resume paused session
   - `stopPomodoro` - Stop and delete current session
-  - `completePomodoro` - Mark session as completed (idempotent to prevent write conflicts)
-  - `updateBackgroundImage` - Update session with Unsplash background image URL
+  - `completePomodoro` - Mark session as completed (uses indexed queries, idempotent to prevent write conflicts)
+  - `updateBackgroundImage` - Update session with Unsplash background image URL (uses indexed queries, idempotent check)
 
 - `unsplash.ts` - Unsplash background image fetching:
   - `fetchBackgroundImage` - Fetches random images from Unsplash API
@@ -216,7 +228,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - Collapsed sidebar shows compact MM/DD date format
   - Mobile detection and auto-hide on small screens (≤768px)
   - Date selection and navigation state (including special "pinned" view)
+  - **Folder selection state** - Support for viewing project folder todos and notes
+  - **Folder todos display** - Shows dateless todos when folder is selected
   - Pinned todos page handling with dedicated display
+  - **Back button navigation** - Back button (CheckboxIcon) next to View full-page notes icon
+    - Returns to appropriate location (date or today) depending on context
+    - Handles both date and folder contexts
   - Search modal integration (Cmd/Ctrl+K keyboard shortcut)
   - Theme context provider
   - Keyboard shortcuts:
@@ -228,6 +245,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - ? to show keyboard shortcuts modal with code block syntax reference
   - Hovered todo tracking for keyboard shortcuts
   - Auto-select hovered todo when not explicitly navigating
+  - **Full-page note folder handling** - Opens notes from folders and highlights folder in sidebar
   - Clerk authentication integration:
     - Conditional query execution based on authentication state
     - "Sign In Required" modal for unauthenticated users
@@ -264,7 +282,12 @@ This document describes the structure and purpose of each file in the Better Tod
 - `TodoList.tsx` - Todo list container with:
   - Drag-and-drop functionality using @dnd-kit
   - **Pinned todos sorted to top** - Automatically displays pinned todos first on each date page
-  - Notion-style inline input (type directly, no button)
+  - **Refined todo input UI** - Modern rounded container with ArrowUp submit button
+    - Max width of 650px on desktop with `var(--bg-secondary)` background
+    - ArrowUp icon button (24px, scales to 22px/20px/18px on smaller devices) from Radix UI
+    - No box shadows for cleaner design
+    - Button integrates with existing keyboard shortcuts (Enter/Shift+Enter)
+    - Disabled state (55% opacity) when input is empty
   - Mobile-friendly: visible "+" button appears when typing on mobile devices
   - Desktop: Shift+Enter to create, Mobile: tap "+" button
   - Enter for new lines in both desktop and mobile
@@ -276,6 +299,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - Integrates NotesSection above archive
   - Tracks hovered todo for keyboard shortcuts
   - **Fixed keyboard navigation** - Proper index matching between keyboard shortcuts and rendered todos
+  - **Folder support** - Supports todos within project folders (folderId prop)
+  - **Move to folder functionality** - Handles moving todos to and from project folders
   - Clerk authentication integration:
     - Checks authentication status before allowing todo/note creation
     - Shows "Sign In Required" modal for unauthenticated users
@@ -294,14 +319,26 @@ This document describes the structure and purpose of each file in the Better Tod
     - Active state indicator (dark transparent overlay) for selected note
   - **NotesForFolder component** - Displays full-page notes within project folders
     - Shows notes that are associated with projects (decoupled from dates)
+    - Always fetches notes to display count badge next to "Notes" toggle
     - Click note title to open that note without navigating to a date
     - Three-dot menu for rename, delete, move to project, and move to date actions
-    - Note count badges on project folders show when they contain notes
+    - Note count badges show next to "Notes" toggle (e.g., "Notes (3)")
+  - **TodosForFolder component** - Displays todos within project folders
+    - Shows todos that are associated with projects (decoupled from dates)
+    - Always fetches todos to display count badge next to "Todos" toggle
+    - Clicking "Todos" directly selects the folder to show todos (no dropdown)
+    - Todo count badges show next to "Todos" toggle (e.g., "Todos (5)")
   - Collapsible view with compact date format (MM/DD) via panel icon in header
   - Collapse button next to "better todo" title (PanelLeft icon)
   - Smooth animated transitions between full (260px) and collapsed (60px) states
   - Custom date labels (rename dates with any text while preserving chronological order)
-  - **Custom projects** for organizing dates (collapsible, renameable, archivable, deletable) - UI calls them "Projects"
+  - **Custom projects** for organizing dates, todos, and notes (collapsible, renameable, archivable, deletable) - UI calls them "Projects"
+    - All active project folders appear in main Folders section (no "Manage Projects" section)
+    - Project folders show immediately when created (including empty folders)
+    - Folders are sorted alphabetically for easier navigation
+    - Folders appear below dates and above "+ Add Project" button
+    - Count badges show next to "Todos" and "Notes" toggles within folders, not on folder name
+    - Auto-expands folders and sections when notes or todos are selected from them
   - **Auto-grouped month sections** for completed months (collapsible, archivable, deletable)
   - "+ Add Project" button at bottom (only shows when authenticated)
   - Active date highlighting (#0076C6 accent color)
@@ -371,7 +408,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Full markdown support** with react-markdown and remark-gfm:
     - Write markdown naturally without needing ```md wrapper
     - Supports bold, italic, headers, lists, links, tables, blockquotes
-    - Code blocks with triple backticks and language identifiers (```js, ```css, etc.)
+    - Code blocks with triple backticks and language identifiers (`js, `css, etc.)
     - GitHub Flavored Markdown support (tables, task lists, strikethrough)
     - Markdown renders in display mode, edit mode shows plain text with markdown syntax
   - **Code syntax highlighting** with Cursor Dark Theme colors:
@@ -554,9 +591,21 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.013 (November 2, 2025)
+## Current Version: v.015 (November 8, 2025)
 
-### Latest Features (v.013) - Pomodoro Timer Duration Toggle
+### Latest Features (v.015) - Todo Composer Refresh
+
+- **Keyboard-forward composer** - The inline todo input now uses a rounded container, ArrowUp submit button, and responsive sizing that snap into every theme without shadows.
+- **Visual polish** - Disabled state clarity (55% opacity) and theme-aware background pull the composer in line with the rest of the UI.
+
+### Previous Features (v.014) - Project Todos & Note Navigation
+
+- **Todos inside projects** - Projects now accept todos directly, with sidebar folder toggles for Todos and Notes.
+- **Folder-aware navigation** - Opening full-page notes from a project auto-expands and highlights the correct folder.
+- **Back navigation** - FileText view now includes a checkbox back button that returns to the right date or Today context.
+- **Robust folder mutations** - New Convex helpers move todos between dates and folders, keep counts accurate, and cascade deletes safely.
+
+### Previous Features (v.013) - Pomodoro Timer Duration Toggle
 
 - **Duration Toggle** - Switch between 25-minute focus sessions and 90-minute flow state sessions
   - Waves icon to switch to 90-minute flow state mode
@@ -566,6 +615,15 @@ This document describes the structure and purpose of each file in the Better Tod
 - **Sound Auto-Play Prevention** - Fixed sounds playing automatically when timer session is restored from previous page load
   - Sounds now only play when user explicitly clicks Start or Reset button in current session
   - Prevents unexpected audio interruptions when navigating to app with active timer
+
+### Previous Features (v.012) - Project Full-Page Notes
+
+- **Full-page notes in projects** - Notes can live in project folders with tab support, counts, and archived-state respect.
+- **Project deletion safeguards** - Confirmation dialogs surface note counts before destructive actions.
+- **Shared archive semantics** - Archiving or unarchiving a project cascades to its notes; archived folders stay read-only.
+- **Remark breaks integration** - Single line breaks render consistently across full-page and inline notes.
+- **Convex updates** - Added `getFullPageNotesByIds`, folder-aware queries, and schema support for archived notes.
+- **Sidebar sync** - Selecting a note from a project expands the matching folder and keeps badges accurate.
 
 ### Previous Features (v.011) - Simplified Full-Page Notes
 
@@ -597,7 +655,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - **Full Markdown Support** - Comprehensive markdown rendering in all notes
   - All text content now supports markdown formatting (bold, italic, headers, lists, links, tables, blockquotes)
   - Works automatically without needing ```md wrapper - just write markdown and it renders
-  - Code blocks continue to work with triple backticks (```js, ```css, etc.)
+  - Code blocks continue to work with triple backticks (`js, `css, etc.)
   - Preserves existing code block syntax highlighting functionality
   - Uses react-markdown and remark-gfm for GitHub Flavored Markdown support
   - Markdown renders in display mode, edit mode shows plain text with markdown syntax
@@ -787,15 +845,6 @@ This document describes the structure and purpose of each file in the Better Tod
 - **Pin icon for pinned todos**
   - Drawing pin filled icon from Radix UI appears before checkbox for pinned todos
   - Only shows on date pages (not in pinned section)
-
-- **Manage Folders section**
-  - New collapsible section below archived items shows all folders
-  - Displays empty folders that don't appear in main sidebar
-  - Shows folder date count badge when folder contains dates
-  - Full access to rename, archive, and delete operations
-  - Perfect alignment of three-dot menu buttons with folder names
-  - Uses theme-aware colors that adapt to light/dark mode
-  - Clean visual indicator without borders or background
 
 - **Pinned todos sorted to top**
   - Pinned todos automatically appear at the top of each date page

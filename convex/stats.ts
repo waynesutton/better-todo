@@ -49,9 +49,12 @@ export const getDatabaseStats = internalQuery({
       .unique();
     const totalFullPageNotes = fullPageNotesStat?.value || 0;
 
-    // Get all pomodoro sessions (count only)
-    const allPomodoroSessions = await ctx.db.query("pomodoroSessions").collect();
-    const pomodoroSessions = allPomodoroSessions.length;
+    // Get cumulative pomodoro sessions started (tracks when user starts, not completes)
+    const pomodoroSessionsStat = await ctx.db
+      .query("statistics")
+      .withIndex("by_key", (q) => q.eq("key", "pomodoroSessionsStarted"))
+      .unique();
+    const pomodoroSessions = pomodoroSessionsStat?.value || 0;
 
     // Get all folders (count only)
     const allFolders = await ctx.db.query("folders").collect();

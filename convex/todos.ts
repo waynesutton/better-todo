@@ -11,7 +11,8 @@ export const getTodosByDate = query({
       _id: v.id("todos"),
       _creationTime: v.number(),
       userId: v.string(),
-      date: v.string(),
+      date: v.optional(v.string()),
+      folderId: v.optional(v.id("folders")),
       content: v.string(),
       type: v.union(
         v.literal("todo"),
@@ -42,8 +43,8 @@ export const getTodosByDate = query({
       )
       .collect();
 
-    // Filter out backlog todos - they should only appear in backlog view
-    const filteredTodos = todos.filter((todo) => !todo.backlog);
+    // Filter out backlog todos and folder todos - they should only appear in their respective views
+    const filteredTodos = todos.filter((todo) => !todo.backlog && !todo.folderId);
 
     // Sort by order
     return filteredTodos.sort((a, b) => a.order - b.order);
@@ -58,7 +59,8 @@ export const getPinnedTodos = query({
       _id: v.id("todos"),
       _creationTime: v.number(),
       userId: v.string(),
-      date: v.string(),
+      date: v.optional(v.string()),
+      folderId: v.optional(v.id("folders")),
       content: v.string(),
       type: v.union(
         v.literal("todo"),
@@ -117,7 +119,8 @@ export const getBacklogTodos = query({
       _id: v.id("todos"),
       _creationTime: v.number(),
       userId: v.string(),
-      date: v.string(),
+      date: v.optional(v.string()),
+      folderId: v.optional(v.id("folders")),
       content: v.string(),
       type: v.union(
         v.literal("todo"),
@@ -168,6 +171,68 @@ export const getBacklogTodos = query({
   },
 });
 
+// Get all todos for a specific folder (including their subtasks)
+export const getTodosByFolder = query({
+  args: {
+    folderId: v.id("folders"),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("todos"),
+      _creationTime: v.number(),
+      userId: v.string(),
+      date: v.optional(v.string()),
+      folderId: v.optional(v.id("folders")),
+      content: v.string(),
+      type: v.union(
+        v.literal("todo"),
+        v.literal("h1"),
+        v.literal("h2"),
+        v.literal("h3"),
+      ),
+      completed: v.boolean(),
+      archived: v.boolean(),
+      order: v.number(),
+      parentId: v.optional(v.id("todos")),
+      collapsed: v.boolean(),
+      pinned: v.optional(v.boolean()),
+      backlog: v.optional(v.boolean()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+    const userId = identity.subject;
+
+    // Get todos in this folder
+    const folderTodos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .collect();
+
+    // Get subtasks (children) of folder todos
+    const folderTodoIds = new Set(folderTodos.map((t) => t._id));
+    const allTodos = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    const subtasks = allTodos.filter(
+      (todo) => todo.parentId && folderTodoIds.has(todo.parentId),
+    );
+
+    // Combine folder todos and their subtasks
+    const combined = [...folderTodos, ...subtasks];
+
+    // Sort by order
+    return combined.sort((a, b) => a.order - b.order);
+  },
+});
+
 // Get all available dates that have todos for the sidebar
 // Note: This query uses .collect() on all user todos to extract unique dates.
 // This is acceptable per Convex best practices because:
@@ -185,13 +250,31 @@ export const getAvailableDates = query({
     }
     const userId = identity.subject;
 
+    // Get all todos with dates
     const todos = await ctx.db
       .query("todos")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
-    // Get unique dates and sort them
-    const dates = Array.from(new Set(todos.map((todo) => todo.date)));
+    // Get all full page notes with dates
+    const fullPageNotes = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+
+    // Collect dates from todos (excluding folder todos)
+    const dateTodos = todos.filter((todo) => !todo.folderId && todo.date);
+    const todoDates = dateTodos.map((todo) => todo.date!);
+
+    // Collect dates from full page notes (excluding folder notes and archived notes)
+    const dateNotes = fullPageNotes.filter(
+      (note) => !note.folderId && note.date && !note.archived
+    );
+    const noteDates = dateNotes.map((note) => note.date!);
+
+    // Combine and get unique dates
+    const allDates = [...todoDates, ...noteDates];
+    const dates = Array.from(new Set(allDates));
     return dates.sort().reverse(); // Most recent first
   },
 });
@@ -199,7 +282,8 @@ export const getAvailableDates = query({
 // Create a new todo item
 export const createTodo = mutation({
   args: {
-    date: v.string(),
+    date: v.optional(v.string()),
+    folderId: v.optional(v.id("folders")),
     content: v.string(),
     type: v.union(
       v.literal("todo"),
@@ -217,27 +301,19 @@ export const createTodo = mutation({
     }
     const userId = identity.subject;
 
-    // Get the highest order number for this date
-    const existingTodos = await ctx.db
-      .query("todos")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", args.date),
-      )
-      .collect();
-
-    const maxOrder =
-      existingTodos.length > 0
-        ? Math.max(...existingTodos.map((t) => t.order))
-        : -1;
+    // Use timestamp-based ordering instead of reading all todos
+    // This avoids write conflicts when creating multiple todos rapidly
+    const order = Date.now();
 
     return await ctx.db.insert("todos", {
       userId: userId,
       date: args.date,
+      folderId: args.folderId,
       content: args.content,
       type: args.type,
       completed: false,
       archived: false,
-      order: maxOrder + 1,
+      order: order,
       parentId: args.parentId,
       collapsed: args.type !== "todo", // Headers start collapsed
     });
@@ -265,13 +341,28 @@ export const createSubtask = mutation({
     }
 
     // Get existing subtasks to determine order
-    const existingSubtasks = await ctx.db
-      .query("todos")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", parent.date),
-      )
-      .filter((q) => q.eq(q.field("parentId"), args.parentId))
-      .collect();
+    let existingSubtasks: Array<{
+      _id: any;
+      _creationTime: number;
+      order: number;
+    }> = [];
+    if (parent.folderId) {
+      existingSubtasks = await ctx.db
+        .query("todos")
+        .withIndex("by_user_and_folder", (q) =>
+          q.eq("userId", userId).eq("folderId", parent.folderId),
+        )
+        .filter((q) => q.eq(q.field("parentId"), args.parentId))
+        .collect();
+    } else if (parent.date) {
+      existingSubtasks = await ctx.db
+        .query("todos")
+        .withIndex("by_user_and_date", (q) =>
+          q.eq("userId", userId).eq("date", parent.date),
+        )
+        .filter((q) => q.eq(q.field("parentId"), args.parentId))
+        .collect();
+    }
 
     const maxOrder =
       existingSubtasks.length > 0
@@ -281,6 +372,7 @@ export const createSubtask = mutation({
     return await ctx.db.insert("todos", {
       userId,
       date: parent.date,
+      folderId: parent.folderId,
       content: args.content,
       type: "todo",
       completed: false,
@@ -355,12 +447,33 @@ export const deleteTodo = mutation({
     }
     const userId = identity.subject;
 
-    const todo = await ctx.db.get(args.id);
-    if (!todo || todo.userId !== userId) {
-      throw new Error("Todo not found or unauthorized");
+    // Use indexed query to verify ownership without reading the document first
+    const todo = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.id))
+      .unique();
+    
+    // If todo doesn't exist or doesn't belong to user, return early (idempotent)
+    if (!todo) {
+      return null;
     }
 
+    // Delete all subtasks (children) first if this is a header
+    if (todo.type !== "todo") {
+      const subtasks = await ctx.db
+        .query("todos")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .filter((q) => q.eq(q.field("parentId"), args.id))
+        .collect();
+      
+      // Delete subtasks in parallel
+      await Promise.all(subtasks.map((subtask) => ctx.db.delete(subtask._id)));
+    }
+
+    // Delete the todo
     await ctx.db.delete(args.id);
+    
     return null;
   },
 });
@@ -443,8 +556,59 @@ export const moveTodoToDate = mutation({
         ? Math.max(...existingTodos.map((t) => t.order))
         : -1;
 
+    // Remove folderId if moving to a date
     await ctx.db.patch(args.todoId, {
       date: args.newDate,
+      folderId: undefined,
+      order: maxOrder + 1,
+    });
+
+    return null;
+  },
+});
+
+// Move a todo to a folder (removes date association)
+export const moveTodoToFolder = mutation({
+  args: {
+    todoId: v.id("todos"),
+    folderId: v.id("folders"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    const todo = await ctx.db.get(args.todoId);
+    if (!todo || todo.userId !== userId) {
+      throw new Error("Todo not found or unauthorized");
+    }
+
+    // Verify folder exists and belongs to user
+    const folder = await ctx.db.get(args.folderId);
+    if (!folder || folder.userId !== userId) {
+      throw new Error("Folder not found or unauthorized");
+    }
+
+    // Get the highest order number for the folder
+    const existingTodos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .collect();
+
+    const maxOrder =
+      existingTodos.length > 0
+        ? Math.max(...existingTodos.map((t) => t.order))
+        : -1;
+
+    // Patch directly to avoid write conflicts
+    await ctx.db.patch(args.todoId, {
+      folderId: args.folderId,
+      date: undefined,
       order: maxOrder + 1,
     });
 
@@ -529,10 +693,11 @@ export const archiveAllTodos = mutation({
       .filter((q) => q.eq(q.field("archived"), false))
       .collect();
 
-    // Archive each todo
-    for (const todo of todos) {
-      await ctx.db.patch(todo._id, { archived: true });
-    }
+    // Archive all todos in parallel to avoid write conflicts
+    const updates = todos.map((todo) =>
+      ctx.db.patch(todo._id, { archived: true }),
+    );
+    await Promise.all(updates);
 
     return null;
   },
@@ -560,10 +725,9 @@ export const deleteAllTodos = mutation({
       .filter((q) => q.eq(q.field("archived"), false))
       .collect();
 
-    // Delete each todo
-    for (const todo of todos) {
-      await ctx.db.delete(todo._id);
-    }
+    // Delete all todos in parallel to avoid write conflicts
+    const deletions = todos.map((todo) => ctx.db.delete(todo._id));
+    await Promise.all(deletions);
 
     return null;
   },
@@ -591,10 +755,101 @@ export const deleteAllArchivedTodos = mutation({
       .filter((q) => q.eq(q.field("archived"), true))
       .collect();
 
-    // Delete each archived todo
-    for (const todo of todos) {
-      await ctx.db.delete(todo._id);
+    // Delete all archived todos in parallel to avoid write conflicts
+    const deletions = todos.map((todo) => ctx.db.delete(todo._id));
+    await Promise.all(deletions);
+
+    return null;
+  },
+});
+
+// Archive all active todos for a specific folder
+export const archiveAllTodosInFolder = mutation({
+  args: {
+    folderId: v.id("folders"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
+
+    // Get all active (non-archived) todos for this folder
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .filter((q) => q.eq(q.field("archived"), false))
+      .collect();
+
+    // Archive all todos in parallel to avoid write conflicts
+    const updates = todos.map((todo) =>
+      ctx.db.patch(todo._id, { archived: true }),
+    );
+    await Promise.all(updates);
+
+    return null;
+  },
+});
+
+// Delete all active todos for a specific folder
+export const deleteAllTodosInFolder = mutation({
+  args: {
+    folderId: v.id("folders"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Get all active (non-archived) todos for this folder
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .filter((q) => q.eq(q.field("archived"), false))
+      .collect();
+
+    // Delete all todos in parallel to avoid write conflicts
+    const deletions = todos.map((todo) => ctx.db.delete(todo._id));
+    await Promise.all(deletions);
+
+    return null;
+  },
+});
+
+// Delete all archived todos for a specific folder
+export const deleteAllArchivedTodosInFolder = mutation({
+  args: {
+    folderId: v.id("folders"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Get all archived todos for this folder
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .filter((q) => q.eq(q.field("archived"), true))
+      .collect();
+
+    // Delete all archived todos in parallel to avoid write conflicts
+    const deletions = todos.map((todo) => ctx.db.delete(todo._id));
+    await Promise.all(deletions);
 
     return null;
   },
@@ -623,13 +878,50 @@ export const getUncompletedCounts = query({
       )
       .collect();
 
-    // Filter out backlog todos - they should only appear in backlog view
-    const filteredTodos = todos.filter((todo) => !todo.backlog);
+    // Filter out backlog todos and folder todos - they should only appear in their respective views
+    const filteredTodos = todos.filter((todo) => !todo.backlog && !todo.folderId && todo.date);
 
     // Count by date
     const counts: Record<string, number> = {};
     for (const todo of filteredTodos) {
-      counts[todo.date] = (counts[todo.date] || 0) + 1;
+      counts[todo.date!] = (counts[todo.date!] || 0) + 1;
+    }
+
+    return counts;
+  },
+});
+
+// Get counts of todos grouped by folder (for sidebar display)
+export const getTodoCountsByFolder = query({
+  args: {},
+  returns: v.record(v.string(), v.number()),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return {};
+    }
+    const userId = identity.subject;
+
+    // Get all uncompleted, non-archived todos in folders
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("completed"), false),
+          q.eq(q.field("archived"), false),
+        ),
+      )
+      .collect();
+
+    // Group todos by folder and count them (only count todos with folders)
+    const counts: Record<string, number> = {};
+    for (const todo of todos) {
+      if (todo.folderId) {
+        // Convert ID to string for consistent key access
+        const folderIdStr = todo.folderId.toString();
+        counts[folderIdStr] = (counts[folderIdStr] || 0) + 1;
+      }
     }
 
     return counts;

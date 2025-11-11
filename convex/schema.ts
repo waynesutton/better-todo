@@ -13,7 +13,8 @@ export default defineSchema({
   // Todos table stores all todo items with markdown support
   todos: defineTable({
     userId: v.string(), // From WorkOS auth
-    date: v.string(), // Format: YYYY-MM-DD
+    date: v.optional(v.string()), // Format: YYYY-MM-DD (optional when in a folder)
+    folderId: v.optional(v.id("folders")), // Optional folder association
     content: v.string(), // Markdown content
     type: v.union(
       v.literal("todo"),
@@ -33,6 +34,7 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_and_pinned", ["userId", "pinned"])
     .index("by_user_and_backlog", ["userId", "backlog"])
+    .index("by_user_and_folder", ["userId", "folderId"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],

@@ -57,6 +57,7 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **Custom confirmation dialogs** matching site design (no browser defaults)
 - **Logged out demo mode** - Try creating up to 3 todos without signing up (data saved locally, lost on refresh)
 - **Feature showcase** - Welcome screen for unauthenticated users explaining app features
+- **Refined todo composer** - Rounded container with ArrowUp submit button keeps keyboard flow fast and responsive across every theme.
 
 ## Tech Stack
 
@@ -207,7 +208,7 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
   - Full-page notes can be moved to projects and appear under project folders in sidebar
   - Note count badges show on project folders when they contain full-page notes
 - **Auto-grouped months** - completed months automatically group into collapsible sections
-  - Named by month and year (e.g., "January 2025")
+  - Named by month and year (e.g., "November 2025")
   - Only displays after a full month has passed
   - Archive, unarchive, and delete month groups
 - **Three-dot menu** next to dates with options to:

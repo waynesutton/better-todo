@@ -4,6 +4,121 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+No unreleased changes. Tracking resumes with the next commit.
+
+## [v.015] - 2025-11-08
+
+### Changed
+
+- **Todo Input UI Redesign** - Refined the todo composer with a modern, compact interface
+  - New rounded container (650px max width on desktop) with background matching `var(--bg-secondary)`
+  - Added ArrowUp icon submit button (24px) from Radix UI for one-click todo creation
+  - Removed box shadows for cleaner visual design
+  - Responsive sizing across all breakpoints (22px on tablet, 20px on mobile, 18px on small devices)
+  - Button integrates seamlessly with existing keyboard shortcuts (Enter/Shift+Enter)
+  - Disabled state (55% opacity) when input is empty
+
+## [v.014] - 2025-11-08
+
+### Added
+
+- **Todos in Project Folders** - Projects can now contain todos directly
+  - Todos can be moved to project folders and disconnected from dates
+  - Each project can have multiple dateless todos organized independently
+  - Todos show in expandable "Todos" section within project folders in sidebar
+  - Todos moved to project remove date association, todos moved to date remove folder association
+  - Project folder todos support all features: drag-and-drop reordering, subtasks, headers, completion, archiving
+  - Creating new todos within a project folder automatically makes them dateless todos for that project
+  - Paste multiple todos at once in project folders
+
+- **Full-Page Notes Back Navigation** - Added back button next to View full-page notes icon
+  - Back button returns to appropriate location (date or today) depending on where user was
+  - Shows only when viewing full-page notes
+  - Uses CheckboxIcon from Radix UI
+
+- **Empty Project Folders Visible** - Project folders now show immediately when created
+  - Empty folders appear in sidebar even without content
+  - Allows better organization and planning
+
+### Changed
+
+- **Project Folder Organization** - Improved project folder display and organization in sidebar
+  - Removed "Manage Projects" section - all project folders now appear in main Folders section
+  - Project folders are sorted alphabetically for easier navigation
+  - Folders appear below dates and above "+ Add Project" button
+  - Removed "(empty)" label from folder display
+  - Count badges show next to "Todos" and "Notes" toggles within folders, not on folder name
+  - Clicking "Todos" in a folder directly shows todos (no "View all todos" dropdown)
+
+- **Full-Page Note Navigation** - Improved note selection and folder highlighting
+  - Opening a note from a folder now selects and expands that folder in sidebar
+  - Auto-expands folder and notes section when note is selected
+  - Consistent sidebar highlighting across all navigation paths
+
+### Fixed
+
+- **TypeScript Build Errors** - Fixed type compatibility issues in TodoList component
+  - Converted `null` to `undefined` when passing `folderId` prop to TodoItem components
+  - Ensures proper type safety for folder associations
+  - Added explicit types to `existingTodos` and `existingSubtasks` in createTodo and createSubtask mutations
+
+- **Todo Deletion Robustness** - Improved todo deletion handling
+  - Made deleteTodo mutation idempotent (safe to call multiple times)
+  - Returns null instead of throwing error if todo doesn't exist
+  - Automatically deletes all subtasks when header is deleted (cascading delete)
+  - Prevents orphaned subtasks and race condition errors
+
+### Backend Changes
+
+- **Todos Schema** (`convex/schema.ts`)
+  - Added `folderId` field to todos table for folder associations
+  - Added `by_user_and_folder` index for efficient folder-based queries
+
+- **Todos Module** (`convex/todos.ts`)
+  - Added `getTodosByFolder` query to fetch todos for specific folder (including subtasks)
+  - Added `getTodoCountsByFolder` query to get uncompleted todo counts per folder
+  - Added `moveTodoToFolder` mutation to move todos to project folders
+  - Added `moveTodoFromFolderToDate` mutation to move todos back to dates
+  - Updated `createTodo` to support both date and folderId parameters
+  - Updated `createSubtask` to inherit folderId from parent todo
+  - Updated `deleteTodo` to be idempotent and cascade delete subtasks
+  - Updated all date-based queries to exclude folder-associated todos
+
+### Frontend Changes
+
+- **Sidebar Component** (`src/components/Sidebar.tsx`)
+  - Added `TodosForFolder` component to display todos within folders
+  - Removed expand/collapse dropdown for folder todos
+  - Updated `NotesForFolder` to always fetch notes for count display
+  - Added count badges to "Todos" and "Notes" toggles within folders
+  - Updated `onOpenFullPageNote` callback to accept optional `folderId` parameter
+  - Added auto-expansion logic for folders when notes are selected
+  - Updated folder filtering to show all active folders (including empty ones)
+  - Removed "Manage Projects" section completely
+
+- **App Component** (`src/App.tsx`)
+  - Added `selectedFolder` state for folder-based navigation
+  - Added `folderTodos` query to fetch todos for selected folder
+  - Updated `displayTodos` logic to show folder todos when folder is selected
+  - Updated header to show folder name when viewing folder todos
+  - Added back button with CheckboxIcon next to View full-page notes icon
+  - Updated back button logic to handle both date and folder contexts
+  - Updated `onOpenFullPageNote` handler to set folder selection for folder notes
+
+- **TodoList Component** (`src/components/TodoList.tsx`)
+  - Added `folderId` prop support
+  - Updated `handleAddTodo` to create dateless todos in folders
+  - Updated paste handler to support creating folder todos
+  - Passes `folderId` to TodoItem components with proper type conversion
+
+- **TodoItem Component** (`src/components/TodoItem.tsx`)
+  - Added "Move to Project..." menu option
+  - Added "Move to Date..." menu option (when todo is in folder)
+  - Added folder selector modal for moving todos to projects
+  - Context-aware menu based on whether todo is in folder or date
+
 ## [v.013] - 2025-11-02
 
 ### Added
@@ -595,7 +710,7 @@ No need to wrap content in ````md` blocks - markdown works by default for all te
   - Preview container with themed background
   - Mobile-responsive button layout
 
-## [2.2.6] - 2025-01-23 - v1.0 FINAL RELEASE
+## [2.2.6] - 2025-10-24 - v1.0 FINAL RELEASE
 
 ### Added
 
@@ -706,7 +821,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Dark mode: `var(--bg-secondary)` (matches menu dropdown items)
   - Consistent visual feedback across all interactive elements
 
-## [2.2.4] - 2025-01-23
+## [2.2.4] - 2025-10-23
 
 ### Added
 
@@ -739,7 +854,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Title remains "Untitled" by default, allowing immediate content entry
   - Improved workflow for quick note-taking
 
-## [2.2.3] - 2025-01-23
+## [2.2.3] - 2025-10-23
 
 ### Fixed
 
@@ -750,7 +865,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Prevents multiple concurrent calls to `completePomodoro` that were causing database write conflicts
   - Improved reliability when timer completes or during rapid state changes
 
-## [2.2.2] - 2025-01-22
+## [2.2.2] - 2025-10-22
 
 ### Added
 
@@ -774,7 +889,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Cleaner, more maintainable audio implementation
   - Better quality sounds with actual audio files
 
-## [2.2.1] - 2025-01-21
+## [2.2.1] - 2025-10-21
 
 ### Added
 
@@ -799,7 +914,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Improved language detection and tokenization
   - Enhanced user experience with better color contrast and readability
 
-## [2.2.0] - 2025-01-21
+## [2.2.0] - 2025-10-21
 
 ### Added
 
@@ -817,7 +932,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Clean code block headers showing language name
   - Security-first approach with plain text storage and client-side rendering only
 
-## [2.1.3] - 2025-01-21
+## [2.1.3] - 2025-10-21
 
 ### Added
 
@@ -836,7 +951,7 @@ The application is now stable, feature-rich, and ready for users to manage their
 
 - Updated keyboard shortcuts help modal to include "s" and "m" shortcuts
 
-## [2.1.2] - 2025-01-21
+## [2.1.2] - 2025-10-21
 
 ### Added
 
@@ -894,7 +1009,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Provides cleaner UX by eliminating extra step to remove from folder first
   - Date appears in main active dates section after unarchiving
 
-## [2.1.1] - 2025-01-20
+## [2.1.1] - 2025-10-20
 
 ### Added
 
@@ -932,7 +1047,7 @@ The application is now stable, feature-rich, and ready for users to manage their
 - **Fixed three-dot menu alignment** - All three-dot menu buttons now have consistent width (30px min-width) and alignment across todo pages, sidebar dates, folders, and month groups
 - **Fixed subtask three-dot menu alignment** - Subtask menu buttons now align perfectly with parent todo menu buttons using negative margin compensation for the indentation
 
-## [2.1.0] - 2025-01-20
+## [2.1.0] - 2025-10-20
 
 ### Added
 
@@ -983,7 +1098,7 @@ The application is now stable, feature-rich, and ready for users to manage their
 - Archived section now includes archived folders and month groups
 - ESC key now closes folder and month group menus and inputs
 
-## [2.0.1] - 2025-01-18
+## [2.0.1] - 2025-10-18
 
 ### Fixed
 
@@ -998,7 +1113,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Applied same responsive layout and close button to SignIn and SignUp modals
   - Added mobile-specific CSS for SignIn/SignUp forms to prevent text cutoff
 
-## [2.0.0] - 2025-01-18
+## [2.0.0] - 2025-10-18
 
 ### Added
 
@@ -1061,7 +1176,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - `CLERK_SECRET_KEY` (Convex backend)
   - `VITE_CLERK_FRONTEND_API_URL` (Convex auth config)
 
-## [1.9.2] - 2025-01-18
+## [1.9.2] - 2025-10-18
 
 ### Fixed
 
@@ -1095,7 +1210,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Ensured `VITE_CONVEX_URL` uses production deployment URL, not development
   - Production Convex deployment now has correct `WORKOS_CLIENT_ID` environment variable
 
-## [1.9.1] - 2025-01-17
+## [1.9.1] - 2025-10-17
 
 ### Fixed
 
@@ -1115,7 +1230,7 @@ The application is now stable, feature-rich, and ready for users to manage their
   - Common deployment issues and solutions
   - Security best practices for environment variables
 
-## [1.9.0] - 2025-01-17
+## [1.9.0] - 2025-10-17
 
 ### Added
 
@@ -1611,7 +1726,7 @@ The application is now stable, feature-rich, and ready for users to manage their
 - Fixed flashing when switching between dates with Convex
 - Improved real-time data loading for smoother transitions
 
-## [1.0.0] - 2025-01-16
+## [1.0.0] - 2025-10-16
 
 ### Added
 

@@ -10,6 +10,7 @@ export function Launch() {
 
   const sections = [
     { id: "intro", title: "Introduction" },
+    { id: "recent-updates", title: "Recent updates" },
     { id: "key-features", title: "Key features" },
     { id: "fullpage-notes", title: "Full-page notes" },
     { id: "projects", title: "Organize with projects" },
@@ -77,11 +78,13 @@ export function Launch() {
     setModalOpen(false);
   };
 
-  const nextImage = () => {
+  const nextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentImageIndex((prev) => (prev + 1) % currentImageSet.length);
   };
 
-  const prevImage = () => {
+  const prevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentImageIndex(
       (prev) => (prev - 1 + currentImageSet.length) % currentImageSet.length,
     );
@@ -168,6 +171,17 @@ export function Launch() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section id="recent-updates" className="launch-section">
+          <h2 className="section-title">Recent updates</h2>
+          <p>
+            The todo composer just picked up a rounded, theme-aware look with an ArrowUp submit button so you can add tasks without breaking flow.
+          </p>
+          <p>
+            Want the full story? Jump into the{" "}
+            <a href="/changelog">changelog</a> to see everything that shipped in v.015.
+          </p>
         </section>
 
         <section id="key-features" className="launch-section">

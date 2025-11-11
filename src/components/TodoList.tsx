@@ -23,6 +23,7 @@ import {
 } from "./NotesSection";
 import { Id } from "../../convex/_generated/dataModel";
 import { format, addDays, subDays } from "date-fns";
+import { ArrowUpIcon, PinLeftIcon, PinRightIcon } from "@radix-ui/react-icons";
 
 interface Todo {
   _id: Id<"todos">;
@@ -43,6 +44,8 @@ interface Todo {
 export interface TodoListProps {
   todos: Todo[];
   date: string;
+  folderId?: Id<"folders"> | null;
+  folders?: Array<{ _id: Id<"folders">; name: string; archived: boolean }>;
   expandedNoteId: string | null;
   onNoteExpanded: () => void;
   isPinnedView?: boolean;
@@ -72,6 +75,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
     {
       todos,
       date,
+      folderId = null,
+      folders = [],
       expandedNoteId,
       onNoteExpanded,
       isPinnedView = false,
@@ -98,6 +103,11 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
     const internalTodoInputRef = React.useRef<HTMLTextAreaElement>(null);
     const todoInputRef = externalTodoInputRef || internalTodoInputRef;
     const [isMobile, setIsMobile] = React.useState(false);
+    const [isInputCentered, setIsInputCentered] = React.useState(() => {
+      // Load preference from localStorage, default to centered
+      const saved = localStorage.getItem("todoInputCentered");
+      return saved === null ? true : saved === "true";
+    });
 
     // Detect mobile device
     React.useEffect(() => {
@@ -112,9 +122,19 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       return () => window.removeEventListener("resize", checkMobile);
     }, []);
 
+    // Toggle input position and save preference
+    const toggleInputPosition = () => {
+      setIsInputCentered((prev) => {
+        const newValue = !prev;
+        localStorage.setItem("todoInputCentered", String(newValue));
+        return newValue;
+      });
+    };
+
     const createTodo = useMutation(api.todos.createTodo);
     const reorderTodos = useMutation(api.todos.reorderTodos);
     const moveTodoToDate = useMutation(api.todos.moveTodoToDate);
+    const moveTodoToFolder = useMutation(api.todos.moveTodoToFolder);
     const createNote = useMutation(api.notes.createNote);
 
     const sensors = useSensors(
@@ -244,7 +264,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
 
       try {
         await createTodo({
-          date,
+          date: folderId ? undefined : date,
+          folderId: folderId || undefined,
           content: content,
           type,
         });
@@ -258,6 +279,14 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
         } else {
           alert("Failed to create todo. Please make sure you're signed in.");
         }
+      }
+    };
+
+    const handleSubmitNewTodo = async () => {
+      if (!newTodoContent.trim()) return;
+      await handleAddTodo();
+      if (todoInputRef.current) {
+        todoInputRef.current.style.height = "auto";
       }
     };
 
@@ -316,6 +345,20 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
         });
       } catch (error) {
         console.error("Error moving todo to today:", error);
+      }
+    };
+
+    const handleMoveToFolder = async (
+      todoId: Id<"todos">,
+      folderId: Id<"folders">,
+    ) => {
+      try {
+        await moveTodoToFolder({
+          todoId,
+          folderId,
+        });
+      } catch (error) {
+        console.error("Error moving todo to folder:", error);
       }
     };
 
@@ -422,6 +465,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                       backlog={parent.backlog}
                       isPinnedView={isPinnedView}
                       isBacklogView={isBacklogView}
+                      folderId={folderId ?? undefined}
                       onMoveToPreviousDay={() =>
                         handleMoveToPreviousDay(parent._id)
                       }
@@ -431,6 +475,10 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                       onMoveToCustomDate={(date) =>
                         handleMoveToCustomDate(parent._id, date)
                       }
+                      onMoveToFolder={(folderId) =>
+                        handleMoveToFolder(parent._id, folderId)
+                      }
+                      folders={folders}
                       onHoverChange={onTodoHover}
                       openMenuTrigger={
                         openMenuForTodoId === parent._id
@@ -441,7 +489,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                       onDemoToggle={handleDemoToggle}
                       isAuthenticated={isAuthenticated}
                       onRequireSignInForMenu={onRequireSignInForMenu}
-                      setPomodoroTriggered={setPomodoroTriggered} // ✅ NEW
+                      setPomodoroTriggered={setPomodoroTriggered} // NEW
                     />
                   </div>
                   {!parent.collapsed &&
@@ -465,6 +513,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                             backlog={child.backlog}
                             isPinnedView={isPinnedView}
                             isBacklogView={isBacklogView}
+                            folderId={folderId ?? undefined}
                             onMoveToPreviousDay={() =>
                               handleMoveToPreviousDay(child._id)
                             }
@@ -478,6 +527,10 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                             onMoveToCustomDate={(date) =>
                               handleMoveToCustomDate(child._id, date)
                             }
+                            onMoveToFolder={(folderId) =>
+                              handleMoveToFolder(child._id, folderId)
+                            }
+                            folders={folders}
                             onHoverChange={onTodoHover}
                             openMenuTrigger={
                               openMenuForTodoId === child._id
@@ -488,7 +541,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                             onDemoToggle={handleDemoToggle}
                             isAuthenticated={isAuthenticated}
                             onRequireSignInForMenu={onRequireSignInForMenu}
-                            setPomodoroTriggered={setPomodoroTriggered} // ✅ NEW
+                            setPomodoroTriggered={setPomodoroTriggered} // NEW
                           />
                         </div>
                       );
@@ -501,123 +554,130 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
 
         {/* Notion-like inline input - hide on pinned view and backlog view */}
         {!isPinnedView && !isBacklogView && (
-          <div className="inline-todo-input">
-            <textarea
-              ref={todoInputRef}
-              className="notion-input"
-              placeholder={
-                isMobile
-                  ? " Type to add a todo..."
-                  : "Type to add a todo... (Shift+Enter for new lines, Enter to create)"
-              }
-              value={newTodoContent}
-              onChange={(e) => {
-                setNewTodoContent(e.target.value);
-                // Auto-resize textarea based on content
-                e.target.style.height = "auto";
-                e.target.style.height = e.target.scrollHeight + "px";
-              }}
-              onFocus={() => setFocusedInput(true)}
-              onPaste={(e) => {
-                const pastedText = e.clipboardData.getData("text");
-                const lines = pastedText
-                  .split("\n")
-                  .filter((line) => line.trim())
-                  .map((line) =>
-                    line
-                      .replace(/^[\s-*•]+/, "")
-                      .replace(/^\[[ x]\]\s*/, "")
-                      .trim(),
-                  )
-                  .filter((line) => line);
+          <div
+            className="inline-todo-input"
+            data-centered={isInputCentered ? "true" : "false"}
+          >
+            <div className="inline-todo-shell">
+              <textarea
+                ref={todoInputRef}
+                className="notion-input"
+                placeholder={
+                  isMobile
+                    ? "Type to add a todo..."
+                    : "Type to add a todo... (Shift+Enter for new lines, Enter to create)"
+                }
+                value={newTodoContent}
+                onChange={(e) => {
+                  setNewTodoContent(e.target.value);
+                  // Auto-resize textarea based on content
+                  e.target.style.height = "auto";
+                  e.target.style.height = e.target.scrollHeight + "px";
+                }}
+                onFocus={() => setFocusedInput(true)}
+                onPaste={(e) => {
+                  const pastedText = e.clipboardData.getData("text");
+                  const lines = pastedText
+                    .split("\n")
+                    .filter((line) => line.trim())
+                    .map((line) =>
+                      line
+                        .replace(/^[\s-*•]+/, "")
+                        .replace(/^\[[ x]\]\s*/, "")
+                        .trim(),
+                    )
+                    .filter((line) => line);
 
-                if (lines.length > 1) {
-                  e.preventDefault();
-                  (async () => {
-                    try {
-                      for (const line of lines) {
-                        await createTodo({
-                          date,
-                          content: line.trim(),
-                          type: "todo",
-                        });
+                  if (lines.length > 1) {
+                    e.preventDefault();
+                    (async () => {
+                      try {
+                        for (const line of lines) {
+                          await createTodo({
+                            date: folderId ? undefined : date,
+                            folderId: folderId || undefined,
+                            content: line.trim(),
+                            type: "todo",
+                          });
+                        }
+                        setNewTodoContent("");
+                      } catch (err) {
+                        console.error("Error creating todos from paste:", err);
+                        if (onRequireSignIn) {
+                          onRequireSignIn();
+                        }
                       }
-                      setNewTodoContent("");
-                    } catch (err) {
-                      console.error("Error creating todos from paste:", err);
-                      if (onRequireSignIn) {
-                        onRequireSignIn();
-                      }
-                    }
-                  })();
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Tab") {
-                  // Tab to focus first todo
-                  e.preventDefault();
-                  if (activeTodos.length > 0 && onFocusFirstTodo) {
-                    // Blur the textarea first
-                    todoInputRef.current?.blur();
-                    // Call the callback to focus first todo
-                    onFocusFirstTodo(() => true);
-                  }
-                } else if (e.key === "Enter" && !e.shiftKey && !isMobile) {
-                  // On desktop: Enter saves the todo
-                  e.preventDefault();
-                  handleAddTodo();
-                  // Reset textarea height
-                  (e.target as HTMLTextAreaElement).style.height = "auto";
-                } else if (e.key === "Enter" && e.shiftKey && isMobile) {
-                  // On mobile: Shift+Enter saves the todo
-                  e.preventDefault();
-                  handleAddTodo();
-                  // Reset textarea height
-                  (e.target as HTMLTextAreaElement).style.height = "auto";
-                } else if (e.key === "Enter") {
-                  // Shift+Enter on desktop or Enter on mobile allows new lines
-                  return;
-                }
-              }}
-              autoFocus={focusedInput}
-              rows={1}
-              spellCheck={false}
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              data-gramm="false"
-              data-gramm_editor="false"
-              data-enable-grammarly="false"
-              data-1p-ignore
-              data-lpignore="true"
-              inputMode="text"
-            />
-            {isMobile && newTodoContent.trim() && (
-              <button
-                className="mobile-add-button"
-                onClick={() => {
-                  handleAddTodo();
-                  if (todoInputRef.current) {
-                    todoInputRef.current.style.height = "auto";
+                    })();
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Tab") {
+                    // Tab to focus first todo
+                    e.preventDefault();
+                    if (activeTodos.length > 0 && onFocusFirstTodo) {
+                      // Blur the textarea first
+                      todoInputRef.current?.blur();
+                      // Call the callback to focus first todo
+                      onFocusFirstTodo(() => true);
+                    }
+                  } else if (e.key === "Enter" && !e.shiftKey && !isMobile) {
+                    // On desktop: Enter saves the todo
+                    e.preventDefault();
+                    handleAddTodo();
+                    // Reset textarea height
+                    (e.target as HTMLTextAreaElement).style.height = "auto";
+                  } else if (e.key === "Enter" && e.shiftKey && isMobile) {
+                    // On mobile: Shift+Enter saves the todo
+                    e.preventDefault();
+                    handleAddTodo();
+                    // Reset textarea height
+                    (e.target as HTMLTextAreaElement).style.height = "auto";
+                  } else if (e.key === "Enter") {
+                    // Shift+Enter on desktop or Enter on mobile allows new lines
+                    return;
+                  }
+                }}
+                autoFocus={focusedInput}
+                rows={1}
+                spellCheck={false}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                data-gramm="false"
+                data-gramm_editor="false"
+                data-enable-grammarly="false"
+                data-1p-ignore
+                data-lpignore="true"
+                inputMode="text"
+              />
+              {!isMobile && (
+                <button
+                  type="button"
+                  className="inline-todo-pin-toggle"
+                  onClick={toggleInputPosition}
+                  aria-label={
+                    isInputCentered ? "Move input to left" : "Center input"
+                  }
+                  title={
+                    isInputCentered ? "Move input to left" : "Center input"
+                  }
+                >
+                  {isInputCentered ? <PinLeftIcon /> : <PinRightIcon />}
+                </button>
+              )}
+              <button
+                type="button"
+                className="inline-todo-submit"
+                onClick={() => {
+                  void handleSubmitNewTodo();
+                }}
+                disabled={!newTodoContent.trim()}
+                aria-label="Add todo"
                 title="Add todo"
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                <ArrowUpIcon />
               </button>
-            )}
+            </div>
           </div>
         )}
 
