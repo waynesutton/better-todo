@@ -82,6 +82,8 @@ function App() {
   const [archiveExpanded, setArchiveExpanded] = useState(false);
   const [confirmArchiveAll, setConfirmArchiveAll] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [confirmDeleteTodo, setConfirmDeleteTodo] = useState(false);
+  const [todoToDelete, setTodoToDelete] = useState<Id<"todos"> | null>(null);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
@@ -469,6 +471,21 @@ function App() {
     setConfirmDeleteAll(false);
   };
 
+  const handleDeleteTodoConfirm = async () => {
+    if (todoToDelete) {
+      await deleteTodo({ id: todoToDelete });
+      // Move focus to next todo or previous if at end
+      setFocusedTodoIndex((prev) => {
+        if (activeTodos.length <= 1) {
+          return -1; // No todos left
+        }
+        return prev >= activeTodos.length - 1 ? prev - 1 : prev;
+      });
+      setTodoToDelete(null);
+    }
+    setConfirmDeleteTodo(false);
+  };
+
   const handleDeleteArchived = async (todoId: Id<"todos">) => {
     await deleteTodo({ id: todoId });
   };
@@ -534,14 +551,26 @@ function App() {
         }
       }
 
-      // Mark todo as done with spacebar or e
-      if (e.key === " " || e.key === "e") {
+      // Mark todo as done with spacebar or d
+      if (e.key === " " || e.key === "d") {
         e.preventDefault();
         if (activeTodos.length > 0 && focusedTodoIndex >= 0) {
           const todo = activeTodos[focusedTodoIndex];
           if (todo && !todo.completed) {
             setLastCompletedTodo(todo._id);
             updateTodo({ id: todo._id, completed: true });
+          }
+        }
+      }
+
+      // Delete focused todo with # (shows confirmation dialog)
+      if (e.key === "#") {
+        e.preventDefault();
+        if (activeTodos.length > 0 && focusedTodoIndex >= 0) {
+          const todo = activeTodos[focusedTodoIndex];
+          if (todo) {
+            setTodoToDelete(todo._id);
+            setConfirmDeleteTodo(true);
           }
         }
       }
@@ -614,6 +643,33 @@ function App() {
         });
       }
 
+      // Navigate todos with Tab (when not in input field and todo is focused)
+      if (
+        e.key === "Tab" &&
+        focusedTodoIndex >= 0 &&
+        !(e.target instanceof HTMLInputElement) &&
+        !(e.target instanceof HTMLTextAreaElement)
+      ) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          // Shift+Tab - navigate to previous todo (like ArrowUp)
+          setFocusedTodoIndex((prev) => {
+            if (prev === -1) {
+              return activeTodos.length - 1;
+            }
+            return prev <= 0 ? activeTodos.length - 1 : prev - 1;
+          });
+        } else {
+          // Tab - navigate to next todo (like ArrowDown)
+          setFocusedTodoIndex((prev) => {
+            if (prev === -1) {
+              return 0;
+            }
+            return prev >= activeTodos.length - 1 ? 0 : prev + 1;
+          });
+        }
+      }
+
       // Undo last completed todo with z
       if (e.key === "z") {
         e.preventDefault();
@@ -629,10 +685,13 @@ function App() {
         const today = format(new Date(), "yyyy-MM-dd");
         setSelectedDate(today);
         setSelectedFolder(null);
-        // Close sidebar on mobile
+        setShowFullPageNotes(false); // Exit full page notes view if active
+        // Hide sidebar on mobile to show main content
         if (window.innerWidth <= 768) {
-          setSidebarHidden(false);
+          setSidebarHidden(true);
         }
+        // Scroll to top of main content
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
       // Scroll to top with cmd+up
@@ -1456,6 +1515,20 @@ function App() {
           cancelText="Cancel"
           onConfirm={handleDeleteAllConfirm}
           onCancel={() => setConfirmDeleteAll(false)}
+          isDangerous={true}
+        />
+
+        <ConfirmDialog
+          isOpen={confirmDeleteTodo}
+          title="Delete Todo"
+          message="Are you sure you want to delete this todo? This cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={handleDeleteTodoConfirm}
+          onCancel={() => {
+            setConfirmDeleteTodo(false);
+            setTodoToDelete(null);
+          }}
           isDangerous={true}
         />
 

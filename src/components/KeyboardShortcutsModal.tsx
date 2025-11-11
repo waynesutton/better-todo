@@ -76,8 +76,10 @@ export function KeyboardShortcutsModal({
       category: "Todo Management",
       items: [
         { key: "/ or c", description: "Focus todo input" },
-        { key: "Tab", description: "Focus first todo from input" },
-        { key: "Space or e", description: "Mark focused todo as done" },
+        { key: "Tab", description: "Focus first todo from input or navigate to next todo" },
+        { key: "Shift + Tab", description: "Navigate to previous todo" },
+        { key: "Space or d", description: "Mark focused todo as done" },
+        { key: "#", description: "Delete focused todo" },
         { key: "p", description: "Pin/unpin hovered todo" },
         { key: "s", description: "Add subtask to focused todo" },
         { key: "m", description: "Open menu for focused todo" },
