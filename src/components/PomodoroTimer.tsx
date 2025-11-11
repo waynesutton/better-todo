@@ -12,19 +12,31 @@ import {
   EnterFullScreenIcon,
   ImageIcon,
 } from "@radix-ui/react-icons";
-import { Volume2, VolumeOff, Waves, Clock } from "lucide-react";
+import { Volume2, VolumeOff, Waves, Clock, Activity } from "lucide-react";
+import { Id } from "../../convex/_generated/dataModel";
 
 interface PomodoroTimerProps {
   triggerData?: { todoId?: string; todoTitle?: string } | null;
+  openOnTrigger?: boolean; // ✅ new optional prop
+  onClearTrigger?: () => void;
 }
 
-export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
+export function PomodoroTimer({
+  triggerData,
+  openOnTrigger,
+  onClearTrigger,
+}: PomodoroTimerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [displayTime, setDisplayTime] = useState(25 * 60 * 1000); // 25 minutes in ms
   const [showBackgroundImage, setShowBackgroundImage] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [durationMinutes, setDurationMinutes] = useState(25); // 25 or 90 minutes
+
+  // Goal 2
+  // adjusting the phase i.e focus and break
+  const [currentPhase, setCurrentPhase] = useState<"focus" | "break">("focus");
+
   const workerRef = useRef<Worker | null>(null);
   const hasPlayedStartSound = useRef(false);
   const hasPlayedCountdownSound = useRef(false);
@@ -34,13 +46,20 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
   const activeAudioRef = useRef<HTMLAudioElement[]>([]);
   const userStartedInThisSession = useRef(false);
 
+  // for respective task when start pomodoro click then only modal appear
+  useEffect(() => {
+    if (openOnTrigger && triggerData?.todoId) {
+      setIsModalOpen(true);
+    }
+  }, [triggerData]);
+
   // Fetch current session from Convex
   const session = useQuery(api.pomodoro.getPomodoroSession);
 
-
-  const todoTitle = session?.todoTitle;
+  const todoTitle = session?.todoTitle || null;
 
   // Mutations and Actions
+  const advancePomodoroPhase = useMutation(api.pomodoro.advancePomodoroPhase);
   const startPomodoro = useMutation(api.pomodoro.startPomodoro);
   const pausePomodoro = useMutation(api.pomodoro.pausePomodoro);
   const resumePomodoro = useMutation(api.pomodoro.resumePomodoro);
@@ -75,11 +94,32 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
           playCompletionSound();
         }
         setIsFullScreen(true);
-        // Only call completePomodoro once per session
-        if (session && !hasCalledComplete.current) {
-          hasCalledComplete.current = true;
-          completePomodoro({ sessionId: session._id });
-        }
+
+        //wayne code
+        // // Only call completePomodoro once per session
+        // if (session && !hasCalledComplete.current) {
+        //   hasCalledComplete.current = true;
+        //   completePomodoro({ sessionId: session._id });
+        // }
+
+        // Goal 2
+        // Handle phase transition when timer segment completes
+        (async () => {
+          if (!session || hasCalledComplete.current) return;
+
+          if (session.phase === "focus") {
+            await advancePomodoroPhase({ sessionId: session._id });
+            return;
+          }
+
+          const nextCycle = session.cycleIndex + 1;
+          if (nextCycle >= session.totalCycles) {
+            hasCalledComplete.current = true;
+            await completePomodoro({ sessionId: session._id });
+          } else {
+            await advancePomodoroPhase({ sessionId: session._id });
+          }
+        })().catch(console.error);
       }
     };
 
@@ -102,10 +142,13 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
       if (workerRef.current) {
         workerRef.current.postMessage({ type: "stop" });
       }
+      setCurrentPhase("focus");
       return;
     }
 
     setDisplayTime(session.remainingTime);
+    // Goal 2: When session exists then..
+    setCurrentPhase(session.phase);
 
     if (session.status === "running") {
       if (workerRef.current) {
@@ -125,6 +168,9 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
         workerRef.current.postMessage({ type: "pause" });
       }
     } else if (session.status === "completed") {
+      // Goal 2: Stop worker when session completes
+      workerRef.current?.postMessage({ type: "stop" });
+
       setIsFullScreen(true);
       setDisplayTime(0);
     }
@@ -214,16 +260,38 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
+  // GOAL 2 : session presets for focus , break cycles
+  const sessionPresets: Record<
+    number,
+    { focus: number; break: number; cycles: number }
+  > = {
+    25: { focus: 25, break: 5, cycles: 4 },
+    50: { focus: 50, break: 10, cycles: 2 },
+    90: { focus: 90, break: 30, cycles: 1 },
+  };
+
+  // goal 2 pull out preset based on duration minutes
+  const activePreset = sessionPresets[durationMinutes] ?? sessionPresets[25];
+
   const handleStart = async () => {
     hasPlayedStartSound.current = false;
     hasPlayedCountdownSound.current = false;
     hasCalledComplete.current = false;
     userStartedInThisSession.current = true;
+
+    // goal 2 : focus and break ms
+    const focusMs = activePreset.focus * 60 * 1000;
+    const breakMs = activePreset.break * 60 * 1000;
+
     await startPomodoro({
-  durationMinutes,
-  todoId: triggerData?.todoId,
-  todoTitle: triggerData?.todoTitle,
-});
+      durationMinutes,
+      todoId: (triggerData?.todoId as Id<"todos">) ?? null, //Goal 1 ✅ Type cast fix
+      todoTitle: triggerData?.todoTitle ?? null,
+      totalCycles: activePreset.cycles,
+      phaseDuration: focusMs,
+      breakDuration: breakMs,
+    });
+    onClearTrigger?.();
     // Play start sound only if not muted
     if (!isMuted) {
       playStartSound();
@@ -249,9 +317,12 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
   const handleStop = async () => {
     if (session) {
       await stopPomodoro({ sessionId: session._id });
-      setIsModalOpen(false);
-      setIsFullScreen(false);
     }
+
+    // ✅ Immediately reset local UI
+    setIsModalOpen(false);
+    setIsFullScreen(false);
+    setDisplayTime(durationMinutes * 60 * 1000);
   };
 
   const handleReset = async () => {
@@ -262,11 +333,19 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
     hasPlayedCountdownSound.current = false;
     hasCalledComplete.current = false;
     userStartedInThisSession.current = true;
+
+    // goal 2 : focus and break ms
+    const focusMs = activePreset.focus * 60 * 1000;
+    const breakMs = activePreset.break * 60 * 1000;
+
     await startPomodoro({
-  durationMinutes,
-  todoId: triggerData?.todoId,
-  todoTitle: triggerData?.todoTitle,
-});
+      durationMinutes,
+      todoId: triggerData?.todoId as Id<"todos">, // ✅ Type cast fix
+      todoTitle: triggerData?.todoTitle,
+      totalCycles: activePreset.cycles,
+      phaseDuration: focusMs,
+      breakDuration: breakMs,
+    });
     // Play start sound only if not muted
     if (!isMuted) {
       playStartSound();
@@ -310,8 +389,27 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
     }
   };
 
+  // Presets and icons for the pomodoro timer
+  const durationPresets = [25, 50, 90];
+  const durationIcons: Record<number, JSX.Element> = {
+    25: <Waves width={24} height={24} />,
+    50: <Activity width={24} height={24} />,
+    90: <Clock width={24} height={24} />,
+  };
+  const durationLabels: Record<number, string> = {
+    25: "25 min focus",
+    50: "50 min steady session",
+    90: "90 min flow state",
+  };
+
   const handleToggleDuration = () => {
-    const newDuration = durationMinutes === 25 ? 90 : 25;
+    // (This assumes durationMinutes is always one of those values; if not, default currentIndex to 0.)
+
+    const currentIndex = durationPresets.indexOf(durationMinutes);
+    //Wayne code:  const newDuration = durationMinutes === 25 ? 90 : 25;
+    const nextIndex = (currentIndex + 1) % durationPresets.length;
+    const newDuration = durationPresets[nextIndex];
+
     setDurationMinutes(newDuration);
     setDisplayTime(newDuration * 60 * 1000);
   };
@@ -372,7 +470,11 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
       {/* Control Modal */}
       {isModalOpen && !isFullScreen && (
         <div className="search-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="pomodoro-modal" onClick={(e) => e.stopPropagation()}>
+          {/* added css with existing pomodoro-modal */}
+          <div
+            className={`pomodoro-modal`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               className="pomodoro-modal-close"
               onClick={() => setIsModalOpen(false)}
@@ -380,6 +482,17 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
             >
               <Cross2Icon />
             </button>
+
+            {/* Goal 2 : Adding phase badge in the modal */}
+            {session && (
+              <div className="phase-badge-wrapper">
+                <div className={`phase-badge phase-${currentPhase}`}>
+                {currentPhase === "focus" ? "Focus" : "Break"} · Round{" "}
+                {session.cycleIndex + 1} of {session.totalCycles}
+              </div>
+              </div>
+              
+            )}
 
             <div className="pomodoro-timer-display">
               {formatTime(displayTime)}
@@ -401,13 +514,17 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
                   <button
                     className="pomodoro-control-button"
                     onClick={handleToggleDuration}
-                    title={durationMinutes === 25 ? "Switch to 90 min flow state" : "Switch to 25 min focus"}
+                    title={durationLabels[durationMinutes]}
                   >
-                    {durationMinutes === 25 ? (
+                    {/* Wayne code */}
+                    {/* {durationMinutes === 25 ? (
                       <Waves width={24} height={24} />
                     ) : (
                       <Clock width={24} height={24} />
-                    )}
+                    )} */}
+                    <span className="duration-icon">
+                      {durationIcons[durationMinutes]}
+                    </span>
                   </button>
                   <button
                     className="pomodoro-control-button"
@@ -483,11 +600,18 @@ export function PomodoroTimer({ triggerData }: PomodoroTimerProps) {
               </div>
             )}
 
+            {/* Goal 2 : Change classname when background image is true i.e from blue or green to white  */}
             <div
               className={`pomodoro-fullscreen-content${showBackgroundImage ? " with-glass-effect" : ""}`}
             >
+              {session && (
+                <div className={`phase-badge phase-${currentPhase} ${showBackgroundImage ? "phase-invert" : ""}`}>
+                  {currentPhase === "focus" ? "Focus" : "Break"} · Round{" "}
+                  {session.cycleIndex + 1} of {session.totalCycles}
+                </div>
+              )}
               <div className="pomodoro-fullscreen-message">
-                {todoTitle ? `Working on: ${todoTitle}` : "keep cooking!"}
+                {todoTitle ? `Working on:  ${todoTitle}` : "keep cooking!"}
               </div>
 
               <div className="pomodoro-timer-display-large">

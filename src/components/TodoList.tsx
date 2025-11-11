@@ -60,6 +60,7 @@ export interface TodoListProps {
   demoTodos?: any[];
   setDemoTodos?: React.Dispatch<React.SetStateAction<any[]>>;
   isAuthenticated?: boolean; // pass auth status to check before menu actions
+  setPomodoroTriggered: (data: { todoId?: string; todoTitle?: string }) => void;
 }
 
 export interface TodoListRef {
@@ -88,6 +89,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       demoTodos = [],
       setDemoTodos,
       isAuthenticated = false,
+      setPomodoroTriggered,
     },
     ref,
   ) => {
@@ -439,6 +441,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                       onDemoToggle={handleDemoToggle}
                       isAuthenticated={isAuthenticated}
                       onRequireSignInForMenu={onRequireSignInForMenu}
+                      setPomodoroTriggered={setPomodoroTriggered} // ✅ NEW
                     />
                   </div>
                   {!parent.collapsed &&
@@ -485,6 +488,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                             onDemoToggle={handleDemoToggle}
                             isAuthenticated={isAuthenticated}
                             onRequireSignInForMenu={onRequireSignInForMenu}
+                            setPomodoroTriggered={setPomodoroTriggered} // ✅ NEW
                           />
                         </div>
                       );

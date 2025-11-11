@@ -31,6 +31,7 @@ interface TodoItemProps {
   onDemoToggle?: (id: Id<"todos">) => void;
   isAuthenticated?: boolean;
   onRequireSignInForMenu?: () => void;
+  setPomodoroTriggered: (data: { todoId?: string ; todoTitle?: string}) => void; // ✅ NEW
 }
 
 export function TodoItem({
@@ -54,6 +55,7 @@ export function TodoItem({
   onDemoToggle,
   isAuthenticated = false,
   onRequireSignInForMenu,
+  setPomodoroTriggered, // ✅ NEW
 }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
@@ -452,8 +454,7 @@ export function TodoItem({
                     }
                     setShowMenu(false);
 
-                    // Start Pomodoro for this todo
-                    await startPomodoro({ todoId: id, todoTitle: content });
+                   
                     setPomodoroTriggered({ todoId: id, todoTitle: content }); // 👈 tell App to open modal
                   }}
                 >

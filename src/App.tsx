@@ -100,6 +100,7 @@ function App() {
   const [openMenuForTodoId, setOpenMenuForTodoId] =
     useState<Id<"todos"> | null>(null);
   const [openMenuTrigger, setOpenMenuTrigger] = useState<number>(0);
+
   // new useState
   const [pomodoroTriggered, setPomodoroTriggered] = useState<{
     todoId?: string;
@@ -973,7 +974,7 @@ function App() {
                     <FileTextIcon style={{ width: 18, height: 18 }} />
                   </button>
                 )}
-                <PomodoroTimer triggerData={pomodoroTriggered} />
+                <PomodoroTimer triggerData={pomodoroTriggered} openOnTrigger={true} onClearTrigger ={() => setPomodoroTriggered(null)}/>
                 <button
                   className="search-button"
                   onClick={() => {
@@ -1153,6 +1154,7 @@ function App() {
                     demoTodos={demoTodos}
                     setDemoTodos={setDemoTodos}
                     isAuthenticated={!authIsLoading && isAuthenticated}
+                    setPomodoroTriggered={setPomodoroTriggered} // ✅ NEW
                   />
                 </div>
               </div>
@@ -1250,6 +1252,7 @@ function App() {
                 demoTodos={demoTodos}
                 setDemoTodos={setDemoTodos}
                 isAuthenticated={!authIsLoading && isAuthenticated}
+                setPomodoroTriggered={setPomodoroTriggered} // ✅ NEW
               />
             )}
           </div>

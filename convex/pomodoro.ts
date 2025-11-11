@@ -16,16 +16,21 @@ export const getPomodoroSession = query({
         v.literal("idle"),
         v.literal("running"),
         v.literal("paused"),
-        v.literal("completed"),
+        v.literal("completed")
       ),
       lastUpdated: v.number(),
       backgroundImageUrl: v.optional(v.string()),
-      // new fields
-      todoId: v.optional(v.id("todos")),
-todoTitle: v.optional(v.string()),
-
+      // new fields for goal 1
+      todoId: v.optional(v.union(v.id("todos"), v.null())),
+      todoTitle: v.optional(v.union(v.string(), v.null())),
+      // new fields for goal 2
+      phase: v.union(v.literal("focus"), v.literal("break")),
+      cycleIndex: v.number(),
+      totalCycles: v.number(),
+      phaseDuration: v.number(),
+      breakDuration: v.number(),
     }),
-    v.null(),
+    v.null()
   ),
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -35,7 +40,7 @@ todoTitle: v.optional(v.string()),
     const session = await ctx.db
       .query("pomodoroSessions")
       .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined),
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
       )
       .first();
 
@@ -47,8 +52,13 @@ todoTitle: v.optional(v.string()),
 export const startPomodoro = mutation({
   args: v.object({
     durationMinutes: v.optional(v.number()),
-    todoId: v.optional(v.id("todos")),
-    todoTitle: v.optional(v.string()),
+    // for Goal 1
+    todoId: v.optional(v.union(v.id("todos"), v.null())),
+    todoTitle: v.optional(v.union(v.string(), v.null())),
+    // for Goal 2
+    totalCycles: v.number(),
+    phaseDuration: v.number(),
+    breakDuration: v.number(),
   }),
   returns: v.id("pomodoroSessions"),
   handler: async (ctx, args) => {
@@ -59,7 +69,7 @@ export const startPomodoro = mutation({
     const existingSession = await ctx.db
       .query("pomodoroSessions")
       .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined),
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
       )
       .first();
 
@@ -76,12 +86,18 @@ export const startPomodoro = mutation({
       userId,
       startTime: now,
       duration,
-      remainingTime: duration,
+      remainingTime: args.phaseDuration, // in wayne's it was duration
       status: "running",
       lastUpdated: now,
-     
-      todoId: args.todoId, // new field
-      todoTitle: args.todoTitle, // new field
+      // for Goal 1
+      todoId: args.todoId ?? null, // new field
+      todoTitle: args.todoTitle ?? null, // new field
+      // For Goal 2
+      phase: "focus",
+      cycleIndex: 0,
+      totalCycles: args.totalCycles,
+      phaseDuration: args.phaseDuration,
+      breakDuration: args.breakDuration,
     });
 
     return sessionId;
@@ -183,6 +199,50 @@ export const updateBackgroundImage = mutation({
 
     await ctx.db.patch(args.sessionId, {
       backgroundImageUrl: args.imageUrl,
+    });
+
+    return null;
+  },
+});
+
+// For Goal 2 new mutation to handle focus and breaks
+export const advancePomodoroPhase = mutation({
+  args: {
+    sessionId: v.id("pomodoroSessions"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) {
+      throw new Error("Session not found");
+    }
+
+    if (session.phase === "focus") {
+      await ctx.db.patch(session._id, {
+        phase: "break",
+        phaseDuration: session.breakDuration,
+        remainingTime: session.breakDuration,
+        lastUpdated: Date.now(),
+      });
+      return null;
+    }
+
+    const nextCycle = session.cycleIndex + 1;
+    if (nextCycle >= session.totalCycles) {
+      await ctx.db.patch(session._id, {
+        status: "completed",
+        remainingTime: 0,
+        lastUpdated: Date.now(),
+      });
+      return null;
+    }
+
+    await ctx.db.patch(session._id, {
+      phase: "focus",
+      cycleIndex: nextCycle,
+      phaseDuration: session.duration,
+      remainingTime: session.duration,
+      lastUpdated: Date.now(),
     });
 
     return null;
