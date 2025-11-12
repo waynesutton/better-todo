@@ -212,31 +212,17 @@ export const updateBackgroundImage = mutation({
   args: { sessionId: v.id("pomodoroSessions"), imageUrl: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    const userId = identity?.subject;
-
-    // Use indexed query to verify ownership
-    const session = await ctx.db
-      .query("pomodoroSessions")
-      .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
-      )
-      .filter((q) => q.eq(q.field("_id"), args.sessionId))
-      .unique();
-
-    if (!session) {
-      return null;
-    }
-
-    // Only update if the image URL is different (idempotent)
-    if (session.backgroundImageUrl === args.imageUrl) {
-      return null;
-    }
-
     // Patch directly without reading first
-    await ctx.db.patch(args.sessionId, {
-      backgroundImageUrl: args.imageUrl,
-    });
+    // This is idempotent - patching with same value is harmless
+    // DB will throw if session doesn't exist
+    try {
+      await ctx.db.patch(args.sessionId, {
+        backgroundImageUrl: args.imageUrl,
+      });
+    } catch (error) {
+      // If session doesn't exist, that's fine (idempotent)
+      return null;
+    }
 
     return null;
   },

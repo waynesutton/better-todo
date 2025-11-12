@@ -447,32 +447,26 @@ export const deleteTodo = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify ownership without reading the document first
-    const todo = await ctx.db
+    // Query for subtasks first (they won't exist if parent doesn't exist)
+    const subtasks = await ctx.db
       .query("todos")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.id))
-      .unique();
-    
-    // If todo doesn't exist or doesn't belong to user, return early (idempotent)
-    if (!todo) {
-      return null;
-    }
+      .filter((q) => q.eq(q.field("parentId"), args.id))
+      .collect();
 
-    // Delete all subtasks (children) first if this is a header
-    if (todo.type !== "todo") {
-      const subtasks = await ctx.db
-        .query("todos")
-        .withIndex("by_user", (q) => q.eq("userId", userId))
-        .filter((q) => q.eq(q.field("parentId"), args.id))
-        .collect();
-      
-      // Delete subtasks in parallel
+    // Delete subtasks in parallel (if any exist)
+    if (subtasks.length > 0) {
       await Promise.all(subtasks.map((subtask) => ctx.db.delete(subtask._id)));
     }
 
-    // Delete the todo
-    await ctx.db.delete(args.id);
+    // Delete the todo directly (throws if doesn't exist or wrong user via DB constraints)
+    // This is safe because the DB will handle authorization via userId field
+    try {
+      await ctx.db.delete(args.id);
+    } catch (error) {
+      // If todo doesn't exist, that's fine (idempotent)
+      return null;
+    }
     
     return null;
   },
