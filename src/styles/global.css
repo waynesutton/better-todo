@@ -3569,7 +3569,7 @@ button:active,
   flex-shrink: 0;
   width: 24px;
   height: 24px;
-  border-radius: 8px;
+  border-radius: 5px;
   border: none;
   background-color: var(--mobile-add-button-bg);
   color: #ffffff;
@@ -3909,9 +3909,10 @@ button:active,
   }
 
   .inline-todo-submit {
-    width: 22px;
-    height: 22px;
-    border-radius: 7px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    margin: 3px;
   }
 
   .inline-todo-submit svg {
@@ -3960,17 +3961,18 @@ button:active,
 
   .inline-todo-shell {
     padding: 10px 10px 10px 14px;
-    border-radius: 6px;
+    border-radius: 5px;
+    margin: 3px;
   }
 
   .inline-todo-submit {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 
   .inline-todo-submit svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 
   .notion-input {
