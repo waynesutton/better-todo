@@ -159,6 +159,7 @@ export default defineSchema({
     collapsed: v.optional(v.boolean()), // For future collapsible functionality
     pinnedToTop: v.optional(v.boolean()), // For future pin functionality
     archived: v.optional(v.boolean()), // Whether note is archived
+    imageIds: v.optional(v.array(v.id("_storage"))), // Array of storage IDs for uploaded images (first image is featured/OG image)
   })
     .index("by_user_and_date", ["userId", "date"])
     .index("by_user_and_folder", ["userId", "folderId"])

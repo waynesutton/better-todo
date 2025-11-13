@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { CheckboxIcon, FilePlusIcon, EnterFullScreenIcon, ExitFullScreenIcon } from "@radix-ui/react-icons";
+import { CheckboxIcon, FilePlusIcon, EnterFullScreenIcon, ExitFullScreenIcon, ImageIcon, EyeOpenIcon } from "@radix-ui/react-icons";
 import { X, Copy, Check } from "lucide-react";
 import { Id } from "../../convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -20,6 +20,11 @@ interface FullPageNoteTabsProps {
   onBackToTodos: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  onImageUpload?: () => void;
+  isAuthenticated: boolean;
+  isEditMode?: boolean;
+  onTogglePreview?: () => void;
+  cursorInCodeBlock?: boolean;
 }
 
 export function FullPageNoteTabs({
@@ -32,6 +37,11 @@ export function FullPageNoteTabs({
   onBackToTodos,
   isFullscreen,
   onToggleFullscreen,
+  onImageUpload,
+  isAuthenticated,
+  isEditMode,
+  onTogglePreview,
+  cursorInCodeBlock,
 }: FullPageNoteTabsProps) {
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const selectedTabRef = useRef<HTMLDivElement>(null);
@@ -181,7 +191,7 @@ export function FullPageNoteTabs({
           <FilePlusIcon style={{ width: 16, height: 16 }} />
         </button>
 
-        {/* Action buttons - copy and fullscreen */}
+        {/* Action buttons - copy, image upload, preview, and fullscreen */}
         <div className="fullpage-note-tab-actions">
           <button
             className="fullpage-note-tab-action-button"
@@ -190,6 +200,31 @@ export function FullPageNoteTabs({
           >
             {copied ? <Check size={16} /> : <Copy size={16} />}
           </button>
+          
+          {isAuthenticated && isEditMode && onImageUpload && (
+            <button
+              className="fullpage-note-tab-action-button"
+              onClick={onImageUpload}
+              disabled={cursorInCodeBlock}
+              title={cursorInCodeBlock ? "Cannot upload image while cursor is in code block" : "Upload image"}
+              style={{ 
+                opacity: cursorInCodeBlock ? 0.4 : 1,
+                cursor: cursorInCodeBlock ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <ImageIcon style={{ width: 16, height: 16 }} />
+            </button>
+          )}
+          
+          {isAuthenticated && isEditMode && onTogglePreview && (
+            <button
+              className="fullpage-note-tab-action-button"
+              onClick={onTogglePreview}
+              title="Preview note"
+            >
+              <EyeOpenIcon style={{ width: 16, height: 16 }} />
+            </button>
+          )}
           
           <button
             className="fullpage-note-tab-action-button"

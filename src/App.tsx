@@ -123,6 +123,9 @@ function App() {
   const [selectedFullPageNoteId, setSelectedFullPageNoteId] =
     useState<Id<"fullPageNotes"> | null>(null);
   const [isFullscreenNotes, setIsFullscreenNotes] = useState(false);
+  const [imageUploadCallback, setImageUploadCallback] = useState<(() => void) | null>(null);
+  const [isFullPageNoteEditMode, setIsFullPageNoteEditMode] = useState(false);
+  const [cursorInCodeBlock, setCursorInCodeBlock] = useState(false);
 
   // Apply user's custom font size to todo text and full-page notes
   useEffect(() => {
@@ -1360,10 +1363,30 @@ function App() {
                   }}
                   isFullscreen={isFullscreenNotes}
                   onToggleFullscreen={() => setIsFullscreenNotes(!isFullscreenNotes)}
+                  onImageUpload={() => {
+                    if (imageUploadCallback) {
+                      imageUploadCallback();
+                    }
+                  }}
+                  isAuthenticated={!authIsLoading && isAuthenticated}
+                  isEditMode={isFullPageNoteEditMode}
+                  onTogglePreview={() => {
+                    if ((window as any).__toggleFullPageNotePreview) {
+                      (window as any).__toggleFullPageNotePreview();
+                    }
+                  }}
+                  cursorInCodeBlock={cursorInCodeBlock}
                 />
                 {/* Full-page note view */}
                 {selectedFullPageNoteId && (
-                  <FullPageNoteView key={selectedFullPageNoteId} noteId={selectedFullPageNoteId} />
+                  <FullPageNoteView 
+                    key={selectedFullPageNoteId} 
+                    noteId={selectedFullPageNoteId}
+                    onImageUploadTrigger={(callback) => setImageUploadCallback(() => callback)}
+                    onEditModeChange={setIsFullPageNoteEditMode}
+                    onTogglePreview={() => {}}
+                    onCursorInCodeBlockChange={setCursorInCodeBlock}
+                  />
                 )}
               </div>
             ) : (

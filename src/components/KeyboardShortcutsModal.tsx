@@ -91,6 +91,14 @@ export function KeyboardShortcutsModal({
       items: [{ key: "Shift + +", description: "Add new note" }],
     },
     {
+      category: "Full-Page Notes",
+      items: [
+        { key: "e", description: "Enter edit mode" },
+        { key: "p", description: "Enter preview mode" },
+        { key: "Esc", description: "Exit edit mode (show preview)" },
+      ],
+    },
+    {
       category: "Search",
       items: [{ key: "⌘ + K", description: "Open search modal" }],
     },

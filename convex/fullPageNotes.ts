@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 // Get full-page notes by their IDs (for tabs)
 export const getFullPageNotesByIds = query({
@@ -31,6 +32,7 @@ export const getFullPageNotesByIds = query({
       collapsed: v.optional(v.boolean()),
       pinnedToTop: v.optional(v.boolean()),
       archived: v.optional(v.boolean()),
+      imageIds: v.optional(v.array(v.id("_storage"))),
     }),
   ),
   handler: async (ctx, args) => {
@@ -88,6 +90,7 @@ export const getFullPageNotesByDate = query({
       collapsed: v.optional(v.boolean()),
       pinnedToTop: v.optional(v.boolean()),
       archived: v.optional(v.boolean()),
+      imageIds: v.optional(v.array(v.id("_storage"))),
     }),
   ),
   handler: async (ctx, args) => {
@@ -141,6 +144,7 @@ export const getFullPageNote = query({
       collapsed: v.optional(v.boolean()),
       pinnedToTop: v.optional(v.boolean()),
       archived: v.optional(v.boolean()),
+      imageIds: v.optional(v.array(v.id("_storage"))),
     }),
     v.null(),
   ),
@@ -191,6 +195,7 @@ export const getFullPageNotesByFolder = query({
       collapsed: v.optional(v.boolean()),
       pinnedToTop: v.optional(v.boolean()),
       archived: v.optional(v.boolean()),
+      imageIds: v.optional(v.array(v.id("_storage"))),
     }),
   ),
   handler: async (ctx, args) => {
@@ -554,6 +559,148 @@ export const getImageUrl = mutation({
   handler: async (ctx, args) => {
     // Get the URL for the storage ID
     return await ctx.storage.getUrl(args.storageId);
+  },
+});
+
+// Add image to full-page note
+export const addImageToNote = mutation({
+  args: {
+    noteId: v.id("fullPageNotes"),
+    storageId: v.id("_storage"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Use indexed query to verify note ownership
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.noteId)
+        )
+      )
+      .unique();
+
+    if (!note) {
+      throw new Error("Note not found or unauthorized");
+    }
+
+    // Append image to imageIds array (or create array if doesn't exist)
+    const currentImageIds = note.imageIds || [];
+    const updatedImageIds = [...currentImageIds, args.storageId];
+
+    await ctx.db.patch(args.noteId, {
+      imageIds: updatedImageIds,
+    });
+
+    return null;
+  },
+});
+
+// Remove image from full-page note and delete from storage
+export const removeImageFromNote = mutation({
+  args: {
+    noteId: v.id("fullPageNotes"),
+    storageId: v.id("_storage"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Use indexed query to verify note ownership
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.noteId)
+        )
+      )
+      .unique();
+
+    if (!note) {
+      // Idempotent - note doesn't exist or doesn't belong to user
+      return null;
+    }
+
+    // Remove image from imageIds array
+    const currentImageIds = note.imageIds || [];
+    const updatedImageIds = currentImageIds.filter(id => id !== args.storageId);
+
+    // Only update if image was in the array
+    if (currentImageIds.length === updatedImageIds.length) {
+      // Image wasn't in array (idempotent)
+      return null;
+    }
+
+    await ctx.db.patch(args.noteId, {
+      imageIds: updatedImageIds,
+    });
+
+    // Delete file from Convex storage
+    try {
+      await ctx.storage.delete(args.storageId);
+    } catch (error) {
+      // Silently handle if file already deleted (idempotent)
+      console.log("Storage delete error (may already be deleted):", error);
+    }
+
+    return null;
+  },
+});
+
+// Get image URLs for a full-page note
+export const getImageUrls = query({
+  args: {
+    noteId: v.id("fullPageNotes"),
+  },
+  returns: v.array(
+    v.object({
+      storageId: v.id("_storage"),
+      url: v.string(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+    const userId = identity.subject;
+
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
+      return [];
+    }
+
+    const imageIds = note.imageIds || [];
+    
+    // Fetch all image URLs in parallel
+    const imageUrlPromises = imageIds.map(async (storageId) => {
+      const url = await ctx.storage.getUrl(storageId);
+      return url ? { storageId, url } : null;
+    });
+
+    const imageUrlsWithNulls = await Promise.all(imageUrlPromises);
+    
+    // Filter out null values (images that no longer exist)
+    const imageUrls: Array<{ storageId: Id<"_storage">; url: string }> = [];
+    for (const img of imageUrlsWithNulls) {
+      if (img !== null) {
+        imageUrls.push(img);
+      }
+    }
+    
+    return imageUrls;
   },
 });
 
