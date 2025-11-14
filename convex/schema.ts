@@ -125,12 +125,12 @@ export default defineSchema({
     // New optional fields (safe, backward-compatible)
     todoId: v.optional(v.union(v.id("todos"), v.null())),
     todoTitle: v.optional(v.union(v.string(), v.null())),
-    // Goal 2: Pomodoro phase metadata
-    phase: v.union(v.literal("focus"), v.literal("break")),
-    cycleIndex: v.number(), // current loop, 0-based
-    totalCycles: v.number(), // user/preset target
-    phaseDuration: v.number(), // ms for the active block
-    breakDuration: v.number(), // ms allocated for breaks
+    // Goal 2: Pomodoro phase metadata (optional for backward compatibility)
+    phase: v.optional(v.union(v.literal("focus"), v.literal("break"))),
+    cycleIndex: v.optional(v.number()), // current loop, 0-based
+    totalCycles: v.optional(v.number()), // user/preset target
+    phaseDuration: v.optional(v.number()), // ms for the active block
+    breakDuration: v.optional(v.number()), // ms allocated for breaks
   }).index("by_user", ["userId"]),
 
   // Custom backlog label - allows renaming the backlog section

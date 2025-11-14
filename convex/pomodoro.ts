@@ -23,12 +23,12 @@ export const getPomodoroSession = query({
       // New fields for goal 1
       todoId: v.optional(v.union(v.id("todos"), v.null())),
       todoTitle: v.optional(v.union(v.string(), v.null())),
-      // New fields for goal 2
-      phase: v.union(v.literal("focus"), v.literal("break")),
-      cycleIndex: v.number(),
-      totalCycles: v.number(),
-      phaseDuration: v.number(),
-      breakDuration: v.number(),
+      // New fields for goal 2 (optional for backward compatibility)
+      phase: v.optional(v.union(v.literal("focus"), v.literal("break"))),
+      cycleIndex: v.optional(v.number()),
+      totalCycles: v.optional(v.number()),
+      phaseDuration: v.optional(v.number()),
+      breakDuration: v.optional(v.number()),
     }),
     v.null()
   ),
@@ -252,6 +252,19 @@ export const advancePomodoroPhase = mutation({
 
     // Idempotent phase handling
     if (session.status === "completed") return null;
+
+    // Handle legacy sessions that don't have phase fields
+    if (!session.phase || session.cycleIndex === undefined || 
+        session.totalCycles === undefined || !session.phaseDuration || 
+        !session.breakDuration) {
+      // Legacy session - just mark as completed
+      await ctx.db.patch(session._id, {
+        status: "completed",
+        remainingTime: 0,
+        lastUpdated: Date.now(),
+      });
+      return null;
+    }
 
     if (session.phase === "focus") {
       await ctx.db.patch(session._id, {
