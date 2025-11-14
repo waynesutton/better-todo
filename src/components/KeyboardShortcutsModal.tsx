@@ -105,6 +105,7 @@ export function KeyboardShortcutsModal({
     {
       category: "Pomodoro Timer",
       items: [
+        { key: "Shift + F", description: "Open Pomodoro timer" },
         {
           key: "f",
           description: "Enter full screen (when timer modal is open)",

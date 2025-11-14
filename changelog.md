@@ -8,6 +8,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes. Tracking resumes with the next commit.
 
+## [v.016] - 2025-11-14
+
+### Added
+
+- **Pomodoro Timer Keyboard Shortcut** - Quickly access timer with Shift + F
+  - Opens Pomodoro timer modal from anywhere in the app
+  - Listed in keyboard shortcuts modal (press ? to view all shortcuts)
+  - Works alongside existing "f" shortcut to enter full-screen mode when timer is open
+  - Keyboard shortcut works whether timer is idle, running, or paused
+
+### Changed
+
+- **Phase Badge Theming** - Phase badges now match your selected theme
+  - Focus and Break badges use theme variables for consistent colors across all themes
+  - Background uses `var(--bg-secondary)`
+  - Text color uses `var(--text-primary)`
+  - Border uses `var(--border-color)`
+  - Adapts seamlessly to dark, light, tan, and cloud themes
+  - Glass effect phase badges (when background image is enabled) remain white for readability
+
+### Fixed
+
+- **Full-Screen Timer Flash** - Eliminated flash when entering full-screen Pomodoro mode
+  - Timer now appears centered immediately without flashing in corner first
+  - Removed fade-in animations that caused layout calculation delays
+  - Removed pulse animation that changed opacity
+  - All elements pre-positioned with proper flexbox centering
+  - Smoother, more professional transition to full-screen mode
+
+### Technical Changes
+
+- **PomodoroTimer Component** (`src/components/PomodoroTimer.tsx`)
+  - Removed unused `startPomodoro` mutation import from TodoItem
+  - Updated `useEffect` dependencies for proper effect tracking
+  - Fixed modal trigger logic to work with or without todo context
+
+- **App Component** (`src/App.tsx`)
+  - Added Shift + F keyboard shortcut handler for opening Pomodoro timer
+  - Keyboard shortcut respects text input focus (won't trigger while typing)
+
+- **KeyboardShortcutsModal Component** (`src/components/KeyboardShortcutsModal.tsx`)
+  - Added "Shift + F" to Pomodoro Timer shortcuts section
+
+- **Global CSS** (`src/styles/global.css`)
+  - Updated `.phase-focus` and `.phase-break` to use CSS variables
+  - Added flexbox centering to `.pomodoro-fullscreen-content`
+  - Added width constraints to prevent layout shifts
+  - Removed problematic animations causing flash
+
 ## [v.015] - 2025-11-08
 
 ### Changed

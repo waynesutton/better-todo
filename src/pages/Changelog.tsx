@@ -8,6 +8,7 @@ export function Changelog() {
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
     { id: "unreleased", title: "Unreleased" },
+    { id: "v016", title: "v.016 - Nov 14, 2025" },
     { id: "v015", title: "v.015 - Nov 8, 2025" },
     { id: "v014", title: "v.014 - Nov 8, 2025" },
     { id: "v013", title: "v.013 - Nov 2, 2025" },
@@ -96,6 +97,52 @@ export function Changelog() {
           <p className="changelog-subtitle">
             No unreleased changes. Follow along with the most recent release below.
           </p>
+        </section>
+
+        <section id="v016" className="launch-section">
+          <h2 className="section-title">v.016 - November 14, 2025</h2>
+
+          <h3 className="subsection-title">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Pomodoro Timer Keyboard Shortcut</strong> - Quickly access timer with Shift + F
+              <ul>
+                <li>Opens Pomodoro timer modal from anywhere in the app</li>
+                <li>Listed in keyboard shortcuts modal (press ? to view all shortcuts)</li>
+                <li>Works alongside existing "f" shortcut to enter full-screen mode when timer is open</li>
+                <li>Keyboard shortcut works whether timer is idle, running, or paused</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Phase Badge Theming</strong> - Phase badges now match your selected theme
+              <ul>
+                <li>Focus and Break badges use theme variables for consistent colors across all themes</li>
+                <li>Background uses secondary theme color</li>
+                <li>Text color uses primary theme text color</li>
+                <li>Border uses theme border color</li>
+                <li>Adapts seamlessly to dark, light, tan, and cloud themes</li>
+                <li>Glass effect phase badges (when background image is enabled) remain white for readability</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Full-Screen Timer Flash</strong> - Eliminated flash when entering full-screen Pomodoro mode
+              <ul>
+                <li>Timer now appears centered immediately without flashing in corner first</li>
+                <li>Removed fade-in animations that caused layout calculation delays</li>
+                <li>Removed pulse animation that changed opacity</li>
+                <li>All elements pre-positioned with proper flexbox centering</li>
+                <li>Smoother, more professional transition to full-screen mode</li>
+              </ul>
+            </li>
+          </ul>
         </section>
 
         <section id="v015" className="launch-section">

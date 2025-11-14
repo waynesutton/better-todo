@@ -5173,7 +5173,6 @@ button:active,
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.3s ease;
   overflow: hidden;
 }
 
@@ -5208,10 +5207,14 @@ button:active,
 .pomodoro-fullscreen-content {
   text-align: center;
   padding: 40px;
-  /*width: 100%;*/
+  width: 100%;
   max-width: 1200px;
   position: relative;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .pomodoro-fullscreen-content.with-glass-effect {
@@ -5249,12 +5252,17 @@ button:active,
   background: rgba(255, 255, 255, 0.25);
 }
 
+.pomodoro-fullscreen-content .phase-badge {
+  align-self: center;
+  margin-bottom: 24px;
+}
+
 .pomodoro-fullscreen-message {
   font-size: 32px;
   font-weight: 300;
   margin-bottom: 48px;
   color: var(--text-primary);
-  animation: slideDown 0.5s ease;
+  width: 100%;
 }
 
 @keyframes slideDown {
@@ -5282,7 +5290,7 @@ button:active,
   margin-bottom: 64px;
   letter-spacing: 4px;
   color: var(--text-primary);
-  animation: pulse 2s ease infinite;
+  width: 100%;
 }
 
 @keyframes pulse {
@@ -5300,6 +5308,7 @@ button:active,
   gap: 24px;
   justify-content: center;
   align-items: center;
+  width: 100%;
 }
 
 .pomodoro-control-button-large {
@@ -7456,6 +7465,7 @@ button:active,
 .phase-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
@@ -7467,15 +7477,15 @@ button:active,
 }
 
 .phase-focus {
-  background: rgba(76, 201, 240, 0.15);
-  color: #00b4d8;
-  border: 1px solid rgba(0, 180, 216, 0.4);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .phase-break {
-  background: rgba(111, 255, 176, 0.15);
-  color: #38b000;
-  border: 1px solid rgba(56, 176, 0, 0.35);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .pomodoro-modal.phase-break {

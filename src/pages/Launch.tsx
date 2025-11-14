@@ -176,11 +176,8 @@ export function Launch() {
         <section id="recent-updates" className="launch-section">
           <h2 className="section-title">Recent updates</h2>
           <p>
-            The todo composer just picked up a rounded, theme-aware look with an ArrowUp submit button so you can add tasks without breaking flow.
-          </p>
-          <p>
-            Want the full story? Jump into the{" "}
-            <a href="/changelog">changelog</a> to see everything that shipped in v.015.
+            Press Shift + F to open the Pomodoro timer from anywhere, and watch
+            those phase badges adapt to your chosen theme.
           </p>
         </section>
 
@@ -195,7 +192,10 @@ export function Launch() {
             <li>No AI assistants - just your todos and focus</li>
             <li>Real-time synchronization across all your devices</li>
             <li>Notion-style inline input - type directly to add todos</li>
-            <li>Daily notes with full markdown support and syntax-highlighted code blocks</li>
+            <li>
+              Daily notes with full markdown support and syntax-highlighted code
+              blocks
+            </li>
             <li>Drag and drop reordering with intuitive handles</li>
             <li>Full-text search across all todos and notes</li>
             <li>
@@ -269,11 +269,11 @@ export function Launch() {
           <p>
             Better-todo supports full markdown rendering in notes with code
             blocks featuring syntax highlighting for JavaScript, TypeScript,
-            CSS, HTML, JSON, Python, Go, and Rust. Write markdown naturally
-            with bold, italic, headers, lists, links, and tables - no special
-            syntax needed. Code blocks use triple backticks with language tags
-            for beautiful syntax highlighting. Take notes with actual code
-            snippets in your daily workflow.
+            CSS, HTML, JSON, Python, Go, and Rust. Write markdown naturally with
+            bold, italic, headers, lists, links, and tables - no special syntax
+            needed. Code blocks use triple backticks with language tags for
+            beautiful syntax highlighting. Take notes with actual code snippets
+            in your daily workflow.
           </p>
           <p>
             Every feature is designed to get out of your way and let you focus
@@ -304,7 +304,9 @@ export function Launch() {
           <p>
             Stay focused with the built-in Pomodoro timer. Features include
             audio notifications, full-screen mode with optional background
-            images, and customizable work intervals. Switch between 25-minute focus sessions and 90-minute flow state sessions with a single click.
+            images, and customizable work intervals. Switch between 25-minute
+            focus sessions and 90-minute flow state sessions with a single
+            click.
           </p>
           <div className="launch-screenshots-timer">
             {imageGalleries.timer.map((img, idx) => (

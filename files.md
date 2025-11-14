@@ -399,6 +399,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Active state highlighting for current selection
     - Persists across sessions and devices
   - Organized by categories (Navigation, Todo Management, Search, Pomodoro Timer)
+  - **Pomodoro shortcuts**: Shift + F to open timer, f to enter full-screen mode
   - Accessible via ? key or keyboard shortcuts button
   - Theme-aware styling matching app design
 
@@ -491,11 +492,14 @@ This document describes the structure and purpose of each file in the Better Tod
   - Full-screen "keep cooking!" message on completion
   - Timer button in header shows countdown when running
   - **Timer icon opens modal** - No auto-start, user must click "Start" button
+  - **Shift + F keyboard shortcut** - Open Pomodoro timer modal from anywhere in the app
+  - **Theme-aware phase badges** - Focus and Break badges use CSS variables to match all themes (dark, light, tan, cloud)
+  - **Smooth full-screen transitions** - No flash when entering full-screen mode (removed fade-in and pulse animations)
   - Web Worker for accurate background timing
   - Session persistence via Convex (syncs across tabs)
-  - Keyboard shortcuts (ESC to close full-screen, f to enter full-screen)
+  - Keyboard shortcuts (ESC to close full-screen, f to enter full-screen, Shift + F to open timer)
   - Sound state tracking with refs (`hasPlayedStartSound`, `hasPlayedCountdownSound`, `lastEndSoundIndex`, `userStartedInThisSession`)
-  - Accessible from timer icon in header
+  - Accessible from timer icon in header or Shift + F shortcut
 
 - `FullPageNoteView.tsx` - Full-page note editing and display component:
   - Dual-mode rendering (edit/display) with single-click to start typing

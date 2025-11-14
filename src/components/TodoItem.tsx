@@ -111,8 +111,6 @@ export function TodoItem({
   const updateTodo = useMutation(api.todos.updateTodo);
   const deleteTodo = useMutation(api.todos.deleteTodo);
   const createSubtask = useMutation(api.todos.createSubtask);
-  // for start pomodoro option in dropdown
-  const startPomodoro = useMutation(api.pomodoro.startPomodoro);
 
   const {
     attributes,

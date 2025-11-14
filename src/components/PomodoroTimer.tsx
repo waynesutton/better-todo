@@ -49,10 +49,10 @@ export function PomodoroTimer({
 
   // for respective task when start pomodoro click then only modal appear
   useEffect(() => {
-    if (openOnTrigger && triggerData?.todoId) {
+    if (openOnTrigger && triggerData) {
       setIsModalOpen(true);
     }
-  }, [triggerData]);
+  }, [triggerData, openOnTrigger]);
 
   // Fetch current session from Convex
   const session = useQuery(api.pomodoro.getPomodoroSession);

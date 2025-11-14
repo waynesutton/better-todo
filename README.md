@@ -33,6 +33,9 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **Custom projects** - organize dates into collapsible projects with custom names
 - **Auto-grouped months** - completed months automatically group into collapsible sections
 - **Pomodoro timer** - built-in productivity timer with duration toggle (25-minute focus sessions or 90-minute flow state sessions), sound notifications, and rotating completion sounds
+  - **Shift + F keyboard shortcut** - open timer instantly from anywhere in the app
+  - **Theme-aware phase badges** - Focus and Break badges adapt to your selected theme
+  - **Smooth full-screen transitions** - no flash when entering full-screen mode
 - **Unsplash background images** - Optional beautiful nature images in Pomodoro full-screen mode with glass morphism overlay
 - **Progressive Web App** - install on iOS or Android for native app experience with offline support
 

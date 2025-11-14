@@ -629,6 +629,12 @@ function App() {
         }
       }
 
+      // Open Pomodoro timer with Shift + F
+      if ((e.key === "F" || e.key === "f") && e.shiftKey) {
+        e.preventDefault();
+        setPomodoroTriggered({});
+      }
+
       // Open menu with m key
       if (e.key === "m") {
         e.preventDefault();
