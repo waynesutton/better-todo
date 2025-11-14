@@ -113,8 +113,9 @@ export function PomodoroTimer({
             return;
           }
 
-          const nextCycle = session.cycleIndex + 1;
-          if (nextCycle >= session.totalCycles) {
+          const nextCycle = (session.cycleIndex ?? 0) + 1;
+          const totalCycles = session.totalCycles ?? 1;
+          if (nextCycle >= totalCycles) {
             hasCalledComplete.current = true;
             await completePomodoro({ sessionId: session._id });
           } else {
@@ -149,7 +150,7 @@ export function PomodoroTimer({
 
     setDisplayTime(session.remainingTime);
     // Goal 2: When session exists then..
-    setCurrentPhase(session.phase);
+    setCurrentPhase(session.phase ?? "focus");
 
     if (session.status === "running") {
       if (workerRef.current) {

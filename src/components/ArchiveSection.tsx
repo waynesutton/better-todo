@@ -161,6 +161,7 @@ export function ArchiveSection({
                     onMoveToCustomDate={(date) =>
                       onMoveToCustomDate(todo._id, date)
                     }
+                    setPomodoroTriggered={() => {}} // Not used in archive section
                   />
                   <button
                     className="archived-delete-button"
