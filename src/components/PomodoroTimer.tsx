@@ -489,7 +489,7 @@ export function PomodoroTimer({
               <div className="phase-badge-wrapper">
                 <div className={`phase-badge phase-${currentPhase}`}>
                   {currentPhase === "focus" ? "Focus" : "Break"} · Round{" "}
-                  {session.cycleIndex + 1} of {session.totalCycles}
+                  {(session.cycleIndex ?? 0) + 1} of {session.totalCycles ?? 1}
                 </div>
               </div>
             )}
@@ -604,7 +604,7 @@ export function PomodoroTimer({
                   className={`phase-badge phase-${currentPhase} ${showBackgroundImage ? "phase-invert" : ""}`}
                 >
                   {currentPhase === "focus" ? "Focus" : "Break"} · Round{" "}
-                  {session.cycleIndex + 1} of {session.totalCycles}
+                  {(session.cycleIndex ?? 0) + 1} of {session.totalCycles ?? 1}
                 </div>
               )}
               <div className="pomodoro-fullscreen-message">
