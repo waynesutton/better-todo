@@ -168,7 +168,7 @@ const cursorLightTheme: { [key: string]: React.CSSProperties } = {
 type ContentBlock =
   | { type: "text"; content: string }
   | { type: "code"; content: string; language: string }
-  | { type: "image"; storageId: string; size: "small" | "medium" | "large"; alt: string; alignment: "left" | "center" | "right" };
+  | { type: "image"; storageId: Id<"_storage">; size: "small" | "medium" | "large"; alt: string; alignment: "left" | "center" | "right" };
 
 // Helper: Check if there are images inside code blocks (invalid state)
 function hasImagesInCodeBlocks(content: string): boolean {
@@ -228,11 +228,11 @@ function parseContentBlocks(content: string): Array<ContentBlock> {
       const language = match[2] || "text";
       const codeContent = match[3];
       blocks.push({ type: "code", content: codeContent, language });
-    } else if (match[0].startsWith("![")) {
+      } else if (match[0].startsWith("![")) {
       // Image - only add if NOT inside a code block
       if (!isInsideCodeBlock(match.index)) {
         const alt = match[4] || "";
-        const storageId = match[5];
+        const storageId = match[5] as Id<"_storage">;
         const size = match[6] as "small" | "medium" | "large";
         const alignment = (match[7] as "left" | "center" | "right") || "center";
         blocks.push({ type: "image", storageId, size, alt, alignment });
@@ -291,10 +291,9 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
   
   // Image upload state
   const [showSizeModal, setShowSizeModal] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imageToDelete, setImageToDelete] = useState<{ storageId: string; alt: string } | null>(null);
+  const [imageToDelete, setImageToDelete] = useState<{ storageId: Id<"_storage">; alt: string } | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [showImageInCodeWarning, setShowImageInCodeWarning] = useState(false);
   const [cursorInCodeBlock, setCursorInCodeBlock] = useState(false);
@@ -454,7 +453,7 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
   };
 
   // Image alignment handler - update specific image instance by index
-  const handleAlignmentChange = (imageIndex: number, storageId: string, newAlignment: "left" | "center" | "right") => {
+  const handleAlignmentChange = (imageIndex: number, storageId: Id<"_storage">, newAlignment: "left" | "center" | "right") => {
     // Find the specific image instance and update only that one
     const imageRegex = /!\[(.*?)\]\((.*?)\|(\w+)(?:\|(\w+))?\)/g;
     let match;
@@ -531,8 +530,6 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
       }
     }
 
-    setUploadingImage(true);
-
     try {
       // Generate upload URL
       const uploadUrl = await generateUploadUrl();
@@ -583,7 +580,6 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
       console.error("Error uploading image:", error);
       alert("Failed to upload image. Please try again.");
     } finally {
-      setUploadingImage(false);
       setPendingFile(null);
     }
   };
@@ -1031,8 +1027,8 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
         isOpen={!!imageToDelete}
         title="Delete Image"
         message="This will permanently delete the image from your note. This action cannot be undone."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        confirmText="Delete"
+        cancelText="Cancel"
         onConfirm={handleDeleteImage}
         onCancel={() => setImageToDelete(null)}
         isDangerous={true}
