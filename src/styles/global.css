@@ -7444,3 +7444,53 @@ button:active,
     font-size: 12px;
   }
 }
+
+/* Goal 2: css for the phases like focus and break for pomodoro timer */
+.phase-badge-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.phase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+}
+
+.phase-focus {
+  background: rgba(76, 201, 240, 0.15);
+  color: #00b4d8;
+  border: 1px solid rgba(0, 180, 216, 0.4);
+}
+
+.phase-break {
+  background: rgba(111, 255, 176, 0.15);
+  color: #38b000;
+  border: 1px solid rgba(56, 176, 0, 0.35);
+}
+
+.pomodoro-modal.phase-break {
+  box-shadow: 0 15px 45px rgba(56, 176, 0, 0.15);
+}
+
+.pomodoro-modal.phase-focus {
+  box-shadow: 0 15px 45px rgba(0, 180, 216, 0.15);
+}
+
+/* Goal 2: Change phase blue or green color to white when background image true */
+
+.phase-badge.phase-invert {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}

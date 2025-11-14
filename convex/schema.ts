@@ -20,7 +20,7 @@ export default defineSchema({
       v.literal("todo"),
       v.literal("h1"),
       v.literal("h2"),
-      v.literal("h3"),
+      v.literal("h3")
     ),
     completed: v.boolean(),
     archived: v.boolean(),
@@ -118,10 +118,19 @@ export default defineSchema({
       v.literal("idle"),
       v.literal("running"),
       v.literal("paused"),
-      v.literal("completed"),
+      v.literal("completed")
     ),
     lastUpdated: v.number(), // Last update timestamp
     backgroundImageUrl: v.optional(v.string()), // Unsplash image URL for full-screen background
+    // New optional fields (safe, backward-compatible)
+    todoId: v.optional(v.union(v.id("todos"), v.null())),
+    todoTitle: v.optional(v.union(v.string(), v.null())),
+    // Goal 2: Pomodoro phase metadata
+    phase: v.union(v.literal("focus"), v.literal("break")),
+    cycleIndex: v.number(), // current loop, 0-based
+    totalCycles: v.number(), // user/preset target
+    phaseDuration: v.number(), // ms for the active block
+    breakDuration: v.number(), // ms allocated for breaks
   }).index("by_user", ["userId"]),
 
   // Custom backlog label - allows renaming the backlog section
@@ -143,18 +152,20 @@ export default defineSchema({
     folderId: v.optional(v.id("folders")), // Optional folder association
     title: v.optional(v.string()), // Note title (defaults to "Untitled")
     content: v.string(), // Note content with markdown/code block support
-    format: v.optional(v.union(
-      v.literal("plaintext"),
-      v.literal("markdown"),
-      v.literal("css"),
-      v.literal("javascript"),
-      v.literal("typescript"),
-      v.literal("html"),
-      v.literal("json"),
-      v.literal("python"),
-      v.literal("go"),
-      v.literal("rust"),
-    )), // Format type for syntax highlighting and code wrapping
+    format: v.optional(
+      v.union(
+        v.literal("plaintext"),
+        v.literal("markdown"),
+        v.literal("css"),
+        v.literal("javascript"),
+        v.literal("typescript"),
+        v.literal("html"),
+        v.literal("json"),
+        v.literal("python"),
+        v.literal("go"),
+        v.literal("rust")
+      )
+    ), // Format type for syntax highlighting and code wrapping
     order: v.number(), // Order for sorting tabs left-to-right
     collapsed: v.optional(v.boolean()), // For future collapsible functionality
     pinnedToTop: v.optional(v.boolean()), // For future pin functionality
