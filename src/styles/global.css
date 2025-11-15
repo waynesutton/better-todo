@@ -2407,6 +2407,13 @@ button:active,
   margin: 8px 0;
 }
 
+/* Allow clicks to pass through code content to wrapper in preview mode */
+.fullpage-note-display-content .note-code-block-wrapper pre,
+.fullpage-note-display-content .note-code-block-wrapper code {
+  pointer-events: none;
+  user-select: none;
+}
+
 .note-code-block-header {
   display: flex;
   justify-content: space-between;
@@ -2456,29 +2463,32 @@ button:active,
 
 /* Light mode code block background */
 :root[data-theme="light"] .note-code-block-wrapper pre {
-  background: #ffffff !important;
+  background: none !important;
+}
+
+:root[data-theme="light"] .note-code-block-wrapper code {
+  background: #fff !important;
+  background-color: #fff !important;
 }
 
 /* Tan mode code block background */
 :root[data-theme="tan"] .note-code-block-wrapper pre {
-  background: #f5f3f0 !important;
-  background-color: #f5f3f0 !important;
+  background: none !important;
 }
 
 :root[data-theme="tan"] .note-code-block-wrapper code {
-  background: #f5f3f0 !important;
-  background-color: #f5f3f0 !important;
+  background: none !important;
 }
 
 /* Cloud mode code block background */
 :root[data-theme="cloud"] .note-code-block-wrapper pre {
-  background: #ededed !important;
-  background-color: #ededed !important;
+  background: none !important;
+  background: none !important;
 }
 
 :root[data-theme="cloud"] .note-code-block-wrapper code {
-  background: #ededed !important;
-  background-color: #ededed !important;
+  background: none !important;
+  background: none !important;
 }
 
 .note-code-block-wrapper code {
@@ -6149,6 +6159,16 @@ button:active,
   color: var(--text-primary);
 }
 
+/* Shared indicator for full-page notes */
+.fullpage-note-shared-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
 .fullpage-note-view {
   flex: 1;
   display: flex;
@@ -7497,6 +7517,724 @@ button:active,
 }
 
 /* Goal 2: Change phase blue or green color to white when background image true */
+
+/* Share Link Modal */
+.share-link-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.share-link-modal {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.share-link-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.share-link-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.share-link-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.share-link-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.share-link-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.share-link-modal-description {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.share-link-modal-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.share-link-modal-input-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Checkbox group for hide header option */
+.share-link-modal-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.share-link-modal-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.share-link-modal-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.share-link-modal-checkbox-label span {
+  user-select: none;
+}
+
+.share-link-modal-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.share-link-modal-input {
+  width: 100%;
+  padding: 10px 40px 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.share-link-modal-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg-primary);
+}
+
+/* Theme-specific interactive accent colors for input focus */
+:root[data-theme="dark"] .share-link-modal-input:focus {
+  border-color: #27a561;
+}
+
+:root[data-theme="light"] .share-link-modal-input:focus {
+  border-color: #0076c6;
+}
+
+:root[data-theme="tan"] .share-link-modal-input:focus {
+  border-color: #eb5601;
+}
+
+:root[data-theme="cloud"] .share-link-modal-input:focus {
+  border-color: #171717;
+}
+
+.share-link-modal-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.share-link-slug-indicator {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.share-link-slug-indicator .slug-available {
+  color: #80cbae;
+}
+
+.share-link-slug-indicator .slug-unavailable {
+  color: #e16d76;
+}
+
+.share-link-modal-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.share-link-modal-url-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.share-link-modal-url-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.share-link-modal-url-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.share-link-modal-url-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: monospace;
+  user-select: all;
+}
+
+.share-link-modal-copy-button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.share-link-modal-copy-button:hover {
+  background: var(--accent);
+  color: white;
+}
+
+/* Theme-specific interactive accent colors for copy button hover */
+:root[data-theme="dark"] .share-link-modal-copy-button:hover {
+  background: #27a561;
+}
+
+:root[data-theme="light"] .share-link-modal-copy-button:hover {
+  background: #0076c6;
+}
+
+:root[data-theme="tan"] .share-link-modal-copy-button:hover {
+  background: #eb5601;
+}
+
+:root[data-theme="cloud"] .share-link-modal-copy-button:hover {
+  background: #171717;
+}
+
+.share-link-modal-copy-button .copied {
+  color: #80cbae;
+}
+
+.share-link-modal-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(225, 109, 118, 0.1);
+  border: 1px solid #e16d76;
+  border-radius: 6px;
+  color: #e16d76;
+  font-size: 13px;
+}
+
+.share-link-modal-button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.share-link-modal-button.primary {
+  background: var(--accent);
+  color: white;
+}
+
+/* Theme-specific interactive accent colors for share button */
+:root[data-theme="dark"] .share-link-modal-button.primary {
+  background: #27a561;
+}
+
+:root[data-theme="light"] .share-link-modal-button.primary {
+  background: #0076c6;
+}
+
+:root[data-theme="tan"] .share-link-modal-button.primary {
+  background: #eb5601;
+}
+
+:root[data-theme="cloud"] .share-link-modal-button.primary {
+  background: #171717;
+}
+
+.share-link-modal-button.primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.share-link-modal-button.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.share-link-modal-button.dangerous {
+  background: #e16d76;
+  color: white;
+}
+
+.share-link-modal-button.dangerous:hover:not(:disabled) {
+  background: #d15a63;
+}
+
+.share-link-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.share-link-modal-actions .share-link-modal-button {
+  flex: 1;
+}
+
+/* Shared Note View */
+.shared-note-view {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 0;
+}
+
+.shared-note-header {
+  padding: 15px 24px 5px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.shared-note-title {
+  font-size: 22px;
+  font-weight: 400;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.shared-note-content {
+  padding: 10px 24px 10px;
+  max-width: 900px;
+  margin: 0 auto;
+  line-height: 1.6;
+  border-radius: 8px;
+  color: var(--text-primary);
+}
+
+/* Match existing markdown styles for shared notes */
+.shared-note-content h1,
+.shared-note-content h2,
+.shared-note-content h3,
+.shared-note-content h4,
+.shared-note-content h5,
+.shared-note-content h6 {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  color: var(--text-primary);
+  font-weight: 400;
+}
+
+.shared-note-content h1 {
+  font-size: 28px;
+}
+
+.shared-note-content h2 {
+  font-size: 24px;
+}
+
+.shared-note-content h3 {
+  font-size: 20px;
+}
+
+.shared-note-content p {
+  margin: 16px 0;
+  color: var(--text-primary);
+}
+
+.shared-note-content code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: monospace;
+  color: var(--text-primary);
+}
+
+.shared-note-content a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* Theme-specific interactive accent colors for shared note links */
+:root[data-theme="dark"] .shared-note-content a {
+  color: #27a561;
+}
+
+:root[data-theme="light"] .shared-note-content a {
+  color: #0076c6;
+}
+
+:root[data-theme="tan"] .shared-note-content a {
+  color: #eb5601;
+}
+
+:root[data-theme="cloud"] .shared-note-content a {
+  color: #171717;
+}
+
+/* Theme-specific backgrounds for shared note content */
+:root[data-theme="dark"] .shared-note-content {
+  background-color: var(--bg-secondary);
+}
+
+:root[data-theme="light"] .shared-note-content {
+  background: white;
+  border: 1px solid var(--bg-secondary);
+}
+
+:root[data-theme="tan"] .shared-note-content {
+  background: white;
+  border: 1px solid var(--bg-secondary);
+}
+
+.shared-note-content a:hover {
+  text-decoration: underline;
+}
+
+.shared-note-content ul,
+.shared-note-content ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.shared-note-content li {
+  margin: 8px 0;
+}
+
+/* Shared note images */
+.shared-note-image {
+  margin: 16px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.shared-note-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.shared-note-image-small {
+  max-width: 300px;
+}
+
+.shared-note-image-medium {
+  max-width: 600px;
+}
+
+.shared-note-image-large {
+  max-width: 900px;
+}
+
+/* Image alignment */
+.shared-note-image-left {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.shared-note-image-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.shared-note-image-right {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* Shared note text blocks */
+.shared-note-text {
+  margin: 16px 0;
+  line-height: 1.6;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+/* White background for text blocks on light themes (not dark and cloud mode) */
+:root[data-theme="light"] .shared-note-text,
+:root[data-theme="tan"] .shared-note-text {
+  background: #ffffff;
+  padding: 5px;
+  border-radius: 4px;
+  border: 0px solid var(--border-color);
+}
+
+.shared-note-text p {
+  margin: 8px 0;
+}
+
+.shared-note-text img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin: 16px 0;
+}
+
+.shared-note-text a {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.shared-note-text ul,
+.shared-note-text ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.shared-note-text li {
+  margin: 4px 0;
+}
+
+.shared-note-text strong {
+  font-weight: 600;
+}
+
+.shared-note-text em {
+  font-style: italic;
+}
+
+/* Shared note error/loading states */
+.shared-note-error,
+.shared-note-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.shared-note-error h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.shared-note-error p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin: 8px 0 24px;
+}
+
+.shared-note-home-button {
+  padding: 12px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Theme-specific interactive accent colors for shared note home button */
+:root[data-theme="dark"] .shared-note-home-button {
+  background: #27a561;
+}
+
+:root[data-theme="light"] .shared-note-home-button {
+  background: #0076c6;
+}
+
+:root[data-theme="tan"] .shared-note-home-button {
+  background: #eb5601;
+}
+
+:root[data-theme="cloud"] .shared-note-home-button {
+  background: #171717;
+}
+
+.shared-note-home-button:hover {
+  opacity: 0.9;
+}
+
+/* Shared note footer */
+.shared-note-footer {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 40px auto 0;
+  max-width: 900px;
+}
+
+.shared-note-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Theme-specific link colors matching date-item-container.active */
+.shared-note-footer-link {
+  color: #0076c6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+:root[data-theme="dark"] .shared-note-footer-link {
+  color: #27a561;
+}
+
+:root[data-theme="tan"] .shared-note-footer-link {
+  color: #eb5601;
+}
+
+:root[data-theme="cloud"] .shared-note-footer-link {
+  color: #171717;
+}
+
+.shared-note-footer-link:hover {
+  text-decoration: underline;
+}
+
+.shared-note-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shared-note-theme-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.shared-note-theme-toggle:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .share-link-modal {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .share-link-modal-title {
+    font-size: 16px;
+  }
+
+  .shared-note-header {
+    padding: 15px 24px 5px;
+  }
+
+  .shared-note-title {
+    font-size: 22px;
+  }
+
+  .shared-note-content {
+    padding: 0 16px 16px;
+  }
+
+  .shared-note-content h1 {
+    font-size: 22px;
+  }
+
+  .shared-note-content h2 {
+    font-size: 20px;
+  }
+
+  .shared-note-content h3 {
+    font-size: 18px;
+  }
+
+  .shared-note-footer {
+    padding: 12px 16px;
+    font-size: 12px;
+    flex-wrap: wrap;
+    margin: 24px auto 0;
+    max-width: 100%;
+  }
+
+  .shared-note-footer-left {
+    font-size: 12px;
+  }
+
+  .shared-note-footer-link {
+    font-weight: 500;
+  }
+
+  .shared-note-image-small,
+  .shared-note-image-medium,
+  .shared-note-image-large {
+    max-width: 100%;
+  }
+}
 
 .phase-badge.phase-invert {
   background: rgba(255, 255, 255, 0.25);

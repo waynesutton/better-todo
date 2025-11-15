@@ -115,6 +115,19 @@ This document describes the structure and purpose of each file in the Better Tod
   - `reorderFullPageNotes` - Update order with parallel updates (Promise.all)
   - `moveFullPageNoteToFolder` - Move note to project (removes date, sets folderId, idempotent check)
   - `moveFullPageNoteToDate` - Move note to date (removes folderId, sets date, idempotent check)
+  - `generateUploadUrl` - Generate URL for image uploads
+  - `getStorageUrl` - Get URL for a stored file
+  - `getImageUrl` - Helper mutation to get image URL
+  - `addImageToNote` - Add image to full-page note
+  - `removeImageFromNote` - Remove image from note and delete from storage
+  - `getImageUrls` - Get all image URLs for a note
+  - `checkSlugAvailability` - Check if a custom slug is available (public query)
+  - `getNoteBySlug` - Get note by share slug with image URLs (public query)
+  - `getSharedNoteMetadata` - Get note metadata for Open Graph tags (internal query)
+  - `generateShareLink` - Generate or update share link with custom slug
+  - `revokeShareLink` - Revoke share link to make note private
+  - `updateHideHeader` - Update hide header setting for shared note
+  - `updateShareSlug` - Update custom slug for shared note
 
 - `search.ts` - Full-text search functionality using Convex search indexes:
   - `searchAll` - Search across todos (by content) and notes (by title and content) and full-page notes
@@ -525,6 +538,32 @@ This document describes the structure and purpose of each file in the Better Tod
   - Tab width: 120-200px (desktop), 80-120px (mobile)
   - Active state highlighting
   - Supports unlimited tabs with scrolling
+  - **Share button** for authenticated users to generate shareable links
+  - Visual indicator if note is already shared
+  - Open shared note in new tab button
+
+- `ShareLinkModal.tsx` - Shareable link management modal:
+  - Custom slug input with validation and availability checking
+  - Copy to clipboard with visual confirmation
+  - Hide title on share toggle
+  - Edit custom slug functionality
+  - Revoke share link button
+  - Open shared note in new tab
+  - Theme-aware styling matching app design
+  - Mobile responsive with proper spacing
+
+- `SharedNoteView.tsx` - Public shared note viewer page:
+  - Public route at `/share/:slug` (no authentication required)
+  - Instant loading with Convex real-time sync
+  - Renders markdown with full syntax highlighting
+  - Displays images with proper sizing and alignment
+  - Theme toggle (dark, light, tan, cloud)
+  - Copy note content button
+  - Footer with link back to better-todo
+  - Dynamic Open Graph meta tags for social sharing
+  - Uses first image as preview for social sharing
+  - Error handling for invalid/missing notes
+  - Mobile responsive design
 
 ### Context (`src/context/`)
 
@@ -595,14 +634,32 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.015 (November 8, 2025)
+## Current Version: v.017 (November 15, 2025)
 
-### Latest Features (v.015) - Todo Composer Refresh
+### Latest Features (v.017) - Shareable Full-Page Notes
 
-- **Keyboard-forward composer** - The inline todo input now uses a rounded container, ArrowUp submit button, and responsive sizing that snap into every theme without shadows.
-- **Visual polish** - Disabled state clarity (55% opacity) and theme-aware background pull the composer in line with the rest of the UI.
+- **Shareable Full-Page Notes** - Share read-only links to your notes with custom URL slugs
+  - Share button in full-page note tabs to generate shareable links
+  - Custom URL slugs (alphanumeric, hyphens, underscores, 3-50 characters)
+  - Random slug generation if no custom slug provided
+  - Reserved slugs protection (api, admin, share, etc.)
+  - Public `/share/:slug` route accessible without authentication
+  - Share modal with copy-to-clipboard functionality
+  - Optional hide title on shared note setting
+  - Ability to edit custom slugs after creating share link
+  - Revoke share link to make note private again
+  - Open shared note in new tab from share modal
+  - Theme-aware shared note viewer with theme toggle
+  - Copy note content from shared view
+  - Real-time Open Graph meta tags for social sharing
+  - First image from note used as preview image
+  - Instant loading with Convex real-time sync (no loading states)
+  - Footer with link back to better-todo
+  - Works with markdown, code blocks, and images
 
-### Previous Features (v.014) - Project Todos & Note Navigation
+### Previous Features (v.016) - Pomodoro Timer Keyboard Shortcut
+
+- **Keyboard-forward timer access** - The inline Pomodoro timer now uses Shift + F for instant modal access anywhere in the app.
 
 - **Todos inside projects** - Projects now accept todos directly, with sidebar folder toggles for Todos and Notes.
 - **Folder-aware navigation** - Opening full-page notes from a project auto-expands and highlights the correct folder.

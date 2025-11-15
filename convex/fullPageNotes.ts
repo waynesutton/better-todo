@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 
@@ -33,6 +33,10 @@ export const getFullPageNotesByIds = query({
       pinnedToTop: v.optional(v.boolean()),
       archived: v.optional(v.boolean()),
       imageIds: v.optional(v.array(v.id("_storage"))),
+      backgroundImageUrl: v.optional(v.string()),
+      shareSlug: v.optional(v.string()),
+      isShared: v.optional(v.boolean()),
+      hideHeaderOnShare: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -91,6 +95,10 @@ export const getFullPageNotesByDate = query({
       pinnedToTop: v.optional(v.boolean()),
       archived: v.optional(v.boolean()),
       imageIds: v.optional(v.array(v.id("_storage"))),
+      backgroundImageUrl: v.optional(v.string()),
+      shareSlug: v.optional(v.string()),
+      isShared: v.optional(v.boolean()),
+      hideHeaderOnShare: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -145,6 +153,10 @@ export const getFullPageNote = query({
       pinnedToTop: v.optional(v.boolean()),
       archived: v.optional(v.boolean()),
       imageIds: v.optional(v.array(v.id("_storage"))),
+      backgroundImageUrl: v.optional(v.string()),
+      shareSlug: v.optional(v.string()),
+      isShared: v.optional(v.boolean()),
+      hideHeaderOnShare: v.optional(v.boolean()),
     }),
     v.null(),
   ),
@@ -196,6 +208,10 @@ export const getFullPageNotesByFolder = query({
       pinnedToTop: v.optional(v.boolean()),
       archived: v.optional(v.boolean()),
       imageIds: v.optional(v.array(v.id("_storage"))),
+      backgroundImageUrl: v.optional(v.string()),
+      shareSlug: v.optional(v.string()),
+      isShared: v.optional(v.boolean()),
+      hideHeaderOnShare: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -701,6 +717,438 @@ export const getImageUrls = query({
     }
     
     return imageUrls;
+  },
+});
+
+// Reserved slug words that cannot be used
+const RESERVED_SLUGS = [
+  "share", "api", "admin", "launch", "about", "stats", 
+  "changelog", "login", "logout", "settings", "profile"
+];
+
+// Validate slug format (alphanumeric, hyphens, underscores, 3-50 chars)
+function validateSlugFormat(slug: string): boolean {
+  const slugRegex = /^[a-zA-Z0-9_-]{3,50}$/;
+  return slugRegex.test(slug) && !RESERVED_SLUGS.includes(slug.toLowerCase());
+}
+
+// Generate a random slug
+function generateRandomSlug(): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let slug = "";
+  for (let i = 0; i < 8; i++) {
+    slug += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return slug;
+}
+
+// Check if a slug is available (public query, no auth required)
+export const checkSlugAvailability = query({
+  args: {
+    slug: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    // Case-insensitive lookup
+    const slugLower = args.slug.toLowerCase();
+    
+    // Check if slug is reserved
+    if (RESERVED_SLUGS.includes(slugLower)) {
+      return false;
+    }
+    
+    // Check if slug format is valid
+    if (!validateSlugFormat(args.slug)) {
+      return false;
+    }
+    
+    // Check if slug already exists (case-insensitive)
+    const existing = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_shareSlug", (q) => q.eq("shareSlug", args.slug))
+      .first();
+    
+    return existing === null;
+  },
+});
+
+// Get note by slug with image URLs (public query, no auth required)
+export const getNoteBySlug = query({
+  args: {
+    slug: v.string(),
+  },
+  returns: v.union(
+    v.object({
+      _id: v.id("fullPageNotes"),
+      _creationTime: v.number(),
+      userId: v.string(),
+      title: v.optional(v.string()),
+      content: v.string(),
+      format: v.optional(v.union(
+        v.literal("plaintext"),
+        v.literal("markdown"),
+        v.literal("css"),
+        v.literal("javascript"),
+        v.literal("typescript"),
+        v.literal("html"),
+        v.literal("json"),
+        v.literal("python"),
+        v.literal("go"),
+        v.literal("rust"),
+      )),
+      shareSlug: v.optional(v.string()),
+      isShared: v.optional(v.boolean()),
+      imageIds: v.optional(v.array(v.id("_storage"))),
+      backgroundImageUrl: v.optional(v.string()),
+      hideHeaderOnShare: v.optional(v.boolean()),
+      imageUrls: v.array(v.object({
+        storageId: v.id("_storage"),
+        url: v.string(),
+      })),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    // Look up note by shareSlug using indexed query
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_shareSlug", (q) => q.eq("shareSlug", args.slug))
+      .first();
+    
+    // Return null if note doesn't exist or isn't shared
+    if (!note || !note.isShared) {
+      return null;
+    }
+    
+    // Load all image URLs in parallel if images exist
+    const imageIds = note.imageIds || [];
+    const imageUrlPromises = imageIds.map(async (storageId) => {
+      const url = await ctx.storage.getUrl(storageId);
+      return url ? { storageId, url } : null;
+    });
+    
+    const imageUrlsWithNulls = await Promise.all(imageUrlPromises);
+    const imageUrls: Array<{ storageId: Id<"_storage">; url: string }> = [];
+    for (const img of imageUrlsWithNulls) {
+      if (img !== null) {
+        imageUrls.push(img);
+      }
+    }
+    
+    return {
+      _id: note._id,
+      _creationTime: note._creationTime,
+      userId: note.userId,
+      title: note.title,
+      content: note.content,
+      format: note.format,
+      shareSlug: note.shareSlug,
+      isShared: note.isShared,
+      imageIds: note.imageIds,
+      backgroundImageUrl: note.backgroundImageUrl,
+      hideHeaderOnShare: note.hideHeaderOnShare,
+      imageUrls,
+    };
+  },
+});
+
+// Get note metadata for Open Graph (internal query for HTTP action)
+export const getSharedNoteMetadata = internalQuery({
+  args: {
+    slug: v.string(),
+  },
+  returns: v.union(
+    v.object({
+      title: v.string(),
+      content: v.string(),
+      screenshotUrl: v.union(v.string(), v.null()),
+      slug: v.string(),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    // Look up note by shareSlug
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_shareSlug", (q) => q.eq("shareSlug", args.slug))
+      .first();
+    
+    // Return null if note doesn't exist or isn't shared
+    if (!note || !note.isShared) {
+      return null;
+    }
+    
+    // Get first image URL if available
+    let screenshotUrl: string | null = null;
+    if (note.imageIds && note.imageIds.length > 0) {
+      screenshotUrl = await ctx.storage.getUrl(note.imageIds[0]);
+    }
+    
+    return {
+      title: note.title || "Untitled",
+      content: note.content,
+      screenshotUrl,
+      slug: args.slug,
+    };
+  },
+});
+
+// Generate or update share link for a note
+export const generateShareLink = mutation({
+  args: {
+    noteId: v.id("fullPageNotes"),
+    customSlug: v.optional(v.string()),
+    hideHeaderOnShare: v.optional(v.boolean()),
+  },
+  returns: v.object({
+    shareUrl: v.string(),
+    slug: v.string(),
+  }),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+    
+    // Verify note ownership
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.noteId)
+        )
+      )
+      .unique();
+    
+    if (!note) {
+      throw new Error("Note not found or unauthorized");
+    }
+    
+    let slug: string;
+    
+    if (args.customSlug) {
+      // Validate custom slug format
+      if (!validateSlugFormat(args.customSlug)) {
+        throw new Error("Invalid slug format. Use 3-50 characters (letters, numbers, hyphens, underscores)");
+      }
+      
+      // Check if slug is available (case-insensitive)
+      const slugLower = args.customSlug.toLowerCase();
+      if (RESERVED_SLUGS.includes(slugLower)) {
+        throw new Error("This slug is reserved and cannot be used");
+      }
+      
+      // Check if slug is already taken by another note
+      const existing = await ctx.db
+        .query("fullPageNotes")
+        .withIndex("by_shareSlug", (q) => q.eq("shareSlug", args.customSlug))
+        .first();
+      
+      if (existing && existing._id !== args.noteId) {
+        throw new Error("This slug is already taken");
+      }
+      
+      slug = args.customSlug;
+    } else {
+      // Generate random slug and ensure uniqueness
+      let attempts = 0;
+      do {
+        slug = generateRandomSlug();
+        const existing = await ctx.db
+          .query("fullPageNotes")
+          .withIndex("by_shareSlug", (q) => q.eq("shareSlug", slug))
+          .first();
+        if (!existing) break;
+        attempts++;
+      } while (attempts < 10);
+      
+      if (attempts >= 10) {
+        throw new Error("Failed to generate unique slug");
+      }
+    }
+    
+    // Early return if slug is already set (idempotent)
+    if (note.shareSlug === slug && note.isShared && note.hideHeaderOnShare === args.hideHeaderOnShare) {
+      const baseUrl = process.env.CONVEX_SITE_URL || "https://bettertodo.app";
+      const shareUrl = `${baseUrl}/share/${slug}`;
+      return { shareUrl, slug };
+    }
+    
+    // Patch directly without re-reading
+    await ctx.db.patch(args.noteId, {
+      shareSlug: slug,
+      isShared: true,
+      hideHeaderOnShare: args.hideHeaderOnShare,
+    });
+    
+    // Construct share URL (use environment variable or default)
+    const baseUrl = process.env.CONVEX_SITE_URL || "https://bettertodo.app";
+    const shareUrl = `${baseUrl}/share/${slug}`;
+    
+    return { shareUrl, slug };
+  },
+});
+
+// Revoke share link for a note
+export const revokeShareLink = mutation({
+  args: {
+    noteId: v.id("fullPageNotes"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+    
+    // Verify note ownership
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.noteId)
+        )
+      )
+      .unique();
+    
+    if (!note) {
+      // Note doesn't exist or doesn't belong to user (idempotent)
+      return null;
+    }
+    
+    // Only update if note is currently shared (idempotent)
+    if (!note.isShared) {
+      return null;
+    }
+    
+    // Patch directly to remove share settings
+    await ctx.db.patch(args.noteId, {
+      shareSlug: undefined,
+      isShared: false,
+    });
+    
+    return null;
+  },
+});
+
+// Update hide header setting for shared note
+export const updateHideHeader = mutation({
+  args: {
+    noteId: v.id("fullPageNotes"),
+    hideHeaderOnShare: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+    
+    // Verify note ownership
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.noteId)
+        )
+      )
+      .unique();
+    
+    if (!note) {
+      throw new Error("Note not found or unauthorized");
+    }
+    
+    // Early return if already set to desired value (idempotent)
+    if (note.hideHeaderOnShare === args.hideHeaderOnShare) {
+      return null;
+    }
+    
+    // Patch directly without re-reading
+    await ctx.db.patch(args.noteId, {
+      hideHeaderOnShare: args.hideHeaderOnShare,
+    });
+    
+    return null;
+  },
+});
+
+// Update share slug for a note
+export const updateShareSlug = mutation({
+  args: {
+    noteId: v.id("fullPageNotes"),
+    newSlug: v.string(),
+  },
+  returns: v.object({
+    shareUrl: v.string(),
+    slug: v.string(),
+  }),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+    
+    // Verify note ownership
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.noteId)
+        )
+      )
+      .unique();
+    
+    if (!note) {
+      throw new Error("Note not found or unauthorized");
+    }
+    
+    // Validate new slug format
+    if (!validateSlugFormat(args.newSlug)) {
+      throw new Error("Invalid slug format. Use 3-50 characters (letters, numbers, hyphens, underscores)");
+    }
+    
+    // Check if slug is reserved
+    const slugLower = args.newSlug.toLowerCase();
+    if (RESERVED_SLUGS.includes(slugLower)) {
+      throw new Error("This slug is reserved and cannot be used");
+    }
+    
+    // Check if new slug is same as current (idempotent)
+    if (note.shareSlug === args.newSlug) {
+      const baseUrl = process.env.CONVEX_SITE_URL || "https://bettertodo.app";
+      const shareUrl = `${baseUrl}/share/${args.newSlug}`;
+      return { shareUrl, slug: args.newSlug };
+    }
+    
+    // Check if new slug is already taken by another note
+    const existing = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_shareSlug", (q) => q.eq("shareSlug", args.newSlug))
+      .first();
+    
+    if (existing && existing._id !== args.noteId) {
+      throw new Error("This slug is already taken");
+    }
+    
+    // Update slug and ensure isShared is true
+    await ctx.db.patch(args.noteId, {
+      shareSlug: args.newSlug,
+      isShared: true,
+    });
+    
+    // Construct share URL
+    const baseUrl = process.env.CONVEX_SITE_URL || "https://bettertodo.app";
+    const shareUrl = `${baseUrl}/share/${args.newSlug}`;
+    
+    return { shareUrl, slug: args.newSlug };
   },
 });
 

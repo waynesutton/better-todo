@@ -13,10 +13,12 @@ import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { PomodoroTimer } from "./components/PomodoroTimer";
 import { FullPageNoteView } from "./components/FullPageNoteView";
 import { FullPageNoteTabs } from "./components/FullPageNoteTabs";
+import { ShareLinkModal } from "./components/ShareLinkModal";
 import { Launch } from "./pages/Launch";
 import { Changelog } from "./pages/Changelog";
 import { NotFound } from "./pages/NotFound";
 import { Stats } from "./pages/Stats";
+import { SharedNoteView } from "./pages/SharedNoteView";
 import { format } from "date-fns";
 import { Search, Menu, X } from "lucide-react";
 import {
@@ -134,6 +136,7 @@ function App() {
   const [imageUploadCallback, setImageUploadCallback] = useState<(() => void) | null>(null);
   const [isFullPageNoteEditMode, setIsFullPageNoteEditMode] = useState(false);
   const [cursorInCodeBlock, setCursorInCodeBlock] = useState(false);
+  const [showShareLinkModal, setShowShareLinkModal] = useState(false);
 
   // Apply user's custom font size to todo text and full-page notes
   useEffect(() => {
@@ -1414,6 +1417,7 @@ function App() {
                     }
                   }}
                   cursorInCodeBlock={cursorInCodeBlock}
+                  onShareNote={() => setShowShareLinkModal(true)}
                 />
                 {/* Full-page note view */}
                 {selectedFullPageNoteId && (
@@ -1556,6 +1560,26 @@ function App() {
           isOpen={showKeyboardShortcuts}
           onClose={() => setShowKeyboardShortcuts(false)}
         />
+
+        {/* Share Link Modal */}
+        {showShareLinkModal && selectedFullPageNoteId && (
+          <ShareLinkModal
+            noteId={selectedFullPageNoteId}
+            currentShareSlug={
+              allFullPageNotes.find((n) => n._id === selectedFullPageNoteId)
+                ?.shareSlug
+            }
+            isShared={
+              allFullPageNotes.find((n) => n._id === selectedFullPageNoteId)
+                ?.isShared
+            }
+            hideHeaderOnShare={
+              allFullPageNotes.find((n) => n._id === selectedFullPageNoteId)
+                ?.hideHeaderOnShare
+            }
+            onClose={() => setShowShareLinkModal(false)}
+          />
+        )}
 
         {/* Confirmation dialogs */}
         <ConfirmDialog
@@ -1843,6 +1867,7 @@ function AppRouter() {
       <Route path="/about" element={<Launch />} />
       <Route path="/changelog" element={<Changelog />} />
       <Route path="/stats" element={<Stats />} />
+      <Route path="/share/:slug" element={<SharedNoteView />} />
       <Route path="/" element={<App />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

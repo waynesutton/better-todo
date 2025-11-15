@@ -16,6 +16,7 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **Notion-style inline input** - type directly to add todos (no button needed)
 - **Daily notes section** with line numbers, Edit/Preview tabs, and syntax-highlighted code blocks
 - **Full-page notes** - dedicated workspace for each date with Chrome-style tabs, line numbers, markdown support, and instant loading with Convex real-time sync
+- **Shareable notes** - generate read-only links with custom URL slugs for sharing notes publicly
 - **Move notes to projects** - organize full-page notes in project folders, decoupled from dates
 - **Smart keyboard shortcuts**: Enter for new lines, Shift+Enter to create/save
 - **Drag and drop** todo reordering with intuitive handles
@@ -178,6 +179,19 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
 - **FilePlus icon** to create new notes within full-page notes page
 - **Checkbox icon** to return to todos from full-page notes
 - **Unlimited notes per date** with individual titles
+- **Shareable notes** - Generate read-only links with custom URL slugs
+  - Share button in note tabs for authenticated users
+  - Custom alphanumeric slugs (3-50 characters)
+  - Random slug generation if no custom slug provided
+  - Public `/share/:slug` route accessible without authentication
+  - Optional hide title on shared note setting
+  - Edit custom slugs after creation
+  - Revoke share links to make notes private
+  - Open shared notes in new tab
+  - Theme toggle in shared view (dark, light, tan, cloud)
+  - Copy note content from shared view
+  - Open Graph meta tags for social sharing
+  - First image used as preview for social media
 - **Single-click to edit** - automatic edit mode for immediate typing
 - **Double-click tab titles** to rename notes
 - **Line numbers** that scale with font size (code editor style)

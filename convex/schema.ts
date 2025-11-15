@@ -171,9 +171,14 @@ export default defineSchema({
     pinnedToTop: v.optional(v.boolean()), // For future pin functionality
     archived: v.optional(v.boolean()), // Whether note is archived
     imageIds: v.optional(v.array(v.id("_storage"))), // Array of storage IDs for uploaded images (first image is featured/OG image)
+    backgroundImageUrl: v.optional(v.string()), // Background image URL for the note
+    shareSlug: v.optional(v.string()), // Custom URL slug for sharing
+    isShared: v.optional(v.boolean()), // Whether note is currently shared
+    hideHeaderOnShare: v.optional(v.boolean()), // Whether to hide title header on shared view
   })
     .index("by_user_and_date", ["userId", "date"])
     .index("by_user_and_folder", ["userId", "folderId"])
+    .index("by_shareSlug", ["shareSlug"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],

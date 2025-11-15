@@ -175,10 +175,24 @@ export function Launch() {
 
         <section id="recent-updates" className="launch-section">
           <h2 className="section-title">Recent updates</h2>
-          <p>
-            Press Shift + F to open the Pomodoro timer from anywhere, and watch
-            those phase badges adapt to your chosen theme.
-          </p>
+          <ul className="feature-list">
+            <li>
+              <strong>Shareable full-page notes</strong> - Generate read-only
+              links with custom URL slugs. Share your notes publicly with
+              optional title hiding, theme toggle, and Open Graph meta tags for
+              beautiful social media previews.
+            </li>
+            <li>
+              <strong>Pomodoro timer keyboard shortcut</strong> - Press Shift +
+              F to open the timer from anywhere. Phase badges now adapt to your
+              chosen theme (dark, light, tan, cloud).
+            </li>
+            <li>
+              <strong>Todo composer refresh</strong> - Rounded container with
+              ArrowUp submit button keeps keyboard flow fast and responsive
+              across every theme.
+            </li>
+          </ul>
         </section>
 
         <section id="key-features" className="launch-section">

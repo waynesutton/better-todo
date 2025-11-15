@@ -124,9 +124,21 @@ export const pausePomodoro = mutation({
   args: { sessionId: v.id("pomodoroSessions"), remainingTime: v.number() },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const session = await ctx.db.get(args.sessionId);
+    const identity = await ctx.auth.getUserIdentity();
+    const userId = identity?.subject;
+
+    // Use indexed query to verify ownership
+    const session = await ctx.db
+      .query("pomodoroSessions")
+      .withIndex("by_user", (q) =>
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
+      )
+      .filter((q) => q.eq(q.field("_id"), args.sessionId))
+      .unique();
+
     if (!session) {
-      throw new Error("Session not found");
+      // Session doesn't exist (idempotent)
+      return null;
     }
 
     await ctx.db.patch(args.sessionId, {
@@ -144,9 +156,21 @@ export const resumePomodoro = mutation({
   args: { sessionId: v.id("pomodoroSessions") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const session = await ctx.db.get(args.sessionId);
+    const identity = await ctx.auth.getUserIdentity();
+    const userId = identity?.subject;
+
+    // Use indexed query to verify ownership
+    const session = await ctx.db
+      .query("pomodoroSessions")
+      .withIndex("by_user", (q) =>
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
+      )
+      .filter((q) => q.eq(q.field("_id"), args.sessionId))
+      .unique();
+
     if (!session) {
-      throw new Error("Session not found");
+      // Session doesn't exist (idempotent)
+      return null;
     }
 
     await ctx.db.patch(args.sessionId, {
@@ -163,9 +187,21 @@ export const stopPomodoro = mutation({
   args: { sessionId: v.id("pomodoroSessions") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const session = await ctx.db.get(args.sessionId);
+    const identity = await ctx.auth.getUserIdentity();
+    const userId = identity?.subject;
+
+    // Use indexed query to verify ownership
+    const session = await ctx.db
+      .query("pomodoroSessions")
+      .withIndex("by_user", (q) =>
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
+      )
+      .filter((q) => q.eq(q.field("_id"), args.sessionId))
+      .unique();
+
     if (!session) {
-      throw new Error("Session not found");
+      // Session doesn't exist (idempotent)
+      return null;
     }
 
     await ctx.db.delete(args.sessionId);

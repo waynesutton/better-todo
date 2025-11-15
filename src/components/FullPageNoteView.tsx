@@ -296,6 +296,8 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
   const [imageToDelete, setImageToDelete] = useState<{ storageId: Id<"_storage">; alt: string } | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [showImageInCodeWarning, setShowImageInCodeWarning] = useState(false);
+  const [showImageErrorModal, setShowImageErrorModal] = useState(false);
+  const [imageErrorMessage, setImageErrorMessage] = useState("");
   const [cursorInCodeBlock, setCursorInCodeBlock] = useState(false);
   const [showPreviewBlockedWarning, setShowPreviewBlockedWarning] = useState(false);
 
@@ -500,16 +502,34 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      setPendingFile(file);
-      setShowSizeModal(true);
-    } else if (file) {
-      alert("Please select an image file (JPEG, PNG, GIF, WebP)");
-    }
+    
     // Reset input value so same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    
+    if (!file) return;
+    
+    // Validate file type (only JPG and PNG)
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      setImageErrorMessage("Only JPG and PNG files are supported.");
+      setShowImageErrorModal(true);
+      return;
+    }
+    
+    // Validate file size (max 3MB)
+    const maxSizeInBytes = 3 * 1024 * 1024; // 3MB
+    if (file.size > maxSizeInBytes) {
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      setImageErrorMessage(`File size (${fileSizeMB}MB) exceeds the 3MB limit.`);
+      setShowImageErrorModal(true);
+      return;
+    }
+    
+    // File is valid, proceed with upload
+    setPendingFile(file);
+    setShowSizeModal(true);
   };
 
   const handleSizeSelect = async (size: "small" | "medium" | "large") => {
@@ -578,7 +598,8 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
       }
     } catch (error) {
       console.error("Error uploading image:", error);
-      alert("Failed to upload image. Please try again.");
+      setImageErrorMessage("Failed to upload image. Please try again.");
+      setShowImageErrorModal(true);
     } finally {
       setPendingFile(null);
     }
@@ -604,7 +625,8 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
       updateNote({ id: noteId, content: newContent });
     } catch (error) {
       console.error("Error deleting image:", error);
-      alert("Failed to delete image. Please try again.");
+      setImageErrorMessage("Failed to delete image. Please try again.");
+      setShowImageErrorModal(true);
     } finally {
       setImageToDelete(null);
     }
@@ -1007,7 +1029,7 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp"
+        accept="image/jpeg,image/png"
         style={{ display: "none" }}
         onChange={handleFileSelect}
       />
@@ -1032,6 +1054,17 @@ export function FullPageNoteView({ noteId, onImageUploadTrigger, onEditModeChang
         onConfirm={handleDeleteImage}
         onCancel={() => setImageToDelete(null)}
         isDangerous={true}
+      />
+
+      {/* Image upload error dialog */}
+      <ConfirmDialog
+        isOpen={showImageErrorModal}
+        title="Image Upload Error"
+        message={imageErrorMessage}
+        confirmText="OK"
+        onConfirm={() => setShowImageErrorModal(false)}
+        onCancel={() => setShowImageErrorModal(false)}
+        isDangerous={false}
       />
 
       {/* Warning for images in code blocks */}

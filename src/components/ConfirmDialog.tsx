@@ -60,12 +60,14 @@ export function ConfirmDialog({
           <p className="confirm-dialog-message">{message}</p>
         </div>
         <div className="confirm-dialog-footer">
-          <button
-            className="confirm-dialog-button confirm-dialog-button-cancel"
-            onClick={onCancel}
-          >
-            {cancelText}
-          </button>
+          {cancelText && (
+            <button
+              className="confirm-dialog-button confirm-dialog-button-cancel"
+              onClick={onCancel}
+            >
+              {cancelText}
+            </button>
+          )}
           <button
             className={`confirm-dialog-button confirm-dialog-button-confirm ${isDangerous ? "dangerous" : ""}`}
             onClick={onConfirm}

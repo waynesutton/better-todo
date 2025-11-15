@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v015");
+  const [activeSection, setActiveSection] = useState("v017");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
     { id: "unreleased", title: "Unreleased" },
+    { id: "v017", title: "v.017 - Nov 15, 2025" },
     { id: "v016", title: "v.016 - Nov 14, 2025" },
     { id: "v015", title: "v.015 - Nov 8, 2025" },
     { id: "v014", title: "v.014 - Nov 8, 2025" },
@@ -97,6 +98,128 @@ export function Changelog() {
           <p className="changelog-subtitle">
             No unreleased changes. Follow along with the most recent release below.
           </p>
+        </section>
+
+        <section id="v017" className="launch-section">
+          <h2 className="section-title">v.017 - November 15, 2025</h2>
+          <p className="changelog-subtitle">Shareable Full-Page Notes</p>
+          <p>
+            Generate read-only links to share your full-page notes publicly with custom URL slugs, optional title hiding, and beautiful social media previews.
+          </p>
+
+          <h3 className="subsection-title">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Shareable Full-Page Notes</strong> - Generate read-only links with custom URL slugs
+              <ul>
+                <li>Share button in note tabs (authenticated users only)</li>
+                <li>Custom alphanumeric slugs (3-50 characters, underscores allowed)</li>
+                <li>Random slug generation if no custom slug provided</li>
+                <li>Public <code>/share/:slug</code> route accessible without authentication</li>
+                <li>Optional hide title on shared note setting</li>
+                <li>Edit custom slugs after creation</li>
+                <li>Revoke share links to make notes private</li>
+                <li>Open shared notes in new tab</li>
+                <li>Theme toggle in shared view (dark, light, tan, cloud)</li>
+                <li>Copy note content from shared view</li>
+                <li>Open Graph meta tags for social sharing</li>
+                <li>First image in note used as preview for social media</li>
+                <li>Instant loading with Convex real-time sync (no loading states)</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Backend changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Schema updates</strong> - Added <code>shareSlug</code>, <code>isShared</code>, and <code>hideHeaderOnShare</code> fields to <code>fullPageNotes</code> table
+            </li>
+            <li>
+              <strong>Full-page notes module</strong> - New mutations and queries for sharing
+              <ul>
+                <li><code>generateShareLink</code> - Create shareable link with custom or random slug</li>
+                <li><code>revokeShareLink</code> - Remove share access and clear slug</li>
+                <li><code>updateShareSlug</code> - Update existing share slug</li>
+                <li><code>updateHideHeader</code> - Toggle title visibility on shared note</li>
+                <li><code>checkSlugAvailability</code> - Verify slug uniqueness before saving</li>
+                <li><code>getNoteBySlug</code> - Fetch shared note for public viewing</li>
+                <li><code>getSharedNoteMetadata</code> - Get Open Graph metadata for social sharing</li>
+                <li><code>getImageUrls</code> - Retrieve image URLs from Convex storage for note</li>
+              </ul>
+            </li>
+            <li>
+              <strong>HTTP endpoints</strong> - Added <code>/share/:slug/metadata</code> route for Netlify Edge Functions
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Frontend changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>ShareLinkModal component</strong> - Modal for creating and managing share links
+              <ul>
+                <li>Custom slug input with real-time validation</li>
+                <li>Slug availability checking (debounced, 500ms delay)</li>
+                <li>Generated share URL with copy functionality</li>
+                <li>Hide title toggle for shared view</li>
+                <li>Open in new tab button</li>
+                <li>Edit slug after creation</li>
+                <li>Revoke share link option</li>
+              </ul>
+            </li>
+            <li>
+              <strong>SharedNoteView component</strong> - Public view for shared notes
+              <ul>
+                <li>Accessible at <code>/share/:slug</code> without authentication</li>
+                <li>Theme toggle (dark, light, tan, cloud)</li>
+                <li>Copy note content button</li>
+                <li>Optional title display based on <code>hideHeaderOnShare</code> setting</li>
+                <li>Full markdown rendering with syntax highlighting</li>
+                <li>Image support from Convex storage</li>
+                <li>Instant loading with empty state that fills in (no loading spinner)</li>
+              </ul>
+            </li>
+            <li>
+              <strong>FullPageNoteTabs updates</strong> - Added share button with link icon
+              <ul>
+                <li>Appears in tab actions next to delete button</li>
+                <li>Opens ShareLinkModal on click</li>
+                <li>Only visible to authenticated users</li>
+              </ul>
+            </li>
+            <li>
+              <strong>App routing</strong> - Added <code>/share/:slug</code> route for shared notes
+            </li>
+            <li>
+              <strong>Netlify configuration</strong> - Added Edge Function for Open Graph meta tags
+            </li>
+          </ul>
+
+          <h3 className="subsection-title">Styling changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Shared note view styles</strong> - Complete styling for public shared notes
+              <ul>
+                <li>Theme-aware color system matching main app themes</li>
+                <li>Responsive layout with max-width container</li>
+                <li>Header with optional title display</li>
+                <li>Theme toggle buttons in top right</li>
+                <li>Copy button styling</li>
+                <li>Markdown content rendering with proper spacing</li>
+                <li>Code block syntax highlighting</li>
+                <li>Mobile-responsive design</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Share link modal styles</strong> - Modal styling for share management
+              <ul>
+                <li>Input validation states (available, taken, invalid)</li>
+                <li>Action button group layout</li>
+                <li>Copy confirmation states</li>
+                <li>Error message styling</li>
+                <li>Mobile-optimized modal size</li>
+              </ul>
+            </li>
+          </ul>
         </section>
 
         <section id="v016" className="launch-section">

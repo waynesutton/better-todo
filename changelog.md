@@ -8,7 +8,113 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes. Tracking resumes with the next commit.
 
-## [v.016] - 2025-11-14
+## [v.017] - 2025-11-15
+
+### Added
+
+- **Shareable Full-Page Notes** - Share read-only links to your notes with custom URL slugs
+  - Share button in full-page note tabs to generate shareable links
+  - Custom URL slugs (alphanumeric, hyphens, underscores, 3-50 characters)
+  - Random slug generation if no custom slug provided
+  - Reserved slugs protection (api, admin, share, etc.)
+  - Public `/share/:slug` route accessible without authentication
+  - Share modal with copy-to-clipboard functionality
+  - Optional hide title on shared note setting
+  - Ability to edit custom slugs after creating share link
+  - Revoke share link to make note private again
+  - Open shared note in new tab from share modal
+  - Theme-aware shared note viewer with theme toggle
+  - Copy note content from shared view
+  - Real-time Open Graph meta tags for social sharing
+  - First image from note used as preview image
+  - Instant loading with Convex real-time sync (no loading states)
+  - Footer with link back to better-todo
+  - Works with markdown, code blocks, and images
+
+### Backend Changes
+
+- **Full-Page Notes Schema** (`convex/schema.ts`)
+  - Added `shareSlug` field with index for efficient lookup
+  - Added `isShared` boolean field
+  - Added `hideHeaderOnShare` optional field
+  - Added `imageIds` array for tracking uploaded images
+  
+- **Full-Page Notes Module** (`convex/fullPageNotes.ts`)
+  - Added `generateShareLink` mutation for creating shareable links
+  - Added `revokeShareLink` mutation to make notes private
+  - Added `updateShareSlug` mutation to edit custom slugs
+  - Added `updateHideHeader` mutation for title visibility
+  - Added `checkSlugAvailability` query (public, no auth)
+  - Added `getNoteBySlug` query (public, no auth) with image URLs
+  - Added `getSharedNoteMetadata` internal query for Open Graph tags
+  - All mutations are idempotent with early returns
+  - Slug validation with reserved words protection
+  - Random 8-character slug generation with uniqueness checks
+
+- **HTTP Routes** (`convex/http.ts`)
+  - Added `/meta/share/:slug` endpoint for bot metadata
+  - Serves Open Graph tags to social media crawlers
+  - Returns 404 for non-shared or missing notes
+
+### Frontend Changes
+
+- **ShareLinkModal Component** (`src/components/ShareLinkModal.tsx`)
+  - New modal for managing shareable links
+  - Custom slug input with validation and availability checking
+  - Copy to clipboard with visual confirmation
+  - Hide title on share toggle
+  - Edit custom slug functionality
+  - Revoke share link button
+  - Open shared note in new tab
+  - Theme-aware styling matching app design
+  - Mobile responsive with proper spacing
+
+- **SharedNoteView Page** (`src/pages/SharedNoteView.tsx`)
+  - Public shared note viewer at `/share/:slug`
+  - Instant loading with Convex real-time sync
+  - Renders markdown with full syntax highlighting
+  - Displays images with proper sizing and alignment
+  - Theme toggle (dark, light, tan, cloud)
+  - Copy note content button
+  - Footer with link back to better-todo
+  - Dynamic Open Graph meta tags
+  - Uses first image as preview for social sharing
+  - Error handling for invalid/missing notes
+  - Mobile responsive design
+
+- **FullPageNoteTabs Component** (`src/components/FullPageNoteTabs.tsx`)
+  - Added share icon button for authenticated users
+  - Opens share modal for generating links
+  - Visual indicator if note is already shared
+  - Open shared note in new tab button
+  - Share button only visible when authenticated
+
+- **App Component** (`src/App.tsx`)
+  - Added `/share/:slug` route for public shared notes
+  - Share modal state management
+  - Proper routing with React Router
+
+- **Netlify Configuration** (`netlify.toml`)
+  - Edge function route for bot detection
+  - Serves meta tags to social media crawlers
+  - Client-side routing for shared notes
+
+### Styling Changes
+
+- **Global CSS** (`src/styles/global.css`)
+  - Added `.shared-note-view` container styles
+  - Added `.shared-note-header` and `.shared-note-title` styles
+  - Added `.shared-note-content` markdown rendering styles
+  - Added `.shared-note-image` with size and alignment classes
+  - Added `.shared-note-text` for text block rendering
+  - Added `.shared-note-error` and `.shared-note-loading` states
+  - Added `.shared-note-footer` with theme toggle and copy button
+  - Added `.shared-note-footer-link` with theme-aware colors
+  - Added `.shared-note-theme-toggle` button styles
+  - Theme-specific styling for all four themes (dark, light, tan, cloud)
+  - Mobile responsive with proper spacing and font sizes
+
+## [v.016] - 2025-11-13
 
 ### Added
 

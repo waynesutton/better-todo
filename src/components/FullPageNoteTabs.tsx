@@ -1,6 +1,13 @@
 import React, { useRef, useEffect, useState } from "react";
-import { CheckboxIcon, FilePlusIcon, EnterFullScreenIcon, ExitFullScreenIcon, ImageIcon, EyeOpenIcon } from "@radix-ui/react-icons";
-import { X, Copy, Check } from "lucide-react";
+import {
+  CheckboxIcon,
+  FilePlusIcon,
+  EnterFullScreenIcon,
+  ExitFullScreenIcon,
+  ImageIcon,
+  EyeOpenIcon,
+} from "@radix-ui/react-icons";
+import { X, Copy, Check, Link2, ExternalLinkIcon } from "lucide-react";
 import { Id } from "../../convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -11,6 +18,8 @@ interface FullPageNoteTabsProps {
     title?: string;
     order: number;
     content?: string;
+    shareSlug?: string;
+    isShared?: boolean;
   }>;
   openTabIds: Array<Id<"fullPageNotes">>;
   selectedNoteId: Id<"fullPageNotes"> | null;
@@ -25,6 +34,7 @@ interface FullPageNoteTabsProps {
   isEditMode?: boolean;
   onTogglePreview?: () => void;
   cursorInCodeBlock?: boolean;
+  onShareNote?: () => void;
 }
 
 export function FullPageNoteTabs({
@@ -42,10 +52,12 @@ export function FullPageNoteTabs({
   isEditMode,
   onTogglePreview,
   cursorInCodeBlock,
+  onShareNote,
 }: FullPageNoteTabsProps) {
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const selectedTabRef = useRef<HTMLDivElement>(null);
-  const [editingNoteId, setEditingNoteId] = useState<Id<"fullPageNotes"> | null>(null);
+  const [editingNoteId, setEditingNoteId] =
+    useState<Id<"fullPageNotes"> | null>(null);
   const [titleInput, setTitleInput] = useState("");
   const titleInputRef = useRef<HTMLInputElement>(null);
   const updateNote = useMutation(api.fullPageNotes.updateFullPageNote);
@@ -56,7 +68,7 @@ export function FullPageNoteTabs({
     if (selectedTabRef.current && tabsContainerRef.current) {
       const tabElement = selectedTabRef.current;
       const container = tabsContainerRef.current;
-      
+
       const tabLeft = tabElement.offsetLeft;
       const tabRight = tabLeft + tabElement.offsetWidth;
       const containerLeft = container.scrollLeft;
@@ -82,7 +94,10 @@ export function FullPageNoteTabs({
     }
   }, [editingNoteId]);
 
-  const handleTitleDoubleClick = (noteId: Id<"fullPageNotes">, currentTitle: string) => {
+  const handleTitleDoubleClick = (
+    noteId: Id<"fullPageNotes">,
+    currentTitle: string,
+  ) => {
     setEditingNoteId(noteId);
     setTitleInput(currentTitle || "Untitled");
   };
@@ -191,7 +206,7 @@ export function FullPageNoteTabs({
           <FilePlusIcon style={{ width: 16, height: 16 }} />
         </button>
 
-        {/* Action buttons - copy, image upload, preview, and fullscreen */}
+        {/* Action buttons - copy, share, image upload, preview, and fullscreen */}
         <div className="fullpage-note-tab-actions">
           <button
             className="fullpage-note-tab-action-button"
@@ -200,22 +215,56 @@ export function FullPageNoteTabs({
           >
             {copied ? <Check size={16} /> : <Copy size={16} />}
           </button>
-          
+
+          {isAuthenticated && onShareNote && (
+            <>
+              <button
+                className="fullpage-note-tab-action-button"
+                onClick={onShareNote}
+                title="Share note"
+              >
+                <Link2 size={16} />
+              </button>
+
+              {/* Show external link icon if note is currently shared */}
+              {notes.find((n) => n._id === selectedNoteId)?.isShared && (
+                <button
+                  className="fullpage-note-tab-action-button"
+                  onClick={() => {
+                    const sharedNote = notes.find(
+                      (n) => n._id === selectedNoteId,
+                    );
+                    if (sharedNote?.shareSlug) {
+                      window.open(`/share/${sharedNote.shareSlug}`, "_blank");
+                    }
+                  }}
+                  title="Open shared note in new tab"
+                >
+                  <ExternalLinkIcon style={{ width: 16, height: 16 }} />
+                </button>
+              )}
+            </>
+          )}
+
           {isAuthenticated && isEditMode && onImageUpload && (
             <button
               className="fullpage-note-tab-action-button"
               onClick={onImageUpload}
               disabled={cursorInCodeBlock}
-              title={cursorInCodeBlock ? "Cannot upload image while cursor is in code block" : "Upload image"}
-              style={{ 
+              title={
+                cursorInCodeBlock
+                  ? "Cannot upload image while cursor is in code block"
+                  : "Upload image"
+              }
+              style={{
                 opacity: cursorInCodeBlock ? 0.4 : 1,
-                cursor: cursorInCodeBlock ? 'not-allowed' : 'pointer'
+                cursor: cursorInCodeBlock ? "not-allowed" : "pointer",
               }}
             >
               <ImageIcon style={{ width: 16, height: 16 }} />
             </button>
           )}
-          
+
           {isAuthenticated && isEditMode && onTogglePreview && (
             <button
               className="fullpage-note-tab-action-button"
@@ -225,7 +274,7 @@ export function FullPageNoteTabs({
               <EyeOpenIcon style={{ width: 16, height: 16 }} />
             </button>
           )}
-          
+
           <button
             className="fullpage-note-tab-action-button"
             onClick={onToggleFullscreen}
@@ -242,4 +291,3 @@ export function FullPageNoteTabs({
     </div>
   );
 }
-

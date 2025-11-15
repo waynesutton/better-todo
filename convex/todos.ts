@@ -334,40 +334,20 @@ export const createSubtask = mutation({
     }
     const userId = identity.subject;
 
-    // Get the parent todo to inherit its date
-    const parent = await ctx.db.get(args.parentId);
-    if (!parent || parent.userId !== userId) {
+    // Use indexed query to get parent and verify ownership
+    const parent = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.parentId))
+      .unique();
+
+    if (!parent) {
       throw new Error("Parent todo not found or unauthorized");
     }
 
-    // Get existing subtasks to determine order
-    let existingSubtasks: Array<{
-      _id: any;
-      _creationTime: number;
-      order: number;
-    }> = [];
-    if (parent.folderId) {
-      existingSubtasks = await ctx.db
-        .query("todos")
-        .withIndex("by_user_and_folder", (q) =>
-          q.eq("userId", userId).eq("folderId", parent.folderId),
-        )
-        .filter((q) => q.eq(q.field("parentId"), args.parentId))
-        .collect();
-    } else if (parent.date) {
-      existingSubtasks = await ctx.db
-        .query("todos")
-        .withIndex("by_user_and_date", (q) =>
-          q.eq("userId", userId).eq("date", parent.date),
-        )
-        .filter((q) => q.eq(q.field("parentId"), args.parentId))
-        .collect();
-    }
-
-    const maxOrder =
-      existingSubtasks.length > 0
-        ? Math.max(...existingSubtasks.map((t) => t.order))
-        : parent.order;
+    // Use timestamp-based ordering instead of reading all subtasks
+    // This avoids write conflicts when creating multiple subtasks rapidly
+    const order = Date.now();
 
     return await ctx.db.insert("todos", {
       userId,
@@ -377,7 +357,7 @@ export const createSubtask = mutation({
       type: "todo",
       completed: false,
       archived: false,
-      order: maxOrder + 1,
+      order: order,
       parentId: args.parentId,
       collapsed: false,
     });
@@ -403,8 +383,14 @@ export const updateTodo = mutation({
     }
     const userId = identity.subject;
 
-    const todo = await ctx.db.get(args.id);
-    if (!todo || todo.userId !== userId) {
+    // Use indexed query to verify ownership without reading first
+    const todo = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.id))
+      .unique();
+
+    if (!todo) {
       throw new Error("Todo not found or unauthorized");
     }
 
@@ -447,26 +433,32 @@ export const deleteTodo = mutation({
     }
     const userId = identity.subject;
 
-    // Query for subtasks first (they won't exist if parent doesn't exist)
+    // Use indexed query to verify ownership in one operation
+    const todo = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.id))
+      .unique();
+
+    // Idempotent: if todo doesn't exist or wrong user, return early
+    if (!todo) {
+      return null;
+    }
+
+    // Get subtasks (won't create conflicts since we're just reading for IDs)
     const subtasks = await ctx.db
       .query("todos")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("parentId"), args.id))
       .collect();
 
-    // Delete subtasks in parallel (if any exist)
-    if (subtasks.length > 0) {
-      await Promise.all(subtasks.map((subtask) => ctx.db.delete(subtask._id)));
-    }
-
-    // Delete the todo directly (throws if doesn't exist or wrong user via DB constraints)
-    // This is safe because the DB will handle authorization via userId field
-    try {
-      await ctx.db.delete(args.id);
-    } catch (error) {
-      // If todo doesn't exist, that's fine (idempotent)
-      return null;
-    }
+    // Delete todo and all subtasks in parallel to minimize conflicts
+    const deleteOperations = [
+      ctx.db.delete(args.id),
+      ...subtasks.map((subtask) => ctx.db.delete(subtask._id)),
+    ];
+    
+    await Promise.all(deleteOperations);
     
     return null;
   },
@@ -486,8 +478,14 @@ export const reorderTodos = mutation({
     }
     const userId = identity.subject;
 
-    const todo = await ctx.db.get(args.todoId);
-    if (!todo || todo.userId !== userId) {
+    // Use indexed query to verify ownership
+    const todo = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.todoId))
+      .unique();
+
+    if (!todo) {
       throw new Error("Todo not found or unauthorized");
     }
 
@@ -507,12 +505,17 @@ export const reorderTodos = mutation({
     // Insert it at the new position
     filtered.splice(args.newOrder, 0, todo);
 
-    // Update all orders
-    for (let i = 0; i < filtered.length; i++) {
-      if (filtered[i].order !== i) {
-        await ctx.db.patch(filtered[i]._id, { order: i });
-      }
-    }
+    // Update all orders in parallel to avoid write conflicts
+    const updates = filtered
+      .map((t, index) => {
+        if (t.order !== index) {
+          return ctx.db.patch(t._id, { order: index });
+        }
+        return null;
+      })
+      .filter((update) => update !== null);
+
+    await Promise.all(updates);
 
     return null;
   },
@@ -532,29 +535,26 @@ export const moveTodoToDate = mutation({
     }
     const userId = identity.subject;
 
-    const todo = await ctx.db.get(args.todoId);
-    if (!todo || todo.userId !== userId) {
+    // Use indexed query to verify ownership
+    const todo = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.todoId))
+      .unique();
+
+    if (!todo) {
       throw new Error("Todo not found or unauthorized");
     }
 
-    // Get the highest order number for the new date
-    const existingTodos = await ctx.db
-      .query("todos")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", args.newDate),
-      )
-      .collect();
-
-    const maxOrder =
-      existingTodos.length > 0
-        ? Math.max(...existingTodos.map((t) => t.order))
-        : -1;
+    // Use timestamp-based ordering instead of reading all todos
+    // This avoids write conflicts when moving multiple todos rapidly
+    const order = Date.now();
 
     // Remove folderId if moving to a date
     await ctx.db.patch(args.todoId, {
       date: args.newDate,
       folderId: undefined,
-      order: maxOrder + 1,
+      order: order,
     });
 
     return null;
@@ -575,35 +575,37 @@ export const moveTodoToFolder = mutation({
     }
     const userId = identity.subject;
 
-    const todo = await ctx.db.get(args.todoId);
-    if (!todo || todo.userId !== userId) {
+    // Use indexed query to verify todo ownership
+    const todo = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.todoId))
+      .unique();
+
+    if (!todo) {
       throw new Error("Todo not found or unauthorized");
     }
 
-    // Verify folder exists and belongs to user
-    const folder = await ctx.db.get(args.folderId);
-    if (!folder || folder.userId !== userId) {
+    // Use indexed query to verify folder exists and belongs to user
+    const folder = await ctx.db
+      .query("folders")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.folderId))
+      .unique();
+
+    if (!folder) {
       throw new Error("Folder not found or unauthorized");
     }
 
-    // Get the highest order number for the folder
-    const existingTodos = await ctx.db
-      .query("todos")
-      .withIndex("by_user_and_folder", (q) =>
-        q.eq("userId", userId).eq("folderId", args.folderId),
-      )
-      .collect();
-
-    const maxOrder =
-      existingTodos.length > 0
-        ? Math.max(...existingTodos.map((t) => t.order))
-        : -1;
+    // Use timestamp-based ordering instead of reading all todos
+    // This avoids write conflicts when moving multiple todos rapidly
+    const order = Date.now();
 
     // Patch directly to avoid write conflicts
     await ctx.db.patch(args.todoId, {
       folderId: args.folderId,
       date: undefined,
-      order: maxOrder + 1,
+      order: order,
     });
 
     return null;
