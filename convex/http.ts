@@ -49,7 +49,7 @@ function generateNoteHTML(note: {
 }) {
   const imageUrl =
     note.screenshotUrl ||
-    "https://better-todo.co/better-todo-open-graph-image.png";
+    "https://better-todo.co/og-image.png";
   const canonicalUrl = `https://better-todo.co/share/${note.slug}`;
   const siteName = "better todo";
   const twitterHandle = "@waynesutton";
@@ -65,8 +65,33 @@ function generateNoteHTML(note: {
   };
 
   const safeTitle = escapeHtml(note.title);
-  // Create a short description from content (first 160 chars)
-  const contentPreview = note.content.substring(0, 160).replace(/\n/g, " ");
+  
+  // Extract first line of actual text for description (skip code blocks and images)
+  const extractTextDescription = (content: string): string => {
+    // Remove code blocks
+    let text = content.replace(/```[\s\S]*?```/g, "");
+    
+    // Remove image syntax: ![alt](storageId|size|alignment)
+    text = text.replace(/!\[.*?\]\(.*?\|.*?(?:\|.*?)?\)/g, "");
+    
+    // Remove markdown headers
+    text = text.replace(/^#+\s+/gm, "");
+    
+    // Remove inline code
+    text = text.replace(/`[^`]+`/g, "");
+    
+    // Remove markdown links but keep text: [text](url) -> text
+    text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1");
+    
+    // Split by newlines and get first non-empty line
+    const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+    const firstLine = lines[0] || "A shared note from better todo";
+    
+    // Truncate to 160 chars for Open Graph
+    return firstLine.length > 160 ? firstLine.substring(0, 157) + "..." : firstLine;
+  };
+  
+  const contentPreview = extractTextDescription(note.content);
   const safeDescription = escapeHtml(contentPreview);
 
   return `<!DOCTYPE html>

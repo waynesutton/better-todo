@@ -22,9 +22,8 @@ const BOT_USER_AGENTS = [
   "pinterestbot", // Pinterest
 ];
 
-// Convex deployment URLs (PROD and DEV)
-const CONVEX_PROD_URL = "https://whimsical-dalmatian-205.convex.site";
-const CONVEX_DEV_URL = "https://acoustic-goldfinch-461.convex.site";
+// Convex deployment URL
+const CONVEX_URL = "https://next-crane-985.convex.cloud";
 
 export default async (request: Request, context: Context) => {
   const url = new URL(request.url);
@@ -55,8 +54,7 @@ export default async (request: Request, context: Context) => {
 
   // For bots, fetch server-rendered HTML from Convex meta endpoint
   try {
-    // Try PROD first
-    const convexUrl = `${CONVEX_PROD_URL}/meta/share?slug=${encodeURIComponent(slug)}`;
+    const convexUrl = `${CONVEX_URL}/meta/share?slug=${encodeURIComponent(slug)}`;
     const response = await fetch(convexUrl);
 
     if (response.ok) {
@@ -71,24 +69,7 @@ export default async (request: Request, context: Context) => {
       });
     }
 
-    // If PROD returns 404, try DEV as fallback
-    if (response.status === 404) {
-      const devUrl = `${CONVEX_DEV_URL}/meta/share?slug=${encodeURIComponent(slug)}`;
-      const devResponse = await fetch(devUrl);
-
-      if (devResponse.ok) {
-        return new Response(await devResponse.text(), {
-          status: devResponse.status,
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control":
-              "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
-          },
-        });
-      }
-    }
-
-    // If both fail, fall back to SPA
+    // If not found or error, fall back to SPA
     return context.next();
   } catch (error) {
     // On any error, fall back to SPA
