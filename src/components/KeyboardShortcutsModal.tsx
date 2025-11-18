@@ -93,6 +93,7 @@ export function KeyboardShortcutsModal({
     {
       category: "Full-Page Notes",
       items: [
+        { key: "Shift + N", description: "Open full-page notes for current date" },
         { key: "e", description: "Enter edit mode" },
         { key: "p", description: "Enter preview mode" },
         { key: "Esc", description: "Exit edit mode (show preview)" },

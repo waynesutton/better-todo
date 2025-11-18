@@ -13,6 +13,7 @@ import {
   Cloud,
   Scroll,
   ChevronRight,
+  Eye,
 } from "lucide-react";
 import {
   KeyboardIcon,
@@ -34,23 +35,13 @@ function TodosForFolder({
   folderId,
   onSelectFolder,
   selectedFolder,
+  uncompletedCount,
 }: {
   folderId: Id<"folders">;
   onSelectFolder: (folderId: Id<"folders">) => void;
   selectedFolder: Id<"folders"> | null;
+  uncompletedCount: number;
 }) {
-  const { isAuthenticated } = useConvexAuth();
-
-  // Fetch todos for this folder (always fetch to show count)
-  const todos = useQuery(
-    api.todos.getTodosByFolder,
-    isAuthenticated ? { folderId } : "skip",
-  );
-
-  // Count uncompleted todos
-  const uncompletedCount =
-    todos?.filter((t) => !t.completed && !t.archived).length || 0;
-
   return (
     <div className="notes-folder-section">
       <div
@@ -191,6 +182,12 @@ function NotesForDate({
                   >
                     <span className="notes-folder-item-title">
                       {note.title || "Untitled"}
+                      {(note.isShared || note.shareSlug) && (
+                        <Eye
+                          size={12}
+                          style={{ marginLeft: "6px", display: "inline" }}
+                        />
+                      )}
                     </span>
                   </div>
                   <button
@@ -471,6 +468,12 @@ function NotesForFolder({
                   >
                     <span className="notes-folder-item-title">
                       {note.title || "Untitled"}
+                      {(note.isShared || note.shareSlug) && (
+                        <Eye
+                          size={12}
+                          style={{ marginLeft: "6px", display: "inline" }}
+                        />
+                      )}
                     </span>
                   </div>
                   <button
@@ -736,6 +739,11 @@ export function Sidebar({
   const fullPageNoteCountsByFolder =
     useQuery(
       api.fullPageNotes.getFullPageNoteCountsByFolder,
+      isAuthenticated ? undefined : "skip",
+    ) || {};
+  const todoCountsByFolder =
+    useQuery(
+      api.todos.getTodoCountsByFolder,
       isAuthenticated ? undefined : "skip",
     ) || {};
 
@@ -2270,6 +2278,7 @@ export function Sidebar({
                   folderId={folder._id}
                   onSelectFolder={handleSelectFolder}
                   selectedFolder={selectedFolder}
+                  uncompletedCount={todoCountsByFolder[folder._id.toString()] || 0}
                 />
               )}
 

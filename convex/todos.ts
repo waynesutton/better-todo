@@ -862,15 +862,11 @@ export const getUncompletedCounts = query({
     }
     const userId = identity.subject;
 
-    // Get all uncompleted todos
+    // Use indexed query for uncompleted, unarchived todos (following Convex best practices)
     const todos = await ctx.db
       .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("completed"), false),
-          q.eq(q.field("archived"), false),
-        ),
+      .withIndex("by_user_completed_archived", (q) =>
+        q.eq("userId", userId).eq("completed", false).eq("archived", false),
       )
       .collect();
 
@@ -898,15 +894,11 @@ export const getTodoCountsByFolder = query({
     }
     const userId = identity.subject;
 
-    // Get all uncompleted, non-archived todos in folders
+    // Use indexed query for uncompleted, unarchived todos (following Convex best practices)
     const todos = await ctx.db
       .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("completed"), false),
-          q.eq(q.field("archived"), false),
-        ),
+      .withIndex("by_user_completed_archived", (q) =>
+        q.eq("userId", userId).eq("completed", false).eq("archived", false),
       )
       .collect();
 

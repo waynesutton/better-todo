@@ -638,6 +638,44 @@ function App() {
         setPomodoroTriggered({});
       }
 
+      // Open full-page notes with Shift + N
+      if ((e.key === "N" || e.key === "n") && e.shiftKey) {
+        e.preventDefault();
+        // Only allow on regular dates and folders (not pinned/backlog)
+        if (
+          selectedDate !== "pinned" &&
+          selectedDate !== "backlog" &&
+          isAuthenticated
+        ) {
+          (async () => {
+            // Get notes based on whether we're viewing a folder or a date
+            const notesToView = selectedFolder
+              ? folderFullPageNotes
+              : fullPageNotes;
+
+            // If there are existing notes, open the first one
+            if (notesToView && notesToView.length > 0) {
+              const firstNote = notesToView[0];
+              if (!openFullPageNoteTabs.includes(firstNote._id)) {
+                setOpenFullPageNoteTabs((prev) => [...prev, firstNote._id]);
+              }
+              setSelectedFullPageNoteId(firstNote._id);
+              setShowFullPageNotes(true);
+            } else {
+              // No notes exist, create a new one
+              const newNoteId = await createFullPageNote(
+                selectedFolder
+                  ? { folderId: selectedFolder }
+                  : { date: selectedDate }
+              );
+              setOpenFullPageNoteTabs([newNoteId]);
+              setSelectedFullPageNoteId(newNoteId);
+              setShowFullPageNotes(true);
+            }
+          })();
+        }
+      }
+
       // Open menu with m key
       if (e.key === "m") {
         e.preventDefault();
@@ -775,6 +813,11 @@ function App() {
     lastCompletedTodo,
     isAuthenticated,
     showFullPageNotes,
+    selectedDate,
+    selectedFolder,
+    fullPageNotes,
+    folderFullPageNotes,
+    openFullPageNoteTabs,
   ]);
 
   // Reset focused index when todos change

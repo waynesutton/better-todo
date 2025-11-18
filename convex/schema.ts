@@ -35,6 +35,7 @@ export default defineSchema({
     .index("by_user_and_pinned", ["userId", "pinned"])
     .index("by_user_and_backlog", ["userId", "backlog"])
     .index("by_user_and_folder", ["userId", "folderId"])
+    .index("by_user_completed_archived", ["userId", "completed", "archived"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],

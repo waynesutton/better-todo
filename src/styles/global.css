@@ -6582,11 +6582,25 @@ button:active,
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+
+/* Eye icon for shared notes */
+.notes-folder-item-title svg {
+  flex-shrink: 0;
+  opacity: 0.6;
 }
 
 /* White text when parent date is active */
 .date-item-container.active .notes-folder-item-title {
   color: #ffffff;
+}
+
+/* Eye icon color when note is active/selected */
+.notes-folder-item.active .notes-folder-item-title svg {
+  opacity: 0.9;
+  color: currentColor;
 }
 
 /* Mobile responsive styles */
