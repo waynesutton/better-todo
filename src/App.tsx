@@ -36,7 +36,7 @@ import "./styles/global.css";
 function App() {
   const { isLoading: authIsLoading, isAuthenticated } = useConvexAuth();
   const { user } = useUser();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
 
   // Fetch user preferences for font size
   const userPreferences = useQuery(
@@ -747,7 +747,7 @@ function App() {
       }
 
       // Jump to today with t
-      if (e.key === "t") {
+      if (e.key === "t" && !e.shiftKey) {
         e.preventDefault();
         const today = format(new Date(), "yyyy-MM-dd");
         setSelectedDate(today);
@@ -759,6 +759,12 @@ function App() {
         }
         // Scroll to top of main content
         window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      // Toggle theme with Shift + T
+      if ((e.key === "T" || e.key === "t") && e.shiftKey) {
+        e.preventDefault();
+        toggleTheme();
       }
 
       // Scroll to top with cmd+up
@@ -818,6 +824,7 @@ function App() {
     fullPageNotes,
     folderFullPageNotes,
     openFullPageNoteTabs,
+    toggleTheme,
   ]);
 
   // Reset focused index when todos change

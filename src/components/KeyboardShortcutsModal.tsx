@@ -65,6 +65,7 @@ export function KeyboardShortcutsModal({
       category: "Navigation",
       items: [
         { key: "t", description: "Jump to today" },
+        { key: "Shift + T", description: "Toggle theme" },
         { key: "↑/↓", description: "Navigate between todos" },
         { key: "⌘ + ↑", description: "Scroll to top" },
         { key: "⌘ + ↓", description: "Scroll to bottom" },
