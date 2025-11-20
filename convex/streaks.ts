@@ -388,6 +388,22 @@ export const saveBadge = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // Check if badge already exists (prevent duplicates from race conditions)
+    const existing = await ctx.db
+      .query("badges")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("slug"), args.slug))
+      .first();
+
+    // Early return if badge already exists (idempotent)
+    if (existing) {
+      console.log(
+        `[Streaks] Badge '${args.slug}' already exists for user, skipping insert`,
+      );
+      return null;
+    }
+
+    // Insert the new badge
     await ctx.db.insert("badges", {
       userId: args.userId,
       slug: args.slug,
@@ -396,6 +412,8 @@ export const saveBadge = internalMutation({
       imageUrl: args.imageUrl,
       earnedAt: Date.now(),
     });
+
+    console.log(`[Streaks] Successfully saved new badge '${args.slug}' for user`);
 
     // Mark that user has unseen badges
     const streak = await ctx.db
