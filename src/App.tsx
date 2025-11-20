@@ -14,8 +14,10 @@ import { PomodoroTimer } from "./components/PomodoroTimer";
 import { FullPageNoteView } from "./components/FullPageNoteView";
 import { FullPageNoteTabs } from "./components/FullPageNoteTabs";
 import { ShareLinkModal } from "./components/ShareLinkModal";
+import { StreaksHeader } from "./components/StreaksHeader"; // New
 import { Launch } from "./pages/Launch";
 import { Changelog } from "./pages/Changelog";
+import { StreaksPage } from "./pages/StreaksPage"; // New
 import { NotFound } from "./pages/NotFound";
 import { Stats } from "./pages/Stats";
 import { SharedNoteView } from "./pages/SharedNoteView";
@@ -41,14 +43,20 @@ function App() {
   // Fetch user preferences for font size
   const userPreferences = useQuery(
     api.users.getUserPreferences,
-    isAuthenticated ? undefined : "skip"
+    isAuthenticated ? undefined : "skip",
   );
 
+  // Streaks header visibility state (persisted in localStorage)
+  const [showStreaksHeader, setShowStreaksHeader] = useState<boolean>(() => {
+    const saved = localStorage.getItem("showStreaksHeader");
+    return saved !== null ? JSON.parse(saved) : true; // Default to visible
+  });
+
   const [selectedDate, setSelectedDate] = useState<string>(
-    format(new Date(), "yyyy-MM-dd")
+    format(new Date(), "yyyy-MM-dd"),
   );
   const [selectedFolder, setSelectedFolder] = useState<Id<"folders"> | null>(
-    null
+    null,
   );
   // Check if mobile on initial load (hide sidebar completely by default on mobile)
   const isMobile = window.innerWidth <= 768;
@@ -133,7 +141,9 @@ function App() {
   const [selectedFullPageNoteId, setSelectedFullPageNoteId] =
     useState<Id<"fullPageNotes"> | null>(null);
   const [isFullscreenNotes, setIsFullscreenNotes] = useState(false);
-  const [imageUploadCallback, setImageUploadCallback] = useState<(() => void) | null>(null);
+  const [imageUploadCallback, setImageUploadCallback] = useState<
+    (() => void) | null
+  >(null);
   const [isFullPageNoteEditMode, setIsFullPageNoteEditMode] = useState(false);
   const [cursorInCodeBlock, setCursorInCodeBlock] = useState(false);
   const [showShareLinkModal, setShowShareLinkModal] = useState(false);
@@ -178,11 +188,11 @@ function App() {
   const deleteAllTodos = useMutation(api.todos.deleteAllTodos);
   const deleteAllArchivedTodos = useMutation(api.todos.deleteAllArchivedTodos);
   const archiveAllTodosInFolder = useMutation(
-    api.todos.archiveAllTodosInFolder
+    api.todos.archiveAllTodosInFolder,
   );
   const deleteAllTodosInFolder = useMutation(api.todos.deleteAllTodosInFolder);
   const deleteAllArchivedTodosInFolder = useMutation(
-    api.todos.deleteAllArchivedTodosInFolder
+    api.todos.deleteAllArchivedTodosInFolder,
   );
   const deleteTodo = useMutation(api.todos.deleteTodo);
   const reorderTodos = useMutation(api.todos.reorderTodos);
@@ -196,23 +206,23 @@ function App() {
   // Fetch available dates and todos (skip if not authenticated)
   const availableDates = useQuery(
     api.todos.getAvailableDates,
-    isAuthenticated ? undefined : "skip"
+    isAuthenticated ? undefined : "skip",
   );
   const pinnedTodos = useQuery(
     api.todos.getPinnedTodos,
-    isAuthenticated ? undefined : "skip"
+    isAuthenticated ? undefined : "skip",
   );
   const backlogTodos = useQuery(
     api.todos.getBacklogTodos,
-    isAuthenticated ? undefined : "skip"
+    isAuthenticated ? undefined : "skip",
   );
   const folderTodos = useQuery(
     api.todos.getTodosByFolder,
-    isAuthenticated && selectedFolder ? { folderId: selectedFolder } : "skip"
+    isAuthenticated && selectedFolder ? { folderId: selectedFolder } : "skip",
   );
   const folders = useQuery(
     api.folders.getFolders,
-    isAuthenticated ? undefined : "skip"
+    isAuthenticated ? undefined : "skip",
   );
   const selectedFolderData = folders?.find((f) => f._id === selectedFolder);
   const todos = useQuery(
@@ -222,7 +232,7 @@ function App() {
       selectedDate !== "backlog" &&
       !selectedFolder
       ? { date: selectedDate }
-      : "skip"
+      : "skip",
   );
 
   // Fetch full-page notes for selected date
@@ -233,13 +243,13 @@ function App() {
       selectedDate !== "backlog" &&
       !selectedFolder
       ? { date: selectedDate }
-      : "skip"
+      : "skip",
   );
 
   // Fetch full-page notes for selected folder
   const folderFullPageNotes = useQuery(
     api.fullPageNotes.getFullPageNotesByFolder,
-    isAuthenticated && selectedFolder ? { folderId: selectedFolder } : "skip"
+    isAuthenticated && selectedFolder ? { folderId: selectedFolder } : "skip",
   );
 
   // Fetch full-page notes for all open tabs (including folder notes)
@@ -247,7 +257,7 @@ function App() {
     api.fullPageNotes.getFullPageNotesByIds,
     isAuthenticated && openFullPageNoteTabs.length > 0
       ? { noteIds: openFullPageNoteTabs }
-      : "skip"
+      : "skip",
   );
 
   // Combine notes from date, folder, and open tabs
@@ -304,7 +314,7 @@ function App() {
 
       // Check if there's a default todo and other todos exist
       const defaultTodo = todos.find(
-        (t) => t.content === "what's the priority?" && !t.completed
+        (t) => t.content === "what's the priority?" && !t.completed,
       );
 
       // If default todo exists and there are other todos, delete the default one
@@ -525,7 +535,7 @@ function App() {
 
   const handleReorderArchived = async (
     activeId: Id<"todos">,
-    overId: Id<"todos">
+    overId: Id<"todos">,
   ) => {
     // Find the new order based on the overId position
     const overIndex = archivedTodos.findIndex((t) => t._id === overId);
@@ -536,7 +546,7 @@ function App() {
 
   const handleMoveArchivedToCustomDate = async (
     todoId: Id<"todos">,
-    newDate: string
+    newDate: string,
   ) => {
     await moveTodoToDate({ todoId, newDate });
   };
@@ -666,7 +676,7 @@ function App() {
               const newNoteId = await createFullPageNote(
                 selectedFolder
                   ? { folderId: selectedFolder }
-                  : { date: selectedDate }
+                  : { date: selectedDate },
               );
               setOpenFullPageNoteTabs([newNoteId]);
               setSelectedFullPageNoteId(newNoteId);
@@ -765,6 +775,16 @@ function App() {
       if ((e.key === "T" || e.key === "t") && e.shiftKey) {
         e.preventDefault();
         toggleTheme();
+      }
+
+      // Toggle streaks header with Shift + S
+      if ((e.key === "S" || e.key === "s") && e.shiftKey) {
+        e.preventDefault();
+        setShowStreaksHeader((prev) => {
+          const newValue = !prev;
+          localStorage.setItem("showStreaksHeader", JSON.stringify(newValue));
+          return newValue;
+        });
       }
 
       // Scroll to top with cmd+up
@@ -1021,7 +1041,7 @@ function App() {
                 }
                 // Add the note as a tab if it's not already open, otherwise just select it
                 setOpenFullPageNoteTabs((prev) =>
-                  prev.includes(noteId) ? prev : [...prev, noteId]
+                  prev.includes(noteId) ? prev : [...prev, noteId],
                 );
                 setSelectedFullPageNoteId(noteId);
                 setShowFullPageNotes(true);
@@ -1086,7 +1106,7 @@ function App() {
                     // If on full-page note view, copy the note content
                     if (showFullPageNotes && selectedFullPageNoteId) {
                       const currentNote = allFullPageNotes.find(
-                        (note) => note._id === selectedFullPageNoteId
+                        (note) => note._id === selectedFullPageNoteId,
                       );
                       if (currentNote && currentNote.content) {
                         navigator.clipboard
@@ -1105,7 +1125,7 @@ function App() {
                     } else {
                       // Otherwise, copy all unchecked (incomplete) todos to clipboard
                       const incompleteTodos = activeTodos.filter(
-                        (todo) => !todo.completed
+                        (todo) => !todo.completed,
                       );
                       const todoText = incompleteTodos
                         .map((todo) => `- ${todo.content}`)
@@ -1187,7 +1207,7 @@ function App() {
                             const newNoteId = await createFullPageNote(
                               selectedFolder
                                 ? { folderId: selectedFolder }
-                                : { date: selectedDate }
+                                : { date: selectedDate },
                             );
                             setOpenFullPageNoteTabs([newNoteId]);
                             setSelectedFullPageNoteId(newNoteId);
@@ -1207,6 +1227,7 @@ function App() {
                   openOnTrigger={true}
                   onClearTrigger={() => setPomodoroTriggered(null)}
                 />
+                {showStreaksHeader && <StreaksHeader />}
                 <button
                   className="search-button"
                   onClick={() => {
@@ -1303,15 +1324,22 @@ function App() {
                           Real-time synchronization across all your devices
                         </li>
                         <li>
-                          Notion-style inline input - type directly to add todos
+                          Full markdown support with syntax-highlighted code
+                          blocks
                         </li>
-                        <li>Daily notes with syntax-highlighted code blocks</li>
-                        <li>Drag and drop reordering with intuitive handles</li>
-                        <li>Full-text search across all todos and notes</li>
-                        <li>Dark and light themes with smooth transitions</li>
-                        <li>Mobile-optimized with touch-friendly interface</li>
-                        <li>Archive and bulk actions for easy management</li>
-                        <li>Built-in Pomodoro timer for productivity</li>
+                        <li>
+                          Four beautiful themes: Dark, Light, Tan, and Cloud
+                        </li>
+                        <li>Full-text search across todos and notes</li>
+                        <li>Shareable full-page notes with custom URL slugs</li>
+                        <li>
+                          Built-in Pomodoro timer with 25 or 90 minute sessions
+                        </li>
+                        <li>Streaks and AI-generated badges for motivation</li>
+                        <li>Mobile-optimized PWA with offline support</li>
+                        <li>
+                          Keyboard-first workflow with extensive shortcuts
+                        </li>
                       </ul>
                       <div
                         style={{
@@ -1404,7 +1432,7 @@ function App() {
                   }}
                   onCloseTab={(noteId) => {
                     const newTabs = openFullPageNoteTabs.filter(
-                      (id) => id !== noteId
+                      (id) => id !== noteId,
                     );
                     setOpenFullPageNoteTabs(newTabs);
                     // If closing the selected tab, select the previous tab or exit full-page view
@@ -1423,7 +1451,7 @@ function App() {
                   onCreateNote={async () => {
                     // Determine if we're creating a note in a folder or for a date
                     const selectedNote = allFullPageNotes.find(
-                      (note) => note._id === selectedFullPageNoteId
+                      (note) => note._id === selectedFullPageNoteId,
                     );
 
                     // Block creation if note is in an archived folder
@@ -1453,7 +1481,9 @@ function App() {
                     setIsFullscreenNotes(false);
                   }}
                   isFullscreen={isFullscreenNotes}
-                  onToggleFullscreen={() => setIsFullscreenNotes(!isFullscreenNotes)}
+                  onToggleFullscreen={() =>
+                    setIsFullscreenNotes(!isFullscreenNotes)
+                  }
                   onImageUpload={() => {
                     if (imageUploadCallback) {
                       imageUploadCallback();
@@ -1471,10 +1501,12 @@ function App() {
                 />
                 {/* Full-page note view */}
                 {selectedFullPageNoteId && (
-                  <FullPageNoteView 
-                    key={selectedFullPageNoteId} 
+                  <FullPageNoteView
+                    key={selectedFullPageNoteId}
                     noteId={selectedFullPageNoteId}
-                    onImageUploadTrigger={(callback) => setImageUploadCallback(() => callback)}
+                    onImageUploadTrigger={(callback) =>
+                      setImageUploadCallback(() => callback)
+                    }
                     onEditModeChange={setIsFullPageNoteEditMode}
                     onTogglePreview={() => {}}
                     onCursorInCodeBlockChange={setCursorInCodeBlock}
@@ -1577,14 +1609,16 @@ function App() {
             if (fullPageNoteId) {
               // Check if note is in a folder
               const note = allFullPageNotes.find(
-                (n) => n._id === fullPageNoteId
+                (n) => n._id === fullPageNoteId,
               );
               if (note?.folderId) {
                 setSelectedFolder(note.folderId);
                 setSelectedDate("");
               }
               setOpenFullPageNoteTabs((prev) =>
-                prev.includes(fullPageNoteId) ? prev : [...prev, fullPageNoteId]
+                prev.includes(fullPageNoteId)
+                  ? prev
+                  : [...prev, fullPageNoteId],
               );
               setSelectedFullPageNoteId(fullPageNoteId);
               setShowFullPageNotes(true);
@@ -1865,15 +1899,15 @@ function App() {
                   <li>No AI assistants - just your todos and focus</li>
                   <li>Real-time synchronization across all your devices</li>
                   <li>
-                    Notion-style inline input - type directly to add todos
+                    Full markdown support with syntax-highlighted code blocks
                   </li>
-                  <li>Daily notes with syntax-highlighted code blocks</li>
-                  <li>Drag and drop reordering with intuitive handles</li>
-                  <li>Full-text search across all todos and notes</li>
-                  <li>Dark and light themes with smooth transitions</li>
-                  <li>Mobile-optimized with touch-friendly interface</li>
-                  <li>Archive and bulk actions for easy management</li>
-                  <li>Built-in Pomodoro timer for productivity</li>
+                  <li>Four beautiful themes: Dark, Light, Tan, and Cloud</li>
+                  <li>Full-text search across todos and notes</li>
+                  <li>Shareable full-page notes with custom URL slugs</li>
+                  <li>Built-in Pomodoro timer with 25 or 90 minute sessions</li>
+                  <li>Streaks and AI-generated badges for motivation</li>
+                  <li>Mobile-optimized PWA with offline support</li>
+                  <li>Keyboard-first workflow with extensive shortcuts</li>
                 </ul>
                 <div
                   style={{
@@ -1917,6 +1951,7 @@ function AppRouter() {
       <Route path="/about" element={<Launch />} />
       <Route path="/changelog" element={<Changelog />} />
       <Route path="/stats" element={<Stats />} />
+      <Route path="/streaks" element={<StreaksPage />} />
       <Route path="/share/:slug" element={<SharedNoteView />} />
       <Route path="/" element={<App />} />
       <Route path="*" element={<NotFound />} />

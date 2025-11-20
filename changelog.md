@@ -8,6 +8,221 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes. Tracking resumes with the next commit.
 
+## [v.019] - 2025-11-19
+
+### Added
+
+- **Mini Stats Section on Streaks Page** - Personal statistics overview below streak cards
+  - Displays user-specific statistics (excludes total users from global stats)
+  - Stats shown: Todos Created, Completed, Active, Pinned, Archived, Full-Page Notes, Todo Notes, Pomodoro Sessions, Folders
+  - Completion rate percentage with subtitle on "Completed" stat
+  - Responsive grid layout: auto-fit columns on desktop, single column on mobile, 2 columns on tablet
+  - Matches streaks page theme and UI with icon-based cards
+  - Same width as two-column layout above it
+  - Hover effects with subtle transform animation
+
+### Backend Changes
+
+- **Stats Module Updates** (`convex/stats.ts`)
+  - Added `getUserStats` query: Returns user-specific statistics for authenticated user
+    - Uses indexed queries (`by_user`, `by_user_and_date`) for efficient lookups
+    - Queries: `todos`, `notes`, `fullPageNotes`, `pomodoroSessions`, `folders`
+    - Returns counts for all stat categories
+    - Returns null if user not authenticated
+
+### Frontend Changes
+
+- **Streaks Page Updates** (`src/pages/StreaksPage.tsx`)
+  - Added `userStats` query integration
+  - Added lucide-react icons for stat cards
+  - Added `formatNumber` helper for number formatting with commas
+  - Added `calculatePercentage` helper for completion rate
+  - Created mini stats grid with 9 stat cards
+  - Positioned below two-column layout, above year selector
+
+### Style Changes
+
+- **Global CSS Updates** (`src/styles/global.css`)
+  - Added `.streaks-mini-stats` container styles
+  - Added `.streaks-mini-stats-title` for section heading
+  - Added `.streaks-mini-stats-grid` with responsive grid
+  - Added `.streaks-mini-stat-card` with hover effects
+  - Added icon and content layout styles
+  - Mobile responsive: single column, reduced padding
+  - Tablet responsive: auto-fit 180px columns
+
+## [v.018] - 2025-11-18
+
+### Added
+
+- **Streaks Feature** - Track your todo completion momentum with streaks and badges
+  - **Streak Tracking** - Automatic tracking of consecutive days completing all regular date-based todos
+    - Current streak counter showing ongoing consecutive days
+    - Longest streak counter showing personal best
+    - Total todos completed counter
+    - Weekly progress visualization showing 7-day completion status
+    - Completion rate percentage based on tracked days
+    - Next milestone progress bar with target goals (3, 5, 7, 10, 30, 60, 90, 365 days)
+  - **Streaks Page** - Dedicated streaks dashboard at `/streaks` route
+    - Two-column layout: left shows stats, right shows earned badges
+    - Takes up 80% of page width (90% on tablet, 100% on mobile) for optimal viewing
+    - HUD-inspired sci-fi tech interface with corner decorations
+    - Weekly calendar visualization with day indicators (past, today, future)
+    - Theme switcher in top right corner (matches sidebar theme toggle)
+    - App name "better todo" in top left serves as back button to home
+    - Real-time sync with Convex for instant updates
+    - Mobile responsive with single-column stacked layout
+  - **Streaks Header Button** - Quick access from main app header
+    - Fire icon (rise.svg) with 7-bar weekly progress indicator
+    - Bars disappear as you complete todos for each day of the week
+    - Bars reset every Sunday at 12:01 am
+    - Bar color matches active date theme color for each theme (green/dark, blue/light, orange/tan, black/cloud)
+    - Only visible for authenticated users
+  - **AI-Generated Badges** - Unique achievement badges using OpenAI DALL-E 3
+    - "First Step" badge: Complete your first todo
+    - "Day One Done" badge: Complete all todos for a single day
+    - Streak milestone badges: 3-day, 5-day, 7-day, 10-day, 30-day, 60-day, 90-day, 365-day streaks
+    - All badges are grayscale with transparent backgrounds
+    - Fortnite-style geometric designs with 3D metallic rendering
+    - Each badge is unique with randomized silhouettes, symbols, and finishes
+    - Badges grid displays all earned badges with larger images (96px)
+    - Year selector dropdown to view badges from previous years
+  - **Smart Todo Filtering** - Only tracks regular date-based todos
+    - Excludes full-page notes (from fullPageNotes table)
+    - Excludes todo page notes (from notes table)
+    - Excludes folder todos (todos with folderId)
+    - Excludes backlog todos (todos with backlog: true)
+    - Excludes pinned todos (todos with pinned: true)
+    - Excludes archived todos (todos with archived: true)
+    - Only counts todos with a date field (YYYY-MM-DD format)
+  - **User-Scoped Data** - Complete data isolation and privacy
+    - All queries use indexed lookups with userId
+    - Each user only sees their own streak data and badges
+    - No cross-user data leakage
+
+### Backend Changes
+
+- **Schema Updates** (`convex/schema.ts`)
+  - Added `streaks` table with fields:
+    - `userId`: User identifier (indexed)
+    - `currentStreak`: Current consecutive days streak
+    - `longestStreak`: Personal best streak
+    - `lastCompletedDate`: Last date all todos were completed (YYYY-MM-DD)
+    - `weeklyProgress`: Record of daily completion status (dynamic date keys)
+    - `totalTodosCompleted`: Count of all completed regular todos
+  - Added `badges` table with fields:
+    - `userId`: User identifier (indexed)
+    - `slug`: Unique badge identifier (e.g., "first-todo", "3-day-streak")
+    - `name`: Display name (e.g., "First Step", "3 Day Streak")
+    - `description`: Badge description
+    - `imageUrl`: URL to stored badge image in Convex storage
+    - `earnedAt`: Timestamp when badge was earned
+
+- **Streaks Module** (`convex/streaks.ts`)
+  - `getStreakStatus` query: Fetches current user's streak data with defaults
+  - `getBadges` query: Gets all earned badges for user in descending order
+  - `updateStreak` internal mutation: Updates streak on todo completion/deletion
+    - Filters todos to only track regular date-based todos
+    - Checks if all todos for a date are completed
+    - Calculates consecutive day streaks
+    - Updates weekly progress record
+    - Triggers badge generation for milestones
+    - Idempotent with early returns to prevent write conflicts
+  - `generateBadge` internal action: Calls OpenAI DALL-E 3 to create badge images
+    - Uses environment variable OPENAI_API_KEY for authentication
+    - Generates grayscale geometric badge designs
+    - Stores image in Convex storage
+    - Comprehensive console logging for debugging
+  - `saveBadge` internal mutation: Saves badge metadata to database
+
+- **Todos Module Updates** (`convex/todos.ts`)
+  - Updated `updateTodo` mutation to trigger streak updates
+    - Only triggers for regular date-based todos (excludes folder/backlog/pinned)
+    - Checks if todo has date, not in folder, not backlog, not pinned
+    - Schedules streak update on completion or archive status change
+  - Updated `deleteTodo` mutation to trigger streak updates
+    - Recalculates streak when regular date-based todo is deleted
+    - Ensures streak stays accurate after deletions
+
+### Frontend Changes
+
+- **StreaksHeader Component** (`src/components/StreaksHeader.tsx`)
+  - Displays fire icon (rise.svg) in app header
+  - Shows 7-bar weekly progress indicator
+  - Bars use theme-specific colors matching active date colors
+  - Navigates to `/streaks` route on click
+  - Only visible for authenticated users
+
+- **StreaksPage Component** (`src/pages/StreaksPage.tsx`)
+  - Dedicated streaks dashboard with two-column layout
+  - Left column displays:
+    - Current streak number with "Day Streak" label
+    - Longest streak and total completed stats
+    - Weekly calendar with Sun-Sat day indicators
+    - Completion rate percentage with progress bar
+    - Next milestone progress with target goal
+  - Right column displays:
+    - Earned badges grid with larger images (96px)
+    - Badge name and description for each
+    - "Complete todos to earn badges" message when empty
+  - Year selector dropdown for viewing previous years' badges
+  - Theme switcher button in top right
+  - App name "better todo" in top left serves as back button
+  - HUD-style corner decorations on main streak card
+  - Mobile responsive with single-column stacked layout
+
+- **App Component Updates** (`src/App.tsx`)
+  - Added `/streaks` route for StreaksPage component
+  - Integrated StreaksHeader in main header next to search button
+
+- **Styling Changes** (`src/styles/global.css`)
+  - Added `.streaks-header-button` styles for header button
+  - Added `.streaks-icon` styles with theme-specific filters
+  - Added `.streaks-bar-container` and `.streaks-bar` for weekly progress
+  - Bar colors match theme: green (dark), blue (light), orange (tan), black (cloud)
+  - Added `.streaks-page` container with 80% width on desktop
+  - Added `.streaks-two-column` grid layout (360px + 1fr on desktop)
+  - Added `.streaks-current` card with HUD corner decorations
+  - Added `.streaks-week-card` for weekly calendar display
+  - Added `.streaks-week-day` with day labels and indicators
+  - Added `.streaks-metric-card` for completion rate and milestone progress
+  - Added `.streaks-badges-grid` with auto-fill columns (minmax(160px, 1fr))
+  - Added `.streaks-badge` styles with larger images (96px) and padding (20px)
+  - Mobile responsive: 100% width, single column, adjusted sizes
+  - Tablet responsive: 90% width, adjusted column sizes
+
+### Badge Milestones
+
+| Badge              | Milestone                                             |
+| ------------------ | ----------------------------------------------------- |
+| **First Step**     | Complete 1 todo (ever)                                |
+| **Day One Done**   | Complete ALL todos for a single day                   |
+| **3 Day Streak**   | Complete ALL todos for 3 consecutive days             |
+| **5 Day Streak**   | Complete ALL todos for 5 consecutive days             |
+| **7 Day Streak**   | Complete ALL todos for 7 consecutive days             |
+| **10 Day Streak**  | Complete ALL todos for 10 consecutive days            |
+| **30 Day Streak**  | Complete ALL todos for 30 consecutive days            |
+| **60 Day Streak**  | Complete ALL todos for 60 consecutive days            |
+| **90 Day Streak**  | Complete ALL todos for 90 consecutive days            |
+| **365 Day Streak** | Complete ALL todos for 365 consecutive days (1 year!) |
+
+### Configuration Requirements
+
+- **OpenAI API Key**: Set `OPENAI_API_KEY` in Convex environment variables (both production and development)
+  - Used by `generateBadge` action to call DALL-E 3 API
+  - Required for badge generation to work
+  - Console logging helps debug API connection issues
+
+### Technical Notes
+
+- Streaks only track regular date-based todos (not notes, folder todos, backlog, or pinned todos)
+- Badge generation is asynchronous using Convex scheduled functions
+- All streak operations are user-scoped with indexed queries for performance
+- Mutations are idempotent with early returns to prevent write conflicts
+- Weekly progress uses dynamic date keys (YYYY-MM-DD format)
+- Badge images stored in Convex storage with permanent URLs
+- Real-time sync ensures instant updates across all devices
+
 ## [v.017] - 2025-11-15
 
 ### Added
@@ -38,7 +253,6 @@ No unreleased changes. Tracking resumes with the next commit.
   - Added `isShared` boolean field
   - Added `hideHeaderOnShare` optional field
   - Added `imageIds` array for tracking uploaded images
-  
 - **Full-Page Notes Module** (`convex/fullPageNotes.ts`)
   - Added `generateShareLink` mutation for creating shareable links
   - Added `revokeShareLink` mutation to make notes private
@@ -340,7 +554,6 @@ No unreleased changes. Tracking resumes with the next commit.
 - **Line Breaks in Notes** - Fixed line breaks in full-page notes and todo notes
   - Added `remark-breaks` plugin to preserve single line breaks in markdown
   - Line breaks now render correctly in plain/normal mode and all mode
-  
 - **Tab Switching for Folder Notes** - Fixed content not updating when switching between full-page note tabs from projects
   - Added `getFullPageNotesByIds` query to fetch notes for all open tabs
   - Tab switching now works for both date-based and folder-based notes

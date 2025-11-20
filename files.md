@@ -11,7 +11,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (v.015 - Todo composer refresh)
+- `changelog.md` - Version history with all features (v.019 - Mini Stats Section on Streaks Page)
 - `files.md` - This file, project structure documentation
 - `TASKS.md` - Project tasks and development tracking
 
@@ -65,6 +65,10 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user`
   - **userPreferences**: Stores per-user settings including todoFontSize
     - Index: `by_user`
+  - **streaks**: Tracks user streak progress with currentStreak, longestStreak, lastCompletedDate, weeklyProgress, totalTodosCompleted, and hasUnseenBadges
+    - Index: `by_user`
+  - **badges**: Stores earned achievement badges with userId, slug, name, description, imageUrl, and earnedAt timestamp
+    - Index: `by_user`
   - **fullPageNotes**: Stores full-page notes with userId, optional date, optional folderId, title, content, order, collapsed, pinnedToTop, and archived status
     - Index: `by_user_and_date` (for notes with dates), `by_user_and_folder` (for notes in projects)
     - Search indexes: `search_content` on content field, `search_title` on title field
@@ -83,8 +87,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getUncompletedCounts` - Get count of uncompleted todos for each date (excludes folder-associated todos, for sidebar badges)
   - `createTodo` - Create new todo with timestamp-based ordering (avoids write conflicts, supports both date and folderId parameters)
   - `createSubtask` - Create a subtask under a parent todo (inherits folderId from parent)
-  - `updateTodo` - Update todo (auto-archives on complete, auto-unarchives on uncheck, supports pin/unpin)
-  - `deleteTodo` - Remove a todo (idempotent, uses indexed queries, parallel deletes for subtasks to avoid write conflicts)
+  - `updateTodo` - Update todo (auto-archives on complete, auto-unarchives on uncheck, supports pin/unpin, triggers streak updates)
+  - `deleteTodo` - Remove a todo (idempotent, uses indexed queries, parallel deletes for subtasks to avoid write conflicts, triggers streak updates)
   - `reorderTodos` - Update order after drag-and-drop
   - `moveTodoToDate` - Move todo to different date
   - `moveTodoToFolder` - Move todo to project folder (removes date association)
@@ -189,6 +193,20 @@ This document describes the structure and purpose of each file in the Better Tod
   - Random search queries: "landscape nature", "cities", "ocean", "sky"
   - Updates pomodoro session with image URL for full-screen backgrounds
 
+- `streaks.ts` - Streak tracking and badge generation:
+  - `getStreakStatus` - Get current user's streak data (current streak, longest streak, weekly progress, total completed, hasUnseenBadges)
+  - `getBadges` - Get all earned badges for user in descending order by earnedAt timestamp
+  - `updateStreak` - Internal mutation to update streak on todo completion/deletion (only tracks regular date-based todos)
+  - `generateBadge` - Internal action to generate badge images using OpenAI DALL-E 3 with custom system prompt
+  - `saveBadge` - Internal mutation to save badge metadata to database and set hasUnseenBadges flag
+  - `markBadgesAsSeen` - Mutation to mark badges as seen when user visits streaks page
+
+- `stats.ts` - Statistics tracking (global and user-specific):
+  - `getStats` - Action to get aggregate stats across all users (total users, todos, notes, pomodoro sessions, folders)
+  - `getDatabaseStats` - Internal query to get database table counts
+  - `getUserCountFromClerk` - Action to get total user count from Clerk API
+  - `getUserStats` - Query to get user-specific statistics for authenticated user (excludes total users, uses indexed queries for todos, notes, fullPageNotes, pomodoroSessions, folders, returns null if not authenticated)
+
 ### Authentication (Clerk Integration)
 
 - `auth.config.ts` - Clerk JWT authentication configuration:
@@ -249,6 +267,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Handles both date and folder contexts
   - Search modal integration (Cmd/Ctrl+K keyboard shortcut)
   - Theme context provider
+  - **Streaks header visibility state** - Persisted in localStorage (defaults to visible)
   - Keyboard shortcuts:
     - p key to pin/unpin hovered todo
     - Arrow keys to navigate todos
@@ -256,9 +275,11 @@ This document describes the structure and purpose of each file in the Better Tod
     - z to undo last completion
     - / or c to focus input
     - ? to show keyboard shortcuts modal with code block syntax reference
+    - Shift + S to toggle streaks header button visibility
   - Hovered todo tracking for keyboard shortcuts
   - Auto-select hovered todo when not explicitly navigating
   - **Full-page note folder handling** - Opens notes from folders and highlights folder in sidebar
+  - **Streaks route** - Added `/streaks` route for StreaksPage component
   - Clerk authentication integration:
     - Conditional query execution based on authentication state
     - "Sign In Required" modal for unauthenticated users
@@ -413,6 +434,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Persists across sessions and devices
   - Organized by categories (Navigation, Todo Management, Search, Pomodoro Timer)
   - **Pomodoro shortcuts**: Shift + F to open timer, f to enter full-screen mode
+  - **Streaks shortcut**: Shift + S to toggle streaks header button visibility
   - Accessible via ? key or keyboard shortcuts button
   - Theme-aware styling matching app design
 
@@ -552,6 +574,16 @@ This document describes the structure and purpose of each file in the Better Tod
   - Theme-aware styling matching app design
   - Mobile responsive with proper spacing
 
+- `StreaksHeader.tsx` - Streaks icon and weekly progress bar in app header:
+  - Fire icon (rise.svg) displays current streak status
+  - 7-bar weekly progress indicator showing incomplete days
+  - Bars use theme-specific colors matching active date colors
+  - Highlights when new badges are earned (hasUnseenBadges)
+  - Navigates to `/streaks` route on click
+  - Only visible for authenticated users
+  - Tooltip shows streak count and incomplete days
+  - Can be toggled on/off with Shift + S keyboard shortcut
+
 - `SharedNoteView.tsx` - Public shared note viewer page:
   - Public route at `/share/:slug` (no authentication required)
   - Instant loading with Convex real-time sync
@@ -564,6 +596,26 @@ This document describes the structure and purpose of each file in the Better Tod
   - Uses first image as preview for social sharing
   - Error handling for invalid/missing notes
   - Mobile responsive design
+
+- `StreaksPage.tsx` - Streaks dashboard and badges viewer:
+  - Dedicated route at `/streaks` for viewing streak status
+  - Two-column layout: left shows stats, right shows earned badges
+  - Takes up 80% of page width (90% on tablet, 100% on mobile)
+  - HUD-inspired sci-fi tech interface with corner decorations
+  - Left column displays current streak, longest streak, total completed, weekly calendar, completion rate, and next milestone
+  - Right column displays earned badges grid with larger images (96px)
+  - Mini stats section below two-column layout showing user-specific statistics:
+    - 9 stat cards: Todos Created, Completed, Active, Pinned, Archived, Full-Page Notes, Todo Notes, Pomodoro Sessions, Folders
+    - Completion rate percentage displayed on Completed card
+    - Icon-based cards with hover effects
+    - Responsive grid: auto-fit columns on desktop, single column on mobile, 2 columns on tablet
+    - Matches streaks page theme and UI
+  - Year selector dropdown for viewing previous years' badges
+  - Theme switcher in top right corner
+  - App name "better todo" in top left serves as back button to home
+  - Marks badges as seen when page loads (hasUnseenBadges = false)
+  - Real-time sync with Convex for instant updates
+  - Mobile responsive with single-column stacked layout
 
 ### Context (`src/context/`)
 
@@ -634,9 +686,43 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.017 (November 15, 2025)
+## Current Version: v.018 (November 18, 2025)
 
-### Latest Features (v.017) - Shareable Full-Page Notes
+### Latest Features (v.018) - Streaks and AI Badges
+
+- **Streaks Feature** - Track your todo completion momentum with streaks and AI-generated badges
+  - Automatic tracking of consecutive days completing all regular date-based todos
+  - Current and longest streak counters with weekly progress visualization
+  - Fire icon (rise.svg) in header with 7-bar weekly progress indicator
+  - Bars disappear as you complete todos, reset every Sunday at 12:01 am
+  - Dedicated `/streaks` dashboard with HUD-inspired interface
+  - Two-column layout: stats on left, earned badges on right
+  - Weekly calendar visualization showing past, today, and future days
+  - Completion rate percentage and next milestone progress bar
+  - Theme switcher in top right, app name as back button in top left
+  - Year selector for viewing previous years' badges
+  - Real-time sync with Convex for instant updates
+- **AI-Generated Badges** - Unique achievement badges using OpenAI DALL-E 3
+  - "First Step" badge: Complete your first todo
+  - "Day One Done" badge: Complete all todos for a single day
+  - Streak milestone badges: 3-day, 5-day, 7-day, 10-day, 30-day, 60-day, 90-day, 365-day
+  - All badges are grayscale with transparent backgrounds
+  - Fortnite-style geometric designs with 3D metallic rendering
+  - Each badge is unique with randomized silhouettes, symbols, and finishes
+  - Stored in Convex storage and displayed in badges grid (96px images)
+- **Smart Todo Filtering** - Only tracks regular date-based todos
+  - Excludes full-page notes, todo page notes, folder todos, backlog, pinned, and archived
+- **Unseen Badge Notifications** - Highlights streaks header when new badges are earned
+  - Header button highlights until user visits streaks page
+  - Uses theme-specific hover colors for each theme
+- **Streaks Header Toggle** - Shift + S keyboard shortcut to hide/show streaks header
+  - Preference persisted in localStorage
+  - Streaks page and all features remain functional when header is hidden
+- **User-Scoped Data** - Complete data isolation with indexed queries
+- **Backend**: New `streaks` and `badges` tables, updated `updateTodo` and `deleteTodo` mutations
+- **Configuration**: Requires `OPENAI_API_KEY` in Convex environment variables for badge generation
+
+### Previous Features (v.017) - Shareable Full-Page Notes
 
 - **Shareable Full-Page Notes** - Share read-only links to your notes with custom URL slugs
   - Share button in full-page note tabs to generate shareable links

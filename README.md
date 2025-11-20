@@ -38,6 +38,17 @@ An open source, real-time open-source to-do list that never falls out of sync â€
   - **Theme-aware phase badges** - Focus and Break badges adapt to your selected theme
   - **Smooth full-screen transitions** - no flash when entering full-screen mode
 - **Unsplash background images** - Optional beautiful nature images in Pomodoro full-screen mode with glass morphism overlay
+- **Streaks feature** - Track your todo completion momentum with streaks and AI-generated badges
+  - Fire icon in header with 7-bar weekly progress indicator
+  - Automatic tracking of consecutive days completing all regular date-based todos
+  - Dedicated `/streaks` dashboard with HUD-inspired interface showing stats and earned badges
+  - AI-generated achievement badges using OpenAI DALL-E 3 (First Step, Day One Done, 3/5/7/10/30/60/90/365-day streaks)
+  - All badges are unique grayscale geometric designs with 3D metallic rendering
+  - Weekly calendar visualization with completion rate and next milestone progress
+  - Mini stats section showing personal statistics (Todos Created, Completed, Active, Pinned, Archived, Notes, Sessions, Folders)
+  - Theme switcher and year selector for viewing previous years' badges
+  - Shift + S keyboard shortcut to toggle streaks header visibility
+  - Real-time sync with Convex for instant updates
 - **Progressive Web App** - install on iOS or Android for native app experience with offline support
 
 ### UI/UX

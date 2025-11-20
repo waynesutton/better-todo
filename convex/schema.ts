@@ -194,4 +194,25 @@ export default defineSchema({
     key: v.string(), // Unique key for the statistic (e.g., "fullPageNotesCreated")
     value: v.number(), // The cumulative count
   }).index("by_key", ["key"]),
+
+  // Streaks - tracks user streaks and progress
+  streaks: defineTable({
+    userId: v.string(),
+    currentStreak: v.number(),
+    longestStreak: v.number(),
+    lastCompletedDate: v.string(), // YYYY-MM-DD
+    weeklyProgress: v.any(), // Record<string, boolean> - Date string key -> completion status. Using v.any() to avoid validation issues with dynamic keys, though v.record() is preferred if strict.
+    totalTodosCompleted: v.number(),
+    hasUnseenBadges: v.optional(v.boolean()), // True when new badges are earned, false when user visits streaks page
+  }).index("by_user", ["userId"]),
+
+  // Badges - stores earned badges
+  badges: defineTable({
+    userId: v.string(),
+    slug: v.string(),
+    name: v.string(),
+    description: v.string(),
+    imageUrl: v.string(),
+    earnedAt: v.number(),
+  }).index("by_user", ["userId"]),
 });

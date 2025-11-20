@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 // Get all todos for a specific date
 export const getTodosByDate = query({
@@ -415,7 +416,24 @@ export const updateTodo = mutation({
       updates.archived = args.archived;
     }
 
+    // Patch the todo with updates
     await ctx.db.patch(args.id, updates);
+
+    // If completed status changed or archived status changed, update streak
+    // Only track streaks for regular date-based todos (not folder/backlog/pinned todos)
+    if (
+      (args.completed !== undefined || args.archived !== undefined) &&
+      todo.date &&
+      !todo.folderId &&
+      !todo.backlog &&
+      !todo.pinned
+    ) {
+      await ctx.scheduler.runAfter(0, internal.streaks.updateStreak, {
+        userId,
+        date: todo.date,
+      });
+    }
+
     return null;
   },
 });
@@ -459,6 +477,19 @@ export const deleteTodo = mutation({
     ];
     
     await Promise.all(deleteOperations);
+
+    // Update streak if this was a regular date-based todo
+    if (
+      todo.date &&
+      !todo.folderId &&
+      !todo.backlog &&
+      !todo.pinned
+    ) {
+      await ctx.scheduler.runAfter(0, internal.streaks.updateStreak, {
+        userId,
+        date: todo.date,
+      });
+    }
     
     return null;
   },
