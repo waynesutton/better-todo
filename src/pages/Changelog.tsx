@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v019");
+  const [activeSection, setActiveSection] = useState("v020");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
     { id: "unreleased", title: "Unreleased" },
+    { id: "v020", title: "v.020 - Nov 24, 2025" },
     { id: "v019", title: "v.019 - Nov 19, 2025" },
     { id: "v018", title: "v.018 - Nov 18, 2025" },
     { id: "v017", title: "v.017 - Nov 15, 2025" },
@@ -101,6 +102,91 @@ export function Changelog() {
             No unreleased changes. Follow along with the most recent release
             below.
           </p>
+        </section>
+
+        <section id="v020" className="launch-section">
+          <h2 className="section-title">v.020 - November 24, 2025</h2>
+
+          <h3 className="changelog-category">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>AI-Free Streaks</strong> - Removed all AI functionality
+              from the app
+              <ul className="nested-list">
+                <li>Removed OpenAI dependency and badge generation</li>
+                <li>
+                  Streaks now work completely without AI - pure JavaScript date
+                  calculations
+                </li>
+                <li>Removed badges table from schema</li>
+                <li>
+                  Removed getBadges, generateBadge, saveBadge, and
+                  markBadgesAsSeen functions
+                </li>
+                <li>Removed hasUnseenBadges field from streaks table</li>
+                <li>
+                  Streaks feature remains fully functional with all tracking
+                  capabilities
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Streamlined Streaks Page</strong> - Simplified layout
+              with focus on your data
+              <ul className="nested-list">
+                <li>
+                  Moved Your Stats section to right column (where badges were)
+                </li>
+                <li>Removed badges grid and year selector</li>
+                <li>
+                  Two-column layout now shows: left = streak stats, right =
+                  your personal stats
+                </li>
+                <li>
+                  All sections align at the top for cleaner visual hierarchy
+                </li>
+                <li>Maintains responsive design for mobile, tablet, and desktop</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Light Mode Delete Button</strong> - Added proper
+              theme-aware dangerous button borders
+              <ul className="nested-list">
+                <li>
+                  Fixed missing border color on delete confirmation buttons in
+                  light mode
+                </li>
+                <li>
+                  Added explicit dangerous button styling for all themes (dark,
+                  light, tan, cloud)
+                </li>
+                <li>
+                  Consistent red (#e16d76) color across all themes for
+                  destructive actions
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Removed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Badge System</strong> - Complete removal of AI-generated
+              badges
+              <ul className="nested-list">
+                <li>Deleted convex/badgeTest.ts test file</li>
+                <li>Deleted src/pages/BadgeTest.tsx page component</li>
+                <li>Deleted src/components/BadgeModal.tsx modal component</li>
+                <li>Deleted BADGE_IMPLEMENTATION_SUMMARY.md documentation</li>
+                <li>Removed /badgetest route from App.tsx</li>
+                <li>Updated app descriptions to reflect AI-free status</li>
+              </ul>
+            </li>
+          </ul>
         </section>
 
         <section id="v019" className="launch-section">

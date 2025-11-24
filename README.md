@@ -38,17 +38,16 @@ An open source, real-time open-source to-do list that never falls out of sync â€
   - **Theme-aware phase badges** - Focus and Break badges adapt to your selected theme
   - **Smooth full-screen transitions** - no flash when entering full-screen mode
 - **Unsplash background images** - Optional beautiful nature images in Pomodoro full-screen mode with glass morphism overlay
-- **Streaks feature** - Track your todo completion momentum with streaks and AI-generated badges
+- **Streaks feature** - Track your todo completion momentum (AI-free)
   - Fire icon in header with 7-bar weekly progress indicator
   - Automatic tracking of consecutive days completing all regular date-based todos
-  - Dedicated `/streaks` dashboard with HUD-inspired interface showing stats and earned badges
-  - AI-generated achievement badges using OpenAI DALL-E 3 (First Step, Day One Done, 3/5/7/10/30/60/90/365-day streaks)
-  - All badges are unique grayscale geometric designs with 3D metallic rendering
+  - Dedicated `/streaks` dashboard showing your streak stats and personal statistics
   - Weekly calendar visualization with completion rate and next milestone progress
-  - Mini stats section showing personal statistics (Todos Created, Completed, Active, Pinned, Archived, Notes, Sessions, Folders)
-  - Theme switcher and year selector for viewing previous years' badges
+  - Your stats section showing: Todos Created, Completed, Active, Pinned, Archived, Notes, Sessions, Folders
+  - Theme switcher for consistent experience across all themes
   - Shift + S keyboard shortcut to toggle streaks header visibility
   - Real-time sync with Convex for instant updates
+  - Pure JavaScript calculations with no AI dependencies
 - **Progressive Web App** - install on iOS or Android for native app experience with offline support
 
 ### UI/UX
@@ -79,7 +78,7 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **React 18** - Modern React with hooks
 - **TypeScript** - Type-safe development
 - **Vite** - Lightning-fast build tool
-- **Convex** - Real-time database and backend
+- **Convex** - Real-time database and backend (no AI)
 - **Clerk** - Authentication (fully implemented)
 - **@dnd-kit** - Smooth drag and drop
 - **date-fns** - Date manipulation and formatting
@@ -499,6 +498,7 @@ npx convex deploy
      - Add `UNSPLASH_ACCESS_KEY` to your Convex deployment environment variables
      - Get your free access key from [Unsplash Developers](https://unsplash.com/developers)
      - This enables beautiful nature backgrounds in Pomodoro full-screen mode
+   - **No AI API keys needed** - The app works completely without any AI services
 
 5. Configure Clerk Dashboard:
    - Add production redirect URI: `https://your-domain.netlify.app`

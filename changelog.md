@@ -8,6 +8,78 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 No unreleased changes. Tracking resumes with the next commit.
 
+## [v.020] - 2025-11-24
+
+### Changed
+
+- **AI-Free Streaks** - Removed all AI functionality from the app
+  - Removed OpenAI dependency and badge generation
+  - Streaks now work completely without AI - pure JavaScript date calculations
+  - Removed `badges` table from schema
+  - Removed `getBadges`, `generateBadge`, `saveBadge`, and `markBadgesAsSeen` functions
+  - Removed `hasUnseenBadges` field from streaks table
+  - Streaks feature remains fully functional with all tracking capabilities
+
+- **Streamlined Streaks Page** - Simplified layout with focus on your data
+  - Moved "Your Stats" section to right column (where badges were)
+  - Removed badges grid and year selector
+  - Two-column layout now shows: left = streak stats, right = your personal stats
+  - All sections align at the top for cleaner visual hierarchy
+  - Maintains responsive design for mobile, tablet, and desktop
+
+### Fixed
+
+- **Light Mode Delete Button** - Added proper theme-aware dangerous button borders
+  - Fixed missing border color on delete confirmation buttons in light mode
+  - Added explicit dangerous button styling for all themes (dark, light, tan, cloud)
+  - Consistent red (#e16d76) color across all themes for destructive actions
+
+### Removed
+
+- **Badge System** - Complete removal of AI-generated badges
+  - Deleted `convex/badgeTest.ts` test file
+  - Deleted `src/pages/BadgeTest.tsx` page component
+  - Deleted `src/components/BadgeModal.tsx` modal component
+  - Deleted `BADGE_IMPLEMENTATION_SUMMARY.md` documentation
+  - Removed `/badgetest` route from App.tsx
+  - Updated app descriptions to reflect AI-free status
+
+### Backend Changes
+
+- **Streaks Module** (`convex/streaks.ts`)
+  - Removed OpenAI import and all badge generation logic
+  - Simplified `getStreakStatus` return type (removed `hasUnseenBadges`)
+  - Removed badge milestone checks from `updateStreak`
+  - Pure JavaScript streak calculations with no AI dependencies
+  - Maintained all core streak tracking functionality
+
+- **Schema Updates** (`convex/schema.ts`)
+  - Removed `badges` table definition
+  - Removed `hasUnseenBadges` field from `streaks` table
+  - Cleaner, simpler schema focused on core features
+
+- **Package Updates** (`package.json`)
+  - Removed `openai` package dependency
+  - Smaller bundle size and faster builds
+
+### Frontend Changes
+
+- **Streaks Page** (`src/pages/StreaksPage.tsx`)
+  - Removed badge-related state and functions
+  - Simplified imports (removed BadgeModal, useEffect, useMutation)
+  - Moved stats section to right column
+  - Removed year selector and badge modal rendering
+  - Cleaner, more focused component
+
+- **App Component** (`src/App.tsx`)
+  - Removed BadgeTest import and route
+  - Updated feature descriptions: "Streak tracking for daily todo completion"
+  - Removed mentions of "AI-generated badges"
+
+- **Styles** (`src/styles/global.css`)
+  - Added theme-specific dangerous button styling for all themes
+  - Improved visual consistency across light, dark, tan, and cloud modes
+
 ## [v.019] - 2025-11-19
 
 ### Added

@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
@@ -22,39 +21,15 @@ export function StreaksPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const streakStatus = useQuery(api.streaks.getStreakStatus);
-  const badges = useQuery(api.streaks.getBadges);
   const userStats = useQuery(api.stats.getUserStats);
-  const markBadgesAsSeen = useMutation(api.streaks.markBadgesAsSeen);
-  const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear(),
-  );
 
-  // Mark badges as seen when page loads
-  useEffect(() => {
-    if (streakStatus?.hasUnseenBadges) {
-      markBadgesAsSeen();
-    }
-  }, [streakStatus?.hasUnseenBadges, markBadgesAsSeen]);
-
-  if (!streakStatus || !badges) {
+  if (!streakStatus) {
     return (
       <div className="streaks-page">
         <div className="streaks-loading">Loading streaks...</div>
       </div>
     );
   }
-
-  const availableYears = Array.from(
-    new Set(badges.map((badge) => new Date(badge.earnedAt).getFullYear())),
-  ).sort((a, b) => b - a);
-
-  if (availableYears.length === 0) {
-    availableYears.push(new Date().getFullYear());
-  }
-
-  const filteredBadges = badges.filter(
-    (badge) => new Date(badge.earnedAt).getFullYear() === selectedYear,
-  );
 
   // Calculate completion rate
   const totalDaysTracked = Object.keys(
@@ -266,81 +241,34 @@ export function StreaksPage() {
           </div>
         </div>
 
-        {/* Right Column - Badges */}
+        {/* Right Column - Your Stats */}
         <div className="streaks-column-right">
           <div className="streaks-badges">
-            <h2 className="streaks-badges-title">Badges</h2>
-            {filteredBadges.length === 0 ? (
-              <div className="streaks-no-badges">
-                Complete todos to earn badges
-              </div>
-            ) : (
-              <div className="streaks-badges-grid">
-                {filteredBadges.map((badge) => (
-                  <div key={badge._id} className="streaks-badge">
-                    <img
-                      src={badge.imageUrl}
-                      alt={badge.name}
-                      className="streaks-badge-image"
-                    />
-                    <div className="streaks-badge-name">{badge.name}</div>
-                    <div className="streaks-badge-description">
-                      {badge.description}
+            <h2 className="streaks-badges-title">Your Stats</h2>
+            <div className="streaks-mini-stats-grid">
+              {miniStatCards.map((card, index) => {
+                const Icon = card.icon;
+                return (
+                  <div key={index} className="streaks-mini-stat-card">
+                    <div className="streaks-mini-stat-icon">
+                      <Icon size={16} />
+                    </div>
+                    <div className="streaks-mini-stat-content">
+                      <div className="streaks-mini-stat-title">{card.title}</div>
+                      <div className="streaks-mini-stat-value">{card.value}</div>
+                      {card.subtitle && (
+                        <div className="streaks-mini-stat-subtitle">
+                          {card.subtitle}
+                        </div>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Mini Stats Section */}
-      <div className="streaks-mini-stats">
-        <h2 className="streaks-mini-stats-title">Your Stats</h2>
-        <div className="streaks-mini-stats-grid">
-          {miniStatCards.map((card, index) => {
-            const Icon = card.icon;
-            return (
-              <div key={index} className="streaks-mini-stat-card">
-                <div className="streaks-mini-stat-icon">
-                  <Icon size={16} />
-                </div>
-                <div className="streaks-mini-stat-content">
-                  <div className="streaks-mini-stat-title">{card.title}</div>
-                  <div className="streaks-mini-stat-value">{card.value}</div>
-                  {card.subtitle && (
-                    <div className="streaks-mini-stat-subtitle">
-                      {card.subtitle}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Year Selector */}
-      {availableYears.length > 1 && (
-        <div className="streaks-year-selector">
-          <label htmlFor="year-select" className="streaks-year-label">
-            View badges from:
-          </label>
-          <select
-            id="year-select"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="streaks-year-select"
-          >
-            {availableYears.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
     </div>
   );
 }

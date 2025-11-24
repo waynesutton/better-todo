@@ -4216,10 +4216,28 @@ button:active,
   border-color: #e16d76;
 }
 
+/* Dark mode dangerous confirm button */
+:root[data-theme="dark"] .confirm-dialog-button-confirm.dangerous {
+  background-color: #e16d76;
+  border-color: #e16d76;
+}
+
+/* Light mode dangerous confirm button */
+:root[data-theme="light"] .confirm-dialog-button-confirm.dangerous {
+  background-color: #e16d76;
+  border-color: #e16d76;
+}
+
 /* Tan mode dangerous confirm button */
 :root[data-theme="tan"] .confirm-dialog-button-confirm.dangerous {
   background-color: #eb5601;
   border-color: #eb5601;
+}
+
+/* Cloud mode dangerous confirm button */
+:root[data-theme="cloud"] .confirm-dialog-button-confirm.dangerous {
+  background-color: #e16d76;
+  border-color: #e16d76;
 }
 
 .confirm-dialog-button-confirm.dangerous:hover {
@@ -4227,9 +4245,187 @@ button:active,
   border-color: #c95c64;
 }
 
+/* Dark mode dangerous confirm button hover */
+:root[data-theme="dark"] .confirm-dialog-button-confirm.dangerous:hover {
+  background-color: #c95c64;
+  border-color: #c95c64;
+}
+
+/* Light mode dangerous confirm button hover */
+:root[data-theme="light"] .confirm-dialog-button-confirm.dangerous:hover {
+  background-color: #c95c64;
+  border-color: #c95c64;
+}
+
+/* Tan mode dangerous confirm button hover */
 :root[data-theme="tan"] .confirm-dialog-button-confirm.dangerous:hover {
   background-color: #d64d01;
   border-color: #d64d01;
+}
+
+/* Cloud mode dangerous confirm button hover */
+:root[data-theme="cloud"] .confirm-dialog-button-confirm.dangerous:hover {
+  background-color: #c95c64;
+  border-color: #c95c64;
+}
+
+/* Badge Modal */
+.badge-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.badge-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--bg-primary);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.badge-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  z-index: 1;
+  transition: all 0.2s ease;
+}
+
+.badge-modal-close:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.badge-modal-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: var(--bg-secondary);
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  z-index: 1;
+}
+
+.badge-modal-nav:hover {
+  background-color: var(--bg-hover);
+}
+
+.badge-modal-nav-left {
+  left: 16px;
+}
+
+.badge-modal-nav-right {
+  right: 16px;
+}
+
+.badge-modal-content {
+  padding: 40px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.badge-modal-image-container {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.badge-modal-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.badge-modal-name {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.badge-modal-description {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.badge-modal-date {
+  font-size: 14px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .badge-modal {
+    width: 95%;
+    max-width: none;
+  }
+
+  .badge-modal-content {
+    padding: 40px 24px;
+  }
+
+  .badge-modal-nav {
+    padding: 8px;
+  }
+
+  .badge-modal-nav-left {
+    left: 8px;
+  }
+
+  .badge-modal-nav-right {
+    right: 8px;
+  }
+
+  .badge-modal-image-container {
+    width: 160px;
+    height: 160px;
+  }
+
+  .badge-modal-name {
+    font-size: 20px;
+  }
+
+  .badge-modal-description {
+    font-size: 14px;
+  }
 }
 
 /* Loading state */

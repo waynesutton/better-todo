@@ -30,9 +30,9 @@ export function StreaksHeader() {
 
   return (
     <button
-      className={`streaks-header-button ${streakStatus.hasUnseenBadges ? "has-unseen-badges" : ""}`}
+      className="streaks-header-button"
       onClick={() => navigate("/streaks")}
-      title={`${streakStatus.currentStreak} day streak - ${incompleteDays} days incomplete this week${streakStatus.hasUnseenBadges ? " - New badge earned!" : ""}`}
+      title={`${streakStatus.currentStreak} day streak - ${incompleteDays} days incomplete this week`}
     >
       <img src="/rise.svg" alt="Streaks" className="streaks-icon" />
       <div className="streaks-bar-container">

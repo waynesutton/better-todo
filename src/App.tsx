@@ -17,7 +17,7 @@ import { ShareLinkModal } from "./components/ShareLinkModal";
 import { StreaksHeader } from "./components/StreaksHeader"; // New
 import { Launch } from "./pages/Launch";
 import { Changelog } from "./pages/Changelog";
-import { StreaksPage } from "./pages/StreaksPage"; // New
+import { StreaksPage } from "./pages/StreaksPage";
 import { NotFound } from "./pages/NotFound";
 import { Stats } from "./pages/Stats";
 import { SharedNoteView } from "./pages/SharedNoteView";
@@ -1335,7 +1335,7 @@ function App() {
                         <li>
                           Built-in Pomodoro timer with 25 or 90 minute sessions
                         </li>
-                        <li>Streaks and AI-generated badges for motivation</li>
+                        <li>Streak tracking for daily todo completion</li>
                         <li>Mobile-optimized PWA with offline support</li>
                         <li>
                           Keyboard-first workflow with extensive shortcuts
@@ -1905,7 +1905,7 @@ function App() {
                   <li>Full-text search across todos and notes</li>
                   <li>Shareable full-page notes with custom URL slugs</li>
                   <li>Built-in Pomodoro timer with 25 or 90 minute sessions</li>
-                  <li>Streaks and AI-generated badges for motivation</li>
+                  <li>Streak tracking for daily todo completion</li>
                   <li>Mobile-optimized PWA with offline support</li>
                   <li>Keyboard-first workflow with extensive shortcuts</li>
                 </ul>

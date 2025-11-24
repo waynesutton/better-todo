@@ -11,7 +11,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (v.019 - Mini Stats Section on Streaks Page)
+- `changelog.md` - Version history with all features (v.020 - AI-Free Streaks, Streamlined Layout, Fixed Light Mode Delete Button)
 - `files.md` - This file, project structure documentation
 - `TASKS.md` - Project tasks and development tracking
 
@@ -65,9 +65,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user`
   - **userPreferences**: Stores per-user settings including todoFontSize
     - Index: `by_user`
-  - **streaks**: Tracks user streak progress with currentStreak, longestStreak, lastCompletedDate, weeklyProgress, totalTodosCompleted, and hasUnseenBadges
-    - Index: `by_user`
-  - **badges**: Stores earned achievement badges with userId, slug, name, description, imageUrl, and earnedAt timestamp
+  - **streaks**: Tracks user streak progress with currentStreak, longestStreak, lastCompletedDate, weeklyProgress, and totalTodosCompleted
     - Index: `by_user`
   - **fullPageNotes**: Stores full-page notes with userId, optional date, optional folderId, title, content, order, collapsed, pinnedToTop, and archived status
     - Index: `by_user_and_date` (for notes with dates), `by_user_and_folder` (for notes in projects)
@@ -193,13 +191,11 @@ This document describes the structure and purpose of each file in the Better Tod
   - Random search queries: "landscape nature", "cities", "ocean", "sky"
   - Updates pomodoro session with image URL for full-screen backgrounds
 
-- `streaks.ts` - Streak tracking and badge generation:
-  - `getStreakStatus` - Get current user's streak data (current streak, longest streak, weekly progress, total completed, hasUnseenBadges)
-  - `getBadges` - Get all earned badges for user in descending order by earnedAt timestamp
+- `streaks.ts` - Streak tracking (AI-free):
+  - `getStreakStatus` - Get current user's streak data (current streak, longest streak, weekly progress, total completed, last completed date)
   - `updateStreak` - Internal mutation to update streak on todo completion/deletion (only tracks regular date-based todos)
-  - `generateBadge` - Internal action to generate badge images using OpenAI DALL-E 3 with custom system prompt
-  - `saveBadge` - Internal mutation to save badge metadata to database and set hasUnseenBadges flag
-  - `markBadgesAsSeen` - Mutation to mark badges as seen when user visits streaks page
+  - Pure JavaScript date calculations with no AI dependencies
+  - Tracks consecutive days completing all regular date-based todos
 
 - `stats.ts` - Statistics tracking (global and user-specific):
   - `getStats` - Action to get aggregate stats across all users (total users, todos, notes, pomodoro sessions, folders)
@@ -578,7 +574,6 @@ This document describes the structure and purpose of each file in the Better Tod
   - Fire icon (rise.svg) displays current streak status
   - 7-bar weekly progress indicator showing incomplete days
   - Bars use theme-specific colors matching active date colors
-  - Highlights when new badges are earned (hasUnseenBadges)
   - Navigates to `/streaks` route on click
   - Only visible for authenticated users
   - Tooltip shows streak count and incomplete days
@@ -597,25 +592,22 @@ This document describes the structure and purpose of each file in the Better Tod
   - Error handling for invalid/missing notes
   - Mobile responsive design
 
-- `StreaksPage.tsx` - Streaks dashboard and badges viewer:
+- `StreaksPage.tsx` - Streaks dashboard (AI-free):
   - Dedicated route at `/streaks` for viewing streak status
-  - Two-column layout: left shows stats, right shows earned badges
+  - Two-column layout: left shows streak stats, right shows your personal stats
   - Takes up 80% of page width (90% on tablet, 100% on mobile)
-  - HUD-inspired sci-fi tech interface with corner decorations
   - Left column displays current streak, longest streak, total completed, weekly calendar, completion rate, and next milestone
-  - Right column displays earned badges grid with larger images (96px)
-  - Mini stats section below two-column layout showing user-specific statistics:
+  - Right column displays your personal stats:
     - 9 stat cards: Todos Created, Completed, Active, Pinned, Archived, Full-Page Notes, Todo Notes, Pomodoro Sessions, Folders
     - Completion rate percentage displayed on Completed card
     - Icon-based cards with hover effects
     - Responsive grid: auto-fit columns on desktop, single column on mobile, 2 columns on tablet
     - Matches streaks page theme and UI
-  - Year selector dropdown for viewing previous years' badges
   - Theme switcher in top right corner
   - App name "better todo" in top left serves as back button to home
-  - Marks badges as seen when page loads (hasUnseenBadges = false)
   - Real-time sync with Convex for instant updates
   - Mobile responsive with single-column stacked layout
+  - Pure JavaScript streak calculations with no AI dependencies
 
 ### Context (`src/context/`)
 
@@ -686,41 +678,35 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.018 (November 18, 2025)
+## Current Version: v.020 (November 24, 2025)
 
-### Latest Features (v.018) - Streaks and AI Badges
+### Latest Features (v.020) - AI-Free Streaks
 
-- **Streaks Feature** - Track your todo completion momentum with streaks and AI-generated badges
+- **AI-Free Streaks** - Track your todo completion momentum without AI
   - Automatic tracking of consecutive days completing all regular date-based todos
   - Current and longest streak counters with weekly progress visualization
   - Fire icon (rise.svg) in header with 7-bar weekly progress indicator
   - Bars disappear as you complete todos, reset every Sunday at 12:01 am
-  - Dedicated `/streaks` dashboard with HUD-inspired interface
-  - Two-column layout: stats on left, earned badges on right
+  - Dedicated `/streaks` dashboard with streamlined interface
+  - Two-column layout: streak stats on left, your personal stats on right
   - Weekly calendar visualization showing past, today, and future days
   - Completion rate percentage and next milestone progress bar
   - Theme switcher in top right, app name as back button in top left
-  - Year selector for viewing previous years' badges
   - Real-time sync with Convex for instant updates
-- **AI-Generated Badges** - Unique achievement badges using OpenAI DALL-E 3
-  - "First Step" badge: Complete your first todo
-  - "Day One Done" badge: Complete all todos for a single day
-  - Streak milestone badges: 3-day, 5-day, 7-day, 10-day, 30-day, 60-day, 90-day, 365-day
-  - All badges are grayscale with transparent backgrounds
-  - Fortnite-style geometric designs with 3D metallic rendering
-  - Each badge is unique with randomized silhouettes, symbols, and finishes
-  - Stored in Convex storage and displayed in badges grid (96px images)
+  - Pure JavaScript date calculations with no AI dependencies
+- **Your Stats Section** - Personal statistics overview on streaks page
+  - 9 stat cards: Todos Created, Completed, Active, Pinned, Archived, Full-Page Notes, Todo Notes, Pomodoro Sessions, Folders
+  - Completion rate percentage displayed on Completed card
+  - Icon-based cards with hover effects
+  - Responsive grid layout for all screen sizes
 - **Smart Todo Filtering** - Only tracks regular date-based todos
   - Excludes full-page notes, todo page notes, folder todos, backlog, pinned, and archived
-- **Unseen Badge Notifications** - Highlights streaks header when new badges are earned
-  - Header button highlights until user visits streaks page
-  - Uses theme-specific hover colors for each theme
 - **Streaks Header Toggle** - Shift + S keyboard shortcut to hide/show streaks header
   - Preference persisted in localStorage
   - Streaks page and all features remain functional when header is hidden
 - **User-Scoped Data** - Complete data isolation with indexed queries
-- **Backend**: New `streaks` and `badges` tables, updated `updateTodo` and `deleteTodo` mutations
-- **Configuration**: Requires `OPENAI_API_KEY` in Convex environment variables for badge generation
+- **Backend**: `streaks` table with pure JavaScript calculations, updated `updateTodo` and `deleteTodo` mutations
+- **No Configuration Needed**: App works completely without any AI API keys
 
 ### Previous Features (v.017) - Shareable Full-Page Notes
 
