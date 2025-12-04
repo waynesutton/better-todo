@@ -92,6 +92,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - `moveTodoToFolder` - Move todo to project folder (removes date association)
   - `moveTodoFromFolderToDate` - Move todo from folder to specific date (removes folder association)
   - `copyTodosToDate` - Copy all non-archived todos to another date
+  - `moveTodosToNextDay` - Move all non-completed, non-archived todos to next day (copies to target, archives source, idempotent with parallel operations)
   - `archiveAllTodos` - Archive all active todos for a specific date
   - `deleteAllTodos` - Delete all active todos for a specific date
   - `deleteAllArchivedTodos` - Delete all archived todos for a specific date
@@ -177,12 +178,13 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `pomodoro.ts` - Pomodoro timer functionality:
   - `getPomodoroSession` - Get current pomodoro session for user
-  - `startPomodoro` - Create new pomodoro session with optional duration (defaults to 25 minutes, supports 90 minutes for flow state, increments global statistics counter)
+  - `startPomodoro` - Create new pomodoro session with optional duration (defaults to 25 minutes, supports 50 and 90 minutes, increments global statistics counter)
   - `pausePomodoro` - Pause current session with remaining time
   - `resumePomodoro` - Resume paused session
   - `stopPomodoro` - Stop and delete current session
   - `completePomodoro` - Mark session as completed (uses indexed queries, idempotent to prevent write conflicts)
   - `updateBackgroundImage` - Update session with Unsplash background image URL (uses indexed queries, idempotent check)
+  - `updatePomodoroPreset` - Update session duration while paused (single patch, no stop/start cycle for smooth UI)
 
 - `unsplash.ts` - Unsplash background image fetching:
   - `fetchBackgroundImage` - Fetches random images from Unsplash API
@@ -378,6 +380,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Add to Project (shows project selector modal when projects exist)
     - Remove from Project (when date is in a project)
     - Copy all non-archived todos to tomorrow, previous/next day, or custom date
+    - Move to Next Day (moves incomplete todos to next day and archives originals)
     - Archive the entire date
     - Delete the date and all its content
   - Three-dot menu for dates inside projects with options:
@@ -500,11 +503,15 @@ This document describes the structure and purpose of each file in the Better Tod
     - Shows "Sign In to Search" modal when unauthenticated
 
 - `PomodoroTimer.tsx` - Built-in productivity timer with:
-  - **Duration toggle** - Switch between 25-minute focus sessions and 90-minute flow state sessions
-    - Waves icon to switch from 25 minutes to 90-minute flow state mode
-    - Clock icon to switch back from 90 minutes to 25-minute focus mode
-    - Toggle button appears next to Start button (only visible when timer is idle)
-    - All timer features work identically for both durations
+  - **Duration toggle** - Switch between 25-minute, 50-minute, and 90-minute sessions
+    - Waves icon for 25-minute focus mode
+    - Activity icon for 50-minute steady session
+    - Clock icon for 90-minute flow state mode
+    - Toggle button appears next to Start button when timer is idle
+    - Toggle also available when timer is paused (in both modal and full-screen views)
+    - Changing duration while paused resets timer to new duration and stays paused
+    - Smooth transitions with no UI flickering
+    - All timer features work identically for all durations
   - 25-minute or 90-minute Pomodoro timer with visual countdown display (MM:SS format)
   - **MP3-based audio notifications** for timer events:
     - Start sound (`timer-start.mp3`) plays once when timer begins (only if user started in current session)

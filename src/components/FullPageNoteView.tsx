@@ -179,7 +179,6 @@ function hasImagesInCodeBlocks(content: string): boolean {
     const codeBlockContent = match[0];
     // Check if this code block contains image syntax (including optional alignment)
     if (/!\[.*?\]\(.*?\|.*?(?:\|.*?)?\)/.test(codeBlockContent)) {
-      console.log('Found image inside code block:', codeBlockContent.substring(0, 100));
       return true;
     }
   }

@@ -28,12 +28,13 @@
     "react-dom": "^18.3.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.4",
-    "react-syntax-highlighter": "^15.6.6",
+    "react-syntax-highlighter": "^16.1.0",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@convex-dev/eslint-plugin": "^1.0.0",
     "@types/node": "^22.10.7",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -45,6 +46,6 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "npm-run-all": "^4.1.5",
     "typescript": "^5.7.3",
-    "vite": "^5.4.2"
+    "vite": "^6.4.1"
   }
 }

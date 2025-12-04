@@ -83,6 +83,35 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.022 - 2025-12-04)
+
+- [x] **Pomodoro Duration Toggle While Paused** - Change timer duration when paused
+  - Added duration toggle button (25, 50, 90 min) in modal and full-screen when paused
+  - Created `updatePomodoroPreset` mutation for smooth single-patch transitions
+  - No UI flickering (avoids stop/start cycle)
+  - Timer resets to new duration and stays paused
+  - Uses Waves/Activity/Clock icons for duration presets
+  - Widened modal to 480px to accommodate additional button
+  - Added flex-wrap to controls for mobile responsiveness
+
+## Completed Tasks (v.021 - 2025-12-03)
+
+- [x] **Move to Next Day** - New option in date menu to move incomplete todos
+  - Added `moveTodosToNextDay` mutation to Convex backend
+  - Copies non-completed, non-archived todos to the next day
+  - Archives original todos after moving
+  - Uses idempotent patterns with early returns
+  - Parallel operations with `Promise.all()` for efficiency
+  - Added menu item in Sidebar date dropdown
+
+- [x] **Query Guards** - Added authentication guards to sidebar queries
+  - Prevents unnecessary subscriptions when not authenticated
+  - Uses `isAuthenticated ? undefined : "skip"` pattern
+  - Reduces memory pressure and potential race conditions
+
+- [x] **Console Log Cleanup** - Removed debug console.log statements
+  - Cleaned up FullPageNoteView.tsx debug logging
+
 ## Completed Tasks (v.009.2 - 2025-11-01)
 
 - [x] **Move Full-Page Notes to Projects and Dates** - Flexible note organization

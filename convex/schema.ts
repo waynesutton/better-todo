@@ -203,5 +203,6 @@ export default defineSchema({
     lastCompletedDate: v.string(), // YYYY-MM-DD
     weeklyProgress: v.any(), // Record<string, boolean> - Date string key -> completion status. Using v.any() to avoid validation issues with dynamic keys, though v.record() is preferred if strict.
     totalTodosCompleted: v.number(),
+    hasUnseenBadges: v.optional(v.boolean()), // Track if user has unseen badge achievements
   }).index("by_user", ["userId"]),
 });

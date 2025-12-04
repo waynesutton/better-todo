@@ -279,17 +279,18 @@ function App() {
   // Create default first todo for blank dates
   useEffect(() => {
     const createDefaultTodo = async () => {
-      // Only for authenticated users on regular dates (not pinned/backlog)
+      // Only for authenticated users on regular dates (not pinned/backlog/folder)
       if (
         !isAuthenticated ||
         selectedDate === "pinned" ||
-        selectedDate === "backlog"
+        selectedDate === "backlog" ||
+        selectedFolder // Skip if viewing a folder
       ) {
         return;
       }
 
-      // Check if date is blank (no todos)
-      if (todos && todos.length === 0) {
+      // Check if date is blank (no todos) - todos must be defined array, not undefined/null
+      if (todos !== undefined && todos !== null && todos.length === 0) {
         try {
           await createTodo({
             date: selectedDate,
@@ -303,12 +304,13 @@ function App() {
     };
 
     createDefaultTodo();
-  }, [todos, selectedDate, isAuthenticated, createTodo]);
+  }, [todos, selectedDate, isAuthenticated, selectedFolder, createTodo]);
 
   // Auto-delete default todo when user adds other todos
   useEffect(() => {
     const deleteDefaultTodo = async () => {
-      if (!isAuthenticated || !todos || todos.length <= 1) {
+      // Skip if not authenticated, viewing folder, or todos not loaded/empty
+      if (!isAuthenticated || selectedFolder || !todos || todos.length <= 1) {
         return;
       }
 
@@ -328,7 +330,7 @@ function App() {
     };
 
     deleteDefaultTodo();
-  }, [todos, isAuthenticated, deleteTodo]);
+  }, [todos, isAuthenticated, selectedFolder, deleteTodo]);
 
   // Show all dates including today if not in list
   const allDates = React.useMemo(() => {

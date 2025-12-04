@@ -708,9 +708,17 @@ export function Sidebar({
   const [showMenuForNoteId, setShowMenuForNoteId] =
     useState<Id<"fullPageNotes"> | null>(null);
 
-  // Fetch data
-  const archivedDates = useQuery(api.archivedDates.getArchivedDates) || [];
-  const dateLabelsData = useQuery(api.dateLabels.getDateLabels) || [];
+  // Fetch data - all queries guarded with isAuthenticated to prevent unnecessary subscriptions
+  const archivedDates =
+    useQuery(
+      api.archivedDates.getArchivedDates,
+      isAuthenticated ? undefined : "skip",
+    ) || [];
+  const dateLabelsData =
+    useQuery(
+      api.dateLabels.getDateLabels,
+      isAuthenticated ? undefined : "skip",
+    ) || [];
   const pinnedTodos =
     useQuery(api.todos.getPinnedTodos, isAuthenticated ? undefined : "skip") ||
     [];
@@ -722,7 +730,11 @@ export function Sidebar({
       api.backlogLabel.getBacklogLabel,
       isAuthenticated ? undefined : "skip",
     ) || "Backlog";
-  const uncompletedCounts = useQuery(api.todos.getUncompletedCounts) || {};
+  const uncompletedCounts =
+    useQuery(
+      api.todos.getUncompletedCounts,
+      isAuthenticated ? undefined : "skip",
+    ) || {};
   const folders =
     useQuery(api.folders.getFolders, isAuthenticated ? undefined : "skip") ||
     [];
@@ -792,6 +804,7 @@ export function Sidebar({
 
   // Mutations
   const copyTodosToDate = useMutation(api.todos.copyTodosToDate);
+  const moveTodosToNextDay = useMutation(api.todos.moveTodosToNextDay);
   const archiveDate = useMutation(api.archivedDates.archiveDate);
   const unarchiveDate = useMutation(api.archivedDates.unarchiveDate);
   const deleteDate = useMutation(api.dates.deleteDate);
@@ -922,6 +935,21 @@ export function Sidebar({
       setShowMenuForDate(null);
     } catch (error) {
       console.error("Error copying to next day:", error);
+      setShowMenuForDate(null);
+    }
+  };
+
+  // Move all incomplete todos to next day and archive the source date todos
+  const handleMoveToNextDay = async (sourceDate: string) => {
+    try {
+      const nextDay = format(
+        addDays(new Date(sourceDate + "T00:00:00"), 1),
+        "yyyy-MM-dd",
+      );
+      await moveTodosToNextDay({ sourceDate, targetDate: nextDay });
+      setShowMenuForDate(null);
+    } catch (error) {
+      console.error("Error moving to next day:", error);
       setShowMenuForDate(null);
     }
   };
@@ -1696,6 +1724,12 @@ export function Sidebar({
                         </div>
                         <div
                           className="menu-item"
+                          onClick={() => handleMoveToNextDay(date)}
+                        >
+                          Move to Next Day
+                        </div>
+                        <div
+                          className="menu-item"
                           onClick={() => handleArchiveDate(date)}
                         >
                           Archive Date
@@ -1981,6 +2015,12 @@ export function Sidebar({
                                   }}
                                 >
                                   Copy to Custom Date...
+                                </div>
+                                <div
+                                  className="menu-item"
+                                  onClick={() => handleMoveToNextDay(date)}
+                                >
+                                  Move to Next Day
                                 </div>
                                 <div
                                   className="menu-item"

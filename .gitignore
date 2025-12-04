@@ -17,6 +17,7 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+prds/writing.md
 *.suo
 *.ntvs*
 *.njsproj
@@ -25,4 +26,15 @@ dist-ssr
 
 # Convex
 .env.local
+
+# Cursor rules (local only)
+.cursor/rules/tech-twitter-writing-style.mdc
+.cursor/rules/writing.mdc
+.cursor/rules/write.mdc
+
+# Writing docs (local only)
+prds/writing.md
+prds/write.md
+prds/writing-v1.md
+docs.md
 

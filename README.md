@@ -25,6 +25,7 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **Auto-archive** - checking todos automatically archives them
 - **Bulk actions** - archive or delete all active todos at once with confirmation
 - **Copy todos between dates** - move tasks to tomorrow, previous day, next day, or custom dates
+- **Move to Next Day** - move all incomplete todos to the next day (archives originals)
 - **Full-text search** - search across all todos and notes with keyboard shortcuts (Cmd/Ctrl+K)
 - **Code block syntax highlighting** - Cursor Dark Theme colors for JavaScript, TypeScript, CSS, HTML, JSON, Python, Go, Rust, and more
 - **Multiple notes per date** with drag-and-drop reordering and individual titles
@@ -33,8 +34,9 @@ An open source, real-time open-source to-do list that never falls out of sync â€
 - **Pin todos** - pin important todos with visual pin icons and sort them to the top
 - **Custom projects** - organize dates into collapsible projects with custom names
 - **Auto-grouped months** - completed months automatically group into collapsible sections
-- **Pomodoro timer** - built-in productivity timer with duration toggle (25-minute focus sessions or 90-minute flow state sessions), sound notifications, and rotating completion sounds
+- **Pomodoro timer** - built-in productivity timer with duration toggle (25-minute focus, 50-minute steady, or 90-minute flow state sessions), sound notifications, and rotating completion sounds
   - **Shift + F keyboard shortcut** - open timer instantly from anywhere in the app
+  - **Duration toggle while paused** - change duration (25, 50, 90 min) when timer is paused in modal or full-screen
   - **Theme-aware phase badges** - Focus and Break badges adapt to your selected theme
   - **Smooth full-screen transitions** - no flash when entering full-screen mode
 - **Unsplash background images** - Optional beautiful nature images in Pomodoro full-screen mode with glass morphism overlay
@@ -242,6 +244,7 @@ You'll be able to sign up and sign in with Clerk. Once authenticated, you'll hav
   - Add/edit/remove custom date label
   - Add to Project (when projects exist) or Remove from Project
   - Copy all non-archived todos to tomorrow, previous/next day, or custom date
+  - Move to Next Day (moves incomplete todos to next day and archives originals)
   - Archive the entire date
   - Delete the date and all its content (with confirmation)
 - **Archive dates** - hide completed days in collapsible archived section
@@ -287,11 +290,14 @@ At the bottom of each date's todo list:
 ### Pomodoro Timer
 
 - **Built-in productivity timer** accessible from the timer icon in header
-- **Duration toggle** - Switch between 25-minute focus sessions and 90-minute flow state sessions
-  - Waves icon to switch from 25 minutes to 90-minute flow state mode
-  - Clock icon to switch back from 90 minutes to 25-minute focus mode
-  - Toggle button appears next to Start button (only visible when timer is idle)
-  - All timer features work identically for both durations
+- **Duration toggle** - Switch between 25-minute focus, 50-minute steady, and 90-minute flow state sessions
+  - Waves icon for 25-minute focus mode
+  - Activity icon for 50-minute steady session
+  - Clock icon for 90-minute flow state mode
+  - Toggle button appears next to Start button when timer is idle
+  - **Toggle while paused** - change duration in modal or full-screen when timer is paused
+  - Timer resets to new duration and stays paused for seamless adjustment
+  - All timer features work identically for all durations
 - **Sound notifications** for timer events:
   - Start sound plays when timer begins (only if user started in current session)
   - 5-second countdown sound plays when 5 seconds remain (only if user started in current session)

@@ -66,6 +66,7 @@ export function PomodoroTimer({
   const resumePomodoro = useMutation(api.pomodoro.resumePomodoro);
   const stopPomodoro = useMutation(api.pomodoro.stopPomodoro);
   const completePomodoro = useMutation(api.pomodoro.completePomodoro);
+  const updatePomodoroPreset = useMutation(api.pomodoro.updatePomodoroPreset);
   const fetchBackgroundImage = useAction(api.unsplash.fetchBackgroundImage);
 
   // Initialize Web Worker
@@ -416,6 +417,38 @@ export function PomodoroTimer({
     setDisplayTime(newDuration * 60 * 1000);
   };
 
+  // Handler for changing duration while paused (modal and full-screen)
+  const handleChangeDurationWhilePaused = async () => {
+    if (!session) return;
+
+    const currentIndex = durationPresets.indexOf(durationMinutes);
+    const nextIndex = (currentIndex + 1) % durationPresets.length;
+    const newDuration = durationPresets[nextIndex];
+
+    // Get the preset for the new duration
+    const preset = sessionPresets[newDuration] ?? sessionPresets[25];
+    const focusMs = preset.focus * 60 * 1000;
+    const breakMs = preset.break * 60 * 1000;
+
+    // Update local state immediately for smooth UI
+    setDurationMinutes(newDuration);
+    setDisplayTime(focusMs);
+
+    // Reset sound tracking flags
+    hasPlayedStartSound.current = false;
+    hasPlayedCountdownSound.current = false;
+    hasCalledComplete.current = false;
+
+    // Single mutation to update preset in place - no flickering
+    await updatePomodoroPreset({
+      sessionId: session._id,
+      durationMinutes: newDuration,
+      totalCycles: preset.cycles,
+      phaseDuration: focusMs,
+      breakDuration: breakMs,
+    });
+  };
+
   const handleClickTimer = () => {
     setIsModalOpen(true);
   };
@@ -543,13 +576,24 @@ export function PomodoroTimer({
               )}
 
               {isPaused && (
-                <button
-                  className="pomodoro-control-button"
-                  onClick={handleResume}
-                  title="Resume"
-                >
-                  <PlayIcon width={24} height={24} />
-                </button>
+                <>
+                  <button
+                    className="pomodoro-control-button"
+                    onClick={handleChangeDurationWhilePaused}
+                    title={durationLabels[durationMinutes]}
+                  >
+                    <span className="duration-icon">
+                      {durationIcons[durationMinutes]}
+                    </span>
+                  </button>
+                  <button
+                    className="pomodoro-control-button"
+                    onClick={handleResume}
+                    title="Resume"
+                  >
+                    <PlayIcon width={24} height={24} />
+                  </button>
+                </>
               )}
 
               {(isRunning || isPaused) && (
@@ -650,13 +694,24 @@ export function PomodoroTimer({
                 )}
 
                 {isPaused && (
-                  <button
-                    className="pomodoro-control-button-large"
-                    onClick={handleResume}
-                    title="Resume"
-                  >
-                    <PlayIcon width={24} height={24} />
-                  </button>
+                  <>
+                    <button
+                      className="pomodoro-control-button-large"
+                      onClick={handleChangeDurationWhilePaused}
+                      title={durationLabels[durationMinutes]}
+                    >
+                      <span className="duration-icon">
+                        {durationIcons[durationMinutes]}
+                      </span>
+                    </button>
+                    <button
+                      className="pomodoro-control-button-large"
+                      onClick={handleResume}
+                      title="Resume"
+                    >
+                      <PlayIcon width={24} height={24} />
+                    </button>
+                  </>
                 )}
 
                 <button

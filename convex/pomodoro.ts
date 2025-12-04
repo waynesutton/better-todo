@@ -264,6 +264,50 @@ export const updateBackgroundImage = mutation({
   },
 });
 
+// Update pomodoro session preset (duration) while paused - no stop/start needed
+export const updatePomodoroPreset = mutation({
+  args: {
+    sessionId: v.id("pomodoroSessions"),
+    durationMinutes: v.number(),
+    totalCycles: v.number(),
+    phaseDuration: v.number(),
+    breakDuration: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const userId = identity?.subject;
+
+    // Use indexed query to verify ownership
+    const session = await ctx.db
+      .query("pomodoroSessions")
+      .withIndex("by_user", (q) =>
+        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
+      )
+      .filter((q) => q.eq(q.field("_id"), args.sessionId))
+      .unique();
+
+    // Idempotent: if session doesn't exist, no-op
+    if (!session) {
+      return null;
+    }
+
+    // Patch directly with new preset values, reset to focus phase
+    await ctx.db.patch(args.sessionId, {
+      duration: args.durationMinutes * 60 * 1000,
+      remainingTime: args.phaseDuration,
+      phase: "focus",
+      cycleIndex: 0,
+      totalCycles: args.totalCycles,
+      phaseDuration: args.phaseDuration,
+      breakDuration: args.breakDuration,
+      lastUpdated: Date.now(),
+    });
+
+    return null;
+  },
+});
+
 // 🆕 New: Mutation to handle focus/break cycle transitions (Goal 2)
 export const advancePomodoroPhase = mutation({
   args: {

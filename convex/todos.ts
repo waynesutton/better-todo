@@ -698,6 +698,73 @@ export const copyTodosToDate = mutation({
   },
 });
 
+// Move all non-completed, non-archived todos from one date to the next day
+// This copies todos to target date and archives the source todos
+export const moveTodosToNextDay = mutation({
+  args: {
+    sourceDate: v.string(),
+    targetDate: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Early return if source and target are the same (idempotent)
+    if (args.sourceDate === args.targetDate) {
+      return null;
+    }
+
+    // Get all non-archived, non-completed todos from source date
+    const sourceTodos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_and_date", (q) =>
+        q.eq("userId", userId).eq("date", args.sourceDate),
+      )
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("archived"), false),
+          q.eq(q.field("completed"), false),
+        ),
+      )
+      .collect();
+
+    // If no todos to move, return early (idempotent)
+    if (sourceTodos.length === 0) {
+      return null;
+    }
+
+    // Use timestamp-based ordering for new todos to avoid write conflicts
+    const baseOrder = Date.now();
+
+    // Copy todos to target date and archive source todos in parallel
+    const copyOperations = sourceTodos.map((todo, index) =>
+      ctx.db.insert("todos", {
+        userId: userId,
+        date: args.targetDate,
+        content: todo.content,
+        type: todo.type,
+        completed: false,
+        archived: false,
+        order: baseOrder + index,
+        collapsed: todo.collapsed,
+      }),
+    );
+
+    const archiveOperations = sourceTodos.map((todo) =>
+      ctx.db.patch(todo._id, { archived: true }),
+    );
+
+    // Execute all operations in parallel to minimize conflicts
+    await Promise.all([...copyOperations, ...archiveOperations]);
+
+    return null;
+  },
+});
+
 // Archive all active todos for a specific date
 export const archiveAllTodos = mutation({
   args: {

@@ -6,7 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-No unreleased changes. Tracking resumes with the next commit.
+### Added
+
+- **Pomodoro Duration Toggle While Paused** - Change timer duration (25, 50, 90 min) while paused
+  - Available in both modal and full-screen views when timer is paused
+  - Cycles through: 25 min focus → 50 min steady → 90 min flow state
+  - Uses icons: Waves (25 min), Activity (50 min), Clock (90 min)
+  - Smooth transition with single database patch (no flickering)
+  - Timer resets to new duration and stays paused
+  - Tooltip shows duration label on hover
+
+- **Move to Next Day** - New option in date menu to move incomplete todos to the next day
+  - Copies all non-completed, non-archived todos from source date to the next day
+  - Archives the original todos after moving (keeps history clean)
+  - Idempotent mutation with early returns (no duplicate operations)
+  - Uses timestamp-based ordering for new todos (avoids write conflicts)
+  - Parallel operations with `Promise.all()` for efficient processing
+  - Located in sidebar date menu alongside existing copy options
+
+### Fixed
+
+- **Query Guards** - Added authentication guards to all Convex queries in Sidebar
+  - Prevents unnecessary subscriptions when user is not authenticated
+  - Uses `isAuthenticated ? undefined : "skip"` pattern for all sidebar queries
+  - Reduces memory pressure and potential race conditions
+
+### Backend Changes
+
+- **Pomodoro Module** (`convex/pomodoro.ts`)
+  - Added `updatePomodoroPreset` mutation for changing duration while paused
+  - Single patch operation (no stop/start cycle) for smooth UI transitions
+  - Uses indexed queries for ownership checks
+  - Idempotent with early return if session not found
+
+- **Schema Updates** (`convex/schema.ts`)
+  - Added `hasUnseenBadges` field to streaks table (optional boolean)
+
+- **Todos Module** (`convex/todos.ts`)
+  - Added `moveTodosToNextDay` mutation for moving todos between dates
+  - Follows Convex best practices: idempotent, indexed queries, parallel operations
 
 ## [v.020] - 2025-11-24
 
