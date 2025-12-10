@@ -83,7 +83,7 @@ git push -u origin main
 
 - None currently
 
-## Completed Tasks (v.022 - 2025-12-04)
+## Completed Tasks (v.021 - 2025-12-03)
 
 - [x] **Pomodoro Duration Toggle While Paused** - Change timer duration when paused
   - Added duration toggle button (25, 50, 90 min) in modal and full-screen when paused
@@ -93,8 +93,6 @@ git push -u origin main
   - Uses Waves/Activity/Clock icons for duration presets
   - Widened modal to 480px to accommodate additional button
   - Added flex-wrap to controls for mobile responsiveness
-
-## Completed Tasks (v.021 - 2025-12-03)
 
 - [x] **Move to Next Day** - New option in date menu to move incomplete todos
   - Added `moveTodosToNextDay` mutation to Convex backend

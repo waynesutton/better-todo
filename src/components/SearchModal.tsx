@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { X, Search, CheckSquare, FileText } from "lucide-react";
+import { X, Search, CheckSquare, FileText, MessageSquare } from "lucide-react";
 import { Id } from "../../convex/_generated/dataModel";
 
 interface SearchModalProps {
@@ -11,6 +11,7 @@ interface SearchModalProps {
     date: string,
     noteId?: Id<"notes">,
     fullPageNoteId?: Id<"fullPageNotes">,
+    openAIChat?: boolean,
   ) => void;
 }
 
@@ -110,6 +111,9 @@ export function SearchModal({
         undefined,
         result._id as Id<"fullPageNotes">,
       );
+    } else if (result.type === "aiChatMessage") {
+      // Open AI chat for this date
+      onSelectDate(dateToNavigate, undefined, undefined, true);
     } else {
       onSelectDate(dateToNavigate);
     }
@@ -141,7 +145,9 @@ export function SearchModal({
     let highlightedText = text;
 
     terms.forEach((term) => {
-      const regex = new RegExp(`(${term})`, "gi");
+      // Escape special regex characters
+      const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`(${escapedTerm})`, "gi");
       highlightedText = highlightedText.replace(
         regex,
         '<mark class="search-highlight">$1</mark>',
@@ -204,6 +210,8 @@ export function SearchModal({
                 <div className="search-result-icon">
                   {result.type === "todo" ? (
                     <CheckSquare size={16} />
+                  ) : result.type === "aiChatMessage" ? (
+                    <MessageSquare size={16} />
                   ) : (
                     <FileText size={16} />
                   )}
@@ -233,7 +241,9 @@ export function SearchModal({
                         ? "Todo"
                         : result.type === "fullPageNote"
                           ? "Full-Page Note"
-                          : "Note"}
+                          : result.type === "aiChatMessage"
+                            ? "AI Chat"
+                            : "Note"}
                     </span>
                     {result.date && (
                       <span className="search-result-date">

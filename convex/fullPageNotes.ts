@@ -318,6 +318,27 @@ export const updateFullPageNote = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Verify ownership using indexed query
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("_id"), args.id)
+        )
+      )
+      .unique();
+
+    if (!note) {
+      throw new Error("Note not found or unauthorized");
+    }
+
     // Build updates object only with provided fields
     const updates: Record<string, any> = {};
     if (args.title !== undefined) updates.title = args.title;
@@ -326,8 +347,7 @@ export const updateFullPageNote = mutation({
     if (args.collapsed !== undefined) updates.collapsed = args.collapsed;
     if (args.pinnedToTop !== undefined) updates.pinnedToTop = args.pinnedToTop;
 
-    // Patch directly without reading first to avoid write conflicts
-    // ctx.db.patch will throw if the document doesn't exist
+    // Patch after verifying ownership
     await ctx.db.patch(args.id, updates);
     return null;
   },
@@ -375,11 +395,27 @@ export const reorderFullPageNotes = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Patch all notes with new order in parallel to avoid sequential conflicts
-    // ctx.db.patch will silently ignore notes that don't exist
-    const updates = args.noteIds.map((noteId, index) =>
-      ctx.db.patch(noteId, { order: index }),
-    );
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Verify ownership of all notes before reordering
+    // Fetch all notes for this user and date to validate
+    const userNotes = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_user_and_date", (q) =>
+        q.eq("userId", userId).eq("date", args.date)
+      )
+      .collect();
+
+    const userNoteIds = new Set(userNotes.map((n) => n._id));
+
+    // Only update notes that belong to the user
+    const updates = args.noteIds
+      .filter((noteId) => userNoteIds.has(noteId))
+      .map((noteId, index) => ctx.db.patch(noteId, { order: index }));
 
     await Promise.all(updates);
     return null;
@@ -555,24 +591,34 @@ export const generateUploadUrl = mutation({
 });
 
 // Get storage URL for an uploaded file
+// Note: This requires authentication to prevent unauthorized access to private images
 export const getStorageUrl = query({
   args: {
     storageId: v.id("_storage"),
   },
   returns: v.union(v.string(), v.null()),
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
     // Get the URL for the storage ID
     return await ctx.storage.getUrl(args.storageId);
   },
 });
 
 // Helper mutation to get storage URL after upload (for use in actions/mutations)
+// Note: This requires authentication to prevent unauthorized access to private images
 export const getImageUrl = mutation({
   args: {
     storageId: v.id("_storage"),
   },
   returns: v.union(v.string(), v.null()),
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
     // Get the URL for the storage ID
     return await ctx.storage.getUrl(args.storageId);
   },

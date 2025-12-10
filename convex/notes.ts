@@ -78,6 +78,23 @@ export const updateNote = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Verify ownership using indexed query
+    const note = await ctx.db
+      .query("notes")
+      .withIndex("by_user_and_date", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.id))
+      .unique();
+
+    if (!note) {
+      throw new Error("Note not found or unauthorized");
+    }
+
     // Build updates object only with provided fields
     const updates: Record<string, any> = {};
     if (args.title !== undefined) updates.title = args.title;
@@ -85,8 +102,7 @@ export const updateNote = mutation({
     if (args.collapsed !== undefined) updates.collapsed = args.collapsed;
     if (args.pinnedToTop !== undefined) updates.pinnedToTop = args.pinnedToTop;
 
-    // Patch directly without reading first to avoid write conflicts
-    // ctx.db.patch will throw if the document doesn't exist
+    // Patch after verifying ownership
     await ctx.db.patch(args.id, updates);
     return null;
   },
@@ -134,11 +150,26 @@ export const reorderNotes = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Patch all notes with new order in parallel to avoid sequential conflicts
-    // ctx.db.patch will silently ignore notes that don't exist
-    const updates = args.noteIds.map((noteId, index) =>
-      ctx.db.patch(noteId, { order: index }),
-    );
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Verify ownership of all notes before reordering
+    const userNotes = await ctx.db
+      .query("notes")
+      .withIndex("by_user_and_date", (q) =>
+        q.eq("userId", userId).eq("date", args.date)
+      )
+      .collect();
+
+    const userNoteIds = new Set(userNotes.map((n) => n._id));
+
+    // Only update notes that belong to the user
+    const updates = args.noteIds
+      .filter((noteId) => userNoteIds.has(noteId))
+      .map((noteId, index) => ctx.db.patch(noteId, { order: index }));
 
     await Promise.all(updates);
     return null;

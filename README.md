@@ -1,6 +1,6 @@
-# better todo - The open-source modern todo app for developers and busy people with convex and no ai assistants
+# better todo - The open source real-time todo, notes, and AI writing assistant app
 
-An open source, real-time open-source to-do list that never falls out of sync — built on Convex.
+An open source, real-time to-do list with notes and AI writing assistant that never falls out of sync — built on Convex.
 
 **Live Demo**: [better-todo.co](https://better-todo.co)
 
@@ -40,6 +40,19 @@ An open source, real-time open-source to-do list that never falls out of sync �
   - **Theme-aware phase badges** - Focus and Break badges adapt to your selected theme
   - **Smooth full-screen transitions** - no flash when entering full-screen mode
 - **Unsplash background images** - Optional beautiful nature images in Pomodoro full-screen mode with glass morphism overlay
+- **AI Writing Assistant** - Built-in AI chat powered by Claude for writing assistance
+  - Access from MessageCircle icon in header on any date page
+  - Each date has its own separate chat session with full conversation history
+  - Powered by Claude (claude-opus-4-5) for high-quality writing assistance
+  - Real-time message updates with Convex subscriptions
+  - Markdown rendering for AI responses with full syntax support
+  - Copy button on each AI message for easy content extraction
+  - Press "/" key to quickly focus the chat input from anywhere
+  - Enter to send, Shift+Enter for new lines
+  - Input position toggle (centered or left-aligned) with preference saved
+  - Chat indicator appears in sidebar under dates that have active conversations
+  - Authentication required - only authenticated users can access AI chat
+  - Full conversation context maintained (last 20 messages sent to Claude)
 - **Streaks feature** - Track your todo completion momentum (AI-free)
   - Fire icon in header with 7-bar weekly progress indicator
   - Automatic tracking of consecutive days completing all regular date-based todos
@@ -50,7 +63,7 @@ An open source, real-time open-source to-do list that never falls out of sync �
   - Shift + S keyboard shortcut to toggle streaks header visibility
   - Real-time sync with Convex for instant updates
   - Pure JavaScript calculations with no AI dependencies
-- **Progressive Web App** - install on iOS or Android for native app experience with offline support
+- **Progressive Web App** - install on iOS or Android for native app experience
 
 ### UI/UX
 
@@ -316,6 +329,25 @@ At the bottom of each date's todo list:
   - Toggle button to show/hide background images
   - New image fetches each time full-screen mode opens
 
+### AI Writing Assistant
+
+- **Built-in AI chat** accessible from the MessageCircle icon in header on any date page
+- **Per-date chat sessions** - Each date has its own separate chat session, so conversations are organized by date
+- **Powered by Claude** - Uses Claude (claude-opus-4-5) for high-quality writing assistance
+- **Full conversation history** - All messages are stored in the database and maintain full context
+- **Real-time updates** - Messages appear instantly via Convex real-time subscriptions
+- **Markdown rendering** - AI responses render with full markdown support including code blocks, lists, and formatting
+- **Copy messages** - Each AI message has a copy button for easy content extraction
+- **Keyboard shortcuts**:
+  - Press **"/"** to quickly focus the chat input from anywhere in the app
+  - **Enter** to send message
+  - **Shift+Enter** for new lines
+- **Input customization** - Toggle input position (centered or left-aligned) with preference saved to localStorage
+- **Sidebar indicators** - Chat indicator appears in sidebar under dates that have active conversations
+- **Authentication required** - Only authenticated users can access AI chat
+- **Conversation context** - Last 20 messages are sent to Claude for context, maintaining coherent conversations
+- **Mobile optimized** - Responsive design with auto-expanding textarea
+
 ### Themes
 
 Toggle between dark, light, tan, and cloud modes using the **half-moon icon** at the bottom of the sidebar (above the login link). The login/user icons automatically switch between variants based on the current theme.
@@ -378,6 +410,8 @@ better-todo/
 │   ├── pomodoro.ts            # Pomodoro timer functionality
 │   ├── unsplash.ts            # Unsplash background image fetching
 │   ├── search.ts              # Search functionality
+│   ├── aiChats.ts             # AI chat queries and mutations
+│   ├── aiChatActions.ts       # AI chat actions (Claude API integration)
 │   └── http.ts                # HTTP routes for auth
 ├── src/
 │   ├── components/            # React components
@@ -388,6 +422,7 @@ better-todo/
 │   │   ├── ArchiveSection.tsx # Archived todos
 │   │   ├── SearchModal.tsx    # Search modal
 │   │   ├── PomodoroTimer.tsx  # Pomodoro productivity timer with mute controls
+│   │   ├── AIChatView.tsx     # AI Writing Assistant chat interface
 │   │   ├── ConfirmDialog.tsx  # Confirmation dialogs
 │   │   └── ui/
 │   │       └── tooltip.tsx    # Reusable tooltip component
@@ -504,7 +539,11 @@ npx convex deploy
      - Add `UNSPLASH_ACCESS_KEY` to your Convex deployment environment variables
      - Get your free access key from [Unsplash Developers](https://unsplash.com/developers)
      - This enables beautiful nature backgrounds in Pomodoro full-screen mode
-   - **No AI API keys needed** - The app works completely without any AI services
+   - For AI Writing Assistant (optional):
+     - Add `ANTHROPIC_API_KEY` to your Convex deployment environment variables
+     - Get your API key from [Anthropic Console](https://console.anthropic.com)
+     - This enables the AI Writing Assistant feature powered by Claude
+     - The app works completely without AI services if you don't need the writing assistant
 
 5. Configure Clerk Dashboard:
    - Add production redirect URI: `https://your-domain.netlify.app`
@@ -520,11 +559,14 @@ The app supports continuous deployment, so every push to your main branch will t
 
 **Unsplash Integration:** The `UNSPLASH_ACCESS_KEY` is stored securely in your Convex deployment environment variables (not exposed to frontend) and is only used server-side for fetching background images.
 
+**AI Writing Assistant:** The `ANTHROPIC_API_KEY` is stored securely in your Convex deployment environment variables (not exposed to frontend) and is only used server-side for calling Claude's API. The AI chat feature is optional and the app works completely without it.
+
 ## Keyboard Shortcuts
 
-- **Enter** - Add new line in todo/note, confirm delete dialogs
-- **Shift+Enter** - Create/save todo, save note edit
+- **Enter** - Add new line in todo/note, confirm delete dialogs, send AI chat message
+- **Shift+Enter** - Create/save todo, save note edit, new line in AI chat
 - **Cmd/Ctrl+K** - Open search modal
+- **/** - Focus AI chat input (when AI chat is open)
 - **Escape** - Close search modal, cancel delete dialogs
 - **Arrow keys** - Navigate search results
 - **Click away** - Auto-save changes

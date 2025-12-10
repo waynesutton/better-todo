@@ -18,6 +18,8 @@ export const getDatabaseStats = internalQuery({
     archivedTodos: v.number(),
     pomodoroSessions: v.number(),
     totalFolders: v.number(),
+    totalChatMessages: v.number(),
+    totalChatReplies: v.number(),
   }),
   handler: async (ctx) => {
     // Get all todos (count only)
@@ -60,6 +62,20 @@ export const getDatabaseStats = internalQuery({
     const allFolders = await ctx.db.query("folders").collect();
     const totalFolders = allFolders.length;
 
+    // Get all AI chats and count messages by role (count only, no content)
+    const allChats = await ctx.db.query("aiChats").collect();
+    let totalChatMessages = 0;
+    let totalChatReplies = 0;
+    for (const chat of allChats) {
+      for (const message of chat.messages) {
+        if (message.role === "user") {
+          totalChatMessages++;
+        } else if (message.role === "assistant") {
+          totalChatReplies++;
+        }
+      }
+    }
+
     return {
       totalTodos,
       completedTodos,
@@ -70,6 +86,8 @@ export const getDatabaseStats = internalQuery({
       archivedTodos,
       pomodoroSessions,
       totalFolders,
+      totalChatMessages,
+      totalChatReplies,
     };
   },
 });
@@ -91,6 +109,8 @@ export const getStats = action({
     archivedTodos: v.number(),
     pomodoroSessions: v.number(),
     totalFolders: v.number(),
+    totalChatMessages: v.number(),
+    totalChatReplies: v.number(),
   }),
   handler: async (ctx) => {
     // Get total users from Clerk via backend action
@@ -109,6 +129,8 @@ export const getStats = action({
       archivedTodos: number;
       pomodoroSessions: number;
       totalFolders: number;
+      totalChatMessages: number;
+      totalChatReplies: number;
     } = await ctx.runQuery(internal.stats.getDatabaseStats);
 
     return {
@@ -178,6 +200,8 @@ export const getUserStats = query({
       archivedTodos: v.number(),
       pomodoroSessions: v.number(),
       totalFolders: v.number(),
+      totalChatMessages: v.number(),
+      totalChatReplies: v.number(),
     }),
     v.null(),
   ),
@@ -231,6 +255,23 @@ export const getUserStats = query({
       .collect();
     const totalFolders = userFolders.length;
 
+    // Get user's AI chats and count messages by role (count only, no content)
+    const userChats = await ctx.db
+      .query("aiChats")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    let totalChatMessages = 0;
+    let totalChatReplies = 0;
+    for (const chat of userChats) {
+      for (const message of chat.messages) {
+        if (message.role === "user") {
+          totalChatMessages++;
+        } else if (message.role === "assistant") {
+          totalChatReplies++;
+        }
+      }
+    }
+
     return {
       totalTodos,
       completedTodos,
@@ -241,6 +282,8 @@ export const getUserStats = query({
       archivedTodos,
       pomodoroSessions,
       totalFolders,
+      totalChatMessages,
+      totalChatReplies,
     };
   },
 });

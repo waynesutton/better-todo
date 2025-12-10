@@ -116,6 +116,15 @@ export function KeyboardShortcutsModal({
         { key: "Esc", description: "Exit full screen / Close timer modal" },
       ],
     },
+    {
+      category: "AI Chat",
+      items: [
+        { key: "/", description: "Focus chat input" },
+        { key: "Enter", description: "Send message" },
+        { key: "Shift + Enter", description: "New line" },
+        { key: '"clear"', description: "Clear chat history (type in quotes)" },
+      ],
+    },
   ];
 
   const codeBlocksInfo = {

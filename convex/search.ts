@@ -3,8 +3,8 @@ import { v } from "convex/values";
 
 // Search result type
 const searchResultValidator = v.object({
-  _id: v.union(v.id("todos"), v.id("notes"), v.id("fullPageNotes")),
-  type: v.union(v.literal("todo"), v.literal("note"), v.literal("fullPageNote")),
+  _id: v.union(v.id("todos"), v.id("notes"), v.id("fullPageNotes"), v.id("aiChats")),
+  type: v.union(v.literal("todo"), v.literal("note"), v.literal("fullPageNote"), v.literal("aiChatMessage")),
   content: v.string(),
   title: v.optional(v.string()),
   date: v.optional(v.string()),
@@ -32,7 +32,7 @@ export const searchAll = query({
 
     const results: Array<{
       _id: any;
-      type: "todo" | "note" | "fullPageNote";
+      type: "todo" | "note" | "fullPageNote" | "aiChatMessage";
       content: string;
       title?: string;
       date?: string;
@@ -122,6 +122,32 @@ export const searchAll = query({
           content: note.content,
           title: note.title,
           date: note.date,
+        });
+      }
+    }
+
+    // Search AI chat messages
+    const aiChats = await ctx.db
+      .query("aiChats")
+      .withSearchIndex("search_messages", (q) =>
+        q.search("searchableContent", args.searchQuery).eq("userId", userId),
+      )
+      .take(20);
+
+    // Add AI chat messages to results
+    for (const chat of aiChats) {
+      // Find matching messages in the chat
+      const matchingMessages = chat.messages.filter((msg) =>
+        msg.content.toLowerCase().includes(args.searchQuery.toLowerCase()),
+      );
+
+      // Add each matching message as a separate result
+      for (const message of matchingMessages) {
+        results.push({
+          _id: chat._id,
+          type: "aiChatMessage",
+          content: message.content,
+          date: chat.date,
         });
       }
     }

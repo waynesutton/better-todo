@@ -14,7 +14,8 @@ import { PomodoroTimer } from "./components/PomodoroTimer";
 import { FullPageNoteView } from "./components/FullPageNoteView";
 import { FullPageNoteTabs } from "./components/FullPageNoteTabs";
 import { ShareLinkModal } from "./components/ShareLinkModal";
-import { StreaksHeader } from "./components/StreaksHeader"; // New
+import { StreaksHeader } from "./components/StreaksHeader";
+import { AIChatView } from "./components/AIChatView";
 import { Launch } from "./pages/Launch";
 import { Changelog } from "./pages/Changelog";
 import { StreaksPage } from "./pages/StreaksPage";
@@ -22,7 +23,7 @@ import { NotFound } from "./pages/NotFound";
 import { Stats } from "./pages/Stats";
 import { SharedNoteView } from "./pages/SharedNoteView";
 import { format } from "date-fns";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, MessageCircle } from "lucide-react";
 import {
   CopyIcon,
   CheckIcon,
@@ -103,6 +104,7 @@ function App() {
   const [showSignInToSearchModal, setShowSignInToSearchModal] = useState(false);
   const [showSignInToCreateModal, setShowSignInToCreateModal] = useState(false);
   const [showSignInToNoteModal, setShowSignInToNoteModal] = useState(false);
+  const [showSignInToChatModal, setShowSignInToChatModal] = useState(false);
   const [showSignInToMenuModal, setShowSignInToMenuModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -147,6 +149,9 @@ function App() {
   const [isFullPageNoteEditMode, setIsFullPageNoteEditMode] = useState(false);
   const [cursorInCodeBlock, setCursorInCodeBlock] = useState(false);
   const [showShareLinkModal, setShowShareLinkModal] = useState(false);
+
+  // AI Chat state
+  const [showAIChat, setShowAIChat] = useState(false);
 
   // Apply user's custom font size to todo text and full-page notes
   useEffect(() => {
@@ -765,6 +770,7 @@ function App() {
         setSelectedDate(today);
         setSelectedFolder(null);
         setShowFullPageNotes(false); // Exit full page notes view if active
+        setShowAIChat(false); // Exit AI chat view if active
         // Hide sidebar on mobile to show main content
         if (window.innerWidth <= 768) {
           setSidebarHidden(true);
@@ -1009,9 +1015,10 @@ function App() {
                 setSelectedDate(date);
                 // Clear folder selection when selecting a date
                 setSelectedFolder(null);
-                // Close full-page notes view when selecting a date
+                // Close full-page notes and AI chat view when selecting a date
                 setShowFullPageNotes(false);
                 setSelectedFullPageNoteId(null);
+                setShowAIChat(false);
               }}
               selectedFolder={selectedFolder}
               onSelectFolder={(folderId) => {
@@ -1020,9 +1027,10 @@ function App() {
                 if (selectedDate !== "pinned" && selectedDate !== "backlog") {
                   setSelectedDate("");
                 }
-                // Close full-page notes view when selecting a folder
+                // Close full-page notes and AI chat view when selecting a folder
                 setShowFullPageNotes(false);
                 setSelectedFullPageNoteId(null);
+                setShowAIChat(false);
               }}
               isCollapsed={sidebarCollapsed}
               onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -1031,6 +1039,8 @@ function App() {
               onOpenProfile={() => setShowProfileModal(true)}
               onShowInfo={() => setShowInfoModal(true)}
               onOpenFullPageNote={(noteId, date, folderId) => {
+                // Close AI chat when opening full-page notes
+                setShowAIChat(false);
                 // Navigate to the date or folder and open the full-page note
                 // If date is provided (note is attached to a date), navigate to it
                 if (date) {
@@ -1054,6 +1064,11 @@ function App() {
               }}
               selectedFullPageNoteId={selectedFullPageNoteId}
               datesAreLoading={datesAreLoading}
+              onOpenAIChat={() => {
+                setShowAIChat(true);
+                setShowFullPageNotes(false);
+              }}
+              showAIChat={showAIChat}
             />
           </div>
         )}
@@ -1100,68 +1115,71 @@ function App() {
                 <div className="current-date">{formatCurrentDate()}</div>
               </div>
               <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  className="search-button"
-                  onClick={() => {
-                    triggerSelectionHaptic();
+                {/* Copy button - hide when AI chat is open */}
+                {!showAIChat && (
+                  <button
+                    className="search-button"
+                    onClick={() => {
+                      triggerSelectionHaptic();
 
-                    // If on full-page note view, copy the note content
-                    if (showFullPageNotes && selectedFullPageNoteId) {
-                      const currentNote = allFullPageNotes.find(
-                        (note) => note._id === selectedFullPageNoteId,
-                      );
-                      if (currentNote && currentNote.content) {
-                        navigator.clipboard
-                          .writeText(currentNote.content)
-                          .then(() => {
-                            triggerSuccessHaptic();
-                            setShowCopyConfirmation(true);
-                            setTimeout(() => {
-                              setShowCopyConfirmation(false);
-                            }, 2000);
-                          })
-                          .catch((err) => {
-                            console.error("Failed to copy note:", err);
-                          });
-                      }
-                    } else {
-                      // Otherwise, copy all unchecked (incomplete) todos to clipboard
-                      const incompleteTodos = activeTodos.filter(
-                        (todo) => !todo.completed,
-                      );
-                      const todoText = incompleteTodos
-                        .map((todo) => `- ${todo.content}`)
-                        .join("\n");
+                      // If on full-page note view, copy the note content
+                      if (showFullPageNotes && selectedFullPageNoteId) {
+                        const currentNote = allFullPageNotes.find(
+                          (note) => note._id === selectedFullPageNoteId,
+                        );
+                        if (currentNote && currentNote.content) {
+                          navigator.clipboard
+                            .writeText(currentNote.content)
+                            .then(() => {
+                              triggerSuccessHaptic();
+                              setShowCopyConfirmation(true);
+                              setTimeout(() => {
+                                setShowCopyConfirmation(false);
+                              }, 2000);
+                            })
+                            .catch((err) => {
+                              console.error("Failed to copy note:", err);
+                            });
+                        }
+                      } else {
+                        // Otherwise, copy all unchecked (incomplete) todos to clipboard
+                        const incompleteTodos = activeTodos.filter(
+                          (todo) => !todo.completed,
+                        );
+                        const todoText = incompleteTodos
+                          .map((todo) => `- ${todo.content}`)
+                          .join("\n");
 
-                      if (todoText) {
-                        navigator.clipboard
-                          .writeText(todoText)
-                          .then(() => {
-                            triggerSuccessHaptic();
-                            // Show brief success indicator
-                            setShowCopyConfirmation(true);
-                            setTimeout(() => {
-                              setShowCopyConfirmation(false);
-                            }, 2000);
-                          })
-                          .catch((err) => {
-                            console.error("Failed to copy todos:", err);
-                          });
+                        if (todoText) {
+                          navigator.clipboard
+                            .writeText(todoText)
+                            .then(() => {
+                              triggerSuccessHaptic();
+                              // Show brief success indicator
+                              setShowCopyConfirmation(true);
+                              setTimeout(() => {
+                                setShowCopyConfirmation(false);
+                              }, 2000);
+                            })
+                            .catch((err) => {
+                              console.error("Failed to copy todos:", err);
+                            });
+                        }
                       }
+                    }}
+                    title={
+                      showFullPageNotes && selectedFullPageNoteId
+                        ? "Copy note content"
+                        : "Copy unchecked todos"
                     }
-                  }}
-                  title={
-                    showFullPageNotes && selectedFullPageNoteId
-                      ? "Copy note content"
-                      : "Copy unchecked todos"
-                  }
-                >
-                  {showCopyConfirmation ? (
-                    <CheckIcon style={{ width: 18, height: 18 }} />
-                  ) : (
-                    <CopyIcon style={{ width: 18, height: 18 }} />
-                  )}
-                </button>
+                  >
+                    {showCopyConfirmation ? (
+                      <CheckIcon style={{ width: 18, height: 18 }} />
+                    ) : (
+                      <CopyIcon style={{ width: 18, height: 18 }} />
+                    )}
+                  </button>
+                )}
                 {/* Back button - show when in full-page notes view */}
                 {showFullPageNotes && (
                   <button
@@ -1179,7 +1197,7 @@ function App() {
                     <CheckboxIcon style={{ width: 18, height: 18 }} />
                   </button>
                 )}
-                {/* Full-page notes icon - show on regular date pages and folders */}
+                {/* Full-page notes icon - show on regular date pages and folders, even when AI chat is open */}
                 {selectedDate !== "pinned" &&
                   selectedDate !== "backlog" &&
                   !showFullPageNotes && (
@@ -1188,6 +1206,8 @@ function App() {
                       onClick={async () => {
                         triggerSelectionHaptic();
                         if (!authIsLoading && isAuthenticated) {
+                          // Close AI chat when opening full-page notes
+                          setShowAIChat(false);
                           // Get notes based on whether we're viewing a folder or a date
                           const notesToView = selectedFolder
                             ? folderFullPageNotes
@@ -1224,6 +1244,40 @@ function App() {
                       <FileTextIcon style={{ width: 18, height: 18 }} />
                     </button>
                   )}
+                {/* AI Chat icon - show on regular date pages (not folders, pinned, backlog) */}
+                {selectedDate !== "pinned" &&
+                  selectedDate !== "backlog" &&
+                  !selectedFolder &&
+                  !showFullPageNotes &&
+                  !showAIChat && (
+                    <button
+                      className="search-button"
+                      onClick={() => {
+                        triggerSelectionHaptic();
+                        if (!authIsLoading && isAuthenticated) {
+                          setShowAIChat(true);
+                        } else {
+                          setShowSignInToChatModal(true);
+                        }
+                      }}
+                      title="AI Writing Assistant"
+                    >
+                      <MessageCircle size={18} />
+                    </button>
+                  )}
+                {/* Back from AI Chat */}
+                {showAIChat && (
+                  <button
+                    className="search-button"
+                    onClick={() => {
+                      triggerSelectionHaptic();
+                      setShowAIChat(false);
+                    }}
+                    title="Back to todos"
+                  >
+                    <CheckboxIcon style={{ width: 18, height: 18 }} />
+                  </button>
+                )}
                 <PomodoroTimer
                   triggerData={pomodoroTriggered}
                   openOnTrigger={true}
@@ -1321,9 +1375,12 @@ function App() {
                         </a>
                       </div>
                       <ul className="feature-showcase-list">
-                        <li>No AI assistants - just your todos and focus</li>
                         <li>
                           Real-time synchronization across all your devices
+                        </li>
+                        <li>
+                          AI writing assistant for developer notes and
+                          journaling
                         </li>
                         <li>
                           Full markdown support with syntax-highlighted code
@@ -1338,7 +1395,6 @@ function App() {
                           Built-in Pomodoro timer with 25 or 90 minute sessions
                         </li>
                         <li>Streak tracking for daily todo completion</li>
-                        <li>Mobile-optimized PWA with offline support</li>
                         <li>
                           Keyboard-first workflow with extensive shortcuts
                         </li>
@@ -1422,6 +1478,11 @@ function App() {
                   />
                 </div>
               </div>
+            ) : showAIChat ? (
+              <AIChatView
+                date={selectedDate}
+                onClose={() => setShowAIChat(false)}
+              />
             ) : showFullPageNotes && selectedFullPageNoteId ? (
               <div className={isFullscreenNotes ? "fullscreen-mode" : ""}>
                 {/* Full-page notes tabs */}
@@ -1545,8 +1606,9 @@ function App() {
 
           {/* Sticky footer with archive and bulk actions */}
           <div className="main-content-footer">
-            {/* Archive section - only show for authenticated users and not on full-page notes view */}
+            {/* Archive section - only show for authenticated users and not on full-page notes or AI chat view */}
             {!showFullPageNotes &&
+              !showAIChat &&
               archivedTodos.length > 0 &&
               isAuthenticated && (
                 <ArchiveSection
@@ -1563,8 +1625,9 @@ function App() {
                 />
               )}
 
-            {/* Bulk action buttons - hide on full-page notes view */}
+            {/* Bulk action buttons - hide on full-page notes and AI chat view */}
             {!showFullPageNotes &&
+              !showAIChat &&
               activeTodos.length > 0 &&
               selectedDate !== "pinned" &&
               selectedDate !== "backlog" &&
@@ -1601,7 +1664,7 @@ function App() {
         <SearchModal
           isOpen={searchModalOpen}
           onClose={() => setSearchModalOpen(false)}
-          onSelectDate={(date, noteId, fullPageNoteId) => {
+          onSelectDate={(date, noteId, fullPageNoteId, openAIChat) => {
             // Only set date if it's not empty (folder notes have empty date)
             if (date) {
               setSelectedDate(date);
@@ -1624,15 +1687,23 @@ function App() {
               );
               setSelectedFullPageNoteId(fullPageNoteId);
               setShowFullPageNotes(true);
+              setShowAIChat(false);
+            }
+            // If AI chat was selected, open it
+            else if (openAIChat) {
+              setShowFullPageNotes(false);
+              setShowAIChat(true);
             }
             // If a regular note was selected, set it to be expanded
             else if (noteId) {
               setExpandedNoteId(noteId);
               setShowFullPageNotes(false);
+              setShowAIChat(false);
             }
             // Otherwise, just navigate to the date
             else {
               setShowFullPageNotes(false);
+              setShowAIChat(false);
             }
             // Close sidebar on mobile after selecting from search
             if (window.innerWidth <= 768) {
@@ -1746,6 +1817,21 @@ function App() {
             setShowSignUpModal(true);
           }}
           onCancel={() => setShowSignInToNoteModal(false)}
+          isDangerous={false}
+        />
+
+        {/* Sign In To Chat Modal */}
+        <ConfirmDialog
+          isOpen={showSignInToChatModal}
+          title="Sign In to Chat"
+          message="AI chat requires an account. Sign in to use the AI writing assistant."
+          confirmText="Sign Up"
+          cancelText="Cancel"
+          onConfirm={() => {
+            setShowSignInToChatModal(false);
+            setShowSignUpModal(true);
+          }}
+          onCancel={() => setShowSignInToChatModal(false)}
           isDangerous={false}
         />
 
@@ -1898,8 +1984,10 @@ function App() {
                   </a>
                 </div>
                 <ul className="feature-showcase-list">
-                  <li>No AI assistants - just your todos and focus</li>
                   <li>Real-time synchronization across all your devices</li>
+                  <li>
+                    AI writing assistant for developer notes and journaling
+                  </li>
                   <li>
                     Full markdown support with syntax-highlighted code blocks
                   </li>
@@ -1908,7 +1996,6 @@ function App() {
                   <li>Shareable full-page notes with custom URL slugs</li>
                   <li>Built-in Pomodoro timer with 25 or 90 minute sessions</li>
                   <li>Streak tracking for daily todo completion</li>
-                  <li>Mobile-optimized PWA with offline support</li>
                   <li>Keyboard-first workflow with extensive shortcuts</li>
                 </ul>
                 <div

@@ -98,10 +98,102 @@ export function Changelog() {
           </p>
 
           <h2 className="section-title">Unreleased</h2>
-          <p className="changelog-subtitle">
-            No unreleased changes. Follow along with the most recent release
-            below.
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>AI Writing Assistant</strong> - Built-in AI chat for writing
+              assistance on each date
+              <ul className="nested-list">
+                <li>
+                  Access AI chat from the MessageCircle icon in the header on any
+                  date page
+                </li>
+                <li>
+                  Each date has its own separate chat session with full
+                  conversation history
+                </li>
+                <li>
+                  Powered by Claude (claude-opus-4-5) for high-quality writing
+                  assistance
+                </li>
+                <li>
+                  Chat sessions persist in the database and maintain context
+                  across conversations
+                </li>
+                <li>
+                  Real-time message updates with Convex subscriptions
+                </li>
+                <li>
+                  Markdown rendering for AI responses with full syntax support
+                </li>
+                <li>
+                  Copy button on each AI message for easy content extraction
+                </li>
+                <li>
+                  Auto-expanding textarea input with smart height adjustment
+                </li>
+                <li>
+                  Press "/" key to quickly focus the chat input from anywhere
+                </li>
+                <li>Enter to send, Shift+Enter for new lines</li>
+                <li>
+                  Input position toggle (centered or left-aligned) with
+                  preference saved to localStorage
+                </li>
+                <li>
+                  Mobile-optimized interface with responsive design
+                </li>
+                <li>
+                  Chat indicator appears in sidebar under dates that have active
+                  conversations
+                </li>
+                <li>
+                  Authentication required - only authenticated users can access
+                  AI chat
+                </li>
+                <li>
+                  Full conversation context maintained (last 20 messages sent to
+                  Claude for context)
+                </li>
+                <li>
+                  Searchable chat content indexed for future search capabilities
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">How It Works</h3>
+          <p>
+            The AI chat feature provides writing assistance for each date in
+            your todo list. Here's how it works:
           </p>
+          <ol className="feature-list">
+            <li>
+              <strong>Access</strong>: Click the MessageCircle icon in the header
+              on any date page to open the AI chat
+            </li>
+            <li>
+              <strong>Chat Sessions</strong>: Each date has its own separate
+              chat session, so conversations are organized by date
+            </li>
+            <li>
+              <strong>Conversation History</strong>: All messages are stored in
+              the database and maintain full context
+            </li>
+            <li>
+              <strong>AI Processing</strong>: When you send a message, it's
+              processed by Claude with the last 20 messages as context
+            </li>
+            <li>
+              <strong>Real-time Updates</strong>: Messages appear instantly via
+              Convex real-time subscriptions
+            </li>
+            <li>
+              <strong>Markdown Support</strong>: AI responses render with full
+              markdown support including code blocks, lists, and formatting
+            </li>
+          </ol>
         </section>
 
         <section id="v020" className="launch-section">

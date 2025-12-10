@@ -386,9 +386,7 @@ function NotesForFolder({
   // Fetch full-page notes for this folder (always fetch to show count)
   const notes = useQuery(
     api.fullPageNotes.getFullPageNotesByFolder,
-    isAuthenticated
-      ? { folderId, includeArchived: isArchivedFolder }
-      : "skip",
+    isAuthenticated ? { folderId, includeArchived: isArchivedFolder } : "skip",
   );
 
   const handleRenameNote = async (noteId: Id<"fullPageNotes">) => {
@@ -645,6 +643,8 @@ interface SidebarProps {
   ) => void;
   selectedFullPageNoteId?: Id<"fullPageNotes"> | null;
   datesAreLoading?: boolean;
+  onOpenAIChat?: (date: string) => void;
+  showAIChat?: boolean;
 }
 
 export function Sidebar({
@@ -662,6 +662,8 @@ export function Sidebar({
   onOpenFullPageNote,
   selectedFullPageNoteId,
   datesAreLoading = false,
+  onOpenAIChat,
+  showAIChat = false,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
   const { isLoading: authIsLoading, isAuthenticated } = useConvexAuth();
@@ -756,6 +758,11 @@ export function Sidebar({
   const todoCountsByFolder =
     useQuery(
       api.todos.getTodoCountsByFolder,
+      isAuthenticated ? undefined : "skip",
+    ) || {};
+  const aiChatCounts =
+    useQuery(
+      api.aiChats.getAIChatCounts,
       isAuthenticated ? undefined : "skip",
     ) || {};
 
@@ -1854,6 +1861,22 @@ export function Sidebar({
                     onMoveNoteToDate={handleMoveNoteToDate}
                   />
                 )}
+
+                {/* AI Chat indicator for this date - show if date has AI chat messages */}
+                {aiChatCounts[date] > 0 && (
+                  <div
+                    className={`notes-folder-item ai-chat-item ${showAIChat && date === selectedDate ? "active" : ""}`}
+                    onClick={() => {
+                      triggerSelectionHaptic();
+                      onSelectDate(date);
+                      if (onOpenAIChat) {
+                        onOpenAIChat(date);
+                      }
+                    }}
+                  >
+                    <span className="ai-chat-item-title">Chat</span>
+                  </div>
+                )}
               </div>
             ))}
 
@@ -2266,7 +2289,10 @@ export function Sidebar({
                         <div className="date-item-container-row">
                           <div
                             className="date-item"
-                            onClick={() => onSelectDate(date)}
+                            onClick={() => {
+                              triggerSelectionHaptic();
+                              onSelectDate(date);
+                            }}
                           >
                             {formatDate(date)}
                             {uncompletedCounts[date] > 0 && (
@@ -2307,6 +2333,42 @@ export function Sidebar({
                             )}
                           </div>
                         </div>
+
+                        {/* Notes folder for this date in project folder */}
+                        {fullPageNoteCounts[date] > 0 && (
+                          <NotesForDate
+                            date={date}
+                            expanded={expandedNotesFor.has(date)}
+                            onToggle={() => toggleNotesFolder(date)}
+                            onOpenNote={(noteId) => {
+                              if (onOpenFullPageNote) {
+                                onOpenFullPageNote(noteId, date, undefined);
+                              }
+                            }}
+                            showMenuForNoteId={showMenuForNoteId}
+                            setShowMenuForNoteId={setShowMenuForNoteId}
+                            selectedNoteId={selectedFullPageNoteId}
+                            folders={folders.filter((f) => !f.archived)}
+                            onMoveNoteToFolder={handleMoveNoteToFolder}
+                            onMoveNoteToDate={handleMoveNoteToDate}
+                          />
+                        )}
+
+                        {/* AI Chat indicator for this date in project folder */}
+                        {aiChatCounts[date] > 0 && (
+                          <div
+                            className={`notes-folder-item ai-chat-item ${showAIChat && date === selectedDate ? "active" : ""}`}
+                            onClick={() => {
+                              triggerSelectionHaptic();
+                              onSelectDate(date);
+                              if (onOpenAIChat) {
+                                onOpenAIChat(date);
+                              }
+                            }}
+                          >
+                            <span className="ai-chat-item-title">Chat</span>
+                          </div>
+                        )}
                       </div>
                     ))}
                 </div>
@@ -2318,7 +2380,9 @@ export function Sidebar({
                   folderId={folder._id}
                   onSelectFolder={handleSelectFolder}
                   selectedFolder={selectedFolder}
-                  uncompletedCount={todoCountsByFolder[folder._id.toString()] || 0}
+                  uncompletedCount={
+                    todoCountsByFolder[folder._id.toString()] || 0
+                  }
                 />
               )}
 

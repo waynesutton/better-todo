@@ -14,6 +14,7 @@ export function Launch() {
     { id: "key-features", title: "Key features" },
     { id: "streaks", title: "Streaks tracking" },
     { id: "fullpage-notes", title: "Full-page notes" },
+    { id: "ai-chat", title: "AI Writing Assistant" },
     { id: "projects", title: "Organize with projects" },
     { id: "developers", title: "Built for developers" },
     { id: "themes", title: "Four beautiful themes" },
@@ -178,24 +179,29 @@ export function Launch() {
           <h2 className="section-title">Recent updates</h2>
           <ul className="feature-list">
             <li>
-              <strong>Streaks and AI badges</strong> - Track your todo
-              completion momentum with automatic streak tracking. Fire icon in
-              header shows your current streak with 7-bar weekly progress. Visit
-              the dedicated streaks page to view your stats and AI-generated
-              achievement badges created by OpenAI DALL-E 3 (First Step, Day One
-              Done, 3/5/7/10/30/60/90/365-day streaks). All badges are unique
-              grayscale geometric designs with 3D metallic rendering.
+              <strong>Move to Next Day</strong> - Quickly shift incomplete todos
+              to the next day with a single click. The new option in the date
+              menu copies all non-completed todos forward and archives the
+              originals, keeping your history clean while moving work forward.
             </li>
             <li>
-              <strong>Shareable full-page notes</strong> - Generate read-only
-              links with custom URL slugs. Share your notes publicly with
-              optional title hiding, theme toggle, and Open Graph meta tags for
-              beautiful social media previews.
+              <strong>Pomodoro duration toggle while paused</strong> - Change
+              timer duration (25, 50, or 90 minutes) even when the timer is
+              paused. Switch between focus, steady, and flow state sessions
+              seamlessly without restarting.
             </li>
             <li>
-              <strong>Pomodoro timer keyboard shortcut</strong> - Press Shift +
-              F to open the timer from anywhere. Phase badges now adapt to your
-              chosen theme (dark, light, tan, cloud).
+              <strong>AI Writing Assistant</strong> - Built-in AI chat powered
+              by Claude for writing assistance on each date. Access from the
+              MessageCircle icon in the header. Each date has its own chat
+              session with full conversation history, markdown rendering, and
+              real-time updates.
+            </li>
+            <li>
+              <strong>AI-free streaks</strong> - Track your todo completion
+              momentum with pure JavaScript calculations. Fire icon in header
+              shows your current streak with 7-bar weekly progress. Visit the
+              dedicated streaks page to view your stats and personal statistics.
             </li>
           </ul>
         </section>
@@ -208,15 +214,14 @@ export function Launch() {
             task manager.
           </p>
           <ul className="feature-list">
-            <li>No AI assistants - just your todos and focus</li>
             <li>Real-time synchronization across all your devices</li>
+            <li>AI writing assistant for developer notes and journaling</li>
             <li>Full markdown support with syntax-highlighted code blocks</li>
             <li>Four beautiful themes: Dark, Light, Tan, and Cloud</li>
             <li>Full-text search across todos and notes</li>
             <li>Shareable full-page notes with custom URL slugs</li>
-            <li>Built-in Pomodoro timer with 25 or 90 minute sessions</li>
-            <li>Streaks and AI-generated badges for motivation</li>
-            <li>Mobile-optimized PWA with offline support</li>
+            <li>Built-in Pomodoro timer with 25, 50, or 90 minute sessions</li>
+            <li>Streak tracking for daily todo completion</li>
             <li>Keyboard-first workflow with extensive shortcuts</li>
           </ul>
         </section>
@@ -249,8 +254,7 @@ export function Launch() {
           <p>
             <strong>Streak milestones tracked:</strong> 3 Day Streak · 5 Day
             Streak · 7 Day Streak · 10 Day Streak · 30 Day Streak · 60 Day
-            Streak · 90 Day Streak · 365 Day
-            Streak (1 year!)
+            Streak · 90 Day Streak · 365 Day Streak (1 year!)
           </p>
           <p>
             The streaks page features a theme switcher in the top right corner
@@ -304,6 +308,42 @@ export function Launch() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section id="ai-chat" className="launch-section">
+          <h2 className="section-title">AI Writing Assistant</h2>
+          <p>
+            Get writing help directly in your todo app with the built-in AI chat
+            feature. Powered by Claude (claude-opus-4-5), the AI Writing
+            Assistant provides high-quality writing assistance for any task.
+          </p>
+          <p>
+            Each date has its own separate chat session, so you can organize
+            conversations by date and maintain context for different projects or
+            writing tasks. Access the chat from the MessageCircle icon in the
+            header on any date page.
+          </p>
+          <p>
+            The chat maintains full conversation history, with the last 20
+            messages sent to Claude for context. This means the AI understands
+            the full context of your conversation and can provide more relevant
+            and coherent responses. All messages are stored in the database and
+            sync in real-time across all your devices.
+          </p>
+          <p>
+            AI responses render with full markdown support, including code
+            blocks, lists, tables, and formatting. Each AI message has a copy
+            button for easy content extraction. The input area auto-expands as
+            you type, and you can press "/" to quickly focus the chat input from
+            anywhere in the app.
+          </p>
+          <p>
+            Chat sessions are private and user-scoped. Only authenticated users
+            can access the AI chat, and all conversations are isolated to your
+            account. Chat indicators appear in the sidebar under dates that have
+            active conversations, making it easy to see which dates have chat
+            history.
+          </p>
         </section>
 
         <section id="projects" className="launch-section">

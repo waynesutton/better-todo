@@ -205,4 +205,26 @@ export default defineSchema({
     totalTodosCompleted: v.number(),
     hasUnseenBadges: v.optional(v.boolean()), // Track if user has unseen badge achievements
   }).index("by_user", ["userId"]),
+
+  // AI Chat sessions - one per date for writing assistance
+  aiChats: defineTable({
+    userId: v.string(),
+    date: v.string(), // Format: YYYY-MM-DD
+    messages: v.array(
+      v.object({
+        role: v.union(v.literal("user"), v.literal("assistant")),
+        content: v.string(),
+        timestamp: v.number(),
+      })
+    ),
+    lastMessageAt: v.optional(v.number()),
+    // Searchable content field - concatenated message content for search
+    searchableContent: v.optional(v.string()),
+  })
+    .index("by_user_and_date", ["userId", "date"])
+    .index("by_user", ["userId"])
+    .searchIndex("search_messages", {
+      searchField: "searchableContent",
+      filterFields: ["userId"],
+    }),
 });

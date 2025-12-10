@@ -10,6 +10,7 @@ import {
   FolderOpen,
   Timer,
   Archive,
+  MessageSquare,
 } from "lucide-react";
 import { DashboardIcon, GridIcon } from "@radix-ui/react-icons";
 
@@ -24,6 +25,8 @@ type Stats = {
   archivedTodos: number;
   pomodoroSessions: number;
   totalFolders: number;
+  totalChatMessages: number;
+  totalChatReplies: number;
 };
 
 export function Stats() {
@@ -129,6 +132,20 @@ export function Stats() {
       icon: FolderOpen,
       color: "#8b7355",
       description: "Organizational folders",
+    },
+    {
+      title: "Chat Messages",
+      value: formatNumber(stats?.totalChatMessages),
+      icon: MessageSquare,
+      color: "#EB5601",
+      description: "User messages sent",
+    },
+    {
+      title: "Chat Replies",
+      value: formatNumber(stats?.totalChatReplies),
+      icon: MessageSquare,
+      color: "#8b7355",
+      description: "AI assistant replies",
     },
   ];
 
@@ -326,6 +343,16 @@ export function Stats() {
                 <div className="stats-dashboard-label">Archived Todos</div>
                 <div className="stats-dashboard-value">{formatNumber(stats?.archivedTodos)}</div>
                 <div className="stats-dashboard-unit">todos</div>
+              </div>
+              <div className="stats-dashboard-card">
+                <div className="stats-dashboard-label">Chat Messages</div>
+                <div className="stats-dashboard-value">{formatNumber(stats?.totalChatMessages)}</div>
+                <div className="stats-dashboard-unit">messages</div>
+              </div>
+              <div className="stats-dashboard-card">
+                <div className="stats-dashboard-label">Chat Replies</div>
+                <div className="stats-dashboard-value">{formatNumber(stats?.totalChatReplies)}</div>
+                <div className="stats-dashboard-unit">replies</div>
               </div>
             </div>
           </div>

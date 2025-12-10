@@ -34,6 +34,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `help.mdc` - Core development guidelines and reflection process
 - `clerk-auth-check.mdc` - Clerk authentication guidelines for React components
 - `task.mdc` - Guidelines for creating and managing task lists
+- `write.mdc` - Writing style guide with AI detection avoidance patterns. Covers tweets, LinkedIn, blogs, READMEs, commits. Based on Wikipedia's documented AI tells and academic research.
 - `convex2.mdc` - Additional Convex guidelines
 - `rulesforconvex.mdc` - Convex-specific rules
 
@@ -685,9 +686,32 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.020 (November 24, 2025)
+## Current Version: v.021 (December 3, 2025)
 
-### Latest Features (v.020) - AI-Free Streaks
+### Latest Features (v.021) - Move to Next Day & Pomodoro Duration Toggle
+
+- **Move to Next Day** - Quickly shift incomplete todos to the next day
+  - New option in sidebar date menu to move all non-completed, non-archived todos forward
+  - Copies todos to the next day and archives originals automatically
+  - Idempotent mutation with timestamp-based ordering (avoids write conflicts)
+  - Parallel operations with Promise.all() for efficient processing
+  - Keeps history clean while moving work forward
+
+- **Pomodoro Duration Toggle While Paused** - Change timer duration when paused
+  - Available in both modal and full-screen views when timer is paused
+  - Switch between 25-minute focus, 50-minute steady, and 90-minute flow state sessions
+  - Uses icons: Waves (25 min), Activity (50 min), Clock (90 min)
+  - Smooth transition with single database patch (no UI flickering)
+  - Timer resets to new duration and stays paused for seamless adjustment
+
+- **Query Guards** - Added authentication guards to all Convex queries in Sidebar
+  - Prevents unnecessary subscriptions when user is not authenticated
+  - Uses `isAuthenticated ? undefined : "skip"` pattern for all sidebar queries
+  - Reduces memory pressure and potential race conditions
+
+- **Page Crash Fix** - Fixed page crashing error when navigating between dates
+
+### Previous Features (v.020) - AI-Free Streaks
 
 - **AI-Free Streaks** - Track your todo completion momentum without AI
   - Automatic tracking of consecutive days completing all regular date-based todos

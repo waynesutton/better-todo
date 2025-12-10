@@ -8,6 +8,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **AI Writing Assistant** - Built-in AI chat for writing assistance on each date
+  - Access AI chat from the MessageCircle icon in the header on any date page
+  - Each date has its own separate chat session with full conversation history
+  - Powered by Claude (claude-opus-4-5) for high-quality writing assistance
+  - Chat sessions persist in the database and maintain context across conversations
+  - Real-time message updates with Convex subscriptions
+  - Markdown rendering for AI responses with full syntax support
+  - Copy button on each AI message for easy content extraction
+  - Auto-expanding textarea input with smart height adjustment
+  - Press "/" key to quickly focus the chat input from anywhere
+  - Enter to send, Shift+Enter for new lines
+  - Input position toggle (centered or left-aligned) with preference saved to localStorage
+  - Mobile-optimized interface with responsive design
+  - Chat indicator appears in sidebar under dates that have active conversations
+  - Authentication required - only authenticated users can access AI chat
+  - Full conversation context maintained (last 20 messages sent to Claude for context)
+  - Searchable chat content indexed for future search capabilities
+
+### How It Works
+
+The AI chat feature provides writing assistance for each date in your todo list. Here's how it works:
+
+1. **Access**: Click the MessageCircle icon in the header on any date page to open the AI chat
+2. **Chat Sessions**: Each date has its own separate chat session, so conversations are organized by date
+3. **Conversation History**: All messages are stored in the database and maintain full context
+4. **AI Processing**: When you send a message, it's processed by Claude with the last 20 messages as context
+5. **Real-time Updates**: Messages appear instantly via Convex real-time subscriptions
+6. **Markdown Support**: AI responses render with full markdown support including code blocks, lists, and formatting
+
+### Backend Architecture
+
+- **Schema**: `aiChats` table stores chat sessions with userId, date, messages array, and searchable content
+- **Queries**: `getAIChatByDate` fetches chat history for a specific date
+- **Mutations**: `getOrCreateAIChat`, `addUserMessage`, `addAssistantMessage` manage chat data
+- **Actions**: `generateResponse` calls Claude API with conversation context and system prompts
+- **Indexes**: Optimized queries with `by_user_and_date` and `by_user` indexes
+- **Search**: Full-text search index on `searchableContent` field for future search capabilities
+
+## [v.021] - 2025-12-03
+
+### Added
+
 - **Pomodoro Duration Toggle While Paused** - Change timer duration (25, 50, 90 min) while paused
   - Available in both modal and full-screen views when timer is paused
   - Cycles through: 25 min focus → 50 min steady → 90 min flow state
@@ -31,6 +73,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Uses `isAuthenticated ? undefined : "skip"` pattern for all sidebar queries
   - Reduces memory pressure and potential race conditions
 
+- **Page Crash Error** - Fixed page crashing error when navigating between dates
+
 ### Backend Changes
 
 - **Pomodoro Module** (`convex/pomodoro.ts`)
@@ -39,12 +83,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Uses indexed queries for ownership checks
   - Idempotent with early return if session not found
 
-- **Schema Updates** (`convex/schema.ts`)
-  - Added `hasUnseenBadges` field to streaks table (optional boolean)
-
 - **Todos Module** (`convex/todos.ts`)
   - Added `moveTodosToNextDay` mutation for moving todos between dates
   - Follows Convex best practices: idempotent, indexed queries, parallel operations
+  - Uses timestamp-based ordering for new todos to avoid write conflicts
 
 ## [v.020] - 2025-11-24
 
