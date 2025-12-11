@@ -9548,6 +9548,7 @@ button:active,
   transition: opacity 0.2s ease;
   padding: 0;
   opacity: 0.5;
+  align-self: center;
 }
 
 .ai-chat-pin-toggle svg {
