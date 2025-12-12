@@ -9366,6 +9366,17 @@ button:active,
   color: #e0e0e0;
 }
 
+/* Link styling for user messages (dark background) */
+.ai-chat-message-user .ai-chat-message-content a {
+  color: #ffffff;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.5);
+}
+
+.ai-chat-message-user .ai-chat-message-content a:hover {
+  text-decoration-color: rgba(255, 255, 255, 1);
+}
+
 .ai-chat-message-assistant .ai-chat-message-content {
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -9430,6 +9441,17 @@ button:active,
   margin: 12px 0;
   padding-left: 12px;
   color: var(--text-secondary);
+}
+
+/* Link styling for assistant messages */
+.ai-chat-message-assistant .ai-chat-message-content a {
+  color: var(--mobile-add-button-bg);
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 0, 0, 0.3);
+}
+
+.ai-chat-message-assistant .ai-chat-message-content a:hover {
+  text-decoration-color: var(--mobile-add-button-bg);
 }
 
 /* Message wrapper for positioning copy button outside */
