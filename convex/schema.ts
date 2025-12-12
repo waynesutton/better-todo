@@ -20,7 +20,7 @@ export default defineSchema({
       v.literal("todo"),
       v.literal("h1"),
       v.literal("h2"),
-      v.literal("h3")
+      v.literal("h3"),
     ),
     completed: v.boolean(),
     archived: v.boolean(),
@@ -119,7 +119,7 @@ export default defineSchema({
       v.literal("idle"),
       v.literal("running"),
       v.literal("paused"),
-      v.literal("completed")
+      v.literal("completed"),
     ),
     lastUpdated: v.number(), // Last update timestamp
     backgroundImageUrl: v.optional(v.string()), // Unsplash image URL for full-screen background
@@ -164,8 +164,8 @@ export default defineSchema({
         v.literal("json"),
         v.literal("python"),
         v.literal("go"),
-        v.literal("rust")
-      )
+        v.literal("rust"),
+      ),
     ), // Format type for syntax highlighting and code wrapping
     order: v.number(), // Order for sorting tabs left-to-right
     collapsed: v.optional(v.boolean()), // For future collapsible functionality
@@ -215,7 +215,21 @@ export default defineSchema({
         role: v.union(v.literal("user"), v.literal("assistant")),
         content: v.string(),
         timestamp: v.number(),
-      })
+        // Attachments for images and links
+        attachments: v.optional(
+          v.array(
+            v.object({
+              type: v.union(v.literal("image"), v.literal("link")),
+              // For images: Convex storage ID
+              storageId: v.optional(v.id("_storage")),
+              // For links: URL and scraped content
+              url: v.optional(v.string()),
+              scrapedContent: v.optional(v.string()),
+              title: v.optional(v.string()),
+            }),
+          ),
+        ),
+      }),
     ),
     lastMessageAt: v.optional(v.number()),
     // Searchable content field - concatenated message content for search

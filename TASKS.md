@@ -83,6 +83,24 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.022 - 2025-12-10)
+
+- [x] **AI Chat Image and Link Support** - Upload images and attach links for AI analysis
+  - Added image upload button with file picker (max 3 images, 3MB each)
+  - Added link attach button with URL modal and validation
+  - Auto-detect URLs in messages for scraping
+  - Preview area for attached images and links
+  - Firecrawl integration for web scraping
+  - Claude vision support for image analysis
+  - Updated schema to support attachments in messages
+  - Added `generateUploadUrl`, `getStorageUrl`, `addUserMessageWithAttachments` mutations
+  - Mobile-responsive attachment UI
+
+- [x] **Streaks Icon Inline SVG** - Replaced external SVG file with inline component
+  - Uses currentColor for theme-aware styling
+  - Removed CSS filter-based theming
+  - Better performance and consistency
+
 ## Completed Tasks (v.021 - 2025-12-03)
 
 - [x] **Pomodoro Duration Toggle While Paused** - Change timer duration when paused

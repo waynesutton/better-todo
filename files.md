@@ -200,6 +200,27 @@ This document describes the structure and purpose of each file in the Better Tod
   - Pure JavaScript date calculations with no AI dependencies
   - Tracks consecutive days completing all regular date-based todos
 
+- `aiChats.ts` - AI Chat sessions per date:
+  - `getAIChatByDate` - Fetch chat history for a specific date
+  - `getAIChatCounts` - Get message counts per date for sidebar
+  - `getOrCreateAIChat` - Create new chat or return existing one
+  - `addUserMessage` - Append user message to chat
+  - `addUserMessageWithAttachments` - Append user message with image/link attachments
+  - `addAssistantMessage` - Internal mutation to append AI response
+  - `getAIChatInternal` - Internal query for use in actions
+  - `generateUploadUrl` - Generate URL for image uploads
+  - `getStorageUrl` - Get URL for a stored image
+  - `getStorageUrlInternal` - Internal query for image URLs in actions
+  - `clearChat` - Reset messages to empty array
+  - `deleteChat` - Delete entire chat document
+
+- `aiChatActions.ts` - AI response generation with media support:
+  - `generateResponse` - Generate AI response with Claude, supports images and links
+  - `scrapeUrlAction` - Internal action to scrape a URL for testing
+  - Integrates Firecrawl for web scraping (tweets, LinkedIn, blogs, PDFs)
+  - Claude vision support for image analysis
+  - Auto-detects URLs in messages and scrapes them
+
 - `stats.ts` - Statistics tracking (global and user-specific):
   - `getStats` - Action to get aggregate stats across all users (total users, todos, notes, pomodoro sessions, folders)
   - `getDatabaseStats` - Internal query to get database table counts
@@ -579,13 +600,27 @@ This document describes the structure and purpose of each file in the Better Tod
   - Mobile responsive with proper spacing
 
 - `StreaksHeader.tsx` - Streaks icon and weekly progress bar in app header:
-  - Fire icon (rise.svg) displays current streak status
+  - Inline SVG fire icon using currentColor for theme-aware styling
   - 7-bar weekly progress indicator showing incomplete days
   - Bars use theme-specific colors matching active date colors
   - Navigates to `/streaks` route on click
   - Only visible for authenticated users
   - Tooltip shows streak count and incomplete days
   - Can be toggled on/off with Shift + S keyboard shortcut
+
+- `AIChatView.tsx` - AI writing assistant chat interface:
+  - Full markdown rendering for AI responses with react-markdown
+  - Image upload support (up to 3 images, max 3MB each)
+  - Link attachment with URL modal and validation
+  - Auto-detect URLs in messages for scraping
+  - Preview area for attached images and links
+  - Copy button on AI messages
+  - Stop button to cancel generation
+  - Auto-expanding textarea input
+  - Keyboard shortcuts (Enter to send, Shift+Enter for new line)
+  - Input position toggle (centered or left-aligned)
+  - Mobile-responsive design
+  - Authentication required
 
 - `SharedNoteView.tsx` - Public shared note viewer page:
   - Public route at `/share/:slug` (no authentication required)
@@ -686,7 +721,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.021 (December 3, 2025)
+## Current Version: v.022 (December 10, 2025)
 
 ### Latest Features (v.021) - Move to Next Day & Pomodoro Duration Toggle
 

@@ -1,11 +1,26 @@
-import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
+import {
+  query,
+  mutation,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { v } from "convex/values";
 
-// Message validator for reuse
+// Attachment validator for images and links
+const attachmentValidator = v.object({
+  type: v.union(v.literal("image"), v.literal("link")),
+  storageId: v.optional(v.id("_storage")),
+  url: v.optional(v.string()),
+  scrapedContent: v.optional(v.string()),
+  title: v.optional(v.string()),
+});
+
+// Message validator for reuse (with attachments support)
 const messageValidator = v.object({
   role: v.union(v.literal("user"), v.literal("assistant")),
   content: v.string(),
   timestamp: v.number(),
+  attachments: v.optional(v.array(attachmentValidator)),
 });
 
 // Get AI chat for a specific date
@@ -23,7 +38,7 @@ export const getAIChatByDate = query({
       lastMessageAt: v.optional(v.number()),
       searchableContent: v.optional(v.string()),
     }),
-    v.null()
+    v.null(),
   ),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -35,7 +50,7 @@ export const getAIChatByDate = query({
     const chat = await ctx.db
       .query("aiChats")
       .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", args.date)
+        q.eq("userId", userId).eq("date", args.date),
       )
       .unique();
 
@@ -88,7 +103,7 @@ export const getOrCreateAIChat = mutation({
     const existing = await ctx.db
       .query("aiChats")
       .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", args.date)
+        q.eq("userId", userId).eq("date", args.date),
       )
       .unique();
 
@@ -206,7 +221,7 @@ export const getAIChatInternal = internalQuery({
       lastMessageAt: v.optional(v.number()),
       searchableContent: v.optional(v.string()),
     }),
-    v.null()
+    v.null(),
   ),
   handler: async (ctx, args) => {
     return await ctx.db.get(args.chatId);
@@ -276,3 +291,108 @@ export const deleteChat = mutation({
   },
 });
 
+// Generate upload URL for image uploads in AI chat
+export const generateUploadUrl = mutation({
+  args: {},
+  returns: v.string(),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+// Get storage URL for an uploaded image
+export const getStorageUrl = query({
+  args: {
+    storageId: v.id("_storage"),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+    return await ctx.storage.getUrl(args.storageId);
+  },
+});
+
+// Internal query to get storage URL (for use in actions)
+export const getStorageUrlInternal = internalQuery({
+  args: {
+    storageId: v.id("_storage"),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.storageId);
+  },
+});
+
+// Add a user message with attachments to the chat
+export const addUserMessageWithAttachments = mutation({
+  args: {
+    chatId: v.id("aiChats"),
+    content: v.string(),
+    attachments: v.optional(
+      v.array(
+        v.object({
+          type: v.union(v.literal("image"), v.literal("link")),
+          storageId: v.optional(v.id("_storage")),
+          url: v.optional(v.string()),
+        }),
+      ),
+    ),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Verify ownership using indexed query
+    const chat = await ctx.db
+      .query("aiChats")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.chatId))
+      .unique();
+
+    if (!chat) {
+      throw new Error("Chat not found or unauthorized");
+    }
+
+    // Build attachments array with proper structure
+    const attachments = args.attachments?.map((att) => ({
+      type: att.type,
+      storageId: att.storageId,
+      url: att.url,
+      scrapedContent: undefined, // Will be filled by action
+      title: undefined,
+    }));
+
+    const newMessage = {
+      role: "user" as const,
+      content: args.content,
+      timestamp: Date.now(),
+      attachments:
+        attachments && attachments.length > 0 ? attachments : undefined,
+    };
+
+    const updatedMessages = [...chat.messages, newMessage];
+    // Update searchableContent with all message contents
+    const searchableContent = updatedMessages
+      .map((msg) => msg.content)
+      .join(" ");
+
+    await ctx.db.patch(args.chatId, {
+      messages: updatedMessages,
+      lastMessageAt: Date.now(),
+      searchableContent,
+    });
+
+    return null;
+  },
+});

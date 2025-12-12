@@ -4,6 +4,55 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.022] - 2025-12-10
+
+### Added
+
+- **AI Chat Image and Link Support** - Upload images and attach links for AI analysis
+  - Upload up to 3 images per message (PNG, JPEG, GIF, WebP, max 3MB each)
+  - Attach up to 3 links per message to scrape web content
+  - Auto-detects URLs in message text and scrapes them automatically
+  - Claude vision analyzes uploaded images for questions and context
+  - Firecrawl integration for scraping tweets, LinkedIn posts, blogs, PDFs
+  - Image preview thumbnails before sending
+  - Link preview pills with remove functionality
+  - Link attach modal with URL validation
+  - Image upload button with file picker
+  - Mobile-responsive attachment UI
+  - Images stored in Convex file storage
+
+- **Streaks Icon Inline SVG** - Replaced external SVG file with inline component
+  - Uses currentColor for theme-aware styling
+  - Removes dependency on external image file
+  - Better performance and consistency
+
+### Backend Changes
+
+- **Schema** (`convex/schema.ts`)
+  - Updated `aiChats` messages to include `attachments` field
+  - Attachments support images (storageId) and links (url, scrapedContent, title)
+
+- **AI Chats Module** (`convex/aiChats.ts`)
+  - Added `generateUploadUrl` mutation for image uploads
+  - Added `getStorageUrl` and `getStorageUrlInternal` queries for image URLs
+  - Added `addUserMessageWithAttachments` mutation for messages with attachments
+  - Updated validators to support attachment types
+
+- **AI Chat Actions** (`convex/aiChatActions.ts`)
+  - Integrated Firecrawl SDK for URL scraping
+  - Added Claude vision support for image analysis
+  - Auto-detect URLs in messages (max 3 per message)
+  - Parallel URL scraping for performance
+  - Truncate scraped content to 8000 chars to avoid token limits
+
+### Dependencies
+
+- Added `@mendable/firecrawl-js` for web scraping
+
+### Environment Variables
+
+- Added `FIRECRAWL_API_KEY` requirement for link scraping functionality
+
 ## [Unreleased]
 
 ### Added
