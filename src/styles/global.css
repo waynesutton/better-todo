@@ -9328,12 +9328,42 @@ button:active,
   border-radius: 12px;
   font-size: 14px;
   line-height: 1.6;
+  /* Ensure proper text wrapping */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .ai-chat-message-user .ai-chat-message-content {
   background: var(--mobile-add-button-bg);
   color: #ffffff;
   border-bottom-right-radius: 4px;
+}
+
+/* Code styling for user messages (dark background) */
+.ai-chat-message-user .ai-chat-message-content code {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: "SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace;
+  font-size: 13px;
+}
+
+.ai-chat-message-user .ai-chat-message-content pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.ai-chat-message-user .ai-chat-message-content pre code {
+  background: none;
+  padding: 0;
+  color: #e0e0e0;
 }
 
 .ai-chat-message-assistant .ai-chat-message-content {

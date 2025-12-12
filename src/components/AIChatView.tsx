@@ -441,13 +441,10 @@ export function AIChatView({ date }: AIChatViewProps) {
           <div key={index} className="ai-chat-message-wrapper">
             <div className={`ai-chat-message ai-chat-message-${message.role}`}>
               <div className="ai-chat-message-content">
-                {message.role === "assistant" ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {message.content}
-                  </ReactMarkdown>
-                ) : (
-                  <p>{message.content}</p>
-                )}
+                {/* Use ReactMarkdown for both user and assistant messages to handle code formatting */}
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message.content}
+                </ReactMarkdown>
               </div>
             </div>
             {message.role === "assistant" && (
