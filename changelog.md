@@ -4,6 +4,23 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.023] - 2025-12-19
+
+### Fixed
+
+- **Infinite Re-render Loop Fix** - Fixed app crash when left open in browser
+  - Added refs to track Clerk modal state transitions (profile, sign-up, sign-in)
+  - User reload now only triggers when modal transitions from open to closed
+  - Prevents continuous re-render cycle that caused browser tab crashes
+  - No longer causes "Code 5" or similar runtime errors on live site
+
+### Technical Details
+
+- Added `prevProfileModalRef`, `prevSignUpModalRef`, `prevSignInModalRef` refs
+- Modified useEffect hooks to check previous state before calling `user?.reload?.()`
+- Refs update after each effect run to track current state
+- Fix applies to all three authentication modal close handlers
+
 ## [v.022] - 2025-12-10
 
 ### Added

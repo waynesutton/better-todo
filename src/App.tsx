@@ -66,6 +66,11 @@ function App() {
   // Track the last known date to detect when a new day starts
   const lastKnownDateRef = useRef<string>(format(new Date(), "yyyy-MM-dd"));
 
+  // Track previous modal states to detect close transitions (prevents infinite re-render loop)
+  const prevProfileModalRef = useRef<boolean>(false);
+  const prevSignUpModalRef = useRef<boolean>(false);
+  const prevSignInModalRef = useRef<boolean>(false);
+
   // Auto-switch to today when a new day starts (but don't interfere with manual date selection)
   useEffect(() => {
     const checkForNewDay = () => {
@@ -369,22 +374,29 @@ function App() {
   }, [authIsLoading, isAuthenticated]);
 
   // After closing Clerk modals, refresh Clerk user so Sidebar tooltip/profile reflects updates
+  // Uses refs to detect modal close transitions and prevent infinite re-render loops
   useEffect(() => {
-    if (!showProfileModal) {
+    // Only reload when modal transitions from open to closed
+    if (prevProfileModalRef.current && !showProfileModal) {
       void user?.reload?.();
     }
+    prevProfileModalRef.current = showProfileModal;
   }, [showProfileModal, user]);
 
   useEffect(() => {
-    if (!showSignUpModal) {
+    // Only reload when modal transitions from open to closed
+    if (prevSignUpModalRef.current && !showSignUpModal) {
       void user?.reload?.();
     }
+    prevSignUpModalRef.current = showSignUpModal;
   }, [showSignUpModal, user]);
 
   useEffect(() => {
-    if (!showSignInModal) {
+    // Only reload when modal transitions from open to closed
+    if (prevSignInModalRef.current && !showSignInModal) {
       void user?.reload?.();
     }
+    prevSignInModalRef.current = showSignInModal;
   }, [showSignInModal, user]);
 
   // Handle sidebar resize

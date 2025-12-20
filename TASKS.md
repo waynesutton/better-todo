@@ -83,6 +83,14 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.023 - 2025-12-19)
+
+- [x] **Infinite Re-render Loop Fix** - Fixed app crash when left open in browser
+  - Added refs (`prevProfileModalRef`, `prevSignUpModalRef`, `prevSignInModalRef`) to track modal states
+  - Modified useEffect hooks to only call `user?.reload?.()` when modal transitions from open to closed
+  - Prevents continuous re-render cycle that caused browser tab crashes and "Code 5" errors
+  - No changes to Convex backend required (frontend-only fix)
+
 ## Completed Tasks (v.022 - 2025-12-10)
 
 - [x] **AI Chat Image and Link Support** - Upload images and attach links for AI analysis

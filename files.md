@@ -306,6 +306,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Automatic user data storage in Convex database
     - Ephemeral mode for unsigned users (local storage)
     - Theme-aware authentication modals
+    - Modal state tracking refs to prevent infinite re-render loops on user reload
 
 ### Components (`src/components/`)
 
