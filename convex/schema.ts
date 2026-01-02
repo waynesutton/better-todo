@@ -80,7 +80,10 @@ export default defineSchema({
     name: v.string(),
     order: v.number(),
     archived: v.boolean(),
-  }).index("by_user", ["userId"]),
+    slug: v.optional(v.string()), // Short URL slug for shareable links (NanoID)
+  })
+    .index("by_user", ["userId"])
+    .index("by_slug", ["slug"]),
 
   // Association between folders and dates
   folderDates: defineTable({

@@ -83,6 +83,26 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.024 - 2026-01-02)
+
+- [x] **Shareable URLs for Dates and Projects** - Copy link to navigate directly to dates and projects
+  - Added Copy Link option to sidebar date and project menus
+  - Dates use `/d/YYYY-MM-DD` format (e.g., `/d/2026-01-02`)
+  - Projects use short NanoID-style slugs `/p/:slug` (e.g., `/p/ork88fqr`)
+  - 8 alphanumeric character slugs for clean, short URLs
+  - Backwards compatible - supports both new slugs and legacy full Convex IDs
+  - Auto-generates slugs for existing folders without slugs when copying link
+  - URL navigation auto-expands and highlights the selected folder in sidebar
+  - Active folder header styling with theme-aware colors
+  - Added `slug` field and `by_slug` index to folders schema
+  - Added `generateSlug()`, `getFolderBySlug`, `generateFolderSlug` to convex/folders.ts
+  - Updated App.tsx routing from `/p/:folderId` to `/p/:folderSlug`
+  - Added race condition guards for URL sync
+
+- [x] **Sidebar Collapse Keyboard Shortcut** - Quick toggle for sidebar visibility
+  - Press Cmd+. (Mac) or Ctrl+. (Windows/Linux) to toggle sidebar collapse
+  - Added to keyboard shortcuts modal in Navigation section
+
 ## Completed Tasks (v.023 - 2025-12-19)
 
 - [x] **Infinite Re-render Loop Fix** - Fixed app crash when left open in browser

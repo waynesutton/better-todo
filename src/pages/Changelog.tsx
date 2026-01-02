@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v020");
+  const [activeSection, setActiveSection] = useState("v024");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
-    { id: "unreleased", title: "Unreleased" },
+    { id: "v024", title: "v.024 - Jan 2, 2026" },
+    { id: "v023", title: "v.023 - Dec 19, 2025" },
+    { id: "v022", title: "v.022 - Dec 10, 2025" },
+    { id: "v021", title: "v.021 - Dec 3, 2025" },
     { id: "v020", title: "v.020 - Nov 24, 2025" },
     { id: "v019", title: "v.019 - Nov 19, 2025" },
     { id: "v018", title: "v.018 - Nov 18, 2025" },
@@ -91,109 +94,387 @@ export function Changelog() {
 
       <div className="launch-container">
         {/* Each section mirrors the markdown changelog so anchors stay in sync. */}
-        <section id="unreleased" className="launch-section">
+        <section id="v024" className="launch-section">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
-          <h2 className="section-title">Unreleased</h2>
+          <h2 className="section-title">v.024 - January 2, 2026</h2>
+          <p className="changelog-subtitle">Shareable URLs & Keyboard Shortcuts</p>
 
           <h3 className="changelog-category">Added</h3>
           <ul className="feature-list">
             <li>
-              <strong>AI Writing Assistant</strong> - Built-in AI chat for writing
-              assistance on each date
+              <strong>Shareable URLs for Dates and Projects</strong> - Copy link
+              to navigate directly to dates and projects
               <ul className="nested-list">
                 <li>
-                  Access AI chat from the MessageCircle icon in the header on any
-                  date page
+                  Copy Link option in sidebar date menu copies shareable URL
+                  (e.g., <code>/d/2026-01-02</code>)
                 </li>
                 <li>
-                  Each date has its own separate chat session with full
-                  conversation history
+                  Copy Link option in sidebar project menu copies shareable URL
+                  with short slug (e.g., <code>/p/ork88fqr</code>)
                 </li>
                 <li>
-                  Powered by Claude (claude-opus-4-5) for high-quality writing
-                  assistance
+                  Short NanoID-style slugs (8 alphanumeric characters) for
+                  project URLs
                 </li>
                 <li>
-                  Chat sessions persist in the database and maintain context
-                  across conversations
+                  Backwards compatible - supports both new slugs and legacy full
+                  Convex IDs
                 </li>
                 <li>
-                  Real-time message updates with Convex subscriptions
+                  Auto-generates slugs for existing folders without slugs when
+                  copying link
                 </li>
                 <li>
-                  Markdown rendering for AI responses with full syntax support
+                  URL navigation auto-expands and highlights the selected folder
+                  in sidebar
+                </li>
+                <li>Active folder header styling with theme-aware colors</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Sidebar Collapse Keyboard Shortcut</strong> - Quick toggle
+              for sidebar visibility
+              <ul className="nested-list">
+                <li>
+                  Press Cmd+. (Mac) or Ctrl+. (Windows/Linux) to toggle sidebar
+                  collapse
+                </li>
+                <li>Added to keyboard shortcuts modal (press ? to view)</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Schema Changes</h3>
+          <ul className="feature-list">
+            <li>
+              Added <code>slug</code> field to folders table for short URL slugs
+            </li>
+            <li>
+              Added <code>by_slug</code> index for efficient slug lookups
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Backend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Folders Module</strong> (<code>convex/folders.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Added <code>generateSlug()</code> helper function for
+                  8-character alphanumeric slugs
                 </li>
                 <li>
-                  Copy button on each AI message for easy content extraction
+                  Updated <code>createFolder</code> mutation to auto-generate
+                  unique slugs
                 </li>
                 <li>
-                  Auto-expanding textarea input with smart height adjustment
+                  Added <code>getFolderBySlug</code> query (handles both slugs
+                  and full IDs for backwards compatibility)
                 </li>
                 <li>
-                  Press "/" key to quickly focus the chat input from anywhere
-                </li>
-                <li>Enter to send, Shift+Enter for new lines</li>
-                <li>
-                  Input position toggle (centered or left-aligned) with
-                  preference saved to localStorage
-                </li>
-                <li>
-                  Mobile-optimized interface with responsive design
-                </li>
-                <li>
-                  Chat indicator appears in sidebar under dates that have active
-                  conversations
-                </li>
-                <li>
-                  Authentication required - only authenticated users can access
-                  AI chat
-                </li>
-                <li>
-                  Full conversation context maintained (last 20 messages sent to
-                  Claude for context)
-                </li>
-                <li>
-                  Searchable chat content indexed for future search capabilities
+                  Added <code>generateFolderSlug</code> mutation for existing
+                  folders without slugs
                 </li>
               </ul>
             </li>
           </ul>
 
-          <h3 className="changelog-category">How It Works</h3>
-          <p>
-            The AI chat feature provides writing assistance for each date in
-            your todo list. Here's how it works:
-          </p>
-          <ol className="feature-list">
+          <h3 className="changelog-category">Frontend Changes</h3>
+          <ul className="feature-list">
             <li>
-              <strong>Access</strong>: Click the MessageCircle icon in the header
-              on any date page to open the AI chat
+              <strong>App.tsx</strong> - URL routing and state management
+              <ul className="nested-list">
+                <li>
+                  Changed route from <code>/p/:folderId</code> to{" "}
+                  <code>/p/:folderSlug</code>
+                </li>
+                <li>
+                  Added <code>folderFromSlug</code> query to resolve folder by
+                  slug
+                </li>
+                <li>
+                  Added URL sync guards to prevent race conditions during
+                  navigation
+                </li>
+              </ul>
             </li>
             <li>
-              <strong>Chat Sessions</strong>: Each date has its own separate
-              chat session, so conversations are organized by date
+              <strong>Sidebar.tsx</strong> - Copy link and auto-expand
+              functionality
+              <ul className="nested-list">
+                <li>Added Copy Link to date and project menus</li>
+                <li>Auto-expands folder when selected via URL navigation</li>
+                <li>Added active class styling to folder headers</li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v023" className="launch-section">
+          <h2 className="section-title">v.023 - December 19, 2025</h2>
+          <p className="changelog-subtitle">Stability Fix</p>
+
+          <h3 className="changelog-category">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Infinite Re-render Loop Fix</strong> - Fixed app crash
+              when left open in browser
+              <ul className="nested-list">
+                <li>
+                  Added refs to track Clerk modal state transitions (profile,
+                  sign-up, sign-in)
+                </li>
+                <li>
+                  User reload now only triggers when modal transitions from open
+                  to closed
+                </li>
+                <li>
+                  Prevents continuous re-render cycle that caused browser tab
+                  crashes
+                </li>
+                <li>
+                  No longer causes "Code 5" or similar runtime errors on live
+                  site
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Technical Details</h3>
+          <ul className="feature-list">
+            <li>
+              Added <code>prevProfileModalRef</code>,{" "}
+              <code>prevSignUpModalRef</code>, <code>prevSignInModalRef</code>{" "}
+              refs
             </li>
             <li>
-              <strong>Conversation History</strong>: All messages are stored in
-              the database and maintain full context
+              Modified useEffect hooks to check previous state before calling{" "}
+              <code>user?.reload?.()</code>
+            </li>
+            <li>Refs update after each effect run to track current state</li>
+            <li>Fix applies to all three authentication modal close handlers</li>
+          </ul>
+        </section>
+
+        <section id="v022" className="launch-section">
+          <h2 className="section-title">v.022 - December 10, 2025</h2>
+          <p className="changelog-subtitle">AI Chat Attachments</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>AI Chat Image and Link Support</strong> - Upload images
+              and attach links for AI analysis
+              <ul className="nested-list">
+                <li>
+                  Upload up to 3 images per message (PNG, JPEG, GIF, WebP, max
+                  3MB each)
+                </li>
+                <li>Attach up to 3 links per message to scrape web content</li>
+                <li>
+                  Auto-detects URLs in message text and scrapes them
+                  automatically
+                </li>
+                <li>
+                  Claude vision analyzes uploaded images for questions and
+                  context
+                </li>
+                <li>
+                  Firecrawl integration for scraping tweets, LinkedIn posts,
+                  blogs, PDFs
+                </li>
+                <li>Image preview thumbnails before sending</li>
+                <li>Link preview pills with remove functionality</li>
+                <li>Link attach modal with URL validation</li>
+                <li>Image upload button with file picker</li>
+                <li>Mobile-responsive attachment UI</li>
+                <li>Images stored in Convex file storage</li>
+              </ul>
             </li>
             <li>
-              <strong>AI Processing</strong>: When you send a message, it's
-              processed by Claude with the last 20 messages as context
+              <strong>Streaks Icon Inline SVG</strong> - Replaced external SVG
+              file with inline component
+              <ul className="nested-list">
+                <li>Uses currentColor for theme-aware styling</li>
+                <li>Removes dependency on external image file</li>
+                <li>Better performance and consistency</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Backend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Schema</strong> (<code>convex/schema.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Updated <code>aiChats</code> messages to include{" "}
+                  <code>attachments</code> field
+                </li>
+                <li>
+                  Attachments support images (storageId) and links (url,
+                  scrapedContent, title)
+                </li>
+              </ul>
             </li>
             <li>
-              <strong>Real-time Updates</strong>: Messages appear instantly via
-              Convex real-time subscriptions
+              <strong>AI Chats Module</strong> (<code>convex/aiChats.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Added <code>generateUploadUrl</code> mutation for image
+                  uploads
+                </li>
+                <li>
+                  Added <code>getStorageUrl</code> and{" "}
+                  <code>getStorageUrlInternal</code> queries for image URLs
+                </li>
+                <li>
+                  Added <code>addUserMessageWithAttachments</code> mutation for
+                  messages with attachments
+                </li>
+              </ul>
             </li>
             <li>
-              <strong>Markdown Support</strong>: AI responses render with full
-              markdown support including code blocks, lists, and formatting
+              <strong>AI Chat Actions</strong> (
+              <code>convex/aiChatActions.ts</code>)
+              <ul className="nested-list">
+                <li>Integrated Firecrawl SDK for URL scraping</li>
+                <li>Added Claude vision support for image analysis</li>
+                <li>Auto-detect URLs in messages (max 3 per message)</li>
+                <li>Parallel URL scraping for performance</li>
+              </ul>
             </li>
-          </ol>
+          </ul>
+
+          <h3 className="changelog-category">Dependencies</h3>
+          <ul className="feature-list">
+            <li>
+              Added <code>@mendable/firecrawl-js</code> for web scraping
+            </li>
+          </ul>
+        </section>
+
+        <section id="v021" className="launch-section">
+          <h2 className="section-title">v.021 - December 3, 2025</h2>
+          <p className="changelog-subtitle">Timer Flexibility & Todo Management</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Pomodoro Duration Toggle While Paused</strong> - Change
+              timer duration (25, 50, 90 min) while paused
+              <ul className="nested-list">
+                <li>
+                  Available in both modal and full-screen views when timer is
+                  paused
+                </li>
+                <li>
+                  Cycles through: 25 min focus → 50 min steady → 90 min flow
+                  state
+                </li>
+                <li>
+                  Uses icons: Waves (25 min), Activity (50 min), Clock (90 min)
+                </li>
+                <li>
+                  Smooth transition with single database patch (no flickering)
+                </li>
+                <li>Timer resets to new duration and stays paused</li>
+                <li>Tooltip shows duration label on hover</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Move to Next Day</strong> - New option in date menu to
+              move incomplete todos to the next day
+              <ul className="nested-list">
+                <li>
+                  Copies all non-completed, non-archived todos from source date
+                  to the next day
+                </li>
+                <li>
+                  Archives the original todos after moving (keeps history clean)
+                </li>
+                <li>
+                  Idempotent mutation with early returns (no duplicate
+                  operations)
+                </li>
+                <li>
+                  Uses timestamp-based ordering for new todos (avoids write
+                  conflicts)
+                </li>
+                <li>
+                  Parallel operations with <code>Promise.all()</code> for
+                  efficient processing
+                </li>
+                <li>
+                  Located in sidebar date menu alongside existing copy options
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Query Guards</strong> - Added authentication guards to all
+              Convex queries in Sidebar
+              <ul className="nested-list">
+                <li>
+                  Prevents unnecessary subscriptions when user is not
+                  authenticated
+                </li>
+                <li>
+                  Uses <code>isAuthenticated ? undefined : "skip"</code> pattern
+                  for all sidebar queries
+                </li>
+                <li>Reduces memory pressure and potential race conditions</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Page Crash Error</strong> - Fixed page crashing error when
+              navigating between dates
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Backend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Pomodoro Module</strong> (<code>convex/pomodoro.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Added <code>updatePomodoroPreset</code> mutation for changing
+                  duration while paused
+                </li>
+                <li>
+                  Single patch operation (no stop/start cycle) for smooth UI
+                  transitions
+                </li>
+                <li>Uses indexed queries for ownership checks</li>
+                <li>Idempotent with early return if session not found</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Todos Module</strong> (<code>convex/todos.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Added <code>moveTodosToNextDay</code> mutation for moving
+                  todos between dates
+                </li>
+                <li>
+                  Follows Convex best practices: idempotent, indexed queries,
+                  parallel operations
+                </li>
+                <li>
+                  Uses timestamp-based ordering for new todos to avoid write
+                  conflicts
+                </li>
+              </ul>
+            </li>
+          </ul>
         </section>
 
         <section id="v020" className="launch-section">

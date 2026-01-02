@@ -1,6 +1,17 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 import { getUserId } from "./users";
+
+// Generate a short alphanumeric slug (8 characters)
+function generateSlug(): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let slug = "";
+  for (let i = 0; i < 8; i++) {
+    slug += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return slug;
+}
 
 // Get all folders for the current user with their dates
 export const getFolders = query({
@@ -13,6 +24,7 @@ export const getFolders = query({
       name: v.string(),
       order: v.number(),
       archived: v.boolean(),
+      slug: v.optional(v.string()),
       dates: v.array(v.string()),
     }),
   ),
@@ -92,6 +104,61 @@ export const getFolderForDate = query({
   },
 });
 
+// Get folder by slug or ID (for URL-based navigation)
+// Handles both short slugs (8 chars) and full Convex IDs for backwards compatibility
+export const getFolderBySlug = query({
+  args: { slug: v.string() },
+  returns: v.union(
+    v.object({
+      _id: v.id("folders"),
+      _creationTime: v.number(),
+      userId: v.string(),
+      name: v.string(),
+      order: v.number(),
+      archived: v.boolean(),
+      slug: v.optional(v.string()),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx);
+    if (!userId) return null;
+
+    // First try to find by slug
+    let folder = await ctx.db
+      .query("folders")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .first();
+
+    // If not found by slug, try to find by ID (backwards compatibility)
+    if (!folder && args.slug.length > 20) {
+      // Only try ID lookup for long strings (Convex IDs are ~32 chars)
+      try {
+        const maybeDoc = await ctx.db.get(args.slug as Id<"folders">);
+        // Verify it's actually a folder (has required fields) and cast properly
+        if (
+          maybeDoc &&
+          "name" in maybeDoc &&
+          "order" in maybeDoc &&
+          "archived" in maybeDoc &&
+          "userId" in maybeDoc
+        ) {
+          folder = maybeDoc as NonNullable<typeof folder>;
+        }
+      } catch {
+        // Not a valid ID, folder doesn't exist
+      }
+    }
+
+    // Only return folder if it belongs to the current user
+    if (!folder || folder.userId !== userId) {
+      return null;
+    }
+
+    return folder;
+  },
+});
+
 // Create a new folder
 export const createFolder = mutation({
   args: { name: v.string() },
@@ -104,11 +171,27 @@ export const createFolder = mutation({
     // This avoids write conflicts when creating multiple folders rapidly
     const order = Date.now();
 
+    // Generate a unique slug for the folder
+    let slug = generateSlug();
+    // Check if slug already exists and regenerate if needed
+    let existingFolder = await ctx.db
+      .query("folders")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .first();
+    while (existingFolder) {
+      slug = generateSlug();
+      existingFolder = await ctx.db
+        .query("folders")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .first();
+    }
+
     const folderId = await ctx.db.insert("folders", {
       userId,
       name: args.name,
       order: order,
       archived: false,
+      slug,
     });
 
     return folderId;
@@ -326,6 +409,49 @@ export const addDateToFolder = mutation({
     }
 
     return null;
+  },
+});
+
+// Generate slug for an existing folder (for migration of old folders)
+export const generateFolderSlug = mutation({
+  args: { folderId: v.id("folders") },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    // Verify folder belongs to user
+    const folder = await ctx.db
+      .query("folders")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.folderId))
+      .unique();
+
+    if (!folder) {
+      return null;
+    }
+
+    // If folder already has a slug, return it
+    if (folder.slug) {
+      return folder.slug;
+    }
+
+    // Generate a unique slug
+    let slug = generateSlug();
+    let existingFolder = await ctx.db
+      .query("folders")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .first();
+    while (existingFolder) {
+      slug = generateSlug();
+      existingFolder = await ctx.db
+        .query("folders")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .first();
+    }
+
+    await ctx.db.patch(args.folderId, { slug });
+    return slug;
   },
 });
 

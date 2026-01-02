@@ -1438,6 +1438,27 @@ button:active,
   background-color: rgba(139, 115, 85, 0.08);
 }
 
+/* Active folder styles (when folder is selected) */
+.sidebar-archive-header.active {
+  background-color: #0076c6;
+  color: white;
+}
+
+:root[data-theme="dark"] .sidebar-archive-header.active {
+  background-color: #27a561;
+  color: white;
+}
+
+:root[data-theme="tan"] .sidebar-archive-header.active {
+  background-color: #eb5601;
+  color: white;
+}
+
+:root[data-theme="cloud"] .sidebar-archive-header.active {
+  background-color: #171717;
+  color: white;
+}
+
 /* Apply reduced opacity to folder dates for visual hierarchy */
 /* Don't apply opacity to container - it affects dropdowns */
 

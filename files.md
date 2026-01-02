@@ -54,8 +54,9 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user_and_date`
   - **dateLabels**: Stores custom text labels for dates with userId, date, and label text
     - Index: `by_user_and_date`
-  - **folders**: Stores custom folders for organizing dates with name, order, and archived status
-    - Index: `by_user`
+  - **folders**: Stores custom folders for organizing dates with name, order, archived status, and slug
+    - Index: `by_user`, `by_slug`
+    - Short NanoID-style slugs (8 alphanumeric characters) for shareable URLs
   - **folderDates**: Association table linking folders to dates
     - Index: `by_user_and_folder`, `by_user_and_date`
   - **monthGroups**: Auto-generated groups for completed months with monthName, year, month, and archived status
@@ -160,13 +161,15 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getFolders` - Get all projects with their associated dates
   - `getFolderDates` - Get dates for a specific project
   - `getFolderForDate` - Check if a date belongs to a project
-  - `createFolder` - Create new project with timestamp-based ordering (avoids write conflicts)
+  - `getFolderBySlug` - Get folder by slug or ID (for URL-based navigation, handles both short slugs and full Convex IDs for backwards compatibility)
+  - `createFolder` - Create new project with timestamp-based ordering and auto-generated slug (avoids write conflicts)
   - `renameFolder` - Update project name (uses indexed queries, idempotent check)
   - `archiveFolder` - Archive a project and all its full-page notes in parallel (uses indexed queries, idempotent)
   - `unarchiveFolder` - Restore archived project and all its full-page notes in parallel (uses indexed queries, idempotent)
   - `deleteFolder` - Delete project, all associations, and all its full-page notes (parallel deletes with Promise.all)
   - `addDateToFolder` - Associate a date with a project (idempotent check for existing associations)
   - `removeDateFromFolder` - Remove date from project
+  - `generateFolderSlug` - Generate slug for existing folder (for migration of old folders without slugs)
 
 - `monthGroups.ts` - Auto-grouping for completed months:
   - `getMonthGroups` - Get all month groups with their associated dates
@@ -399,6 +402,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Active date highlighting (#0076C6 accent color)
   - Theme toggle (half-moon icon) at bottom of sidebar above login link
   - Three-dot menu per date with options:
+    - Copy Link (copies shareable URL to clipboard, e.g., `/d/2026-01-02`)
     - Add/edit/remove custom date label
     - Add to Project (shows project selector modal when projects exist)
     - Remove from Project (when date is in a project)
@@ -411,6 +415,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Archive Date
     - Delete Date
   - Three-dot menu per project with options:
+    - Copy Link (copies shareable URL with short slug, e.g., `/p/ork88fqr`)
     - Rename project
     - Archive project
     - Delete project
@@ -443,6 +448,7 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `KeyboardShortcutsModal.tsx` - Keyboard shortcuts reference modal with:
   - Comprehensive keyboard shortcuts documentation
+  - **Sidebar collapse shortcut**: Cmd+. (Mac) or Ctrl+. (Windows/Linux) to toggle sidebar
   - **Code Blocks section** with copyable language syntax:
     - CSS, JavaScript, TypeScript, HTML, JSON, Python, Go, Rust
     - Click-to-copy buttons for each language syntax
@@ -722,9 +728,24 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.022 (December 10, 2025)
+## Current Version: v.024 (January 2, 2026)
 
-### Latest Features (v.021) - Move to Next Day & Pomodoro Duration Toggle
+### Latest Features (v.024) - Shareable URLs & Sidebar Keyboard Shortcut
+
+- **Shareable URLs for Dates and Projects** - Copy link to navigate directly to dates and projects
+  - Copy Link option in sidebar date menu copies shareable URL (e.g., `/d/2026-01-02`)
+  - Copy Link option in sidebar project menu copies shareable URL with short slug (e.g., `/p/ork88fqr`)
+  - Short NanoID-style slugs (8 alphanumeric characters) for project URLs
+  - Backwards compatible - supports both new slugs and legacy full Convex IDs
+  - Auto-generates slugs for existing folders without slugs when copying link
+  - URL navigation auto-expands and highlights the selected folder in sidebar
+  - Active folder header styling with theme-aware colors
+
+- **Sidebar Collapse Keyboard Shortcut** - Quick toggle for sidebar visibility
+  - Press Cmd+. (Mac) or Ctrl+. (Windows/Linux) to toggle sidebar collapse
+  - Added to keyboard shortcuts modal in Navigation section
+
+### Previous Features (v.021) - Move to Next Day & Pomodoro Duration Toggle
 
 - **Move to Next Day** - Quickly shift incomplete todos to the next day
   - New option in sidebar date menu to move all non-completed, non-archived todos forward

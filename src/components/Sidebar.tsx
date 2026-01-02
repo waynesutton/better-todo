@@ -709,6 +709,16 @@ export function Sidebar({
   const [backlogLabelInput, setBacklogLabelInput] = useState("");
   const [showMenuForNoteId, setShowMenuForNoteId] =
     useState<Id<"fullPageNotes"> | null>(null);
+  const [copiedLinkFor, setCopiedLinkFor] = useState<string | null>(null);
+
+  // Helper to copy link to clipboard
+  const copyLinkToClipboard = (path: string, id: string) => {
+    const url = `${window.location.origin}${path}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedLinkFor(id);
+      setTimeout(() => setCopiedLinkFor(null), 2000);
+    });
+  };
 
   // Fetch data - all queries guarded with isAuthenticated to prevent unnecessary subscriptions
   const archivedDates =
@@ -824,6 +834,7 @@ export function Sidebar({
   const deleteFolder = useMutation(api.folders.deleteFolder);
   const addDateToFolder = useMutation(api.folders.addDateToFolder);
   const removeDateFromFolder = useMutation(api.folders.removeDateFromFolder);
+  const generateFolderSlug = useMutation(api.folders.generateFolderSlug);
   const archiveMonthGroup = useMutation(api.monthGroups.archiveMonthGroup);
   const unarchiveMonthGroup = useMutation(api.monthGroups.unarchiveMonthGroup);
   const deleteMonthGroup = useMutation(api.monthGroups.deleteMonthGroup);
@@ -1348,6 +1359,23 @@ export function Sidebar({
     });
   }, [selectedFullPageNoteId, selectedFolder]);
 
+  // Auto-expand folder when selected via URL navigation (without a note selected)
+  useEffect(() => {
+    if (!selectedFolder) {
+      return;
+    }
+
+    // Expand the selected folder so it's visible in the sidebar
+    setExpandedFolders((prev) => {
+      if (prev.has(selectedFolder)) {
+        return prev; // Already expanded, no update needed
+      }
+      const next = new Set(prev);
+      next.add(selectedFolder);
+      return next;
+    });
+  }, [selectedFolder]);
+
   // Calculate dates that are in folders or month groups
   const datesInFoldersOrGroups = new Set<string>();
   folders.forEach((folder) =>
@@ -1704,6 +1732,15 @@ export function Sidebar({
                           )}
                         <div
                           className="menu-item"
+                          onClick={() => {
+                            copyLinkToClipboard(`/d/${date}`, `date-${date}`);
+                            setShowMenuForDate(null);
+                          }}
+                        >
+                          {copiedLinkFor === `date-${date}` ? "Copied!" : "Copy Link"}
+                        </div>
+                        <div
+                          className="menu-item"
                           onClick={() => handleCopyToTomorrow(date)}
                         >
                           Copy to Tomorrow
@@ -2014,6 +2051,15 @@ export function Sidebar({
                                   )}
                                 <div
                                   className="menu-item"
+                                  onClick={() => {
+                                    copyLinkToClipboard(`/d/${date}`, `date-${date}`);
+                                    setShowMenuForDate(null);
+                                  }}
+                                >
+                                  {copiedLinkFor === `date-${date}` ? "Copied!" : "Copy Link"}
+                                </div>
+                                <div
+                                  className="menu-item"
                                   onClick={() => handleCopyToTomorrow(date)}
                                 >
                                   Copy to Tomorrow
@@ -2192,7 +2238,7 @@ export function Sidebar({
           {activeFolders.map((folder) => (
             <div key={folder._id} className="sidebar-archive-section">
               <div
-                className="sidebar-archive-header"
+                className={`sidebar-archive-header ${selectedFolder === folder._id ? "active" : ""}`}
                 onClick={() => toggleFolder(folder._id)}
               >
                 <span
@@ -2216,6 +2262,17 @@ export function Sidebar({
                 </button>
                 {showFolderMenu === folder._id && (
                   <div className="date-menu-dropdown">
+                    <div
+                      className="menu-item"
+                      onClick={async () => {
+                        // Generate slug if it doesn't exist
+                        const slug = folder.slug || await generateFolderSlug({ folderId: folder._id });
+                        copyLinkToClipboard(`/p/${slug || folder._id}`, `folder-${folder._id}`);
+                        setShowFolderMenu(null);
+                      }}
+                    >
+                      {copiedLinkFor === `folder-${folder._id}` ? "Copied!" : "Copy Link"}
+                    </div>
                     <div
                       className="menu-item"
                       onClick={() => {
@@ -2315,6 +2372,15 @@ export function Sidebar({
                             </button>
                             {showMenuForDate === date && (
                               <div className="date-menu-dropdown">
+                                <div
+                                  className="menu-item"
+                                  onClick={() => {
+                                    copyLinkToClipboard(`/d/${date}`, `date-${date}`);
+                                    setShowMenuForDate(null);
+                                  }}
+                                >
+                                  {copiedLinkFor === `date-${date}` ? "Copied!" : "Copy Link"}
+                                </div>
                                 <div
                                   className="menu-item"
                                   onClick={() =>
@@ -2526,6 +2592,15 @@ export function Sidebar({
                             <div className="date-menu-dropdown">
                               <div
                                 className="menu-item"
+                                onClick={() => {
+                                  copyLinkToClipboard(`/d/${date}`, `date-${date}`);
+                                  setShowMenuForDate(null);
+                                }}
+                              >
+                                {copiedLinkFor === `date-${date}` ? "Copied!" : "Copy Link"}
+                              </div>
+                              <div
+                                className="menu-item"
                                 onClick={() => handleUnarchiveDate(date)}
                               >
                                 Unarchive Date
@@ -2565,6 +2640,17 @@ export function Sidebar({
                         </button>
                         {showFolderMenu === folder._id && (
                           <div className="date-menu-dropdown">
+                            <div
+                              className="menu-item"
+                              onClick={async () => {
+                                // Generate slug if it doesn't exist
+                                const slug = folder.slug || await generateFolderSlug({ folderId: folder._id });
+                                copyLinkToClipboard(`/p/${slug || folder._id}`, `folder-${folder._id}`);
+                                setShowFolderMenu(null);
+                              }}
+                            >
+                              {copiedLinkFor === `folder-${folder._id}` ? "Copied!" : "Copy Link"}
+                            </div>
                             <div
                               className="menu-item"
                               onClick={() => {
@@ -2618,6 +2704,15 @@ export function Sidebar({
                                   </button>
                                   {showMenuForDate === date && (
                                     <div className="date-menu-dropdown">
+                                      <div
+                                        className="menu-item"
+                                        onClick={() => {
+                                          copyLinkToClipboard(`/d/${date}`, `date-${date}`);
+                                          setShowMenuForDate(null);
+                                        }}
+                                      >
+                                        {copiedLinkFor === `date-${date}` ? "Copied!" : "Copy Link"}
+                                      </div>
                                       <div
                                         className="menu-item"
                                         onClick={() =>

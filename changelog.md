@@ -4,6 +4,48 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.024] - 2026-01-02
+
+### Added
+
+- **Shareable URLs for Dates and Projects** - Copy link to navigate directly to dates and projects
+  - Copy Link option in sidebar date menu copies shareable URL (e.g., `/d/2026-01-02`)
+  - Copy Link option in sidebar project menu copies shareable URL with short slug (e.g., `/p/ork88fqr`)
+  - Short NanoID-style slugs (8 alphanumeric characters) for project URLs
+  - Backwards compatible - supports both new slugs and legacy full Convex IDs
+  - Auto-generates slugs for existing folders without slugs when copying link
+  - URL navigation auto-expands and highlights the selected folder in sidebar
+  - Active folder header styling with theme-aware colors
+
+- **Sidebar Collapse Keyboard Shortcut** - Quick toggle for sidebar visibility
+  - Press Cmd+. (Mac) or Ctrl+. (Windows/Linux) to toggle sidebar collapse
+  - Added to keyboard shortcuts modal (press `?` to view)
+
+### Schema Changes
+
+- Added `slug` field to folders table for short URL slugs
+- Added `by_slug` index for efficient slug lookups
+
+### Backend Changes
+
+- **Folders Module** (`convex/folders.ts`)
+  - Added `generateSlug()` helper function for 8-character alphanumeric slugs
+  - Updated `createFolder` mutation to auto-generate unique slugs
+  - Added `getFolderBySlug` query (handles both slugs and full IDs for backwards compatibility)
+  - Added `generateFolderSlug` mutation for existing folders without slugs
+
+### Frontend Changes
+
+- **App.tsx** - URL routing and state management
+  - Changed route from `/p/:folderId` to `/p/:folderSlug`
+  - Added `folderFromSlug` query to resolve folder by slug
+  - Added URL sync guards to prevent race conditions during navigation
+
+- **Sidebar.tsx** - Copy link and auto-expand functionality
+  - Added Copy Link to date and project menus
+  - Auto-expands folder when selected via URL navigation
+  - Added active class styling to folder headers
+
 ## [v.023] - 2025-12-19
 
 ### Fixed

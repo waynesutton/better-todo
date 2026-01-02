@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useUser } from "@clerk/clerk-react";
 import { SignIn, SignUp, UserProfile, SignOutButton } from "@clerk/clerk-react";
@@ -40,6 +40,11 @@ function App() {
   const { isLoading: authIsLoading, isAuthenticated } = useConvexAuth();
   const { user } = useUser();
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const { date: urlDate, folderSlug: urlFolderSlug } = useParams<{
+    date?: string;
+    folderSlug?: string;
+  }>();
 
   // Fetch user preferences for font size
   const userPreferences = useQuery(
@@ -53,12 +58,53 @@ function App() {
     return saved !== null ? JSON.parse(saved) : true; // Default to visible
   });
 
-  const [selectedDate, setSelectedDate] = useState<string>(
-    format(new Date(), "yyyy-MM-dd"),
-  );
+  // Initialize selectedDate from URL param or default to today
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    if (urlDate) {
+      // Validate date format (yyyy-MM-dd) or special values
+      if (urlDate === "pinned" || urlDate === "backlog") {
+        return urlDate;
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(urlDate)) {
+        return urlDate;
+      }
+    }
+    return format(new Date(), "yyyy-MM-dd");
+  });
+
+  // Initialize selectedFolder (resolved from slug via useEffect)
   const [selectedFolder, setSelectedFolder] = useState<Id<"folders"> | null>(
     null,
   );
+
+  // Respond to URL param changes (for deep linking and navigation)
+  useEffect(() => {
+    if (urlDate) {
+      // Validate and set date from URL
+      if (urlDate === "pinned" || urlDate === "backlog") {
+        setSelectedDate(urlDate);
+        setSelectedFolder(null);
+      } else if (/^\d{4}-\d{2}-\d{2}$/.test(urlDate)) {
+        setSelectedDate(urlDate);
+        setSelectedFolder(null);
+      }
+    }
+  }, [urlDate]);
+
+  // Query folder by slug when URL has a folder slug param
+  const folderFromSlug = useQuery(
+    api.folders.getFolderBySlug,
+    isAuthenticated && urlFolderSlug ? { slug: urlFolderSlug } : "skip",
+  );
+
+  // Respond to folder slug URL param changes
+  useEffect(() => {
+    if (urlFolderSlug && folderFromSlug) {
+      setSelectedFolder(folderFromSlug._id);
+      setSelectedDate(""); // Clear date when viewing folder
+    }
+  }, [urlFolderSlug, folderFromSlug]);
+
   // Check if mobile on initial load (hide sidebar completely by default on mobile)
   const isMobile = window.innerWidth <= 768;
   const [sidebarHidden, setSidebarHidden] = useState(isMobile);
@@ -285,6 +331,66 @@ function App() {
       // Current date will be created when first todo is added
     }
   }, [availableDates, selectedDate]);
+
+  // Sync URL with selectedDate/selectedFolder state
+  useEffect(() => {
+    const today = format(new Date(), "yyyy-MM-dd");
+
+    // Don't update URL while waiting for folder query to resolve
+    // (urlFolderSlug present but folderFromSlug still loading)
+    if (urlFolderSlug && folderFromSlug === undefined) {
+      return;
+    }
+
+    // Don't update URL while waiting for date URL param to be processed
+    if (urlDate && !selectedFolder) {
+      // URL has a date param - let the date useEffect handle it first
+      if (urlDate !== selectedDate && urlDate !== "pinned" && urlDate !== "backlog") {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(urlDate)) {
+          return; // Wait for date to be set
+        }
+      }
+    }
+
+    // If viewing a folder, update URL to /p/:slug
+    if (selectedFolder && selectedFolderData?.slug) {
+      const newPath = `/p/${selectedFolderData.slug}`;
+      if (window.location.pathname !== newPath) {
+        navigate(newPath, { replace: true });
+      }
+      return;
+    }
+
+    // If viewing a folder but slug not yet loaded, keep the current URL
+    if (selectedFolder && !selectedFolderData?.slug) {
+      return;
+    }
+
+    // If viewing today or a special view (pinned/backlog), just go to root
+    if (selectedDate === today && !urlFolderSlug) {
+      if (window.location.pathname !== "/") {
+        navigate("/", { replace: true });
+      }
+      return;
+    }
+
+    // If viewing a specific date (not today), update URL to /d/:date
+    if (selectedDate && selectedDate !== "pinned" && selectedDate !== "backlog") {
+      const newPath = `/d/${selectedDate}`;
+      if (window.location.pathname !== newPath) {
+        navigate(newPath, { replace: true });
+      }
+      return;
+    }
+
+    // For pinned/backlog, use /d/pinned or /d/backlog
+    if (selectedDate === "pinned" || selectedDate === "backlog") {
+      const newPath = `/d/${selectedDate}`;
+      if (window.location.pathname !== newPath) {
+        navigate(newPath, { replace: true });
+      }
+    }
+  }, [selectedDate, selectedFolder, selectedFolderData, navigate, urlFolderSlug, urlDate, folderFromSlug]);
 
   // Create default first todo for blank dates
   useEffect(() => {
@@ -832,6 +938,12 @@ function App() {
       if (e.key === "k" && e.metaKey) {
         e.preventDefault();
         setSearchModalOpen(true);
+      }
+
+      // Toggle sidebar collapse with Cmd+. or Ctrl+.
+      if ((e.metaKey || e.ctrlKey) && e.key === ".") {
+        e.preventDefault();
+        setSidebarCollapsed((prev) => !prev);
       }
 
       // Close modals with Escape
@@ -2054,6 +2166,8 @@ function AppRouter() {
       <Route path="/stats" element={<Stats />} />
       <Route path="/streaks" element={<StreaksPage />} />
       <Route path="/share/:slug" element={<SharedNoteView />} />
+      <Route path="/d/:date" element={<App />} />
+      <Route path="/p/:folderSlug" element={<App />} />
       <Route path="/" element={<App />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
