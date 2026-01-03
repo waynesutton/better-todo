@@ -183,6 +183,12 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const mainContentRef = useRef<HTMLDivElement>(null);
 
+  // Refs to store pull-to-refresh state for event handlers (prevents memory leak from effect re-runs)
+  const isPullingRef = useRef(false);
+  const pullStartYRef = useRef(0);
+  const pullDistanceRef = useRef(0);
+  const isRefreshingRef = useRef(false);
+
   // Demo mode for logged out users (max 3 todos, no persistence)
   const [demoTodos, setDemoTodos] = useState<any[]>([]);
 
@@ -481,13 +487,15 @@ function App() {
 
   // After closing Clerk modals, refresh Clerk user so Sidebar tooltip/profile reflects updates
   // Uses refs to detect modal close transitions and prevent infinite re-render loops
+  // Note: user is intentionally excluded from deps to prevent re-render loops
   useEffect(() => {
     // Only reload when modal transitions from open to closed
     if (prevProfileModalRef.current && !showProfileModal) {
       void user?.reload?.();
     }
     prevProfileModalRef.current = showProfileModal;
-  }, [showProfileModal, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showProfileModal]);
 
   useEffect(() => {
     // Only reload when modal transitions from open to closed
@@ -495,7 +503,8 @@ function App() {
       void user?.reload?.();
     }
     prevSignUpModalRef.current = showSignUpModal;
-  }, [showSignUpModal, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSignUpModal]);
 
   useEffect(() => {
     // Only reload when modal transitions from open to closed
@@ -503,7 +512,8 @@ function App() {
       void user?.reload?.();
     }
     prevSignInModalRef.current = showSignInModal;
-  }, [showSignInModal, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSignInModal]);
 
   // Handle sidebar resize
   useEffect(() => {
@@ -1010,7 +1020,15 @@ function App() {
     };
   }, []);
 
-  // Pull to refresh functionality for mobile
+  // Keep refs in sync with pull-to-refresh state (for stable event handlers)
+  useEffect(() => {
+    isPullingRef.current = isPulling;
+    pullStartYRef.current = pullStartY;
+    pullDistanceRef.current = pullDistance;
+    isRefreshingRef.current = isRefreshing;
+  }, [isPulling, pullStartY, pullDistance, isRefreshing]);
+
+  // Pull to refresh functionality for mobile (uses refs to avoid event listener leak)
   useEffect(() => {
     const mainContent = mainContentRef.current;
     if (!mainContent) return;
@@ -1030,10 +1048,11 @@ function App() {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isPulling || isRefreshing) return;
+      // Read from refs to get current values without re-running effect
+      if (!isPullingRef.current || isRefreshingRef.current) return;
 
       const currentY = e.touches[0].clientY;
-      const distance = currentY - pullStartY;
+      const distance = currentY - pullStartYRef.current;
 
       // Only allow pulling down
       if (distance > 0 && mainContent.scrollTop === 0) {
@@ -1047,12 +1066,13 @@ function App() {
     };
 
     const handleTouchEnd = () => {
-      if (!isPulling) return;
+      // Read from refs to get current values without re-running effect
+      if (!isPullingRef.current) return;
 
       setIsPulling(false);
 
       // Trigger refresh if pulled more than 80px
-      if (pullDistance > 80 && !isRefreshing) {
+      if (pullDistanceRef.current > 80 && !isRefreshingRef.current) {
         setIsRefreshing(true);
 
         // Show refreshing state for 800ms (visual feedback even though data is realtime)
@@ -1078,7 +1098,7 @@ function App() {
       mainContent.removeEventListener("touchmove", handleTouchMove);
       mainContent.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isPulling, pullStartY, pullDistance, isRefreshing]);
+  }, []); // Empty deps - handlers read from refs
 
   // Clerk appearance customization
   const clerkAppearance = {
