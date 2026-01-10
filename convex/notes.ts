@@ -1,7 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// Get all notes for a specific date
+// Get all notes for a specific date (excludes folder notes)
 export const getNotesByDate = query({
   args: {
     date: v.string(),
@@ -11,7 +11,8 @@ export const getNotesByDate = query({
       _id: v.id("notes"),
       _creationTime: v.number(),
       userId: v.string(),
-      date: v.string(),
+      date: v.optional(v.string()),
+      folderId: v.optional(v.id("folders")),
       title: v.optional(v.string()),
       content: v.string(),
       order: v.optional(v.number()),
@@ -33,15 +34,57 @@ export const getNotesByDate = query({
       )
       .collect();
 
+    // Filter out notes that belong to folders (they should only appear in folder view)
+    const dateNotes = notes.filter((note) => !note.folderId);
+
+    // Sort by order, defaulting to 0 for legacy notes
+    return dateNotes.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  },
+});
+
+// Get all notes for a specific folder
+export const getNotesByFolder = query({
+  args: {
+    folderId: v.id("folders"),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("notes"),
+      _creationTime: v.number(),
+      userId: v.string(),
+      date: v.optional(v.string()),
+      folderId: v.optional(v.id("folders")),
+      title: v.optional(v.string()),
+      content: v.string(),
+      order: v.optional(v.number()),
+      collapsed: v.optional(v.boolean()),
+      pinnedToTop: v.optional(v.boolean()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+    const userId = identity.subject;
+
+    const notes = await ctx.db
+      .query("notes")
+      .withIndex("by_user_and_folder", (q) =>
+        q.eq("userId", userId).eq("folderId", args.folderId),
+      )
+      .collect();
+
     // Sort by order, defaulting to 0 for legacy notes
     return notes.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   },
 });
 
-// Create a new note
+// Create a new note (for a date OR a folder, not both)
 export const createNote = mutation({
   args: {
-    date: v.string(),
+    date: v.optional(v.string()),
+    folderId: v.optional(v.id("folders")),
     title: v.string(),
   },
   returns: v.id("notes"),
@@ -59,6 +102,7 @@ export const createNote = mutation({
     return await ctx.db.insert("notes", {
       userId: userId,
       date: args.date,
+      folderId: args.folderId,
       title: args.title,
       content: "",
       order: order,
@@ -142,10 +186,11 @@ export const deleteNote = mutation({
   },
 });
 
-// Reorder notes
+// Reorder notes (supports both date-based and folder-based notes)
 export const reorderNotes = mutation({
   args: {
-    date: v.string(),
+    date: v.optional(v.string()),
+    folderId: v.optional(v.id("folders")),
     noteIds: v.array(v.id("notes")),
   },
   returns: v.null(),
@@ -157,12 +202,26 @@ export const reorderNotes = mutation({
     const userId = identity.subject;
 
     // Verify ownership of all notes before reordering
-    const userNotes = await ctx.db
-      .query("notes")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", args.date)
-      )
-      .collect();
+    let userNotes;
+    if (args.folderId) {
+      // Folder-based notes
+      userNotes = await ctx.db
+        .query("notes")
+        .withIndex("by_user_and_folder", (q) =>
+          q.eq("userId", userId).eq("folderId", args.folderId)
+        )
+        .collect();
+    } else if (args.date) {
+      // Date-based notes
+      userNotes = await ctx.db
+        .query("notes")
+        .withIndex("by_user_and_date", (q) =>
+          q.eq("userId", userId).eq("date", args.date)
+        )
+        .collect();
+    } else {
+      throw new Error("Either date or folderId must be provided");
+    }
 
     const userNoteIds = new Set(userNotes.map((n) => n._id));
 

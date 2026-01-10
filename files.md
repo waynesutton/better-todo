@@ -47,9 +47,10 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`, `by_user_and_folder`
     - Search index: `search_content` on content field for full-text search
     - Supports both date-based todos and dateless todos in project folders
-  - **notes**: Stores multiple notes per date with optional title, content, order, and collapsed state
-    - Index: `by_user_and_date`
+  - **notes**: Stores multiple notes per date or folder with optional title, content, order, and collapsed state
+    - Index: `by_user_and_date`, `by_user_and_folder`
     - Search indexes: `search_content` on content field, `search_title` on title field
+    - Supports both date-based notes and folder-based notes (for project folder inline notes)
   - **archivedDates**: Tracks which dates are archived with userId and date
     - Index: `by_user_and_date`
   - **dateLabels**: Stores custom text labels for dates with userId, date, and label text
@@ -100,12 +101,13 @@ This document describes the structure and purpose of each file in the Better Tod
   - `deleteAllArchivedTodos` - Delete all archived todos for a specific date
 
 - `notes.ts` - Queries and mutations for notes operations:
-  - `getNotesByDate` - Get all notes for a specific date
-  - `createNote` - Create new note with timestamp-based ordering (avoids write conflicts)
+  - `getNotesByDate` - Get all notes for a specific date (excludes folder notes)
+  - `getNotesByFolder` - Get all notes for a specific project folder
+  - `createNote` - Create new note with timestamp-based ordering (supports both date and folderId, avoids write conflicts)
   - `updateNote` - Update existing note content or title (patches directly without reading first)
   - `deleteNote` - Remove a note by ID (uses indexed queries, idempotent)
   - `updateNoteCollapsed` - Toggle note collapsed state
-  - `reorderNotes` - Update order after drag-and-drop (parallel updates with Promise.all)
+  - `reorderNotes` - Update order after drag-and-drop (supports both date and folder-based notes, parallel updates with Promise.all)
 
 - `fullPageNotes.ts` - Queries and mutations for full-page notes:
   - `getFullPageNotesByIds` - Get multiple full-page notes by ID array (for open tabs)
@@ -728,9 +730,20 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.024 (January 2, 2026)
+## Current Version: v.025 (January 10, 2026)
 
-### Latest Features (v.024) - Shareable URLs & Sidebar Keyboard Shortcut
+### Latest Features (v.025) - Inline Todo Notes in Project Folders
+
+- **Inline Notes Support for Projects** - Fixed bug and added full support for inline notes in project folders
+  - Notes in one project folder no longer appear in other project folders
+  - Each project folder now has its own isolated inline notes
+  - Notes are properly scoped to either a date OR a folder (not both)
+  - Create, edit, pin, reorder, and delete notes directly in project folder views
+  - Added `folderId` field and `by_user_and_folder` index to notes schema
+  - Added `getNotesByFolder` query for fetching notes by folder
+  - Updated `NotesSection` and `PinnedNotesSection` to support folder context
+
+### Previous Features (v.024) - Shareable URLs & Sidebar Keyboard Shortcut
 
 - **Shareable URLs for Dates and Projects** - Copy link to navigate directly to dates and projects
   - Copy Link option in sidebar date menu copies shareable URL (e.g., `/d/2026-01-02`)

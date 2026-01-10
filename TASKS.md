@@ -83,6 +83,20 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.025 - 2026-01-10)
+
+- [x] **Inline Todo Notes in Project Folders** - Fixed bug where notes showed across projects
+  - Added `folderId` field to notes schema (optional, for folder association)
+  - Made `date` field optional (notes can belong to folder instead of date)
+  - Added `by_user_and_folder` index for efficient folder-based note queries
+  - Added `getNotesByFolder` query to convex/notes.ts
+  - Updated `getNotesByDate` to filter out folder-associated notes
+  - Updated `createNote` mutation to accept optional `folderId` parameter
+  - Updated `reorderNotes` mutation to support both date and folder-based reordering
+  - Updated `NotesSection` and `PinnedNotesSection` components to accept `folderId` prop
+  - Updated `TodoList` to pass `folderId` to notes components when in folder view
+  - Notes created in folders are now properly scoped to that folder only
+
 ## Completed Tasks (v.024 - 2026-01-02)
 
 - [x] **Shareable URLs for Dates and Projects** - Copy link to navigate directly to dates and projects

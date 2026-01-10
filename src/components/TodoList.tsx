@@ -384,7 +384,12 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
 
     const handleAddNote = async () => {
       try {
-        const noteId = await createNote({ date, title: "Untitled" });
+        // Create note with either folderId or date (not both)
+        const noteId = await createNote({
+          date: folderId ? undefined : date,
+          folderId: folderId || undefined,
+          title: "Untitled",
+        });
         setNewNoteId(noteId);
         // Clear the newNoteId after a short delay to allow the focus to happen
         setTimeout(() => setNewNoteId(null), 100);
@@ -428,7 +433,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
         {/* Pinned notes section - rendered at top above todos */}
         {!isPinnedView && !isBacklogView && (
           <PinnedNotesSection
-            date={date}
+            date={folderId ? undefined : date}
+            folderId={folderId ?? undefined}
             expandedNoteId={expandedNoteId}
             onNoteExpanded={onNoteExpanded}
             focusNoteId={newNoteId}
@@ -689,7 +695,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
         {/* Notes section below add note button - hide on pinned view and backlog view */}
         {!isPinnedView && !isBacklogView && (
           <NotesSection
-            date={date}
+            date={folderId ? undefined : date}
+            folderId={folderId ?? undefined}
             expandedNoteId={expandedNoteId}
             onNoteExpanded={onNoteExpanded}
             focusNoteId={newNoteId}

@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v024");
+  const [activeSection, setActiveSection] = useState("v025");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
+    { id: "v025", title: "v.025 - Jan 10, 2026" },
     { id: "v024", title: "v.024 - Jan 2, 2026" },
     { id: "v023", title: "v.023 - Dec 19, 2025" },
     { id: "v022", title: "v.022 - Dec 10, 2025" },
@@ -94,12 +95,133 @@ export function Changelog() {
 
       <div className="launch-container">
         {/* Each section mirrors the markdown changelog so anchors stay in sync. */}
-        <section id="v024" className="launch-section">
+        <section id="v025" className="launch-section">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">v.025 - January 10, 2026</h2>
+          <p className="changelog-subtitle">Inline Todo Notes in Project Folders</p>
+
+          <h3 className="changelog-category">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Inline Todo Notes in Project Folders</strong> - Fixed bug
+              where inline notes on todos were showing up across different
+              projects
+              <ul className="nested-list">
+                <li>
+                  Notes in one project folder no longer appear in other project
+                  folders
+                </li>
+                <li>
+                  Each project folder now has its own isolated inline notes
+                </li>
+                <li>
+                  Notes are properly scoped to either a date OR a folder (not
+                  both)
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Inline Notes Support for Projects</strong> - Inline todo
+              notes now work fully in project folders
+              <ul className="nested-list">
+                <li>Create inline notes directly in project folder views</li>
+                <li>
+                  Notes created in folders are associated with that folder (not
+                  a date)
+                </li>
+                <li>Pin notes to top within project folders</li>
+                <li>Drag and drop reorder notes within project folders</li>
+                <li>
+                  All note features (collapse, edit, delete, copy) work in
+                  folder context
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Schema Changes</h3>
+          <ul className="feature-list">
+            <li>
+              Updated <code>notes</code> table with <code>folderId</code> field
+              (optional) for folder association
+            </li>
+            <li>
+              Made <code>date</code> field optional (notes can belong to a
+              folder instead of a date)
+            </li>
+            <li>
+              Added <code>by_user_and_folder</code> index for efficient
+              folder-based note queries
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Backend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Notes Module</strong> (<code>convex/notes.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Added <code>getNotesByFolder</code> query for fetching notes
+                  by folder
+                </li>
+                <li>
+                  Updated <code>getNotesByDate</code> to filter out
+                  folder-associated notes
+                </li>
+                <li>
+                  Updated <code>createNote</code> mutation to accept optional{" "}
+                  <code>folderId</code> parameter
+                </li>
+                <li>
+                  Updated <code>reorderNotes</code> mutation to support both
+                  date and folder-based reordering
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Frontend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>NotesSection.tsx</strong> - Added folder support
+              <ul className="nested-list">
+                <li>
+                  Added <code>folderId</code> prop to <code>NotesSection</code>{" "}
+                  and <code>PinnedNotesSection</code> components
+                </li>
+                <li>
+                  Components now query either by date or folder based on props
+                </li>
+                <li>
+                  Reorder operations pass correct parameters for folder context
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>TodoList.tsx</strong> - Folder-aware note creation
+              <ul className="nested-list">
+                <li>
+                  Passes <code>folderId</code> to <code>NotesSection</code> and{" "}
+                  <code>PinnedNotesSection</code> when in folder view
+                </li>
+                <li>
+                  Note creation uses <code>folderId</code> instead of{" "}
+                  <code>date</code> when in folder context
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v024" className="launch-section">
           <h2 className="section-title">v.024 - January 2, 2026</h2>
           <p className="changelog-subtitle">Shareable URLs & Keyboard Shortcuts</p>
 

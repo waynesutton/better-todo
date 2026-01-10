@@ -4,6 +4,49 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.025] - 2026-01-10
+
+### Fixed
+
+- **Inline Todo Notes in Project Folders** - Fixed bug where inline notes on todos were showing up across different projects
+  - Notes in one project folder no longer appear in other project folders
+  - Each project folder now has its own isolated inline notes
+  - Notes are properly scoped to either a date OR a folder (not both)
+
+### Added
+
+- **Inline Notes Support for Projects** - Inline todo notes now work fully in project folders
+  - Create inline notes directly in project folder views
+  - Notes created in folders are associated with that folder (not a date)
+  - Pin notes to top within project folders
+  - Drag and drop reorder notes within project folders
+  - All note features (collapse, edit, delete, copy) work in folder context
+
+### Schema Changes
+
+- Updated `notes` table with `folderId` field (optional) for folder association
+- Made `date` field optional (notes can belong to a folder instead of a date)
+- Added `by_user_and_folder` index for efficient folder-based note queries
+
+### Backend Changes
+
+- **Notes Module** (`convex/notes.ts`)
+  - Added `getNotesByFolder` query for fetching notes by folder
+  - Updated `getNotesByDate` to filter out folder-associated notes
+  - Updated `createNote` mutation to accept optional `folderId` parameter
+  - Updated `reorderNotes` mutation to support both date and folder-based reordering
+
+### Frontend Changes
+
+- **NotesSection.tsx** - Added folder support
+  - Added `folderId` prop to `NotesSection` and `PinnedNotesSection` components
+  - Components now query either by date or folder based on props
+  - Reorder operations pass correct parameters for folder context
+
+- **TodoList.tsx** - Folder-aware note creation
+  - Passes `folderId` to `NotesSection` and `PinnedNotesSection` when in folder view
+  - Note creation uses `folderId` instead of `date` when in folder context
+
 ## [v.024] - 2026-01-02
 
 ### Added

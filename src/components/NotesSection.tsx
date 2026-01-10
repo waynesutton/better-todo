@@ -246,7 +246,8 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { useTheme } from "../context/ThemeContext";
 
 interface NotesSectionProps {
-  date: string;
+  date?: string;
+  folderId?: Id<"folders">;
   expandedNoteId: string | null;
   onNoteExpanded: () => void;
   focusNoteId?: Id<"notes"> | null;
@@ -256,7 +257,8 @@ interface Note {
   _id: Id<"notes">;
   _creationTime: number;
   userId: string;
-  date: string;
+  date?: string;
+  folderId?: Id<"folders">;
   title?: string;
   content: string;
   order?: number;
@@ -733,16 +735,26 @@ interface NotesWithAddButtonProps {
 
 export function NotesSection({
   date,
+  folderId,
   expandedNoteId,
   onNoteExpanded,
   focusNoteId,
 }: NotesSectionProps) {
-  const allNotes = useQuery(api.notes.getNotesByDate, { date }) || [];
+  // Query notes by folder or date depending on which prop is provided
+  const dateNotes = useQuery(
+    api.notes.getNotesByDate,
+    date ? { date } : "skip"
+  );
+  const folderNotes = useQuery(
+    api.notes.getNotesByFolder,
+    folderId ? { folderId } : "skip"
+  );
+  const allNotes = (folderId ? folderNotes : dateNotes) || [];
   // Filter to only show unpinned notes in this section
   const notes = allNotes.filter((note) => !note.pinnedToTop);
   const updateNote = useMutation(api.notes.updateNote);
   const deleteNote = useMutation(api.notes.deleteNote);
-  const reorderNotes = useMutation(api.notes.reorderNotes);
+  const reorderNotesMutation = useMutation(api.notes.reorderNotes);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
     noteId: Id<"notes"> | null;
@@ -787,8 +799,10 @@ export function NotesSection({
       const newIndex = notes.findIndex((n) => n._id === over.id);
 
       const reorderedNotes = arrayMove(notes, oldIndex, newIndex);
-      reorderNotes({
-        date,
+      // Pass either folderId or date for reordering
+      reorderNotesMutation({
+        date: folderId ? undefined : date,
+        folderId: folderId || undefined,
         noteIds: reorderedNotes.map((n) => n._id),
       });
     }
@@ -836,7 +850,8 @@ export function NotesSection({
     setDeleteConfirm({ isOpen: false, noteId: null, noteTitle: "" });
   };
 
-  if (notes.length === 0) {
+  // Don't render if no date and no folderId provided, or if no notes exist
+  if ((!date && !folderId) || notes.length === 0) {
     return null;
   }
 
@@ -891,7 +906,8 @@ export function AddNoteButton({ onAddNote }: NotesWithAddButtonProps) {
 
 // Pinned Notes Section - renders at top of page
 interface PinnedNotesSectionProps {
-  date: string;
+  date?: string;
+  folderId?: Id<"folders">;
   expandedNoteId: string | null;
   onNoteExpanded: () => void;
   focusNoteId?: Id<"notes"> | null;
@@ -899,16 +915,26 @@ interface PinnedNotesSectionProps {
 
 export function PinnedNotesSection({
   date,
+  folderId,
   expandedNoteId,
   onNoteExpanded,
   focusNoteId,
 }: PinnedNotesSectionProps) {
-  const allNotes = useQuery(api.notes.getNotesByDate, { date }) || [];
+  // Query notes by folder or date depending on which prop is provided
+  const dateNotes = useQuery(
+    api.notes.getNotesByDate,
+    date ? { date } : "skip"
+  );
+  const folderNotes = useQuery(
+    api.notes.getNotesByFolder,
+    folderId ? { folderId } : "skip"
+  );
+  const allNotes = (folderId ? folderNotes : dateNotes) || [];
   // Filter to only show pinned notes
   const notes = allNotes.filter((note) => note.pinnedToTop);
   const updateNote = useMutation(api.notes.updateNote);
   const deleteNote = useMutation(api.notes.deleteNote);
-  const reorderNotes = useMutation(api.notes.reorderNotes);
+  const reorderNotesMutation = useMutation(api.notes.reorderNotes);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
     noteId: Id<"notes"> | null;
@@ -951,8 +977,10 @@ export function PinnedNotesSection({
       const newIndex = notes.findIndex((n) => n._id === over.id);
 
       const reorderedNotes = arrayMove(notes, oldIndex, newIndex);
-      reorderNotes({
-        date,
+      // Pass either folderId or date for reordering
+      reorderNotesMutation({
+        date: folderId ? undefined : date,
+        folderId: folderId || undefined,
         noteIds: reorderedNotes.map((n) => n._id),
       });
     }
@@ -1000,7 +1028,8 @@ export function PinnedNotesSection({
     setDeleteConfirm({ isOpen: false, noteId: null, noteTitle: "" });
   };
 
-  if (notes.length === 0) {
+  // Don't render if no date and no folderId provided, or if no notes exist
+  if ((!date && !folderId) || notes.length === 0) {
     return null;
   }
 

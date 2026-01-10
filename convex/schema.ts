@@ -41,10 +41,11 @@ export default defineSchema({
       filterFields: ["userId"],
     }),
 
-  // Notes table stores multiple notes per date
+  // Notes table stores multiple notes per date or folder
   notes: defineTable({
     userId: v.string(),
-    date: v.string(), // Format: YYYY-MM-DD
+    date: v.optional(v.string()), // Format: YYYY-MM-DD (optional when note is in a folder)
+    folderId: v.optional(v.id("folders")), // Optional folder association
     title: v.optional(v.string()), // Note title (optional for backward compatibility)
     content: v.string(), // Markdown content
     order: v.optional(v.number()), // Order for drag-and-drop
@@ -52,6 +53,7 @@ export default defineSchema({
     pinnedToTop: v.optional(v.boolean()), // Whether note is pinned to top of page
   })
     .index("by_user_and_date", ["userId", "date"])
+    .index("by_user_and_folder", ["userId", "folderId"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],
