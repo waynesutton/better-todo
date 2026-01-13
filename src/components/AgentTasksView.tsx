@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
@@ -51,6 +51,7 @@ import {
   Send,
   ListTodo,
   FilePlus,
+  Key,
 } from "lucide-react";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { triggerHaptic, triggerSuccessHaptic } from "../lib/haptics";
@@ -136,6 +137,15 @@ interface AgentTasksViewProps {
 
 export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps) {
   const { theme } = useTheme();
+  const { isAuthenticated } = useConvexAuth();
+  
+  // Check if user has API keys set
+  const userApiKeys = useQuery(
+    api.userApiKeys.getUserApiKeys,
+    isAuthenticated ? undefined : "skip",
+  );
+  const hasApiKeys = userApiKeys?.hasAnthropicKey || userApiKeys?.hasOpenaiKey;
+  
   const tasks = useQuery(api.agentTasks.getAgentTasks, {
     date: folderId ? undefined : date, // Only use date filter if not in a folder
     folderId,
@@ -321,6 +331,21 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
       </div>
 
       <div className="agent-tasks-content">
+        {/* API Key Warning Banner */}
+        {!hasApiKeys && userApiKeys !== undefined && (
+          <div className="ai-api-key-warning" style={{ margin: "0 16px 16px 16px" }}>
+            <div className="ai-api-key-warning-icon">
+              <Key size={18} />
+            </div>
+            <div className="ai-api-key-warning-content">
+              <strong>API Key Required</strong>
+              <p>
+                Agent tasks require an API key. Press <kbd>?</kbd> to open Keyboard Shortcuts and add your Claude or OpenAI key. You only need one to get started.
+              </p>
+            </div>
+          </div>
+        )}
+        
         {/* Task list */}
         <div className="agent-tasks-list">
           {tasks === undefined ? (

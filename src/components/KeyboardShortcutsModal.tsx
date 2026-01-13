@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { Cross2Icon, EyeOpenIcon, EyeClosedIcon } from "@radix-ui/react-icons";
-import { Copy, Check, Key, Trash2, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { Copy, Check, Key, Trash2, ExternalLink, ChevronDown } from "lucide-react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -16,6 +16,7 @@ export function KeyboardShortcutsModal({
 }: KeyboardShortcutsModalProps) {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const { isAuthenticated } = useConvexAuth();
+  const apiKeysSectionRef = useRef<HTMLDivElement>(null);
   
   // API Key state
   const [anthropicKeyInput, setAnthropicKeyInput] = useState("");
@@ -101,6 +102,14 @@ export function KeyboardShortcutsModal({
       setApiKeyError(error instanceof Error ? error.message : "Failed to delete key");
     }
   };
+  
+  // Scroll to API keys section
+  const scrollToApiKeys = () => {
+    apiKeysSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  
+  // Check if user has any API key set (only need one, not both)
+  const hasAnyApiKey = userApiKeys?.hasAnthropicKey || userApiKeys?.hasOpenaiKey;
 
   if (!isOpen) return null;
 
@@ -219,6 +228,22 @@ export function KeyboardShortcutsModal({
         </div>
 
         <div className="keyboard-shortcuts-content">
+          {/* Quick link to API Keys section */}
+          {isAuthenticated && (
+            <button
+              className="keyboard-shortcuts-api-link"
+              onClick={scrollToApiKeys}
+            >
+              <Key size={16} />
+              <span>
+                {hasAnyApiKey 
+                  ? "Manage API Keys" 
+                  : "Add API Keys for AI Features"}
+              </span>
+              <ChevronDown size={16} />
+            </button>
+          )}
+          
           {shortcuts.map((category) => (
             <div
               key={category.category}
@@ -322,13 +347,16 @@ export function KeyboardShortcutsModal({
 
           {/* API Keys Section */}
           {isAuthenticated && (
-            <div className="keyboard-shortcuts-category api-keys-section">
+            <div 
+              ref={apiKeysSectionRef}
+              className="keyboard-shortcuts-category api-keys-section"
+            >
               <h3>
                 <Key size={16} style={{ marginRight: 8, verticalAlign: "middle" }} />
                 API Keys
               </h3>
               <p className="keyboard-shortcuts-code-info">
-                Add your own API keys to use AI features. Keys are stored securely and only used for your requests.
+                Add your own API keys to use AI features. You only need one key (Claude or OpenAI) to get started. Keys are stored securely and only used for your requests.
               </p>
               
               {apiKeyError && (

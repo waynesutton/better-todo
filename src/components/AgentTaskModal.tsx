@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { Bot, Sparkles, Code, FileText, Search, X, MessageSquare } from "lucide-react";
+import { Bot, Sparkles, Code, FileText, Search, X, MessageSquare, Key } from "lucide-react";
 import { triggerHaptic, triggerSuccessHaptic } from "../lib/haptics";
 
 // Provider and task type options
@@ -70,10 +70,18 @@ export function AgentTaskModal({
   folderId,
   date,
 }: AgentTaskModalProps) {
+  const { isAuthenticated } = useConvexAuth();
   const [selectedProvider, setSelectedProvider] = useState<Provider>("claude");
   const [selectedTaskType, setSelectedTaskType] = useState<TaskType>("expand");
   const [customInstructions, setCustomInstructions] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check if user has API keys set
+  const userApiKeys = useQuery(
+    api.userApiKeys.getUserApiKeys,
+    isAuthenticated ? undefined : "skip",
+  );
+  const hasApiKeys = userApiKeys?.hasAnthropicKey || userApiKeys?.hasOpenaiKey;
 
   const createAgentTask = useMutation(api.agentTasks.createAgentTask);
 
@@ -175,6 +183,21 @@ export function AgentTaskModal({
           <div className="agent-task-modal-preview-content">{contentPreview}</div>
         </div>
 
+        {/* API Key Warning Banner */}
+        {!hasApiKeys && userApiKeys !== undefined && (
+          <div className="ai-api-key-warning">
+            <div className="ai-api-key-warning-icon">
+              <Key size={18} />
+            </div>
+            <div className="ai-api-key-warning-content">
+              <strong>API Key Required</strong>
+              <p>
+                Agent tasks require an API key. Press <kbd>?</kbd> to open Keyboard Shortcuts and add your Claude or OpenAI key. You only need one to get started.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Provider selection */}
         <div className="agent-task-modal-section">
           <label className="agent-task-modal-label">AI Provider</label>
@@ -264,7 +287,8 @@ export function AgentTaskModal({
           <button
             className="agent-task-modal-button submit"
             onClick={handleSubmit}
-            disabled={isSubmitting || (selectedTaskType === "other" && !customInstructions.trim())}
+            disabled={isSubmitting || !hasApiKeys || (selectedTaskType === "other" && !customInstructions.trim())}
+            title={!hasApiKeys ? "Add API keys in Keyboard Shortcuts (?) to use this feature" : ""}
           >
             {isSubmitting ? "Sending..." : "Send to Agent"}
           </button>

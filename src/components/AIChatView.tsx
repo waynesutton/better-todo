@@ -11,7 +11,7 @@ import {
   Cross2Icon,
   ImageIcon,
 } from "@radix-ui/react-icons";
-import { Loader2, Copy, Check, X, Trash2, RotateCcw } from "lucide-react";
+import { Loader2, Copy, Check, X, Trash2, RotateCcw, AlertTriangle, Key } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -81,6 +81,14 @@ export function AIChatView({ date, onClose }: AIChatViewProps) {
     api.aiChats.getAIChatByDate,
     isAuthenticated ? { date } : "skip",
   );
+  
+  // Check if user has API keys set
+  const userApiKeys = useQuery(
+    api.userApiKeys.getUserApiKeys,
+    isAuthenticated ? undefined : "skip",
+  );
+  const hasApiKeys = userApiKeys?.hasAnthropicKey || userApiKeys?.hasOpenaiKey;
+  
   const getOrCreateChat = useMutation(api.aiChats.getOrCreateAIChat);
   const addUserMessageWithAttachments = useMutation(
     api.aiChats.addUserMessageWithAttachments,
@@ -478,6 +486,21 @@ export function AIChatView({ date, onClose }: AIChatViewProps) {
 
   return (
     <div className="ai-chat-view">
+      {/* API Key Warning Banner */}
+      {!hasApiKeys && userApiKeys !== undefined && (
+        <div className="ai-api-key-warning">
+          <div className="ai-api-key-warning-icon">
+            <Key size={18} />
+          </div>
+          <div className="ai-api-key-warning-content">
+            <strong>API Key Required</strong>
+            <p>
+              AI Chat requires an API key. Press <kbd>?</kbd> to open Keyboard Shortcuts and add your Claude or OpenAI key. You only need one to get started.
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* Header with actions */}
       {hasMessages && (
         <div className="ai-chat-header">
