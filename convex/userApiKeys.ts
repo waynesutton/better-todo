@@ -17,6 +17,8 @@ export const getUserApiKeys = query({
     openaiKey: v.union(v.string(), v.null()),
     hasAnthropicKey: v.boolean(),
     hasOpenaiKey: v.boolean(),
+    anthropicPaused: v.boolean(),
+    openaiPaused: v.boolean(),
   }),
   handler: async (ctx) => {
     const userId = await getUserId(ctx);
@@ -26,6 +28,8 @@ export const getUserApiKeys = query({
         openaiKey: null,
         hasAnthropicKey: false,
         hasOpenaiKey: false,
+        anthropicPaused: false,
+        openaiPaused: false,
       };
     }
 
@@ -40,6 +44,8 @@ export const getUserApiKeys = query({
         openaiKey: null,
         hasAnthropicKey: false,
         hasOpenaiKey: false,
+        anthropicPaused: false,
+        openaiPaused: false,
       };
     }
 
@@ -48,6 +54,8 @@ export const getUserApiKeys = query({
       openaiKey: maskApiKey(keys.openaiKey),
       hasAnthropicKey: !!keys.anthropicKey,
       hasOpenaiKey: !!keys.openaiKey,
+      anthropicPaused: keys.anthropicPaused ?? false,
+      openaiPaused: keys.openaiPaused ?? false,
     };
   },
 });
@@ -68,10 +76,52 @@ export const getApiKeyInternal = internalQuery({
     if (!keys) return null;
 
     if (args.provider === "anthropic") {
+      if (keys.anthropicPaused) return null;
       return keys.anthropicKey ?? null;
     } else {
+      if (keys.openaiPaused) return null;
       return keys.openaiKey ?? null;
     }
+  },
+});
+
+// Internal query to get available (non-paused) API keys for fallback logic
+// Returns both keys with their availability status for use in actions
+export const getAvailableApiKeys = internalQuery({
+  args: {
+    userId: v.string(),
+  },
+  returns: v.object({
+    anthropicKey: v.union(v.string(), v.null()),
+    openaiKey: v.union(v.string(), v.null()),
+    anthropicAvailable: v.boolean(),
+    openaiAvailable: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const keys = await ctx.db
+      .query("userApiKeys")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .unique();
+
+    if (!keys) {
+      return {
+        anthropicKey: null,
+        openaiKey: null,
+        anthropicAvailable: false,
+        openaiAvailable: false,
+      };
+    }
+
+    // A key is "available" if it exists AND is not paused
+    const anthropicAvailable = !!keys.anthropicKey && !(keys.anthropicPaused ?? false);
+    const openaiAvailable = !!keys.openaiKey && !(keys.openaiPaused ?? false);
+
+    return {
+      anthropicKey: anthropicAvailable ? (keys.anthropicKey ?? null) : null,
+      openaiKey: openaiAvailable ? (keys.openaiKey ?? null) : null,
+      anthropicAvailable,
+      openaiAvailable,
+    };
   },
 });
 
@@ -103,9 +153,12 @@ export const setApiKey = mutation({
     if (existing) {
       // Update existing record
       if (args.provider === "anthropic") {
-        await ctx.db.patch(existing._id, { anthropicKey: trimmedKey });
+        await ctx.db.patch(existing._id, {
+          anthropicKey: trimmedKey,
+          anthropicPaused: false,
+        });
       } else {
-        await ctx.db.patch(existing._id, { openaiKey: trimmedKey });
+        await ctx.db.patch(existing._id, { openaiKey: trimmedKey, openaiPaused: false });
       }
     } else {
       // Create new record
@@ -113,7 +166,47 @@ export const setApiKey = mutation({
         userId,
         anthropicKey: args.provider === "anthropic" ? trimmedKey : undefined,
         openaiKey: args.provider === "openai" ? trimmedKey : undefined,
+        anthropicPaused: false,
+        openaiPaused: false,
       });
+    }
+
+    return null;
+  },
+});
+
+// Pause/resume an API key without deleting it
+export const setApiKeyPaused = mutation({
+  args: {
+    provider: v.union(v.literal("anthropic"), v.literal("openai")),
+    paused: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const existing = await ctx.db
+      .query("userApiKeys")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (!existing) {
+      // Nothing to pause
+      return null;
+    }
+
+    // Idempotent: don't write if no change.
+    if (args.provider === "anthropic") {
+      if (!existing.anthropicKey) return null;
+      if ((existing.anthropicPaused ?? false) === args.paused) return null;
+      await ctx.db.patch(existing._id, { anthropicPaused: args.paused });
+    } else {
+      if (!existing.openaiKey) return null;
+      if ((existing.openaiPaused ?? false) === args.paused) return null;
+      await ctx.db.patch(existing._id, { openaiPaused: args.paused });
     }
 
     return null;
@@ -143,9 +236,9 @@ export const deleteApiKey = mutation({
 
     // Clear the specific key
     if (args.provider === "anthropic") {
-      await ctx.db.patch(existing._id, { anthropicKey: undefined });
+      await ctx.db.patch(existing._id, { anthropicKey: undefined, anthropicPaused: false });
     } else {
-      await ctx.db.patch(existing._id, { openaiKey: undefined });
+      await ctx.db.patch(existing._id, { openaiKey: undefined, openaiPaused: false });
     }
 
     // If both keys are now empty, delete the record entirely

@@ -10,6 +10,8 @@
 
 import type * as agentTaskActions from "../agentTaskActions.js";
 import type * as agentTasks from "../agentTasks.js";
+import type * as agentToolMutations from "../agentToolMutations.js";
+import type * as agentTools from "../agentTools.js";
 import type * as aiChatActions from "../aiChatActions.js";
 import type * as aiChats from "../aiChats.js";
 import type * as archivedDates from "../archivedDates.js";
@@ -47,6 +49,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   agentTaskActions: typeof agentTaskActions;
   agentTasks: typeof agentTasks;
+  agentToolMutations: typeof agentToolMutations;
+  agentTools: typeof agentTools;
   aiChatActions: typeof aiChatActions;
   aiChats: typeof aiChats;
   archivedDates: typeof archivedDates;

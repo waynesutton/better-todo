@@ -10,6 +10,15 @@ type ConversationMessage = {
   timestamp: number;
 };
 
+// Execution log entry type for "run" task type
+type ExecutionLogEntry = {
+  toolName: string;
+  toolInput: string;
+  toolResult?: string;
+  status: "pending" | "success" | "error";
+  timestamp: number;
+};
+
 // Local type for agent tasks until generated types are available
 type AgentTask = {
   _id: Id<"agentTasks">;
@@ -20,12 +29,14 @@ type AgentTask = {
   sourceContent: string;
   sourceTitle?: string;
   provider: "claude" | "openai";
-  taskType: "expand" | "code" | "summarize" | "analyze" | "other";
+  actualProvider?: "claude" | "openai"; // Provider actually used (may differ if selected was paused)
+  taskType: "expand" | "code" | "summarize" | "analyze" | "other" | "run";
   customInstructions?: string;
   status: "pending" | "processing" | "completed" | "failed";
   result?: string;
   error?: string;
   messages?: ConversationMessage[];
+  executionLog?: ExecutionLogEntry[];
   folderId?: Id<"folders">;
   date?: string;
 };
@@ -43,6 +54,8 @@ import {
   Check,
   Trash2,
   ChevronLeft,
+  ChevronDown,
+  ChevronRight,
   Sparkles,
   Code,
   FileText,
@@ -52,6 +65,10 @@ import {
   ListTodo,
   FilePlus,
   Key,
+  Play,
+  Terminal,
+  RefreshCw,
+  Eraser,
 } from "lucide-react";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { triggerHaptic, triggerSuccessHaptic } from "../lib/haptics";
@@ -119,6 +136,7 @@ const TASK_TYPE_ICONS: Record<string, React.ReactNode> = {
   summarize: <FileText size={14} />,
   analyze: <Search size={14} />,
   other: <MessageSquare size={14} />,
+  run: <Play size={14} />,
 };
 
 // Status icons
@@ -133,9 +151,24 @@ interface AgentTasksViewProps {
   onClose: () => void;
   date?: string;
   folderId?: Id<"folders">;
+  onOpenNote?: (noteId: Id<"fullPageNotes">) => void;
 }
 
-export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps) {
+// Helper to extract noteId from tool result JSON
+function extractNoteIdFromResult(toolName: string, toolResult: string): Id<"fullPageNotes"> | null {
+  if (toolName !== "createNote") return null;
+  try {
+    const parsed = JSON.parse(toolResult);
+    if (parsed.success && parsed.noteId) {
+      return parsed.noteId as Id<"fullPageNotes">;
+    }
+  } catch {
+    // Not valid JSON, ignore
+  }
+  return null;
+}
+
+export function AgentTasksView({ onClose, date, folderId, onOpenNote }: AgentTasksViewProps) {
   const { theme } = useTheme();
   const { isAuthenticated } = useConvexAuth();
   
@@ -155,6 +188,8 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
   const addFollowUpMessage = useMutation(api.agentTasks.addFollowUpMessage);
   const createTodosFromAgent = useMutation(api.agentTasks.createTodosFromAgent);
   const saveResultAsNote = useMutation(api.agentTasks.saveResultAsNote);
+  const retryTask = useMutation(api.agentTasks.retryAgentTask);
+  const clearConversation = useMutation(api.agentTasks.clearTaskConversation);
 
   const [selectedTaskId, setSelectedTaskId] = useState<Id<"agentTasks"> | null>(
     null,
@@ -168,6 +203,9 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [todosCreatedCount, setTodosCreatedCount] = useState<number | null>(null);
   const [noteSaved, setNoteSaved] = useState(false);
+  const [executionLogCollapsed, setExecutionLogCollapsed] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   // Get selected task details
   const selectedTask = tasks?.find((t: AgentTask) => t._id === selectedTaskId);
@@ -298,6 +336,46 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
     }
   };
 
+  // Handle retrying a failed task
+  const handleRetryTask = async (taskId: Id<"agentTasks">) => {
+    if (isRetrying) return;
+    
+    setIsRetrying(true);
+    triggerHaptic("light");
+
+    try {
+      await retryTask({ taskId });
+      triggerSuccessHaptic();
+    } catch (error) {
+      console.error("Error retrying task:", error);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  // Handle clearing conversation for a task
+  const handleClearConversation = async () => {
+    if (!selectedTask || isClearing) return;
+    
+    setIsClearing(true);
+    triggerHaptic("light");
+
+    try {
+      await clearConversation({ taskId: selectedTask._id });
+      triggerSuccessHaptic();
+    } catch (error) {
+      console.error("Error clearing conversation:", error);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  // Get the display provider name (actual provider used, or selected if not yet run)
+  const getProviderName = (task: AgentTask) => {
+    const provider = task.actualProvider || task.provider;
+    return provider === "claude" ? "Claude" : "OpenAI";
+  };
+
   const hasTasks = tasks && tasks.length > 0;
 
   return (
@@ -384,7 +462,7 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
                       </span>
                     </span>
                     <span className="agent-task-item-provider">
-                      {task.provider === "claude" ? "Claude" : "OpenAI"}
+                      {getProviderName(task)}
                     </span>
                   </div>
                   <div className="agent-task-item-actions">
@@ -428,8 +506,28 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
                     {formatTime(task._creationTime)}
                   </span>
                 </div>
-                {task.status === "failed" && task.error && (
-                  <div className="agent-task-item-error">{task.error}</div>
+                {task.status === "failed" && (
+                  <div className="agent-task-item-failed-row">
+                    {task.error && (
+                      <div className="agent-task-item-error">{task.error}</div>
+                    )}
+                    <button
+                      className="agent-task-retry-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRetryTask(task._id);
+                      }}
+                      disabled={isRetrying}
+                      title="Retry task"
+                    >
+                      {isRetrying ? (
+                        <Loader2 size={14} className="agent-task-status-icon processing" />
+                      ) : (
+                        <RefreshCw size={14} />
+                      )}
+                      <span>Retry</span>
+                    </button>
+                  </div>
                 )}
               </div>
             ))
@@ -443,31 +541,47 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
               <div className="agent-task-result-header-left">
                 <span className="agent-task-result-label">Conversation</span>
                 <span className="agent-task-result-provider">
-                  {selectedTask.provider === "claude" ? "Claude" : "OpenAI"} -{" "}
-                  {selectedTask.taskType}
+                  {getProviderName(selectedTask)} - {selectedTask.taskType}
                 </span>
               </div>
-              {selectedTask.result && (
-                <button
-                  className="agent-task-result-copy"
-                  onClick={() =>
-                    handleCopyResult(selectedTask._id, selectedTask.result!)
-                  }
-                  title="Copy initial result"
-                >
-                  {copiedTaskId === selectedTask._id ? (
-                    <>
-                      <Check size={14} />
-                      <span>Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-              )}
+              <div className="agent-task-result-header-actions">
+                {selectedTask.messages && selectedTask.messages.length > 0 && (
+                  <button
+                    className="agent-task-result-clear"
+                    onClick={handleClearConversation}
+                    disabled={isClearing || selectedTask.status === "processing"}
+                    title="Clear follow-up messages"
+                  >
+                    {isClearing ? (
+                      <Loader2 size={14} className="agent-task-status-icon processing" />
+                    ) : (
+                      <Eraser size={14} />
+                    )}
+                    <span>Clear</span>
+                  </button>
+                )}
+                {selectedTask.result && (
+                  <button
+                    className="agent-task-result-copy"
+                    onClick={() =>
+                      handleCopyResult(selectedTask._id, selectedTask.result!)
+                    }
+                    title="Copy initial result"
+                  >
+                    {copiedTaskId === selectedTask._id ? (
+                      <>
+                        <Check size={14} />
+                        <span>Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Action bar for completed tasks */}
@@ -514,12 +628,71 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
               </div>
             )}
 
+            {/* Execution log for "run" tasks - collapsible */}
+            {selectedTask.taskType === "run" && selectedTask.executionLog && selectedTask.executionLog.length > 0 && (
+              <div className={`agent-task-execution-log ${executionLogCollapsed ? "collapsed" : ""}`}>
+                <button
+                  className="agent-task-execution-log-header"
+                  onClick={() => setExecutionLogCollapsed(!executionLogCollapsed)}
+                  type="button"
+                >
+                  {executionLogCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                  <Terminal size={14} />
+                  <span>Execution Log ({selectedTask.executionLog.length} tool calls)</span>
+                </button>
+                {!executionLogCollapsed && (
+                  <div className="agent-task-execution-log-entries">
+                    {selectedTask.executionLog.map((entry, idx) => (
+                      <div key={idx} className={`agent-task-execution-log-entry ${entry.status}`}>
+                        <div className="agent-task-execution-log-entry-header">
+                          <span className="agent-task-execution-log-tool-name">{entry.toolName}</span>
+                          <span className={`agent-task-execution-log-status ${entry.status}`}>
+                            {entry.status === "pending" && <Clock size={12} />}
+                            {entry.status === "success" && <CheckCircle size={12} />}
+                            {entry.status === "error" && <XCircle size={12} />}
+                            {entry.status}
+                          </span>
+                        </div>
+                        <div className="agent-task-execution-log-entry-input">
+                          <span className="agent-task-execution-log-label">Input:</span>
+                          <code>{entry.toolInput}</code>
+                        </div>
+                        {entry.toolResult && (
+                          <div className="agent-task-execution-log-entry-result">
+                            <span className="agent-task-execution-log-label">Result:</span>
+                            <code>{entry.toolResult}</code>
+                            {/* Show "View Note" link if createNote succeeded */}
+                            {onOpenNote && (() => {
+                              const noteId = extractNoteIdFromResult(entry.toolName, entry.toolResult!);
+                              if (noteId) {
+                                return (
+                                  <button
+                                    className="agent-task-view-note-link"
+                                    onClick={() => onOpenNote(noteId)}
+                                    type="button"
+                                  >
+                                    <FileText size={12} />
+                                    View Note
+                                  </button>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="agent-task-conversation">
               {/* Initial result */}
               {selectedTask.result && (
                 <div className="agent-task-message assistant">
                   <div className="agent-task-message-role">
-                    {selectedTask.provider === "claude" ? "Claude" : "OpenAI"}
+                    {getProviderName(selectedTask)}
                   </div>
                   <div className="agent-task-message-content">
                     <ReactMarkdown
@@ -556,7 +729,7 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
               {selectedTask.messages?.map((msg, idx) => (
                 <div key={idx} className={`agent-task-message ${msg.role}`}>
                   <div className="agent-task-message-role">
-                    {msg.role === "user" ? "You" : selectedTask.provider === "claude" ? "Claude" : "OpenAI"}
+                    {msg.role === "user" ? "You" : getProviderName(selectedTask)}
                   </div>
                   <div className="agent-task-message-content">
                     {msg.role === "assistant" ? (
@@ -597,7 +770,7 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
               {selectedTask.status === "processing" && selectedTask.result && (
                 <div className="agent-task-message assistant processing">
                   <div className="agent-task-message-role">
-                    {selectedTask.provider === "claude" ? "Claude" : "OpenAI"}
+                    {getProviderName(selectedTask)}
                   </div>
                   <div className="agent-task-message-content">
                     <div className="agent-task-typing">
@@ -643,12 +816,12 @@ export function AgentTasksView({ onClose, date, folderId }: AgentTasksViewProps)
           </div>
         )}
 
-        {/* Processing state for selected task */}
-        {selectedTask && selectedTask.status === "processing" && (
+        {/* Processing state for selected task - only show when no result yet (initial processing) */}
+        {selectedTask && selectedTask.status === "processing" && !selectedTask.result && (
           <div className="agent-task-result-panel">
             <div className="agent-task-processing">
               <Loader2 size={32} className="agent-task-status-icon processing" />
-              <span>Processing with {selectedTask.provider === "claude" ? "Claude" : "OpenAI"}...</span>
+              <span>Processing with {getProviderName(selectedTask)}...</span>
             </div>
           </div>
         )}

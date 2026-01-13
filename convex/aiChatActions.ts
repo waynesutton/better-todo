@@ -4,6 +4,7 @@ import { action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import Firecrawl from "@mendable/firecrawl-js";
 
 // Minimal fallback prompt - the full prompts should be stored in env vars for privacy
@@ -60,7 +61,8 @@ async function scrapeUrl(
   }
 }
 
-// Generate AI response using Claude with support for images and links
+// Generate AI response using Claude or OpenAI with support for images and links
+// Automatically uses whichever provider has an active (non-paused) key
 export const generateResponse = action({
   args: {
     chatId: v.id("aiChats"),
@@ -82,25 +84,30 @@ export const generateResponse = action({
       throw new Error("Not authenticated");
     }
 
-    // Get user's personal API key (required)
-    const apiKey: string | null = await ctx.runQuery(internal.userApiKeys.getApiKeyInternal, {
-      userId: identity.subject,
-      provider: "anthropic",
-    });
-    
-    if (!apiKey) {
+    // Get available (non-paused) API keys
+    const availableKeys = await ctx.runQuery(
+      internal.userApiKeys.getAvailableApiKeys,
+      {
+        userId: identity.subject,
+      },
+    );
+
+    // Determine which provider to use (prefer Claude, fallback to OpenAI)
+    const useProvider: "anthropic" | "openai" | null =
+      availableKeys.anthropicAvailable
+        ? "anthropic"
+        : availableKeys.openaiAvailable
+          ? "openai"
+          : null;
+
+    if (!useProvider) {
       throw new Error(
-        "No Anthropic API key configured. Please add your API key in Settings (press ?)."
+        "No API key available. Please add or unpause an API key in Settings (press ?).",
       );
     }
 
     // Build system prompt from environment variables
     const systemPrompt = buildSystemPrompt();
-
-    // Initialize Anthropic client
-    const anthropic: Anthropic = new Anthropic({
-      apiKey,
-    });
 
     // Get chat history for context
     const chat = await ctx.runQuery(internal.aiChats.getAIChatInternal, {
@@ -121,12 +128,9 @@ export const generateResponse = action({
         if (attachment.type === "link" && attachment.url) {
           urlsToScrape.push(attachment.url);
         } else if (attachment.type === "image" && attachment.storageId) {
-          // Get image URL from Convex storage
           const imageUrl = await ctx.runQuery(
             internal.aiChats.getStorageUrlInternal,
-            {
-              storageId: attachment.storageId,
-            },
+            { storageId: attachment.storageId },
           );
           if (imageUrl) {
             imageUrls.push(imageUrl);
@@ -157,83 +161,110 @@ export const generateResponse = action({
     });
     await Promise.all(scrapePromises);
 
-    // Build message history for Claude (last 20 messages for context)
-    const recentMessages = chat.messages.slice(-20);
-
-    // Build Claude messages with proper typing
-    type ClaudeMessageContent =
-      | string
-      | Array<Anthropic.TextBlockParam | Anthropic.ImageBlockParam>;
-    const claudeMessages: Array<{
-      role: "user" | "assistant";
-      content: ClaudeMessageContent;
-    }> = recentMessages.map((msg: { role: "user" | "assistant"; content: string }) => ({
-      role: msg.role,
-      content: msg.content,
-    }));
-
-    // Build the new user message content
-    let messageContent: ClaudeMessageContent;
-
-    // If we have images or scraped content, build a complex message
-    if (imageUrls.length > 0 || scrapedContents.length > 0) {
-      const contentBlocks: Array<
-        Anthropic.TextBlockParam | Anthropic.ImageBlockParam
-      > = [];
-
-      // Add images first (Claude vision)
-      for (const imageUrl of imageUrls) {
-        contentBlocks.push({
-          type: "image",
-          source: {
-            type: "url",
-            url: imageUrl,
-          },
-        });
+    // Build enriched message with scraped content
+    let enrichedMessage = args.userMessage;
+    if (scrapedContents.length > 0) {
+      enrichedMessage += "\n\n---\n\n**Referenced Content:**\n\n";
+      for (const scraped of scrapedContents) {
+        enrichedMessage += `### ${scraped.title}\n*Source: ${scraped.url}*\n\n${scraped.content}\n\n---\n\n`;
       }
-
-      // Build text content with scraped URLs
-      let textContent = args.userMessage;
-
-      if (scrapedContents.length > 0) {
-        textContent += "\n\n---\n\n**Referenced Content:**\n\n";
-        for (const scraped of scrapedContents) {
-          textContent += `### ${scraped.title}\n*Source: ${scraped.url}*\n\n${scraped.content}\n\n---\n\n`;
-        }
-      }
-
-      contentBlocks.push({
-        type: "text",
-        text: textContent,
-      });
-
-      messageContent = contentBlocks;
-    } else {
-      messageContent = args.userMessage;
     }
 
-    // Add the new user message
-    claudeMessages.push({
-      role: "user",
-      content: messageContent,
-    });
+    // Build message history (last 20 messages for context)
+    const recentMessages = chat.messages.slice(-20);
 
-    // Call Claude API
-    const response: Anthropic.Message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: claudeMessages,
-    });
+    let assistantMessage: string;
 
-    // Extract text response
-    const textContent: Anthropic.ContentBlock | undefined = response.content.find(
-      (block: Anthropic.ContentBlock) => block.type === "text"
-    );
-    const assistantMessage: string =
-      textContent?.type === "text"
-        ? textContent.text
-        : "I apologize, but I could not generate a response.";
+    if (useProvider === "anthropic") {
+      // Use Claude
+      const anthropic = new Anthropic({ apiKey: availableKeys.anthropicKey! });
+
+      type ClaudeMessageContent =
+        | string
+        | Array<Anthropic.TextBlockParam | Anthropic.ImageBlockParam>;
+
+      const claudeMessages: Array<{
+        role: "user" | "assistant";
+        content: ClaudeMessageContent;
+      }> = recentMessages.map(
+        (msg: { role: "user" | "assistant"; content: string }) => ({
+          role: msg.role,
+          content: msg.content,
+        }),
+      );
+
+      // Build the new user message content
+      let messageContent: ClaudeMessageContent;
+
+      if (imageUrls.length > 0) {
+        const contentBlocks: Array<
+          Anthropic.TextBlockParam | Anthropic.ImageBlockParam
+        > = [];
+        for (const imageUrl of imageUrls) {
+          contentBlocks.push({
+            type: "image",
+            source: { type: "url", url: imageUrl },
+          });
+        }
+        contentBlocks.push({ type: "text", text: enrichedMessage });
+        messageContent = contentBlocks;
+      } else {
+        messageContent = enrichedMessage;
+      }
+
+      claudeMessages.push({ role: "user", content: messageContent });
+
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        system: systemPrompt,
+        messages: claudeMessages,
+      });
+
+      const textContent = response.content.find(
+        (block: Anthropic.ContentBlock) => block.type === "text",
+      );
+      assistantMessage =
+        textContent?.type === "text"
+          ? textContent.text
+          : "I apologize, but I could not generate a response.";
+    } else {
+      // Use OpenAI
+      const openai = new OpenAI({ apiKey: availableKeys.openaiKey! });
+
+      const openaiMessages: OpenAI.ChatCompletionMessageParam[] = [
+        { role: "system", content: systemPrompt },
+      ];
+
+      for (const msg of recentMessages) {
+        openaiMessages.push({ role: msg.role, content: msg.content });
+      }
+
+      // Add new user message with images if any
+      if (imageUrls.length > 0) {
+        const contentParts: OpenAI.ChatCompletionContentPart[] = [];
+        for (const imageUrl of imageUrls) {
+          contentParts.push({
+            type: "image_url",
+            image_url: { url: imageUrl },
+          });
+        }
+        contentParts.push({ type: "text", text: enrichedMessage });
+        openaiMessages.push({ role: "user", content: contentParts });
+      } else {
+        openaiMessages.push({ role: "user", content: enrichedMessage });
+      }
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-5-mini",
+        max_completion_tokens: 2048,
+        messages: openaiMessages,
+      });
+
+      assistantMessage =
+        response.choices[0]?.message?.content ||
+        "I apologize, but I could not generate a response.";
+    }
 
     // Save the assistant message
     await ctx.runMutation(internal.aiChats.addAssistantMessage, {

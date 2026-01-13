@@ -83,6 +83,75 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.031 - 2026-01-13)
+
+- [x] **Executable Notes (Run Note)** - Turn notes into executable programs with AI tool use
+  - New "Run" task type interprets natural language and executes via tools
+  - AI agent loop pattern with multi-step tool execution
+  - Run Note button on full-page notes and inline notes
+  - Execution log shows tool calls with inputs, results, and status
+  - Collapsible execution log with scroll support
+  - Support for both Claude and OpenAI providers
+
+- [x] **AI Agent Tools** - Comprehensive tool set for note execution
+  - `createTodo`, `updateTodo`, `completeTodo`, `deleteTodo` for todo management
+  - `createNote`, `updateNote` for note management
+  - `moveTodosToDate`, `searchTodos`, `searchNotes` for organization
+  - `getTodosForDate`, `archiveDate` for queries and archiving
+
+- [x] **Backend: Agent Tools Module** (`convex/agentTools.ts`) - New file
+  - Centralized tool definitions with schemas
+  - `getClaudeTools()` and `getOpenAITools()` formatters
+  - `EXECUTABLE_NOTE_SYSTEM_PROMPT` for run task guidance
+
+- [x] **Backend: Agent Tool Mutations** (`convex/agentToolMutations.ts`) - New file
+  - Internal mutations for each tool action
+  - Indexed queries for ownership checks
+  - Idempotent mutations with early returns
+  - Parallel operations where possible
+
+- [x] **Backend: Agent Task Actions Updates** (`convex/agentTaskActions.ts`)
+  - Added `processExecutableNote` internal action
+  - `runClaudeAgentLoop` for Claude tool use
+  - `runOpenAIAgentLoop` for OpenAI function calling
+  - `executeAgentTool` dispatcher
+  - Real-time execution log updates
+  - Max 10 iterations safety limit
+
+- [x] **Backend: Schema Updates** (`convex/schema.ts`)
+  - Added `run` to `taskType` union
+  - Added `executionLog` field for tool call tracking
+
+- [x] **Backend: Agent Tasks Updates** (`convex/agentTasks.ts`)
+  - `appendExecutionLogEntry` internal mutation
+  - `updateTaskWithExecutionLog` internal mutation
+  - `createAgentTask` schedules `processExecutableNote` for run tasks
+
+- [x] **Frontend: Run Note UI**
+  - `FullPageNoteTabs.tsx` - Run Note button with Play icon
+  - `NotesSection.tsx` - Run Note for inline notes
+  - `AgentTaskModal.tsx` - Run task type option
+  - `App.tsx` - onRunNote callbacks for notes and folders
+
+- [x] **Frontend: Execution Log Display** (`AgentTasksView.tsx`)
+  - Collapsible execution log section for run tasks
+  - Tool calls with name, input, result, and status
+  - Visual indicators: pending (yellow), success (green), error (red)
+  - Chevron toggle for collapse/expand
+  - Scrollable entries (max-height 300px)
+
+- [x] **CSS: Execution Log Styles** (`global.css`)
+  - `.agent-task-execution-log` container
+  - `.agent-task-execution-log-header` clickable button
+  - Status-based backgrounds for entries
+  - `.run-note-button` hover styles for all themes
+  - Mobile responsive styles
+
+- [x] **Fix: Follow-up Processing Panel**
+  - Processing panel only shows during initial task (no result)
+  - Follow-ups use inline "Thinking..." indicator
+  - Prevents duplicate processing indicators
+
 ## Completed Tasks (v.030 - 2026-01-12)
 
 - [x] **Persistent Navigation Icons** - Keep all view icons visible at all times

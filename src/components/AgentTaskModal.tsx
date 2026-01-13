@@ -3,12 +3,12 @@ import { createPortal } from "react-dom";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { Bot, Sparkles, Code, FileText, Search, X, MessageSquare, Key } from "lucide-react";
+import { Bot, Sparkles, Code, FileText, Search, X, MessageSquare, Key, Play } from "lucide-react";
 import { triggerHaptic, triggerSuccessHaptic } from "../lib/haptics";
 
 // Provider and task type options
 type Provider = "claude" | "openai";
-type TaskType = "expand" | "code" | "summarize" | "analyze" | "other";
+type TaskType = "expand" | "code" | "summarize" | "analyze" | "other" | "run";
 
 interface AgentTaskModalProps {
   isOpen: boolean;
@@ -58,6 +58,12 @@ const TASK_TYPES: Array<{
     description: "Add your own custom instructions",
     icon: <MessageSquare size={18} />,
   },
+  {
+    id: "run",
+    label: "Run",
+    description: "Execute instructions in this note as a program",
+    icon: <Play size={18} />,
+  },
 ];
 
 export function AgentTaskModal({
@@ -76,24 +82,36 @@ export function AgentTaskModal({
   const [customInstructions, setCustomInstructions] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Check if user has API keys set
+  // Check if user has API keys set and which are available (not paused)
   const userApiKeys = useQuery(
     api.userApiKeys.getUserApiKeys,
     isAuthenticated ? undefined : "skip",
   );
   const hasApiKeys = userApiKeys?.hasAnthropicKey || userApiKeys?.hasOpenaiKey;
+  
+  // Determine which providers are available (have key AND not paused)
+  const claudeAvailable = userApiKeys?.hasAnthropicKey && !userApiKeys?.anthropicPaused;
+  const openaiAvailable = userApiKeys?.hasOpenaiKey && !userApiKeys?.openaiPaused;
+  const hasAnyAvailableKey = claudeAvailable || openaiAvailable;
 
   const createAgentTask = useMutation(api.agentTasks.createAgentTask);
 
-  // Reset state when modal opens
+  // Reset state when modal opens and auto-select available provider
   useEffect(() => {
     if (isOpen) {
-      setSelectedProvider("claude");
+      // Auto-select an available provider
+      if (claudeAvailable) {
+        setSelectedProvider("claude");
+      } else if (openaiAvailable) {
+        setSelectedProvider("openai");
+      } else {
+        setSelectedProvider("claude"); // Default fallback
+      }
       setSelectedTaskType("expand");
       setCustomInstructions("");
       setIsSubmitting(false);
     }
-  }, [isOpen]);
+  }, [isOpen, claudeAvailable, openaiAvailable]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -184,15 +202,17 @@ export function AgentTaskModal({
         </div>
 
         {/* API Key Warning Banner */}
-        {!hasApiKeys && userApiKeys !== undefined && (
+        {!hasAnyAvailableKey && userApiKeys !== undefined && (
           <div className="ai-api-key-warning">
             <div className="ai-api-key-warning-icon">
               <Key size={18} />
             </div>
             <div className="ai-api-key-warning-content">
-              <strong>API Key Required</strong>
+              <strong>{hasApiKeys ? "API Keys Paused" : "API Key Required"}</strong>
               <p>
-                Agent tasks require an API key. Press <kbd>?</kbd> to open Keyboard Shortcuts and add your Claude or OpenAI key. You only need one to get started.
+                {hasApiKeys
+                  ? "All your API keys are paused. Press ? to open Settings and unpause a key to use this feature."
+                  : "Agent tasks require an API key. Press ? to open Settings and add your Claude or OpenAI key."}
               </p>
             </div>
           </div>
@@ -203,30 +223,44 @@ export function AgentTaskModal({
           <label className="agent-task-modal-label">AI Provider</label>
           <div className="agent-task-modal-providers">
             <button
-              className={`agent-task-modal-provider ${selectedProvider === "claude" ? "selected" : ""}`}
+              className={`agent-task-modal-provider ${selectedProvider === "claude" ? "selected" : ""} ${!claudeAvailable && userApiKeys?.hasAnthropicKey ? "paused" : ""}`}
               onClick={() => {
                 triggerHaptic("light");
                 setSelectedProvider("claude");
               }}
+              disabled={!userApiKeys?.hasAnthropicKey}
+              title={
+                !userApiKeys?.hasAnthropicKey
+                  ? "No Claude API key"
+                  : userApiKeys?.anthropicPaused
+                    ? "Claude key is paused (will fallback to OpenAI if available)"
+                    : "Use Claude"
+              }
             >
               <div className="agent-task-modal-provider-icon">
-                {/* Claude logo - simple text for now */}
                 <span style={{ fontWeight: 600, fontSize: 14 }}>C</span>
               </div>
-              <span>Claude</span>
+              <span>Claude{userApiKeys?.anthropicPaused ? " (Paused)" : ""}</span>
             </button>
             <button
-              className={`agent-task-modal-provider ${selectedProvider === "openai" ? "selected" : ""}`}
+              className={`agent-task-modal-provider ${selectedProvider === "openai" ? "selected" : ""} ${!openaiAvailable && userApiKeys?.hasOpenaiKey ? "paused" : ""}`}
               onClick={() => {
                 triggerHaptic("light");
                 setSelectedProvider("openai");
               }}
+              disabled={!userApiKeys?.hasOpenaiKey}
+              title={
+                !userApiKeys?.hasOpenaiKey
+                  ? "No OpenAI API key"
+                  : userApiKeys?.openaiPaused
+                    ? "OpenAI key is paused (will fallback to Claude if available)"
+                    : "Use OpenAI"
+              }
             >
               <div className="agent-task-modal-provider-icon">
-                {/* OpenAI logo - simple text for now */}
                 <span style={{ fontWeight: 600, fontSize: 14 }}>O</span>
               </div>
-              <span>OpenAI</span>
+              <span>OpenAI{userApiKeys?.openaiPaused ? " (Paused)" : ""}</span>
             </button>
           </div>
         </div>
@@ -287,8 +321,8 @@ export function AgentTaskModal({
           <button
             className="agent-task-modal-button submit"
             onClick={handleSubmit}
-            disabled={isSubmitting || !hasApiKeys || (selectedTaskType === "other" && !customInstructions.trim())}
-            title={!hasApiKeys ? "Add API keys in Keyboard Shortcuts (?) to use this feature" : ""}
+            disabled={isSubmitting || !hasAnyAvailableKey || (selectedTaskType === "other" && !customInstructions.trim())}
+            title={!hasAnyAvailableKey ? "Add or unpause an API key in Settings (?) to use this feature" : ""}
           >
             {isSubmitting ? "Sending..." : "Send to Agent"}
           </button>

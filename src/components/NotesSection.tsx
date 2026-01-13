@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Copy, Check, Plus, X, Edit3 } from "lucide-react";
+import { Copy, Check, Plus, X, Edit3, Play } from "lucide-react";
 import { DrawingPinIcon, DrawingPinFilledIcon } from "@radix-ui/react-icons";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import ReactMarkdown from "react-markdown";
@@ -251,6 +251,8 @@ interface NotesSectionProps {
   expandedNoteId: string | null;
   onNoteExpanded: () => void;
   focusNoteId?: Id<"notes"> | null;
+  onRunNote?: (data: { noteId: Id<"notes">; content: string; title?: string; date?: string; folderId?: Id<"folders"> }) => void;
+  isAuthenticated?: boolean;
 }
 
 interface Note {
@@ -273,7 +275,9 @@ interface NoteItemProps {
   onToggleCollapse: (id: Id<"notes">, collapsed: boolean) => void;
   onDeleteClick: (id: Id<"notes">) => void;
   onTogglePin: (id: Id<"notes">, pinned: boolean) => void;
+  onRunNote?: (data: { noteId: Id<"notes">; content: string; title?: string }) => void;
   shouldFocus?: boolean;
+  isAuthenticated?: boolean;
 }
 
 // Types for parsed content blocks
@@ -328,7 +332,9 @@ function NoteItem({
   onToggleCollapse,
   onDeleteClick,
   onTogglePin,
+  onRunNote,
   shouldFocus = false,
+  isAuthenticated = false,
 }: NoteItemProps) {
   const { theme } = useTheme();
   const [copied, setCopied] = useState(false);
@@ -605,6 +611,20 @@ function NoteItem({
               <DrawingPinIcon style={{ width: 14, height: 14 }} />
             )}
           </button>
+          {/* Run Note button - execute instructions */}
+          {isAuthenticated && onRunNote && (
+            <button
+              className="note-action-button run-note-button"
+              onClick={() => onRunNote({
+                noteId: note._id,
+                content: note.content,
+                title: note.title,
+              })}
+              title="Run Note - Execute instructions"
+            >
+              <Play size={14} />
+            </button>
+          )}
           <button
             className="note-action-button"
             onClick={() => onDeleteClick(note._id)}
@@ -739,6 +759,8 @@ export function NotesSection({
   expandedNoteId,
   onNoteExpanded,
   focusNoteId,
+  onRunNote,
+  isAuthenticated = false,
 }: NotesSectionProps) {
   // Query notes by folder or date depending on which prop is provided
   const dateNotes = useQuery(
@@ -875,7 +897,9 @@ export function NotesSection({
               onToggleCollapse={handleToggleCollapse}
               onDeleteClick={handleDeleteClick}
               onTogglePin={handleTogglePin}
+              onRunNote={onRunNote ? (data) => onRunNote({ ...data, date, folderId }) : undefined}
               shouldFocus={focusNoteId === note._id}
+              isAuthenticated={isAuthenticated}
             />
           ))}
         </SortableContext>
@@ -911,6 +935,8 @@ interface PinnedNotesSectionProps {
   expandedNoteId: string | null;
   onNoteExpanded: () => void;
   focusNoteId?: Id<"notes"> | null;
+  onRunNote?: (data: { noteId: Id<"notes">; content: string; title?: string; date?: string; folderId?: Id<"folders"> }) => void;
+  isAuthenticated?: boolean;
 }
 
 export function PinnedNotesSection({
@@ -919,6 +945,8 @@ export function PinnedNotesSection({
   expandedNoteId,
   onNoteExpanded,
   focusNoteId,
+  onRunNote,
+  isAuthenticated = false,
 }: PinnedNotesSectionProps) {
   // Query notes by folder or date depending on which prop is provided
   const dateNotes = useQuery(
@@ -1053,7 +1081,9 @@ export function PinnedNotesSection({
               onToggleCollapse={handleToggleCollapse}
               onDeleteClick={handleDeleteClick}
               onTogglePin={handleTogglePin}
+              onRunNote={onRunNote ? (data) => onRunNote({ ...data, date, folderId }) : undefined}
               shouldFocus={focusNoteId === note._id}
+              isAuthenticated={isAuthenticated}
             />
           ))}
         </SortableContext>

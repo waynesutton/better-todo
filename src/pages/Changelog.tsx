@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v030");
+  const [activeSection, setActiveSection] = useState("v031");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
+    { id: "v031", title: "v.031 - Jan 13, 2026" },
     { id: "v030", title: "v.030 - Jan 12, 2026" },
     { id: "v029", title: "v.029 - Jan 12, 2026" },
     { id: "v028", title: "v.028 - Jan 12, 2026" },
@@ -100,12 +101,147 @@ export function Changelog() {
 
       <div className="launch-container">
         {/* Each section mirrors the markdown changelog so anchors stay in sync. */}
-        <section id="v030" className="launch-section">
+        <section id="v031" className="launch-section">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">v.031 - January 13, 2026</h2>
+          <p className="changelog-subtitle">Executable Notes (Run Note)</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Executable Notes (Run Note)</strong> - Turn notes into
+              executable programs with AI tool use
+              <ul className="nested-list">
+                <li>
+                  New &quot;Run&quot; task type that interprets natural language
+                  instructions and executes them
+                </li>
+                <li>AI agent loop pattern with multi-step tool execution</li>
+                <li>Run Note button on full-page notes and inline notes</li>
+                <li>
+                  Execution log showing all tool calls with inputs, results, and
+                  status
+                </li>
+                <li>
+                  Collapsible execution log with scroll support for long tool
+                  chains
+                </li>
+                <li>Support for both Claude and OpenAI providers</li>
+              </ul>
+            </li>
+            <li>
+              <strong>AI Agent Tools</strong> - Comprehensive tool set for note
+              execution
+              <ul className="nested-list">
+                <li>
+                  <code>createTodo</code>, <code>updateTodo</code>,{" "}
+                  <code>completeTodo</code>, <code>deleteTodo</code>
+                </li>
+                <li>
+                  <code>createNote</code>, <code>updateNote</code>
+                </li>
+                <li>
+                  <code>moveTodosToDate</code>, <code>searchTodos</code>,{" "}
+                  <code>searchNotes</code>
+                </li>
+                <li>
+                  <code>getTodosForDate</code>, <code>archiveDate</code>
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Backend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Schema</strong> (<code>convex/schema.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Added <code>run</code> to <code>taskType</code> union
+                </li>
+                <li>
+                  Added <code>executionLog</code> field to track tool calls
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Agent Tools Module</strong> (
+              <code>convex/agentTools.ts</code>) - New file
+              <ul className="nested-list">
+                <li>Centralized tool definitions for AI agent</li>
+                <li>
+                  <code>getClaudeTools()</code> and <code>getOpenAITools()</code>{" "}
+                  formatters
+                </li>
+                <li>System prompt for executable note processing</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Agent Tool Mutations</strong> (
+              <code>convex/agentToolMutations.ts</code>) - New file
+              <ul className="nested-list">
+                <li>Internal mutations for each tool action</li>
+                <li>Indexed queries for ownership checks</li>
+                <li>Idempotent mutations with early returns</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Agent Task Actions</strong> (
+              <code>convex/agentTaskActions.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  <code>processExecutableNote</code> internal action
+                </li>
+                <li>
+                  <code>runClaudeAgentLoop</code> and{" "}
+                  <code>runOpenAIAgentLoop</code> for multi-step execution
+                </li>
+                <li>Real-time execution log updates</li>
+                <li>Max 10 iterations safety limit</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Frontend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>FullPageNoteTabs.tsx</strong> - Run Note button with Play
+              icon
+            </li>
+            <li>
+              <strong>NotesSection.tsx</strong> - Run Note for inline notes
+            </li>
+            <li>
+              <strong>AgentTaskModal.tsx</strong> - Run task type option
+            </li>
+            <li>
+              <strong>AgentTasksView.tsx</strong> - Collapsible execution log
+              display
+              <ul className="nested-list">
+                <li>Shows tool calls with name, input, result, status</li>
+                <li>
+                  Visual indicators: pending (yellow), success (green), error
+                  (red)
+                </li>
+                <li>Chevron toggle for collapse/expand</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Follow-up Processing Panel</strong> - Fixed duplicate
+              &quot;thinking&quot; panels during follow-up questions
+            </li>
+          </ul>
+        </section>
+
+        <section id="v030" className="launch-section">
           <h2 className="section-title">v.030 - January 12, 2026</h2>
           <p className="changelog-subtitle">Persistent Navigation Icons</p>
 

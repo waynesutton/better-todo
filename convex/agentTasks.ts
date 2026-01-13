@@ -10,6 +10,7 @@ const taskTypeValidator = v.union(
   v.literal("summarize"),
   v.literal("analyze"),
   v.literal("other"),
+  v.literal("run"), // Executable note - treats content as instructions to execute
 );
 const statusValidator = v.union(
   v.literal("pending"),
@@ -25,6 +26,15 @@ const messageValidator = v.object({
   timestamp: v.number(),
 });
 
+// Execution log entry validator for "run" task type
+const executionLogEntryValidator = v.object({
+  toolName: v.string(),
+  toolInput: v.string(), // JSON stringified input
+  toolResult: v.optional(v.string()), // JSON stringified result
+  status: v.union(v.literal("pending"), v.literal("success"), v.literal("error")),
+  timestamp: v.number(),
+});
+
 // Agent task return type validator
 const agentTaskValidator = v.object({
   _id: v.id("agentTasks"),
@@ -34,13 +44,15 @@ const agentTaskValidator = v.object({
   sourceType: v.union(v.literal("todo"), v.literal("fullPageNote")),
   sourceContent: v.string(),
   sourceTitle: v.optional(v.string()),
-  provider: providerValidator,
+  provider: providerValidator, // User's selected provider
+  actualProvider: v.optional(providerValidator), // Provider actually used (may differ if selected was paused)
   taskType: taskTypeValidator,
   customInstructions: v.optional(v.string()),
   status: statusValidator,
   result: v.optional(v.string()),
   error: v.optional(v.string()),
   messages: v.optional(v.array(messageValidator)),
+  executionLog: v.optional(v.array(executionLogEntryValidator)), // For "run" task type
   folderId: v.optional(v.id("folders")),
   date: v.optional(v.string()),
 });
@@ -196,10 +208,18 @@ export const createAgentTask = mutation({
       date: args.date,
     });
 
-    // Schedule the processing action to run immediately
-    await ctx.scheduler.runAfter(0, internal.agentTaskActions.processAgentTask, {
-      taskId,
-    });
+    // Schedule the appropriate processing action based on task type
+    if (args.taskType === "run") {
+      // Use the executable note processor for "run" tasks
+      await ctx.scheduler.runAfter(0, internal.agentTaskActions.processExecutableNote, {
+        taskId,
+      });
+    } else {
+      // Use the standard processor for other task types
+      await ctx.scheduler.runAfter(0, internal.agentTaskActions.processAgentTask, {
+        taskId,
+      });
+    }
 
     return taskId;
   },
@@ -502,6 +522,7 @@ export const updateTaskStatus = internalMutation({
     status: statusValidator,
     result: v.optional(v.string()),
     error: v.optional(v.string()),
+    actualProvider: v.optional(providerValidator),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -514,6 +535,7 @@ export const updateTaskStatus = internalMutation({
       status: args.status,
       result: args.result,
       error: args.error,
+      actualProvider: args.actualProvider,
     });
 
     return null;
@@ -579,5 +601,143 @@ export const getTaskForProcessing = internalQuery({
   returns: v.union(agentTaskValidator, v.null()),
   handler: async (ctx, args) => {
     return await ctx.db.get(args.taskId);
+  },
+});
+
+// Internal mutation to append a single execution log entry (for real-time updates)
+export const appendExecutionLogEntry = internalMutation({
+  args: {
+    taskId: v.id("agentTasks"),
+    entry: executionLogEntryValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      return null;
+    }
+
+    const existingLog = task.executionLog || [];
+    await ctx.db.patch(args.taskId, {
+      executionLog: [...existingLog, args.entry],
+    });
+
+    return null;
+  },
+});
+
+// Internal mutation to update task with final result and execution log
+export const updateTaskWithExecutionLog = internalMutation({
+  args: {
+    taskId: v.id("agentTasks"),
+    status: statusValidator,
+    result: v.optional(v.string()),
+    error: v.optional(v.string()),
+    executionLog: v.array(executionLogEntryValidator),
+    actualProvider: v.optional(providerValidator),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      return null;
+    }
+
+    await ctx.db.patch(args.taskId, {
+      status: args.status,
+      result: args.result,
+      error: args.error,
+      executionLog: args.executionLog,
+      actualProvider: args.actualProvider,
+    });
+
+    return null;
+  },
+});
+
+// Retry a failed agent task
+export const retryAgentTask = mutation({
+  args: {
+    taskId: v.id("agentTasks"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Verify ownership using indexed query
+    const task = await ctx.db
+      .query("agentTasks")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.taskId))
+      .unique();
+
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    // Only allow retry on failed tasks
+    if (task.status !== "failed") {
+      throw new Error("Can only retry failed tasks");
+    }
+
+    // Reset task to pending and clear error/result
+    await ctx.db.patch(args.taskId, {
+      status: "pending",
+      result: undefined,
+      error: undefined,
+      actualProvider: undefined,
+      executionLog: undefined,
+      messages: undefined,
+    });
+
+    // Schedule the appropriate processing action based on task type
+    if (task.taskType === "run") {
+      await ctx.scheduler.runAfter(0, internal.agentTaskActions.processExecutableNote, {
+        taskId: args.taskId,
+      });
+    } else {
+      await ctx.scheduler.runAfter(0, internal.agentTaskActions.processAgentTask, {
+        taskId: args.taskId,
+      });
+    }
+
+    return null;
+  },
+});
+
+// Clear conversation/messages for an agent task (keep initial result)
+export const clearTaskConversation = mutation({
+  args: {
+    taskId: v.id("agentTasks"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Verify ownership using indexed query
+    const task = await ctx.db
+      .query("agentTasks")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.taskId))
+      .unique();
+
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    // Clear follow-up messages but keep initial result
+    await ctx.db.patch(args.taskId, {
+      messages: undefined,
+    });
+
+    return null;
   },
 });

@@ -7,7 +7,8 @@ import {
   ImageIcon,
   EyeOpenIcon,
 } from "@radix-ui/react-icons";
-import { X, Copy, Check, Link2, ExternalLinkIcon, Bot, Download } from "lucide-react";
+import { X, Copy, Check, Link2, ExternalLinkIcon, Bot, Download, Play, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -36,6 +37,8 @@ interface FullPageNoteTabsProps {
   cursorInCodeBlock?: boolean;
   onShareNote?: () => void;
   onSendToAgent?: (data: { noteId: Id<"fullPageNotes">; content: string; title?: string; folderId?: Id<"folders">; date?: string }) => void;
+  onRunNote?: (data: { noteId: Id<"fullPageNotes">; content: string; title?: string; folderId?: Id<"folders">; date?: string }) => void;
+  onDeleteNote?: (noteId: Id<"fullPageNotes">) => void;
 }
 
 export function FullPageNoteTabs({
@@ -55,6 +58,8 @@ export function FullPageNoteTabs({
   cursorInCodeBlock,
   onShareNote,
   onSendToAgent,
+  onRunNote,
+  onDeleteNote,
 }: FullPageNoteTabsProps) {
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const selectedTabRef = useRef<HTMLDivElement>(null);
@@ -64,6 +69,7 @@ export function FullPageNoteTabs({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const updateNote = useMutation(api.fullPageNotes.updateFullPageNote);
   const [copied, setCopied] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Scroll to selected tab when it changes
   useEffect(() => {
@@ -263,6 +269,26 @@ export function FullPageNoteTabs({
             </button>
           )}
 
+          {/* Run Note button - executes note as instructions */}
+          {isAuthenticated && onRunNote && selectedNoteId && (
+            <button
+              className="fullpage-note-tab-action-button run-note-button"
+              onClick={() => {
+                const selectedNote = notes.find((n) => n._id === selectedNoteId);
+                if (selectedNote && selectedNote.content) {
+                  onRunNote({
+                    noteId: selectedNote._id,
+                    content: selectedNote.content,
+                    title: selectedNote.title,
+                  });
+                }
+              }}
+              title="Run Note - Execute instructions"
+            >
+              <Play size={16} />
+            </button>
+          )}
+
           {isAuthenticated && onShareNote && (
             <>
               <button
@@ -322,6 +348,17 @@ export function FullPageNoteTabs({
             </button>
           )}
 
+          {/* Delete note button */}
+          {isAuthenticated && onDeleteNote && selectedNoteId && (
+            <button
+              className="fullpage-note-tab-action-button delete-note-button"
+              onClick={() => setShowDeleteConfirm(true)}
+              title="Delete note"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+
           <button
             className="fullpage-note-tab-action-button"
             onClick={onToggleFullscreen}
@@ -335,6 +372,23 @@ export function FullPageNoteTabs({
           </button>
         </div>
       </div>
+
+      {/* Delete note confirmation dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete Note"
+        message="Are you sure you want to delete this note? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={() => {
+          if (selectedNoteId && onDeleteNote) {
+            onDeleteNote(selectedNoteId);
+          }
+          setShowDeleteConfirm(false);
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+        isDangerous={true}
+      />
     </div>
   );
 }

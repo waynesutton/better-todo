@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { Cross2Icon, EyeOpenIcon, EyeClosedIcon } from "@radix-ui/react-icons";
-import { Copy, Check, Key, Trash2, ExternalLink, ChevronDown } from "lucide-react";
+import { Copy, Check, Key, Trash2, ExternalLink, ChevronDown, Pause, Play } from "lucide-react";
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -42,6 +42,7 @@ export function KeyboardShortcutsModal({
   // Mutations for API keys
   const setApiKey = useMutation(api.userApiKeys.setApiKey);
   const deleteApiKey = useMutation(api.userApiKeys.deleteApiKey);
+  const setApiKeyPaused = useMutation(api.userApiKeys.setApiKeyPaused);
   
   // Mutation to update font size
   const setTodoFontSize = useMutation(api.users.setTodoFontSize);
@@ -100,6 +101,32 @@ export function KeyboardShortcutsModal({
       await deleteApiKey({ provider: "openai" });
     } catch (error) {
       setApiKeyError(error instanceof Error ? error.message : "Failed to delete key");
+    }
+  };
+
+  const handleToggleAnthropicPaused = async () => {
+    if (!userApiKeys?.hasAnthropicKey) return;
+    setApiKeyError(null);
+    try {
+      await setApiKeyPaused({
+        provider: "anthropic",
+        paused: !(userApiKeys.anthropicPaused ?? false),
+      });
+    } catch (error) {
+      setApiKeyError(error instanceof Error ? error.message : "Failed to update key");
+    }
+  };
+
+  const handleToggleOpenaiPaused = async () => {
+    if (!userApiKeys?.hasOpenaiKey) return;
+    setApiKeyError(null);
+    try {
+      await setApiKeyPaused({
+        provider: "openai",
+        paused: !(userApiKeys.openaiPaused ?? false),
+      });
+    } catch (error) {
+      setApiKeyError(error instanceof Error ? error.message : "Failed to update key");
     }
   };
   
@@ -369,7 +396,15 @@ export function KeyboardShortcutsModal({
                   <span>Claude (Anthropic)</span>
                   {userApiKeys?.hasAnthropicKey && (
                     <span className="api-key-saved-badge">
-                      <Check size={12} /> Saved
+                      {userApiKeys.anthropicPaused ? (
+                        <>
+                          <Pause size={12} /> Paused
+                        </>
+                      ) : (
+                        <>
+                          <Check size={12} /> Saved
+                        </>
+                      )}
                     </span>
                   )}
                 </div>
@@ -377,6 +412,14 @@ export function KeyboardShortcutsModal({
                 {userApiKeys?.hasAnthropicKey ? (
                   <div className="api-key-saved-row">
                     <code className="api-key-masked">{userApiKeys.anthropicKey}</code>
+                    <button
+                      className="api-key-pause-btn"
+                      onClick={handleToggleAnthropicPaused}
+                      title={userApiKeys.anthropicPaused ? "Resume Claude key" : "Pause Claude key"}
+                      type="button"
+                    >
+                      {userApiKeys.anthropicPaused ? <Play size={14} /> : <Pause size={14} />}
+                    </button>
                     <button
                       className="api-key-delete-btn"
                       onClick={handleDeleteAnthropicKey}
@@ -432,7 +475,15 @@ export function KeyboardShortcutsModal({
                   <span>OpenAI</span>
                   {userApiKeys?.hasOpenaiKey && (
                     <span className="api-key-saved-badge">
-                      <Check size={12} /> Saved
+                      {userApiKeys.openaiPaused ? (
+                        <>
+                          <Pause size={12} /> Paused
+                        </>
+                      ) : (
+                        <>
+                          <Check size={12} /> Saved
+                        </>
+                      )}
                     </span>
                   )}
                 </div>
@@ -440,6 +491,14 @@ export function KeyboardShortcutsModal({
                 {userApiKeys?.hasOpenaiKey ? (
                   <div className="api-key-saved-row">
                     <code className="api-key-masked">{userApiKeys.openaiKey}</code>
+                    <button
+                      className="api-key-pause-btn"
+                      onClick={handleToggleOpenaiPaused}
+                      title={userApiKeys.openaiPaused ? "Resume OpenAI key" : "Pause OpenAI key"}
+                      type="button"
+                    >
+                      {userApiKeys.openaiPaused ? <Play size={14} /> : <Pause size={14} />}
+                    </button>
                     <button
                       className="api-key-delete-btn"
                       onClick={handleDeleteOpenaiKey}

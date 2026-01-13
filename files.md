@@ -11,7 +11,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (v.020 - AI-Free Streaks, Streamlined Layout, Fixed Light Mode Delete Button)
+- `changelog.md` - Version history with all features (v.031 - Executable Notes / Run Note with AI tool use)
 - `files.md` - This file, project structure documentation
 - `TASKS.md` - Project tasks and development tracking
 
@@ -253,9 +253,35 @@ This document describes the structure and purpose of each file in the Better Tod
 - `agentTaskActions.ts` - AI Agent task processing with Claude and OpenAI:
   - `processAgentTask` - Process initial task with selected AI provider
   - `processFollowUp` - Process follow-up messages with conversation context
-  - Task-specific system prompts for expand, code, summarize, analyze, other
+  - `processExecutableNote` - Process run tasks with AI tool use agent loop
+  - `runClaudeAgentLoop` - Multi-step execution with Claude tool use
+  - `runOpenAIAgentLoop` - Multi-step execution with OpenAI function calling
+  - `executeAgentTool` - Dispatcher for tool execution
+  - Task-specific system prompts for expand, code, summarize, analyze, other, run
   - Supports full conversation history for multi-turn interactions
   - Requires user's personal API keys (no environment variable fallback)
+  - Max 10 iterations safety limit for agent loops
+
+- `agentTools.ts` - AI Agent tool definitions:
+  - `AGENT_TOOLS` - Array of tool definitions with name, description, parameters
+  - `getClaudeTools()` - Format tools for Anthropic API
+  - `getOpenAITools()` - Format tools for OpenAI function calling
+  - `EXECUTABLE_NOTE_SYSTEM_PROMPT` - System prompt for run task execution
+  - Tools: createTodo, updateTodo, completeTodo, deleteTodo, createNote, updateNote, moveTodosToDate, searchTodos, searchNotes, getTodosForDate, archiveDate
+
+- `agentToolMutations.ts` - Internal mutations for AI agent tool execution:
+  - `agentCreateTodo` - Create todo with validation
+  - `agentUpdateTodo` - Update todo content or pinned status
+  - `agentCompleteTodo` - Mark todo as completed
+  - `agentDeleteTodo` - Delete todo with ownership check
+  - `agentCreateNote` - Create full-page note
+  - `agentUpdateNote` - Update note title or content
+  - `agentMoveTodosToDate` - Move todos to target date
+  - `agentSearchTodos` - Search todos by query
+  - `agentSearchNotes` - Search notes by query
+  - `agentGetTodosForDate` - Get todos for specific date
+  - `agentArchiveDate` - Archive date and todos
+  - All mutations use indexed queries for ownership checks
 
 - `userApiKeys.ts` - Per-user API key management for AI features:
   - `getUserApiKeys` - Query to get masked API keys for UI display (shows last 4 chars only)
@@ -793,9 +819,25 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.001 to v.030)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.030 (January 12, 2026)
+## Current Version: v.031 (January 13, 2026)
 
-### Latest Features (v.030) - Persistent Navigation Icons
+### Latest Features (v.031) - Executable Notes (Run Note)
+
+- **Executable Notes (Run Note)** - Turn notes into executable programs with AI tool use
+  - New "Run" task type interprets natural language and executes via tools
+  - AI agent loop pattern with multi-step tool execution
+  - Run Note button on full-page notes and inline notes
+  - Execution log shows tool calls with inputs, results, and status
+  - Collapsible execution log with scroll support
+  - Support for both Claude and OpenAI providers
+
+- **AI Agent Tools** - Comprehensive tool set for note execution
+  - createTodo, updateTodo, completeTodo, deleteTodo for todo management
+  - createNote, updateNote for note management
+  - moveTodosToDate, searchTodos, searchNotes for organization
+  - getTodosForDate, archiveDate for queries and archiving
+
+### Previous Features (v.030) - Persistent Navigation Icons
 
 - **Persistent Navigation Icons** - All view icons now always visible in header
   - Todos (checkbox), Notes (file), Chat (message), and Agent (sparkles) icons always visible

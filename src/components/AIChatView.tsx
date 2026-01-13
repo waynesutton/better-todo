@@ -11,7 +11,7 @@ import {
   Cross2Icon,
   ImageIcon,
 } from "@radix-ui/react-icons";
-import { Loader2, Copy, Check, X, Trash2, RotateCcw, AlertTriangle, Key } from "lucide-react";
+import { Loader2, Copy, Check, X, Trash2, RotateCcw, Key } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ConfirmDialog } from "./ConfirmDialog";

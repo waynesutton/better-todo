@@ -65,6 +65,7 @@ export interface TodoListProps {
   isAuthenticated?: boolean; // pass auth status to check before menu actions
   setPomodoroTriggered: (data: { todoId?: string; todoTitle?: string }) => void;
   onSendToAgent?: (data: { todoId: string; content: string; folderId?: Id<"folders">; date?: string }) => void;
+  onRunNote?: (data: { noteId: Id<"notes">; content: string; title?: string; date?: string; folderId?: Id<"folders"> }) => void;
 }
 
 export interface TodoListRef {
@@ -97,6 +98,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       isAuthenticated = false,
       setPomodoroTriggered,
       onSendToAgent,
+      onRunNote,
     },
     ref,
   ) => {
@@ -440,6 +442,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
             expandedNoteId={expandedNoteId}
             onNoteExpanded={onNoteExpanded}
             focusNoteId={newNoteId}
+            onRunNote={onRunNote}
+            isAuthenticated={isAuthenticated}
           />
         )}
 
@@ -704,6 +708,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
             expandedNoteId={expandedNoteId}
             onNoteExpanded={onNoteExpanded}
             focusNoteId={newNoteId}
+            onRunNote={onRunNote}
+            isAuthenticated={isAuthenticated}
           />
         )}
       </div>

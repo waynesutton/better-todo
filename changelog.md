@@ -4,6 +4,109 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.031] - 2026-01-13
+
+### Added
+
+- **Executable Notes (Run Note)** - Turn notes into executable programs with AI tool use
+  - New "Run" task type that interprets natural language instructions and executes them
+  - AI agent loop pattern with multi-step tool execution
+  - Run Note button on full-page notes and inline notes
+  - Execution log showing all tool calls with inputs, results, and status
+  - Collapsible execution log with scroll support for long tool chains
+  - Support for both Claude and OpenAI providers
+
+- **AI Agent Tools** - Comprehensive tool set for note execution
+  - `createTodo` - Create new todos with optional date/folder/pinned
+  - `updateTodo` - Update existing todo content or pinned status
+  - `completeTodo` - Mark a todo as completed
+  - `deleteTodo` - Remove a todo
+  - `createNote` - Create new full-page notes
+  - `updateNote` - Update note title or content
+  - `moveTodosToDate` - Move multiple todos to a target date
+  - `searchTodos` - Search todos by query with date/completion filters
+  - `searchNotes` - Search full-page notes by query
+  - `getTodosForDate` - Get all todos for a specific date
+  - `archiveDate` - Archive a date and all its todos
+
+### Backend Changes
+
+- **Schema** (`convex/schema.ts`)
+  - Added `run` to `taskType` union for agent tasks
+  - Added `executionLog` field to `agentTasks` table for tracking tool calls
+  - Execution log entries include toolName, toolInput, toolResult, status, timestamp
+
+- **Agent Tools Module** (`convex/agentTools.ts`) - New file
+  - Centralized tool definitions for AI agent
+  - `AGENT_TOOLS` array with tool schemas (name, description, parameters)
+  - `getClaudeTools()` - Format tools for Anthropic API
+  - `getOpenAITools()` - Format tools for OpenAI function calling API
+  - `EXECUTABLE_NOTE_SYSTEM_PROMPT` - System prompt for run task execution
+
+- **Agent Tool Mutations** (`convex/agentToolMutations.ts`) - New file
+  - Internal mutations for each tool action (secure, not exposed to client)
+  - Uses indexed queries for ownership checks
+  - Idempotent mutations with early returns
+  - Parallel operations where possible
+
+- **Agent Task Actions** (`convex/agentTaskActions.ts`)
+  - Added `processExecutableNote` internal action for run tasks
+  - `runClaudeAgentLoop` - Multi-step execution with Claude tool use
+  - `runOpenAIAgentLoop` - Multi-step execution with OpenAI function calling
+  - `executeAgentTool` - Dispatcher for tool execution
+  - Real-time execution log updates via `appendExecutionLogEntry`
+  - Max 10 iterations to prevent runaway execution
+
+- **Agent Tasks Module** (`convex/agentTasks.ts`)
+  - Updated `taskTypeValidator` to include `run`
+  - Added `appendExecutionLogEntry` internal mutation for real-time log updates
+  - Added `updateTaskWithExecutionLog` internal mutation for final status update
+  - `createAgentTask` schedules `processExecutableNote` for run tasks
+
+### Frontend Changes
+
+- **FullPageNoteTabs.tsx** - Run Note button added
+  - Play icon button in note tab menu
+  - Triggers `onRunNote` callback with note data
+
+- **NotesSection.tsx** - Run Note for inline notes
+  - Play icon button on each note item
+  - Triggers `onRunNote` with note content and context
+
+- **AgentTaskModal.tsx** - Run task type option
+  - Added "Run" option with Play icon
+  - Description: "Execute this note as instructions"
+
+- **AgentTasksView.tsx** - Execution log display
+  - Collapsible execution log section for run tasks
+  - Shows tool calls with name, input, result, and status
+  - Visual indicators for pending (yellow), success (green), error (red)
+  - Chevron toggle for collapse/expand
+  - Scrollable entries container (max-height 300px)
+
+- **App.tsx** - Run Note integration
+  - `onRunNote` callback for FullPageNoteTabs creates run task
+  - `onRunNote` callback for TodoList (inline notes) creates run task
+  - Navigates to Agent Tasks view after triggering run
+
+### Styling Changes
+
+- **global.css** - Execution log and run button styles
+  - `.agent-task-execution-log` container styles
+  - `.agent-task-execution-log-header` clickable button with hover state
+  - `.agent-task-execution-log.collapsed` hides entries
+  - `.agent-task-execution-log-entries` scrollable container
+  - `.agent-task-execution-log-entry` with status-based backgrounds
+  - `.run-note-button` hover styles for all themes
+  - Mobile responsive styles for execution log
+
+### Fixed
+
+- **Follow-up Processing Panel** - Fixed duplicate "thinking" panels
+  - Processing panel only shows during initial task processing (no result yet)
+  - Follow-up processing uses inline "Thinking..." indicator in conversation
+  - Prevents two processing indicators showing simultaneously
+
 ## [v.030] - 2026-01-12
 
 ### Changed

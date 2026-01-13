@@ -278,6 +278,10 @@ function App() {
 
   // Full-page notes mutations
   const createFullPageNote = useMutation(api.fullPageNotes.createFullPageNote);
+  const deleteFullPageNote = useMutation(api.fullPageNotes.deleteFullPageNote);
+
+  // Agent task mutation for "Run Note" functionality
+  const createAgentTask = useMutation(api.agentTasks.createAgentTask);
 
   // Fetch available dates and todos (skip if not authenticated)
   const availableDates = useQuery(
@@ -1707,6 +1711,20 @@ function App() {
                         date: selectedDate !== "pinned" && selectedDate !== "backlog" ? selectedDate : undefined,
                       });
                     }}
+                    onRunNote={async (data) => {
+                      // Directly create an agent task with "run" type for inline notes
+                      await createAgentTask({
+                        sourceId: data.noteId,
+                        sourceType: "fullPageNote", // Using fullPageNote type for consistency
+                        sourceContent: data.content,
+                        sourceTitle: data.title,
+                        provider: "claude",
+                        taskType: "run",
+                        folderId: data.folderId,
+                        date: data.date,
+                      });
+                      setShowAgentTasks(true);
+                    }}
                   />
                 </div>
               </div>
@@ -1715,6 +1733,15 @@ function App() {
                 onClose={() => setShowAgentTasks(false)}
                 date={selectedDate !== "pinned" && selectedDate !== "backlog" ? selectedDate : undefined}
                 folderId={selectedFolder ?? undefined}
+                onOpenNote={(noteId) => {
+                  // Open the note that was created by the agent
+                  setOpenFullPageNoteTabs((prev) =>
+                    prev.includes(noteId) ? prev : [...prev, noteId]
+                  );
+                  setSelectedFullPageNoteId(noteId);
+                  setShowFullPageNotes(true);
+                  setShowAgentTasks(false);
+                }}
               />
             ) : showAIChat ? (
               <AIChatView
@@ -1811,6 +1838,41 @@ function App() {
                       date: note?.date,
                     });
                   }}
+                  onRunNote={async (data) => {
+                    // Directly create an agent task with "run" type - no modal needed
+                    const note = allFullPageNotes.find((n) => n._id === data.noteId);
+                    if (note) {
+                      await createAgentTask({
+                        sourceId: data.noteId,
+                        sourceType: "fullPageNote",
+                        sourceContent: data.content,
+                        sourceTitle: data.title,
+                        provider: "claude", // Default to Claude for run tasks
+                        taskType: "run",
+                        folderId: note.folderId,
+                        date: note.date,
+                      });
+                      // Open agent tasks view to show execution
+                      setShowAgentTasks(true);
+                    }
+                  }}
+                  onDeleteNote={async (noteId) => {
+                    // Delete the note and close the tab
+                    await deleteFullPageNote({ id: noteId });
+                    // Close the tab
+                    const newTabs = openFullPageNoteTabs.filter((id) => id !== noteId);
+                    setOpenFullPageNoteTabs(newTabs);
+                    // If deleting the selected tab, select the previous tab or exit full-page view
+                    if (noteId === selectedFullPageNoteId) {
+                      if (newTabs.length > 0) {
+                        setSelectedFullPageNoteId(newTabs[newTabs.length - 1]);
+                      } else {
+                        setShowFullPageNotes(false);
+                        setSelectedFullPageNoteId(null);
+                        setIsFullscreenNotes(false);
+                      }
+                    }
+                  }}
                 />
                 {/* Full-page note view */}
                 {selectedFullPageNoteId && (
@@ -1859,6 +1921,20 @@ function App() {
                     folderId: data.folderId,
                     date: selectedDate !== "pinned" && selectedDate !== "backlog" ? selectedDate : undefined,
                   });
+                }}
+                onRunNote={async (data) => {
+                  // Directly create an agent task with "run" type for inline notes
+                  await createAgentTask({
+                    sourceId: data.noteId,
+                    sourceType: "fullPageNote", // Using fullPageNote type for consistency
+                    sourceContent: data.content,
+                    sourceTitle: data.title,
+                    provider: "claude",
+                    taskType: "run",
+                    folderId: data.folderId,
+                    date: data.date,
+                  });
+                  setShowAgentTasks(true);
                 }}
               />
             )}

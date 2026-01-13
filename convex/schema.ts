@@ -156,6 +156,8 @@ export default defineSchema({
     userId: v.string(),
     anthropicKey: v.optional(v.string()), // Claude/Anthropic API key
     openaiKey: v.optional(v.string()), // OpenAI API key
+    anthropicPaused: v.optional(v.boolean()), // Pause Claude without deleting key
+    openaiPaused: v.optional(v.boolean()), // Pause OpenAI without deleting key
   }).index("by_user", ["userId"]),
 
   // Full page notes - stores full-page notes with Chrome-style tabs
@@ -261,13 +263,15 @@ export default defineSchema({
     sourceType: v.union(v.literal("todo"), v.literal("fullPageNote")),
     sourceContent: v.string(), // Original content sent to agent
     sourceTitle: v.optional(v.string()), // Optional title for display
-    provider: v.union(v.literal("claude"), v.literal("openai")),
+    provider: v.union(v.literal("claude"), v.literal("openai")), // User's selected provider
+    actualProvider: v.optional(v.union(v.literal("claude"), v.literal("openai"))), // Provider actually used (may differ if selected was paused)
     taskType: v.union(
       v.literal("expand"),
       v.literal("code"),
       v.literal("summarize"),
       v.literal("analyze"),
       v.literal("other"),
+      v.literal("run"), // Executable note - treats content as instructions to execute
     ),
     customInstructions: v.optional(v.string()), // Custom instructions for "other" task type
     status: v.union(
@@ -284,6 +288,22 @@ export default defineSchema({
         v.object({
           role: v.union(v.literal("user"), v.literal("assistant")),
           content: v.string(),
+          timestamp: v.number(),
+        }),
+      ),
+    ),
+    // Execution log for "run" task type - tracks tool calls and results
+    executionLog: v.optional(
+      v.array(
+        v.object({
+          toolName: v.string(),
+          toolInput: v.string(), // JSON stringified input
+          toolResult: v.optional(v.string()), // JSON stringified result
+          status: v.union(
+            v.literal("pending"),
+            v.literal("success"),
+            v.literal("error"),
+          ),
           timestamp: v.number(),
         }),
       ),
