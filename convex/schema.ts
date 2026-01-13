@@ -151,6 +151,13 @@ export default defineSchema({
     todoFontSize: v.number(), // Font size in pixels for .todo-text (default: 12)
   }).index("by_user", ["userId"]),
 
+  // User API keys - stores per-user API keys for AI features
+  userApiKeys: defineTable({
+    userId: v.string(),
+    anthropicKey: v.optional(v.string()), // Claude/Anthropic API key
+    openaiKey: v.optional(v.string()), // OpenAI API key
+  }).index("by_user", ["userId"]),
+
   // Full page notes - stores full-page notes with Chrome-style tabs
   fullPageNotes: defineTable({
     userId: v.string(),
@@ -246,4 +253,46 @@ export default defineSchema({
       searchField: "searchableContent",
       filterFields: ["userId"],
     }),
+
+  // Agent Tasks - stores AI agent task requests and results
+  agentTasks: defineTable({
+    userId: v.string(),
+    sourceId: v.string(), // todo._id or fullPageNote._id as string
+    sourceType: v.union(v.literal("todo"), v.literal("fullPageNote")),
+    sourceContent: v.string(), // Original content sent to agent
+    sourceTitle: v.optional(v.string()), // Optional title for display
+    provider: v.union(v.literal("claude"), v.literal("openai")),
+    taskType: v.union(
+      v.literal("expand"),
+      v.literal("code"),
+      v.literal("summarize"),
+      v.literal("analyze"),
+      v.literal("other"),
+    ),
+    customInstructions: v.optional(v.string()), // Custom instructions for "other" task type
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    result: v.optional(v.string()), // AI-generated result (initial response)
+    error: v.optional(v.string()), // Error message if failed
+    // Conversation history for follow-up messages
+    messages: v.optional(
+      v.array(
+        v.object({
+          role: v.union(v.literal("user"), v.literal("assistant")),
+          content: v.string(),
+          timestamp: v.number(),
+        }),
+      ),
+    ),
+    folderId: v.optional(v.id("folders")), // Optional folder association
+    date: v.optional(v.string()), // Optional date association (YYYY-MM-DD)
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_status", ["userId", "status"])
+    .index("by_user_and_date", ["userId", "date"])
+    .index("by_user_and_folder", ["userId", "folderId"]),
 });

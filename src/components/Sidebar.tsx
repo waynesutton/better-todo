@@ -1631,6 +1631,7 @@ export function Sidebar({
             </div>
           )}
 
+
           {/* Loading skeleton for dates */}
           {datesAreLoading && (
             <>
@@ -2841,6 +2842,7 @@ export function Sidebar({
               <Scroll size={16} />
             </div>
           )}
+
 
           {/* Loading skeleton for collapsed dates */}
           {datesAreLoading && (

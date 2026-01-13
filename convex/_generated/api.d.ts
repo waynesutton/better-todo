@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as agentTaskActions from "../agentTaskActions.js";
+import type * as agentTasks from "../agentTasks.js";
 import type * as aiChatActions from "../aiChatActions.js";
 import type * as aiChats from "../aiChats.js";
 import type * as archivedDates from "../archivedDates.js";
@@ -25,6 +27,7 @@ import type * as stats from "../stats.js";
 import type * as streaks from "../streaks.js";
 import type * as todos from "../todos.js";
 import type * as unsplash from "../unsplash.js";
+import type * as userApiKeys from "../userApiKeys.js";
 import type * as users from "../users.js";
 
 import type {
@@ -42,6 +45,8 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  agentTaskActions: typeof agentTaskActions;
+  agentTasks: typeof agentTasks;
   aiChatActions: typeof aiChatActions;
   aiChats: typeof aiChats;
   archivedDates: typeof archivedDates;
@@ -59,6 +64,7 @@ declare const fullApi: ApiFromModules<{
   streaks: typeof streaks;
   todos: typeof todos;
   unsplash: typeof unsplash;
+  userApiKeys: typeof userApiKeys;
   users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

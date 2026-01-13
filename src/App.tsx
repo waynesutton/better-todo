@@ -16,6 +16,8 @@ import { FullPageNoteTabs } from "./components/FullPageNoteTabs";
 import { ShareLinkModal } from "./components/ShareLinkModal";
 import { StreaksHeader } from "./components/StreaksHeader";
 import { AIChatView } from "./components/AIChatView";
+import { AgentTaskModal } from "./components/AgentTaskModal";
+import { AgentTasksView } from "./components/AgentTasksView";
 import { Launch } from "./pages/Launch";
 import { Changelog } from "./pages/Changelog";
 import { StreaksPage } from "./pages/StreaksPage";
@@ -23,7 +25,7 @@ import { NotFound } from "./pages/NotFound";
 import { Stats } from "./pages/Stats";
 import { SharedNoteView } from "./pages/SharedNoteView";
 import { format } from "date-fns";
-import { Search, Menu, X, MessageCircle } from "lucide-react";
+import { Search, Menu, X, MessageCircle, Sparkles } from "lucide-react";
 import {
   CopyIcon,
   CheckIcon,
@@ -209,6 +211,18 @@ function App() {
 
   // AI Chat state
   const [showAIChat, setShowAIChat] = useState(false);
+
+  // Agent Tasks state
+  const [showAgentTasks, setShowAgentTasks] = useState(false);
+  const [agentTaskModalData, setAgentTaskModalData] = useState<{
+    isOpen: boolean;
+    sourceId: string;
+    sourceType: "todo" | "fullPageNote";
+    sourceContent: string;
+    sourceTitle?: string;
+    folderId?: Id<"folders">;
+    date?: string;
+  } | null>(null);
 
   // Apply user's custom font size to todo text and full-page notes
   useEffect(() => {
@@ -923,6 +937,33 @@ function App() {
         });
       }
 
+      // Send focused todo to agent with Shift + A
+      if ((e.key === "A" || e.key === "a") && e.shiftKey) {
+        e.preventDefault();
+        if (
+          isAuthenticated &&
+          activeTodos.length > 0 &&
+          focusedTodoIndex >= 0 &&
+          focusedTodoIndex < activeTodos.length
+        ) {
+          const todo = activeTodos[focusedTodoIndex];
+          if (todo) {
+            setAgentTaskModalData({
+              isOpen: true,
+              sourceId: todo._id,
+              sourceType: "todo",
+              sourceContent: todo.text,
+              sourceTitle: todo.text.slice(0, 100),
+              folderId: selectedFolder ?? undefined,
+              date:
+                selectedDate !== "pinned" && selectedDate !== "backlog"
+                  ? selectedDate
+                  : undefined,
+            });
+          }
+        }
+      }
+
       // Scroll to top with cmd+up
       if (e.key === "ArrowUp" && e.metaKey) {
         e.preventDefault();
@@ -961,12 +1002,17 @@ function App() {
         setShowKeyboardShortcuts(false);
         setSearchModalOpen(false);
         setShowInfoModal(false);
-        // Close full-page notes view if open
+        // Handle full-page notes view
         if (showFullPageNotes) {
-          setShowFullPageNotes(false);
-          setSelectedFullPageNoteId(null);
-          setOpenFullPageNoteTabs([]);
-          setIsFullscreenNotes(false);
+          // First exit fullscreen mode if active
+          if (isFullscreenNotes) {
+            setIsFullscreenNotes(false);
+          } else {
+            // Otherwise close the full-page notes view
+            setShowFullPageNotes(false);
+            setSelectedFullPageNoteId(null);
+            setOpenFullPageNoteTabs([]);
+          }
         }
         // Clear todo focus when pressing Escape
         setFocusedTodoIndex(-1);
@@ -981,6 +1027,7 @@ function App() {
     lastCompletedTodo,
     isAuthenticated,
     showFullPageNotes,
+    isFullscreenNotes,
     selectedDate,
     selectedFolder,
     fullPageNotes,
@@ -1159,10 +1206,11 @@ function App() {
                 setSelectedDate(date);
                 // Clear folder selection when selecting a date
                 setSelectedFolder(null);
-                // Close full-page notes and AI chat view when selecting a date
+                // Close full-page notes, AI chat, and agent tasks view when selecting a date
                 setShowFullPageNotes(false);
                 setSelectedFullPageNoteId(null);
                 setShowAIChat(false);
+                setShowAgentTasks(false);
               }}
               selectedFolder={selectedFolder}
               onSelectFolder={(folderId) => {
@@ -1171,10 +1219,11 @@ function App() {
                 if (selectedDate !== "pinned" && selectedDate !== "backlog") {
                   setSelectedDate("");
                 }
-                // Close full-page notes and AI chat view when selecting a folder
+                // Close full-page notes, AI chat, and agent tasks view when selecting a folder
                 setShowFullPageNotes(false);
                 setSelectedFullPageNoteId(null);
                 setShowAIChat(false);
+                setShowAgentTasks(false);
               }}
               isCollapsed={sidebarCollapsed}
               onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -1201,6 +1250,7 @@ function App() {
                 );
                 setSelectedFullPageNoteId(noteId);
                 setShowFullPageNotes(true);
+                setShowAgentTasks(false);
                 // Close sidebar on mobile
                 if (window.innerWidth <= 768) {
                   setSidebarHidden(true);
@@ -1211,6 +1261,7 @@ function App() {
               onOpenAIChat={() => {
                 setShowAIChat(true);
                 setShowFullPageNotes(false);
+                setShowAgentTasks(false);
               }}
               showAIChat={showAIChat}
             />
@@ -1259,146 +1310,159 @@ function App() {
                 <div className="current-date">{formatCurrentDate()}</div>
               </div>
               <div style={{ display: "flex", gap: "8px" }}>
-                {/* Copy button - hide when AI chat is open */}
-                {!showAIChat && (
-                  <button
-                    className="search-button"
-                    onClick={() => {
-                      triggerSelectionHaptic();
+                {/* Copy button - always visible */}
+                <button
+                  className="search-button"
+                  onClick={() => {
+                    triggerSelectionHaptic();
 
-                      // If on full-page note view, copy the note content
-                      if (showFullPageNotes && selectedFullPageNoteId) {
-                        const currentNote = allFullPageNotes.find(
-                          (note) => note._id === selectedFullPageNoteId,
-                        );
-                        if (currentNote && currentNote.content) {
-                          navigator.clipboard
-                            .writeText(currentNote.content)
-                            .then(() => {
-                              triggerSuccessHaptic();
-                              setShowCopyConfirmation(true);
-                              setTimeout(() => {
-                                setShowCopyConfirmation(false);
-                              }, 2000);
-                            })
-                            .catch((err) => {
-                              console.error("Failed to copy note:", err);
-                            });
-                        }
-                      } else {
-                        // Otherwise, copy all unchecked (incomplete) todos to clipboard
-                        const incompleteTodos = activeTodos.filter(
-                          (todo) => !todo.completed,
-                        );
-                        const todoText = incompleteTodos
-                          .map((todo) => `- ${todo.content}`)
-                          .join("\n");
-
-                        if (todoText) {
-                          navigator.clipboard
-                            .writeText(todoText)
-                            .then(() => {
-                              triggerSuccessHaptic();
-                              // Show brief success indicator
-                              setShowCopyConfirmation(true);
-                              setTimeout(() => {
-                                setShowCopyConfirmation(false);
-                              }, 2000);
-                            })
-                            .catch((err) => {
-                              console.error("Failed to copy todos:", err);
-                            });
-                        }
+                    // If on full-page note view, copy the note content
+                    if (showFullPageNotes && selectedFullPageNoteId) {
+                      const currentNote = allFullPageNotes.find(
+                        (note) => note._id === selectedFullPageNoteId,
+                      );
+                      if (currentNote && currentNote.content) {
+                        navigator.clipboard
+                          .writeText(currentNote.content)
+                          .then(() => {
+                            triggerSuccessHaptic();
+                            setShowCopyConfirmation(true);
+                            setTimeout(() => {
+                              setShowCopyConfirmation(false);
+                            }, 2000);
+                          })
+                          .catch((err) => {
+                            console.error("Failed to copy note:", err);
+                          });
                       }
-                    }}
-                    title={
-                      showFullPageNotes && selectedFullPageNoteId
-                        ? "Copy note content"
-                        : "Copy unchecked todos"
+                    } else {
+                      // Otherwise, copy all unchecked (incomplete) todos to clipboard
+                      const incompleteTodos = activeTodos.filter(
+                        (todo) => !todo.completed,
+                      );
+                      const todoText = incompleteTodos
+                        .map((todo) => `- ${todo.content}`)
+                        .join("\n");
+
+                      if (todoText) {
+                        navigator.clipboard
+                          .writeText(todoText)
+                          .then(() => {
+                            triggerSuccessHaptic();
+                            // Show brief success indicator
+                            setShowCopyConfirmation(true);
+                            setTimeout(() => {
+                              setShowCopyConfirmation(false);
+                            }, 2000);
+                          })
+                          .catch((err) => {
+                            console.error("Failed to copy todos:", err);
+                          });
+                      }
                     }
-                  >
-                    {showCopyConfirmation ? (
-                      <CheckIcon style={{ width: 18, height: 18 }} />
-                    ) : (
-                      <CopyIcon style={{ width: 18, height: 18 }} />
-                    )}
-                  </button>
-                )}
-                {/* Back button - show when in full-page notes view */}
-                {showFullPageNotes && (
+                  }}
+                  title={
+                    showFullPageNotes && selectedFullPageNoteId
+                      ? "Copy note content"
+                      : "Copy unchecked todos"
+                  }
+                >
+                  {showCopyConfirmation ? (
+                    <CheckIcon style={{ width: 18, height: 18 }} />
+                  ) : (
+                    <CopyIcon style={{ width: 18, height: 18 }} />
+                  )}
+                </button>
+                {/* Todos icon - always visible, toggles back to todos view */}
+                {selectedDate !== "pinned" && selectedDate !== "backlog" && (
                   <button
-                    className="search-button"
+                    className={`search-button ${!showFullPageNotes && !showAIChat && !showAgentTasks ? "nav-icon-active" : ""}`}
                     onClick={() => {
                       triggerSelectionHaptic();
-                      // Close full-page notes view and stay on the same date/folder
-                      // No need to navigate elsewhere - just hide the notes view
+                      // Close all other views to return to todos
                       setShowFullPageNotes(false);
                       setSelectedFullPageNoteId(null);
                       setIsFullscreenNotes(false);
+                      setShowAIChat(false);
+                      setShowAgentTasks(false);
                     }}
-                    title="Back to todos"
+                    title="Todos"
                   >
                     <CheckboxIcon style={{ width: 18, height: 18 }} />
                   </button>
                 )}
-                {/* Full-page notes icon - show on regular date pages and folders, even when AI chat is open */}
-                {selectedDate !== "pinned" &&
-                  selectedDate !== "backlog" &&
-                  !showFullPageNotes && (
-                    <button
-                      className="search-button"
-                      onClick={async () => {
-                        triggerSelectionHaptic();
-                        if (!authIsLoading && isAuthenticated) {
-                          // Close AI chat when opening full-page notes
-                          setShowAIChat(false);
-                          // Get notes based on whether we're viewing a folder or a date
-                          const notesToView = selectedFolder
-                            ? folderFullPageNotes
-                            : fullPageNotes;
-
-                          // If there are existing notes, open the first one
-                          if (notesToView && notesToView.length > 0) {
-                            const firstNote = notesToView[0];
-                            if (!openFullPageNoteTabs.includes(firstNote._id)) {
-                              setOpenFullPageNoteTabs((prev) => [
-                                ...prev,
-                                firstNote._id,
-                              ]);
-                            }
-                            setSelectedFullPageNoteId(firstNote._id);
-                            setShowFullPageNotes(true);
-                          } else {
-                            // No notes exist, create a new one
-                            const newNoteId = await createFullPageNote(
-                              selectedFolder
-                                ? { folderId: selectedFolder }
-                                : { date: selectedDate },
-                            );
-                            setOpenFullPageNoteTabs([newNoteId]);
-                            setSelectedFullPageNoteId(newNoteId);
-                            setShowFullPageNotes(true);
-                          }
-                        } else {
-                          setShowSignInToNoteModal(true);
+                {/* Full-page notes icon - always visible on regular date pages and folders */}
+                {selectedDate !== "pinned" && selectedDate !== "backlog" && (
+                  <button
+                    className={`search-button ${showFullPageNotes ? "nav-icon-active" : ""}`}
+                    onClick={async () => {
+                      triggerSelectionHaptic();
+                      if (!authIsLoading && isAuthenticated) {
+                        // If already in notes view, close it
+                        if (showFullPageNotes) {
+                          setShowFullPageNotes(false);
+                          setSelectedFullPageNoteId(null);
+                          setIsFullscreenNotes(false);
+                          return;
                         }
-                      }}
-                      title="View full-page notes"
-                    >
-                      <FileTextIcon style={{ width: 18, height: 18 }} />
-                    </button>
-                  )}
-                {/* AI Chat icon - show on regular date pages (not folders, pinned, backlog) */}
+                        // Close other views
+                        setShowAIChat(false);
+                        setShowAgentTasks(false);
+                        // Get notes based on whether we're viewing a folder or a date
+                        const notesToView = selectedFolder
+                          ? folderFullPageNotes
+                          : fullPageNotes;
+
+                        // If there are existing notes, open the first one
+                        if (notesToView && notesToView.length > 0) {
+                          const firstNote = notesToView[0];
+                          if (!openFullPageNoteTabs.includes(firstNote._id)) {
+                            setOpenFullPageNoteTabs((prev) => [
+                              ...prev,
+                              firstNote._id,
+                            ]);
+                          }
+                          setSelectedFullPageNoteId(firstNote._id);
+                          setShowFullPageNotes(true);
+                        } else {
+                          // No notes exist, create a new one
+                          const newNoteId = await createFullPageNote(
+                            selectedFolder
+                              ? { folderId: selectedFolder }
+                              : { date: selectedDate },
+                          );
+                          setOpenFullPageNoteTabs([newNoteId]);
+                          setSelectedFullPageNoteId(newNoteId);
+                          setShowFullPageNotes(true);
+                        }
+                      } else {
+                        setShowSignInToNoteModal(true);
+                      }
+                    }}
+                    title="Full-page notes"
+                  >
+                    <FileTextIcon style={{ width: 18, height: 18 }} />
+                  </button>
+                )}
+                {/* AI Chat icon - always visible on regular date pages (not folders, pinned, backlog) */}
                 {selectedDate !== "pinned" &&
                   selectedDate !== "backlog" &&
-                  !selectedFolder &&
-                  !showFullPageNotes &&
-                  !showAIChat && (
+                  !selectedFolder && (
                     <button
-                      className="search-button"
+                      className={`search-button ${showAIChat ? "nav-icon-active" : ""}`}
                       onClick={() => {
                         triggerSelectionHaptic();
                         if (!authIsLoading && isAuthenticated) {
+                          // If already in chat view, close it
+                          if (showAIChat) {
+                            setShowAIChat(false);
+                            return;
+                          }
+                          // Close other views
+                          setShowFullPageNotes(false);
+                          setSelectedFullPageNoteId(null);
+                          setIsFullscreenNotes(false);
+                          setShowAgentTasks(false);
                           setShowAIChat(true);
                         } else {
                           setShowSignInToChatModal(true);
@@ -1409,17 +1473,31 @@ function App() {
                       <MessageCircle size={18} />
                     </button>
                   )}
-                {/* Back from AI Chat */}
-                {showAIChat && (
+                {/* Agent Tasks icon - always visible on date pages and folders */}
+                {selectedDate !== "pinned" && selectedDate !== "backlog" && (
                   <button
-                    className="search-button"
+                    className={`search-button ${showAgentTasks ? "nav-icon-active" : ""}`}
                     onClick={() => {
                       triggerSelectionHaptic();
-                      setShowAIChat(false);
+                      if (!authIsLoading && isAuthenticated) {
+                        // If already in agent tasks view, close it
+                        if (showAgentTasks) {
+                          setShowAgentTasks(false);
+                          return;
+                        }
+                        // Close other views
+                        setShowFullPageNotes(false);
+                        setSelectedFullPageNoteId(null);
+                        setIsFullscreenNotes(false);
+                        setShowAIChat(false);
+                        setShowAgentTasks(true);
+                      } else {
+                        setShowSignInToChatModal(true);
+                      }
                     }}
-                    title="Back to todos"
+                    title="Agent Tasks"
                   >
-                    <CheckboxIcon style={{ width: 18, height: 18 }} />
+                    <Sparkles size={18} />
                   </button>
                 )}
                 <PomodoroTimer
@@ -1618,10 +1696,26 @@ function App() {
                     demoTodos={demoTodos}
                     setDemoTodos={setDemoTodos}
                     isAuthenticated={!authIsLoading && isAuthenticated}
-                    setPomodoroTriggered={setPomodoroTriggered} // New
+                    setPomodoroTriggered={setPomodoroTriggered}
+                    onSendToAgent={(data) => {
+                      setAgentTaskModalData({
+                        isOpen: true,
+                        sourceId: data.todoId,
+                        sourceType: "todo",
+                        sourceContent: data.content,
+                        folderId: data.folderId,
+                        date: selectedDate !== "pinned" && selectedDate !== "backlog" ? selectedDate : undefined,
+                      });
+                    }}
                   />
                 </div>
               </div>
+            ) : showAgentTasks ? (
+              <AgentTasksView
+                onClose={() => setShowAgentTasks(false)}
+                date={selectedDate !== "pinned" && selectedDate !== "backlog" ? selectedDate : undefined}
+                folderId={selectedFolder ?? undefined}
+              />
             ) : showAIChat ? (
               <AIChatView
                 date={selectedDate}
@@ -1705,6 +1799,18 @@ function App() {
                   }}
                   cursorInCodeBlock={cursorInCodeBlock}
                   onShareNote={() => setShowShareLinkModal(true)}
+                  onSendToAgent={(data) => {
+                    const note = allFullPageNotes.find((n) => n._id === data.noteId);
+                    setAgentTaskModalData({
+                      isOpen: true,
+                      sourceId: data.noteId,
+                      sourceType: "fullPageNote",
+                      sourceContent: data.content,
+                      sourceTitle: data.title,
+                      folderId: note?.folderId,
+                      date: note?.date,
+                    });
+                  }}
                 />
                 {/* Full-page note view */}
                 {selectedFullPageNoteId && (
@@ -1743,16 +1849,27 @@ function App() {
                 demoTodos={demoTodos}
                 setDemoTodos={setDemoTodos}
                 isAuthenticated={!authIsLoading && isAuthenticated}
-                setPomodoroTriggered={setPomodoroTriggered} // New
+                setPomodoroTriggered={setPomodoroTriggered}
+                onSendToAgent={(data) => {
+                  setAgentTaskModalData({
+                    isOpen: true,
+                    sourceId: data.todoId,
+                    sourceType: "todo",
+                    sourceContent: data.content,
+                    folderId: data.folderId,
+                    date: selectedDate !== "pinned" && selectedDate !== "backlog" ? selectedDate : undefined,
+                  });
+                }}
               />
             )}
           </div>
 
           {/* Sticky footer with archive and bulk actions */}
           <div className="main-content-footer">
-            {/* Archive section - only show for authenticated users and not on full-page notes or AI chat view */}
+            {/* Archive section - only show for authenticated users and not on full-page notes, AI chat, or agent tasks view */}
             {!showFullPageNotes &&
               !showAIChat &&
+              !showAgentTasks &&
               archivedTodos.length > 0 &&
               isAuthenticated && (
                 <ArchiveSection
@@ -1769,9 +1886,10 @@ function App() {
                 />
               )}
 
-            {/* Bulk action buttons - hide on full-page notes and AI chat view */}
+            {/* Bulk action buttons - hide on full-page notes, AI chat, and agent tasks view */}
             {!showFullPageNotes &&
               !showAIChat &&
+              !showAgentTasks &&
               activeTodos.length > 0 &&
               selectedDate !== "pinned" &&
               selectedDate !== "backlog" &&
@@ -1879,6 +1997,20 @@ function App() {
                 ?.hideHeaderOnShare
             }
             onClose={() => setShowShareLinkModal(false)}
+          />
+        )}
+
+        {/* Agent Task Modal */}
+        {agentTaskModalData && agentTaskModalData.isOpen && (
+          <AgentTaskModal
+            isOpen={agentTaskModalData.isOpen}
+            onClose={() => setAgentTaskModalData(null)}
+            sourceId={agentTaskModalData.sourceId}
+            sourceType={agentTaskModalData.sourceType}
+            sourceContent={agentTaskModalData.sourceContent}
+            sourceTitle={agentTaskModalData.sourceTitle}
+            folderId={agentTaskModalData.folderId}
+            date={agentTaskModalData.date}
           />
         )}
 

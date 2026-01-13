@@ -76,6 +76,15 @@ This document describes the structure and purpose of each file in the Better Tod
     - Notes can exist independently in projects (decoupled from dates)
     - Notes can be archived with their parent project or independently
     - Archived notes are excluded from active counts and listings
+  - **agentTasks**: Stores AI agent task requests and results with conversation history
+    - Fields: userId, sourceId, sourceType (todo/fullPageNote), sourceContent, sourceTitle, provider (claude/openai), taskType (expand/code/summarize/analyze/other), customInstructions, status (pending/processing/completed/failed), result, error, messages array, folderId, date
+    - Index: `by_user`, `by_user_and_status`, `by_user_and_date`, `by_user_and_folder`
+    - Messages array stores conversation history with role (user/assistant), content, and timestamp
+  - **userApiKeys**: Stores per-user API keys for AI features (Claude and OpenAI)
+    - Fields: userId, anthropicKey (optional), openaiKey (optional)
+    - Index: `by_user`
+    - Keys stored securely with Convex encryption at rest
+    - Full keys only accessible via internal queries, client sees masked versions
 
 ### Functions
 
@@ -207,7 +216,7 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `aiChats.ts` - AI Chat sessions per date:
   - `getAIChatByDate` - Fetch chat history for a specific date
-  - `getAIChatCounts` - Get message counts per date for sidebar
+  - `getAIChatCounts` - Get message counts per date for sidebar (returns 0 for cleared/deleted chats)
   - `getOrCreateAIChat` - Create new chat or return existing one
   - `addUserMessage` - Append user message to chat
   - `addUserMessageWithAttachments` - Append user message with image/link attachments
@@ -216,8 +225,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - `generateUploadUrl` - Generate URL for image uploads
   - `getStorageUrl` - Get URL for a stored image
   - `getStorageUrlInternal` - Internal query for image URLs in actions
-  - `clearChat` - Reset messages to empty array
-  - `deleteChat` - Delete entire chat document
+  - `clearChat` - Reset messages to empty array (keeps chat, removes from sidebar display)
+  - `deleteChat` - Delete entire chat document (removes from database and sidebar)
 
 - `aiChatActions.ts` - AI response generation with media support:
   - `generateResponse` - Generate AI response with Claude, supports images and links
@@ -225,6 +234,36 @@ This document describes the structure and purpose of each file in the Better Tod
   - Integrates Firecrawl for web scraping (tweets, LinkedIn, blogs, PDFs)
   - Claude vision support for image analysis
   - Auto-detects URLs in messages and scrapes them
+
+- `agentTasks.ts` - AI Agent Tasks management:
+  - `getAgentTasks` - Get tasks filtered by date or folder for current user
+  - `getAgentTaskCounts` - Get counts of tasks by status for sidebar badges
+  - `getAgentTask` - Get single task by ID with ownership check
+  - `createAgentTask` - Create new agent task and schedule processing
+  - `deleteAgentTask` - Remove task with ownership verification
+  - `deleteAllAgentTasks` - Bulk delete all tasks (with optional date/folder filter)
+  - `addFollowUpMessage` - Add follow-up message to existing conversation
+  - `createTodosFromAgent` - Parse agent results into individual todos
+  - `saveResultAsNote` - Save agent conversation as full-page note
+  - `updateTaskStatus` - Internal mutation for task status updates
+  - `appendAssistantMessage` - Internal mutation for AI response appending
+  - `markFollowUpFailed` - Internal mutation for follow-up error handling
+  - `getTaskForProcessing` - Internal query for action processing
+
+- `agentTaskActions.ts` - AI Agent task processing with Claude and OpenAI:
+  - `processAgentTask` - Process initial task with selected AI provider
+  - `processFollowUp` - Process follow-up messages with conversation context
+  - Task-specific system prompts for expand, code, summarize, analyze, other
+  - Supports full conversation history for multi-turn interactions
+  - Requires user's personal API keys (no environment variable fallback)
+
+- `userApiKeys.ts` - Per-user API key management for AI features:
+  - `getUserApiKeys` - Query to get masked API keys for UI display (shows last 4 chars only)
+  - `getApiKeyInternal` - Internal query to get full API key for actions (not exposed to client)
+  - `setApiKey` - Mutation to save or update an API key for a provider (anthropic or openai)
+  - `deleteApiKey` - Mutation to remove a saved API key
+  - Keys stored securely with Convex encryption at rest
+  - Scoped to authenticated user via userId index
 
 - `stats.ts` - Statistics tracking (global and user-specific):
   - `getStats` - Action to get aggregate stats across all users (total users, todos, notes, pomodoro sessions, folders)
@@ -628,6 +667,30 @@ This document describes the structure and purpose of each file in the Better Tod
   - Auto-expanding textarea input
   - Keyboard shortcuts (Enter to send, Shift+Enter for new line)
   - Input position toggle (centered or left-aligned)
+  - `/clear` command to clear messages (with confirmation dialog)
+  - `/delete` command to delete chat from database (with warning dialog)
+  - Header actions (Clear and Delete buttons) visible when chat has messages
+  - Closes view and removes from sidebar after deletion
+
+- `AgentTaskModal.tsx` - Modal for configuring and sending AI agent tasks:
+  - Provider selection between Claude (Anthropic) and OpenAI
+  - Task type selection: Expand, Code, Summarize, Analyze, or Other
+  - Custom instructions textarea for "Other" task type
+  - Source content preview showing what will be sent
+  - Creates agent task and schedules background processing
+
+- `AgentTasksView.tsx` - View for displaying AI agent tasks and results:
+  - Task list with status indicators (pending, processing, completed, failed)
+  - Task type icons for visual identification
+  - Conversation thread display with user/assistant message styling
+  - Full markdown rendering with syntax-highlighted code blocks
+  - Follow-up chat input for continuing conversations in same thread
+  - Copy results to clipboard
+  - Delete individual tasks with confirmation dialog
+  - Delete All button to bulk delete tasks (with confirmation showing count)
+  - Create Todos from agent results (parses markdown lists)
+  - Save agent results as full-page notes
+  - Filtered by current date or folder context
   - Mobile-responsive design
   - Authentication required
 
@@ -727,12 +790,86 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `README.md` - Complete project documentation with features, usage guide, and customization
 - `files.md` - This file, describing project structure and file purposes
-- `changelog.md` - Version history with all feature additions and changes (v1.0.0 to v1.8.3)
+- `changelog.md` - Version history with all feature additions and changes (v1.001 to v.030)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.025 (January 10, 2026)
+## Current Version: v.030 (January 12, 2026)
 
-### Latest Features (v.025) - Inline Todo Notes in Project Folders
+### Latest Features (v.030) - Persistent Navigation Icons
+
+- **Persistent Navigation Icons** - All view icons now always visible in header
+  - Todos (checkbox), Notes (file), Chat (message), and Agent (sparkles) icons always visible
+  - Icons toggle their respective views when clicked (click to open, click again to close)
+  - Active view indicated with accent color highlight
+  - Icons still contextually hidden on pinned/backlog views where not applicable
+
+### Previous Features (v.029) - Per-User API Keys
+
+- **Per-User API Keys** - Users must provide their own API keys for AI features
+  - New "API Keys" section in Keyboard Shortcuts Modal (press ?)
+  - Support for both Claude (Anthropic) and OpenAI API keys
+  - Keys stored securely in Convex database (encrypted at rest)
+  - Masked key display in UI (only last 4 characters visible)
+  - Help links to get API keys from console.anthropic.com and platform.openai.com
+  - Save and delete functionality per provider
+  - Show/hide password toggle for key input
+  - Each user must provide their own keys to use AI features
+  - Full keys only accessible via internal Convex queries (not exposed to client)
+
+### Previous Features (v.028) - Chat & Agent Task Management
+
+- **AI Chat Clear and Delete Commands** - Manage chat history with commands or buttons
+  - Type `/clear` to clear all messages (keeps the chat, removes messages)
+  - Type `/delete` to permanently delete the chat from the database
+  - Header buttons for Clear and Delete appear when chat has messages
+  - Confirmation dialogs before destructive actions
+  - Delete removes chat from sidebar automatically (Convex reactivity)
+
+- **Agent Tasks Delete All** - Bulk delete agent tasks
+  - New "Delete All" button in agent tasks header
+  - Deletes all tasks filtered by current date or folder context
+  - Confirmation dialog shows count of tasks to be deleted
+
+### Previous Features (v.027) - Agent Actions & UX Improvements
+
+- **Markdown Download for Full-Page Notes** - Download any note as a .md file
+  - New Download icon button in full-page notes toolbar
+  - Downloads note content with sanitized filename
+  - Client-side download using Blob and createObjectURL
+
+- **Create Todos from Agent Results** - Turn AI output into actionable todos
+  - New "Create Todos" button on completed agent tasks
+  - Parses markdown lists (checkboxes, bullets, numbered) into individual todos
+  - Todos created in same date/folder context as the original task
+  - Success feedback showing count of todos created
+
+- **Save Agent Results as Notes** - Preserve AI output as full-page notes
+  - New "Save as Note" button on completed agent tasks
+  - Saves entire conversation including follow-ups
+  - Note created in same date/folder context
+  - Success feedback when note is saved
+
+- **Persistent Agent Tasks Icon** - Always visible in header
+  - Sparkles icon now visible when in full-page notes or AI chat views
+  - Allows switching to Agent Tasks from any view
+  - Closes current view when switching
+
+- **ESC Key Fullscreen Exit** - Smarter escape handling for full-page notes
+  - First ESC exits fullscreen mode (if active)
+  - Second ESC closes the full-page notes view
+  - Better UX for fullscreen editing
+
+### Previous Features (v.026) - AI Agent Tasks
+
+- **AI Agent Tasks** - Send todos and notes to Claude or OpenAI for processing
+  - Choose between Claude (Anthropic) or OpenAI providers
+  - Five task types: Expand, Code, Summarize, Analyze, Other
+  - Conversation threads with follow-up questions
+  - Real-time status indicators
+  - Markdown rendering with syntax highlighting
+  - Keyboard shortcut Shift+A to send focused todo
+
+### Previous Features (v.025) - Inline Todo Notes in Project Folders
 
 - **Inline Notes Support for Projects** - Fixed bug and added full support for inline notes in project folders
   - Notes in one project folder no longer appear in other project folders

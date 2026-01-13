@@ -4,6 +4,292 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.030] - 2026-01-12
+
+### Changed
+
+- **Persistent Navigation Icons** - All view icons now always visible in header
+  - Todos (checkbox), Notes (file), Chat (message), and Agent (sparkles) icons always visible
+  - Icons toggle their respective views when clicked
+  - Active view indicated with accent color highlight
+  - Clicking an active icon returns to todos view
+  - Removed conditional visibility logic for cleaner UX
+  - Icons still contextually hidden on pinned/backlog views where not applicable
+
+### Frontend Changes
+
+- **App.tsx** - Navigation icon behavior update
+  - All nav icons visible simultaneously on regular date/folder pages
+  - Each icon toggles its view (click to open, click again to close)
+  - Added `nav-icon-active` class for visual feedback on current view
+  - Simplified header icon rendering logic
+
+### Styling Changes
+
+- **global.css** - Navigation icon active state
+  - Added `.search-button:hover` background color
+  - Added `.nav-icon-active` class with accent color and background
+  - Consistent hover states across all nav icons
+
+## [v.029] - 2026-01-12
+
+### Added
+
+- **Per-User API Keys** - Users can now add their own API keys for AI features
+  - New "API Keys" section in Keyboard Shortcuts Modal (press ?)
+  - Support for both Claude (Anthropic) and OpenAI API keys
+  - Keys stored securely in Convex database (encrypted at rest)
+  - Masked key display in UI (only last 4 characters visible)
+  - Help links to get API keys from console.anthropic.com and platform.openai.com
+  - Save and delete functionality per provider
+  - Show/hide password toggle for key input
+  - Each user must provide their own API keys to use AI features
+
+### Backend Changes
+
+- **Schema** (`convex/schema.ts`)
+  - Added `userApiKeys` table with `anthropicKey` and `openaiKey` fields
+  - Index on `userId` for efficient lookups
+
+- **User API Keys Module** (`convex/userApiKeys.ts`) - New file
+  - `getUserApiKeys` query returns masked keys for UI display
+  - `getApiKeyInternal` internal query returns full key for actions (not exposed to client)
+  - `setApiKey` mutation to save/update API keys
+  - `deleteApiKey` mutation to remove API keys
+
+- **AI Chat Actions** (`convex/aiChatActions.ts`)
+  - Updated `generateResponse` to use user's Anthropic key (required)
+  - Clear error message directing users to Settings if no key configured
+
+- **Agent Task Actions** (`convex/agentTaskActions.ts`)
+  - Updated `processAgentTask` and `processFollowUp` to use user API keys (required)
+  - Helper functions `processWithClaude`, `processWithClaudeConversation`, `processWithOpenAI`, `processWithOpenAIConversation` require user API key
+  - Clear error messages directing users to Settings if no key configured
+
+### Frontend Changes
+
+- **KeyboardShortcutsModal.tsx** - API Keys management UI
+  - New "API Keys" section (authenticated users only)
+  - Key icon header with section title
+  - Input fields for Anthropic and OpenAI keys (password type)
+  - Show/hide toggle for each key input
+  - Save button per provider
+  - Masked display when key is saved with delete button
+  - Help links to provider API key pages
+  - Error handling with inline error display
+
+### Styling Changes
+
+- **global.css** - API Keys section styles
+  - `.api-keys-section` container with top border separator
+  - `.api-key-error` error message styling
+  - `.api-key-field` for each provider's key input area
+  - `.api-key-label` with saved badge indicator
+  - `.api-key-input-row` and `.api-key-input-wrapper` for input layout
+  - `.api-key-input` with monospace font for key display
+  - `.api-key-toggle-visibility` show/hide button
+  - `.api-key-save-btn` and `.api-key-delete-btn` button styles
+  - `.api-key-masked` for displaying saved keys
+  - `.api-key-help-link` for external links to provider consoles
+  - Mobile responsive styles for API key inputs
+
+### Security
+
+- Full API keys only accessible via internal Convex queries (not exposed to client)
+- Client only sees masked versions of keys
+- Keys scoped to authenticated user via userId index
+- Convex provides encryption at rest and HTTPS transport
+
+## [v.028] - 2026-01-12
+
+### Added
+
+- **AI Chat Clear and Delete Commands** - Manage chat history with commands or buttons
+  - Type `/clear` to clear all messages (keeps the chat, removes messages)
+  - Type `/delete` to permanently delete the chat from the database
+  - Header buttons for Clear and Delete appear when chat has messages
+  - Confirmation dialogs before destructive actions
+  - Delete removes chat from sidebar automatically (Convex reactivity)
+  - Chat view closes after deletion and returns to todos
+
+- **Agent Tasks Delete All** - Bulk delete agent tasks
+  - New "Delete All" button in agent tasks header
+  - Deletes all tasks filtered by current date or folder context
+  - Confirmation dialog shows count of tasks to be deleted
+  - Uses parallel deletion with `Promise.all()` for efficiency
+
+### Backend Changes
+
+- **AI Chats Module** (`convex/aiChats.ts`)
+  - `clearChat` mutation now properly resets messages array
+  - `deleteChat` mutation removes entire chat document from database
+
+- **Agent Tasks Module** (`convex/agentTasks.ts`)
+  - Added `deleteAllAgentTasks` mutation for bulk deletion
+  - Supports optional date and folder filtering
+  - Returns count of deleted tasks
+
+### Frontend Changes
+
+- **AIChatView.tsx** - Chat management UI
+  - Added header with Clear and Delete buttons (visible when chat has messages)
+  - `/clear` command clears messages with confirmation
+  - `/delete` command deletes chat with warning dialog
+  - Updated hint text to show available commands
+  - Chat view closes after deletion via `onClose` callback
+  - Uses ConfirmDialog for consistent UI
+
+- **AgentTasksView.tsx** - Bulk delete functionality
+  - Added "Delete All" button in header (visible when tasks exist)
+  - Confirmation dialog with task count
+  - Resets selected task state after deletion
+
+### Styling Changes
+
+- **global.css** - New styles for chat and agent task controls
+  - `.ai-chat-header-title`, `.ai-chat-header-actions`, `.ai-chat-header-action` styles
+  - `.ai-chat-header-action.dangerous` hover state with red styling
+  - `.agent-tasks-delete-all` button styles with danger hover state
+  - Mobile responsive styles for new controls
+
+## [v.027] - 2026-01-12
+
+### Added
+
+- **Markdown Download for Full-Page Notes** - Download any note as a markdown file
+  - New download button in full-page notes toolbar (Download icon)
+  - Downloads note content as `.md` file with sanitized filename
+  - Client-side download (no server required)
+
+- **Create Todos from Agent Results** - Turn AI agent output into actionable todos
+  - New "Create Todos" button on completed agent tasks
+  - Parses markdown lists (checkboxes, bullets, numbered) into individual todos
+  - Todos created in same date/folder context as the original task
+  - Shows count of todos created with success feedback
+
+- **Save Agent Results as Notes** - Preserve AI agent output as full-page notes
+  - New "Save as Note" button on completed agent tasks
+  - Saves entire conversation (including follow-ups) to a new full-page note
+  - Note created in same date/folder context as the original task
+  - Success feedback when note is saved
+
+- **Persistent Agent Tasks Icon** - Access agent tasks from any view
+  - Sparkles icon now visible when in full-page notes or AI chat views
+  - Allows switching to Agent Tasks without returning to todos first
+  - Closes current view (notes/chat) when switching to agent tasks
+
+### Changed
+
+- **ESC Key Behavior in Full-Page Notes** - Smarter escape key handling
+  - First ESC press exits fullscreen mode (if active)
+  - Second ESC press closes the full-page notes view
+  - Allows exiting fullscreen without losing your place
+
+### Backend Changes
+
+- **Agent Tasks Module** (`convex/agentTasks.ts`)
+  - Added `createTodosFromAgent` mutation - Parses agent results into todos
+  - Added `saveResultAsNote` mutation - Saves agent results as full-page note
+  - Both mutations use indexed queries for ownership verification
+  - Parallel todo creation with `Promise.all()` for efficiency
+
+### Frontend Changes
+
+- **AgentTasksView.tsx** - Action buttons for completed tasks
+  - Added action bar with "Create Todos" and "Save as Note" buttons
+  - Loading states and success feedback for actions
+  - Sparkles icon in header for navigation
+
+- **FullPageNoteTabs.tsx** - Download button added to toolbar
+  - New `handleDownloadMarkdown` function for client-side downloads
+
+- **App.tsx** - Updated header icon visibility and ESC handling
+  - Agent Tasks icon visible when in notes or chat views
+  - ESC key exits fullscreen before closing notes view
+
+### Mobile Responsiveness
+
+- Full mobile optimization for agent task action bar
+- Responsive button sizing and spacing
+- Touch-friendly targets on all new UI elements
+
+## [v.026] - 2026-01-11
+
+### Added
+
+- **AI Agent Tasks** - Send todos and notes to Claude or OpenAI for AI-powered processing
+  - Send any todo or full-page note to AI agents via menu option or keyboard shortcut
+  - Choose between Claude (Anthropic) or OpenAI as your AI provider
+  - Five task types: Expand (brainstorm), Code (generate), Summarize, Analyze, or Other (custom instructions)
+  - Per-date and per-folder agent task views (contextual to your current location)
+  - Conversation threads with follow-up questions in the same chat
+  - Real-time status indicators (pending, processing, completed, failed)
+  - Markdown rendering with syntax-highlighted code blocks in results
+  - Copy results to clipboard with one click
+  - Delete tasks when no longer needed
+
+- **Agent Tasks Keyboard Shortcut** - Quick access to send focused todo to AI
+  - Press `Shift + A` when a todo is focused to open the Agent Task modal
+  - Added to keyboard shortcuts modal under Todo Management
+
+- **Agent Tasks Header Icon** - Access agent tasks from any date or folder view
+  - Sparkles icon in header toolbar to toggle Agent Tasks view
+  - Works alongside existing full-page notes and AI chat icons
+  - Checkbox icon to return to todos from Agent Tasks view
+
+### Schema Changes
+
+- Added `agentTasks` table with fields for userId, sourceId, sourceType, sourceContent, provider, taskType, status, result, messages, folderId, and date
+- Indexes: `by_user`, `by_user_and_status`, `by_user_and_date`, `by_user_and_folder`
+- Messages array stores conversation history with role, content, and timestamp
+
+### Backend Changes
+
+- **Agent Tasks Module** (`convex/agentTasks.ts`)
+  - `getAgentTasks` - Query tasks filtered by date or folder
+  - `createAgentTask` - Create task and schedule processing
+  - `deleteAgentTask` - Remove task with ownership verification
+  - `addFollowUpMessage` - Add follow-up to existing conversation
+  - `updateTaskStatus` - Internal mutation for status updates
+  - `appendAssistantMessage` - Internal mutation for AI responses
+  - `getTaskForProcessing` - Internal query for action processing
+
+- **Agent Task Actions** (`convex/agentTaskActions.ts`)
+  - `processAgentTask` - Process initial task with Claude or OpenAI
+  - `processFollowUp` - Process follow-up messages with conversation context
+  - Task-specific system prompts for expand, code, summarize, analyze, and other
+  - Full conversation history support for multi-turn interactions
+
+### Frontend Changes
+
+- **AgentTaskModal.tsx** - Modal for configuring and sending agent tasks
+  - Provider selection (Claude/OpenAI)
+  - Task type selection with descriptions
+  - Custom instructions textarea for "Other" task type
+  - Source content preview
+
+- **AgentTasksView.tsx** - View for displaying agent tasks and results
+  - Task list with status indicators and task type icons
+  - Conversation thread display with user/assistant message styling
+  - Markdown rendering with syntax highlighting
+  - Follow-up chat input for continuing conversations
+  - Copy and delete actions
+
+- **App.tsx** - Integration and state management
+  - Agent tasks state and modal data management
+  - Header icon for toggling agent tasks view
+  - Keyboard shortcut handler for Shift+A
+
+- **KeyboardShortcutsModal.tsx** - Added Shift+A shortcut documentation
+
+- **TodoItem.tsx** - Added "Send to Agent" menu option
+
+- **FullPageNoteTabs.tsx** - Added agent tasks button to toolbar
+
+### Dependencies
+
+- Added `openai` package (^4.79.0) for OpenAI API integration
+
 ## [v.025] - 2026-01-10
 
 ### Fixed

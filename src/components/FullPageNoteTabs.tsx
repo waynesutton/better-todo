@@ -7,7 +7,7 @@ import {
   ImageIcon,
   EyeOpenIcon,
 } from "@radix-ui/react-icons";
-import { X, Copy, Check, Link2, ExternalLinkIcon } from "lucide-react";
+import { X, Copy, Check, Link2, ExternalLinkIcon, Bot, Download } from "lucide-react";
 import { Id } from "../../convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -35,6 +35,7 @@ interface FullPageNoteTabsProps {
   onTogglePreview?: () => void;
   cursorInCodeBlock?: boolean;
   onShareNote?: () => void;
+  onSendToAgent?: (data: { noteId: Id<"fullPageNotes">; content: string; title?: string; folderId?: Id<"folders">; date?: string }) => void;
 }
 
 export function FullPageNoteTabs({
@@ -53,6 +54,7 @@ export function FullPageNoteTabs({
   onTogglePreview,
   cursorInCodeBlock,
   onShareNote,
+  onSendToAgent,
 }: FullPageNoteTabsProps) {
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const selectedTabRef = useRef<HTMLDivElement>(null);
@@ -135,6 +137,22 @@ export function FullPageNoteTabs({
     }
   };
 
+  // Handle download note as markdown file
+  const handleDownloadMarkdown = () => {
+    const selectedNote = notes.find((n) => n._id === selectedNoteId);
+    if (!selectedNote?.content) return;
+
+    // Sanitize filename - replace non-alphanumeric chars with dashes
+    const filename = `${(selectedNote.title || "untitled").replace(/[^a-z0-9]/gi, "-")}.md`;
+    const blob = new Blob([selectedNote.content], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Filter notes to only show open tabs
   const openNotes = notes.filter((note) => openTabIds.includes(note._id));
 
@@ -206,7 +224,7 @@ export function FullPageNoteTabs({
           <FilePlusIcon style={{ width: 16, height: 16 }} />
         </button>
 
-        {/* Action buttons - copy, share, image upload, preview, and fullscreen */}
+        {/* Action buttons - copy, download, share, image upload, preview, and fullscreen */}
         <div className="fullpage-note-tab-actions">
           <button
             className="fullpage-note-tab-action-button"
@@ -215,6 +233,35 @@ export function FullPageNoteTabs({
           >
             {copied ? <Check size={16} /> : <Copy size={16} />}
           </button>
+
+          {/* Download as markdown button */}
+          <button
+            className="fullpage-note-tab-action-button"
+            onClick={handleDownloadMarkdown}
+            title="Download as Markdown"
+          >
+            <Download size={16} />
+          </button>
+
+          {/* Send to Agent button */}
+          {isAuthenticated && onSendToAgent && selectedNoteId && (
+            <button
+              className="fullpage-note-tab-action-button"
+              onClick={() => {
+                const selectedNote = notes.find((n) => n._id === selectedNoteId);
+                if (selectedNote && selectedNote.content) {
+                  onSendToAgent({
+                    noteId: selectedNote._id,
+                    content: selectedNote.content,
+                    title: selectedNote.title,
+                  });
+                }
+              }}
+              title="Send to Agent"
+            >
+              <Bot size={16} />
+            </button>
+          )}
 
           {isAuthenticated && onShareNote && (
             <>

@@ -82,17 +82,23 @@ export const generateResponse = action({
       throw new Error("Not authenticated");
     }
 
-    // Get the API key from environment
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    // Get user's personal API key (required)
+    const apiKey: string | null = await ctx.runQuery(internal.userApiKeys.getApiKeyInternal, {
+      userId: identity.subject,
+      provider: "anthropic",
+    });
+    
     if (!apiKey) {
-      throw new Error("ANTHROPIC_API_KEY not configured");
+      throw new Error(
+        "No Anthropic API key configured. Please add your API key in Settings (press ?)."
+      );
     }
 
     // Build system prompt from environment variables
     const systemPrompt = buildSystemPrompt();
 
     // Initialize Anthropic client
-    const anthropic = new Anthropic({
+    const anthropic: Anthropic = new Anthropic({
       apiKey,
     });
 
@@ -161,7 +167,7 @@ export const generateResponse = action({
     const claudeMessages: Array<{
       role: "user" | "assistant";
       content: ClaudeMessageContent;
-    }> = recentMessages.map((msg) => ({
+    }> = recentMessages.map((msg: { role: "user" | "assistant"; content: string }) => ({
       role: msg.role,
       content: msg.content,
     }));
@@ -213,7 +219,7 @@ export const generateResponse = action({
     });
 
     // Call Claude API
-    const response = await anthropic.messages.create({
+    const response: Anthropic.Message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 2048,
       system: systemPrompt,
@@ -221,8 +227,10 @@ export const generateResponse = action({
     });
 
     // Extract text response
-    const textContent = response.content.find((block) => block.type === "text");
-    const assistantMessage =
+    const textContent: Anthropic.ContentBlock | undefined = response.content.find(
+      (block: Anthropic.ContentBlock) => block.type === "text"
+    );
+    const assistantMessage: string =
       textContent?.type === "text"
         ? textContent.text
         : "I apologize, but I could not generate a response.";

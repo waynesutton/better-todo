@@ -2,11 +2,16 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v025");
+  const [activeSection, setActiveSection] = useState("v030");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
+    { id: "v030", title: "v.030 - Jan 12, 2026" },
+    { id: "v029", title: "v.029 - Jan 12, 2026" },
+    { id: "v028", title: "v.028 - Jan 12, 2026" },
+    { id: "v027", title: "v.027 - Jan 12, 2026" },
+    { id: "v026", title: "v.026 - Jan 11, 2026" },
     { id: "v025", title: "v.025 - Jan 10, 2026" },
     { id: "v024", title: "v.024 - Jan 2, 2026" },
     { id: "v023", title: "v.023 - Dec 19, 2025" },
@@ -95,12 +100,613 @@ export function Changelog() {
 
       <div className="launch-container">
         {/* Each section mirrors the markdown changelog so anchors stay in sync. */}
-        <section id="v025" className="launch-section">
+        <section id="v030" className="launch-section">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">v.030 - January 12, 2026</h2>
+          <p className="changelog-subtitle">Persistent Navigation Icons</p>
+
+          <h3 className="changelog-category">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Persistent Navigation Icons</strong> - All view icons now
+              always visible in header
+              <ul className="nested-list">
+                <li>
+                  Todos (checkbox), Notes (file), Chat (message), and Agent
+                  (sparkles) icons always visible
+                </li>
+                <li>Icons toggle their respective views when clicked</li>
+                <li>Active view indicated with accent color highlight</li>
+                <li>Clicking an active icon returns to todos view</li>
+                <li>Removed conditional visibility logic for cleaner UX</li>
+                <li>
+                  Icons still contextually hidden on pinned/backlog views where
+                  not applicable
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Frontend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>App.tsx</strong> - Navigation icon behavior update
+              <ul className="nested-list">
+                <li>All nav icons visible simultaneously on regular date/folder pages</li>
+                <li>Each icon toggles its view (click to open, click again to close)</li>
+                <li>
+                  Added <code>nav-icon-active</code> class for visual feedback on
+                  current view
+                </li>
+                <li>Simplified header icon rendering logic</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Styling Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>global.css</strong> - Navigation icon active state
+              <ul className="nested-list">
+                <li>
+                  Added <code>.search-button:hover</code> background color
+                </li>
+                <li>
+                  Added <code>.nav-icon-active</code> class with accent color and
+                  background
+                </li>
+                <li>Consistent hover states across all nav icons</li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v029" className="launch-section">
+          <h2 className="section-title">v.029 - January 12, 2026</h2>
+          <p className="changelog-subtitle">Per-User API Keys</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Per-User API Keys</strong> - Users must provide their own
+              API keys to use AI features
+              <ul className="nested-list">
+                <li>
+                  New &quot;API Keys&quot; section in Keyboard Shortcuts Modal
+                  (press ?)
+                </li>
+                <li>Support for both Claude (Anthropic) and OpenAI API keys</li>
+                <li>
+                  Keys stored securely in Convex database (encrypted at rest)
+                </li>
+                <li>Masked key display in UI (only last 4 characters visible)</li>
+                <li>
+                  Help links to get API keys from console.anthropic.com and
+                  platform.openai.com
+                </li>
+                <li>Save and delete functionality per provider</li>
+                <li>Show/hide password toggle for key input</li>
+                <li>
+                  Each user must provide their own keys to use AI features
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Backend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Schema</strong> (<code>convex/schema.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Added <code>userApiKeys</code> table with{" "}
+                  <code>anthropicKey</code> and <code>openaiKey</code> fields
+                </li>
+                <li>
+                  Index on <code>userId</code> for efficient lookups
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>User API Keys Module</strong> (
+              <code>convex/userApiKeys.ts</code>) - New file
+              <ul className="nested-list">
+                <li>
+                  <code>getUserApiKeys</code> query returns masked keys for UI
+                  display
+                </li>
+                <li>
+                  <code>getApiKeyInternal</code> internal query returns full key
+                  for actions (not exposed to client)
+                </li>
+                <li>
+                  <code>setApiKey</code> mutation to save/update API keys
+                </li>
+                <li>
+                  <code>deleteApiKey</code> mutation to remove API keys
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>AI Chat Actions</strong> (
+              <code>convex/aiChatActions.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Updated <code>generateResponse</code> to require user&apos;s
+                  Anthropic key
+                </li>
+                <li>
+                  Clear error message directing users to Settings if no key
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Agent Task Actions</strong> (
+              <code>convex/agentTaskActions.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Updated <code>processAgentTask</code> and{" "}
+                  <code>processFollowUp</code> to require user API keys
+                </li>
+                <li>
+                  Helper functions require user API key parameter
+                </li>
+                <li>Clear error messages directing users to Settings</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Frontend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>KeyboardShortcutsModal.tsx</strong> - API Keys management
+              UI
+              <ul className="nested-list">
+                <li>
+                  New &quot;API Keys&quot; section (authenticated users only)
+                </li>
+                <li>Key icon header with section title</li>
+                <li>
+                  Input fields for Anthropic and OpenAI keys (password type)
+                </li>
+                <li>Show/hide toggle for each key input</li>
+                <li>Save button per provider with loading state</li>
+                <li>Masked display when key is saved with delete button</li>
+                <li>Help links to provider API key pages</li>
+                <li>Error handling with inline error display</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Styling Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>global.css</strong> - API Keys section styles
+              <ul className="nested-list">
+                <li>
+                  <code>.api-keys-section</code> container with top border
+                  separator
+                </li>
+                <li>
+                  <code>.api-key-error</code> error message styling
+                </li>
+                <li>
+                  <code>.api-key-input-row</code> and{" "}
+                  <code>.api-key-input-wrapper</code> for input layout
+                </li>
+                <li>
+                  <code>.api-key-save-btn</code> and{" "}
+                  <code>.api-key-delete-btn</code> button styles
+                </li>
+                <li>
+                  <code>.api-key-help-link</code> for external links to provider
+                  consoles
+                </li>
+                <li>Mobile responsive styles for API key inputs</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Security</h3>
+          <ul className="feature-list">
+            <li>
+              Full API keys only accessible via internal Convex queries (not
+              exposed to client)
+            </li>
+            <li>Client only sees masked versions of keys</li>
+            <li>Keys scoped to authenticated user via userId index</li>
+            <li>Convex provides encryption at rest and HTTPS transport</li>
+          </ul>
+        </section>
+
+        <section id="v028" className="launch-section">
+          <h2 className="section-title">v.028 - January 12, 2026</h2>
+          <p className="changelog-subtitle">Chat & Agent Task Management</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>AI Chat Clear and Delete Commands</strong> - Manage chat
+              history with commands or buttons
+              <ul className="nested-list">
+                <li>
+                  Type <code>/clear</code> to clear all messages (keeps the chat,
+                  removes messages)
+                </li>
+                <li>
+                  Type <code>/delete</code> to permanently delete the chat from
+                  the database
+                </li>
+                <li>
+                  Header buttons for Clear and Delete appear when chat has messages
+                </li>
+                <li>Confirmation dialogs before destructive actions</li>
+                <li>
+                  Delete removes chat from sidebar automatically (Convex reactivity)
+                </li>
+                <li>Chat view closes after deletion and returns to todos</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Agent Tasks Delete All</strong> - Bulk delete agent tasks
+              <ul className="nested-list">
+                <li>New &quot;Delete All&quot; button in agent tasks header</li>
+                <li>
+                  Deletes all tasks filtered by current date or folder context
+                </li>
+                <li>Confirmation dialog shows count of tasks to be deleted</li>
+                <li>
+                  Uses parallel deletion with <code>Promise.all()</code> for
+                  efficiency
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Backend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>AI Chats Module</strong> (<code>convex/aiChats.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  <code>clearChat</code> mutation resets messages array
+                </li>
+                <li>
+                  <code>deleteChat</code> mutation removes entire chat document
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Agent Tasks Module</strong> (<code>convex/agentTasks.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Added <code>deleteAllAgentTasks</code> mutation for bulk deletion
+                </li>
+                <li>Supports optional date and folder filtering</li>
+                <li>Returns count of deleted tasks</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Frontend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>AIChatView.tsx</strong> - Chat management UI
+              <ul className="nested-list">
+                <li>
+                  Added header with Clear and Delete buttons (visible when chat
+                  has messages)
+                </li>
+                <li>
+                  <code>/clear</code> and <code>/delete</code> commands with
+                  confirmation dialogs
+                </li>
+                <li>Updated hint text to show available commands</li>
+                <li>Chat view closes after deletion via onClose callback</li>
+              </ul>
+            </li>
+            <li>
+              <strong>AgentTasksView.tsx</strong> - Bulk delete functionality
+              <ul className="nested-list">
+                <li>
+                  Added &quot;Delete All&quot; button in header (visible when
+                  tasks exist)
+                </li>
+                <li>Confirmation dialog with task count</li>
+                <li>Resets selected task state after deletion</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Styling Changes</h3>
+          <ul className="feature-list">
+            <li>
+              New styles for chat and agent task controls in global.css
+            </li>
+            <li>
+              <code>.ai-chat-header-actions</code> and{" "}
+              <code>.ai-chat-header-action</code> styles
+            </li>
+            <li>
+              <code>.agent-tasks-delete-all</code> button with danger hover state
+            </li>
+            <li>Mobile responsive styles for new controls</li>
+          </ul>
+        </section>
+
+        <section id="v027" className="launch-section">
+          <h2 className="section-title">v.027 - January 12, 2026</h2>
+          <p className="changelog-subtitle">Agent Actions & UX Improvements</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Markdown Download for Full-Page Notes</strong> - Download any
+              note as a markdown file
+              <ul className="nested-list">
+                <li>New Download icon button in full-page notes toolbar</li>
+                <li>Downloads note content as .md file with sanitized filename</li>
+                <li>Client-side download (no server required)</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Create Todos from Agent Results</strong> - Turn AI agent
+              output into actionable todos
+              <ul className="nested-list">
+                <li>New &quot;Create Todos&quot; button on completed agent tasks</li>
+                <li>
+                  Parses markdown lists (checkboxes, bullets, numbered) into
+                  individual todos
+                </li>
+                <li>
+                  Todos created in same date/folder context as the original task
+                </li>
+                <li>Shows count of todos created with success feedback</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Save Agent Results as Notes</strong> - Preserve AI agent
+              output as full-page notes
+              <ul className="nested-list">
+                <li>New &quot;Save as Note&quot; button on completed agent tasks</li>
+                <li>
+                  Saves entire conversation (including follow-ups) to a new
+                  full-page note
+                </li>
+                <li>Note created in same date/folder context as original task</li>
+                <li>Success feedback when note is saved</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Persistent Agent Tasks Icon</strong> - Access agent tasks from
+              any view
+              <ul className="nested-list">
+                <li>
+                  Sparkles icon now visible when in full-page notes or AI chat views
+                </li>
+                <li>Allows switching to Agent Tasks without returning to todos first</li>
+                <li>Closes current view (notes/chat) when switching to agent tasks</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>ESC Key Behavior in Full-Page Notes</strong> - Smarter escape
+              key handling
+              <ul className="nested-list">
+                <li>First ESC press exits fullscreen mode (if active)</li>
+                <li>Second ESC press closes the full-page notes view</li>
+                <li>Allows exiting fullscreen without losing your place</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Backend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Agent Tasks Module</strong> (<code>convex/agentTasks.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  Added <code>createTodosFromAgent</code> mutation - Parses agent
+                  results into todos
+                </li>
+                <li>
+                  Added <code>saveResultAsNote</code> mutation - Saves agent results
+                  as full-page note
+                </li>
+                <li>Both mutations use indexed queries for ownership verification</li>
+                <li>
+                  Parallel todo creation with <code>Promise.all()</code> for
+                  efficiency
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Frontend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>AgentTasksView.tsx</strong> - Action buttons for completed
+              tasks
+              <ul className="nested-list">
+                <li>
+                  Added action bar with &quot;Create Todos&quot; and &quot;Save as Note&quot;
+                  buttons
+                </li>
+                <li>Loading states and success feedback for actions</li>
+                <li>Sparkles icon in header for navigation</li>
+              </ul>
+            </li>
+            <li>
+              <strong>FullPageNoteTabs.tsx</strong> - Download button added to
+              toolbar
+              <ul className="nested-list">
+                <li>
+                  New <code>handleDownloadMarkdown</code> function for client-side
+                  downloads
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>App.tsx</strong> - Updated header icon visibility and ESC
+              handling
+              <ul className="nested-list">
+                <li>Agent Tasks icon visible when in notes or chat views</li>
+                <li>ESC key exits fullscreen before closing notes view</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Mobile Responsiveness</h3>
+          <ul className="feature-list">
+            <li>Full mobile optimization for agent task action bar</li>
+            <li>Responsive button sizing and spacing</li>
+            <li>Touch-friendly targets on all new UI elements</li>
+          </ul>
+        </section>
+
+        <section id="v026" className="launch-section">
+          <h2 className="section-title">v.026 - January 11, 2026</h2>
+          <p className="changelog-subtitle">AI Agent Tasks</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>AI Agent Tasks</strong> - Send todos and notes to Claude or
+              OpenAI for AI-powered processing
+              <ul className="nested-list">
+                <li>
+                  Send any todo or full-page note to AI agents via menu option or
+                  keyboard shortcut
+                </li>
+                <li>
+                  Choose between Claude (Anthropic) or OpenAI as your AI provider
+                </li>
+                <li>
+                  Five task types: Expand (brainstorm), Code (generate), Summarize,
+                  Analyze, or Other (custom instructions)
+                </li>
+                <li>
+                  Per-date and per-folder agent task views (contextual to your
+                  current location)
+                </li>
+                <li>Conversation threads with follow-up questions in the same chat</li>
+                <li>Real-time status indicators (pending, processing, completed, failed)</li>
+                <li>Markdown rendering with syntax-highlighted code blocks in results</li>
+                <li>Copy results to clipboard with one click</li>
+                <li>Delete tasks when no longer needed</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Agent Tasks Keyboard Shortcut</strong> - Quick access to send
+              focused todo to AI
+              <ul className="nested-list">
+                <li>
+                  Press <kbd>Shift + A</kbd> when a todo is focused to open the
+                  Agent Task modal
+                </li>
+                <li>Added to keyboard shortcuts modal under Todo Management</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Agent Tasks Header Icon</strong> - Access agent tasks from any
+              date or folder view
+              <ul className="nested-list">
+                <li>Sparkles icon in header toolbar to toggle Agent Tasks view</li>
+                <li>Works alongside existing full-page notes and AI chat icons</li>
+                <li>Checkbox icon to return to todos from Agent Tasks view</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Schema Changes</h3>
+          <ul className="feature-list">
+            <li>
+              Added <code>agentTasks</code> table with fields for userId, sourceId,
+              sourceType, sourceContent, provider, taskType, status, result,
+              messages, folderId, and date
+            </li>
+            <li>
+              Indexes: <code>by_user</code>, <code>by_user_and_status</code>,{" "}
+              <code>by_user_and_date</code>, <code>by_user_and_folder</code>
+            </li>
+            <li>
+              Messages array stores conversation history with role, content, and
+              timestamp
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Backend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Agent Tasks Module</strong> (<code>convex/agentTasks.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  <code>getAgentTasks</code> - Query tasks filtered by date or folder
+                </li>
+                <li>
+                  <code>createAgentTask</code> - Create task and schedule processing
+                </li>
+                <li>
+                  <code>addFollowUpMessage</code> - Add follow-up to existing
+                  conversation
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Agent Task Actions</strong> (
+              <code>convex/agentTaskActions.ts</code>)
+              <ul className="nested-list">
+                <li>
+                  <code>processAgentTask</code> - Process initial task with Claude or
+                  OpenAI
+                </li>
+                <li>
+                  <code>processFollowUp</code> - Process follow-up messages with
+                  conversation context
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Frontend Changes</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>AgentTaskModal.tsx</strong> - Modal for configuring and sending
+              agent tasks
+            </li>
+            <li>
+              <strong>AgentTasksView.tsx</strong> - View for displaying agent tasks
+              and conversation threads
+            </li>
+            <li>
+              <strong>KeyboardShortcutsModal.tsx</strong> - Added Shift+A shortcut
+              documentation
+            </li>
+            <li>
+              <strong>TodoItem.tsx</strong> - Added &quot;Send to Agent&quot; menu option
+            </li>
+            <li>
+              <strong>FullPageNoteTabs.tsx</strong> - Added agent tasks button to
+              toolbar
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Dependencies</h3>
+          <ul className="feature-list">
+            <li>
+              Added <code>openai</code> package (^4.79.0) for OpenAI API integration
+            </li>
+          </ul>
+        </section>
+
+        <section id="v025" className="launch-section">
           <h2 className="section-title">v.025 - January 10, 2026</h2>
           <p className="changelog-subtitle">Inline Todo Notes in Project Folders</p>
 

@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
-import { Cross2Icon } from "@radix-ui/react-icons";
-import { Copy, Check } from "lucide-react";
+import { Cross2Icon, EyeOpenIcon, EyeClosedIcon } from "@radix-ui/react-icons";
+import { Copy, Check, Key, Trash2, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -17,11 +17,30 @@ export function KeyboardShortcutsModal({
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const { isAuthenticated } = useConvexAuth();
   
+  // API Key state
+  const [anthropicKeyInput, setAnthropicKeyInput] = useState("");
+  const [openaiKeyInput, setOpenaiKeyInput] = useState("");
+  const [showAnthropicKey, setShowAnthropicKey] = useState(false);
+  const [showOpenaiKey, setShowOpenaiKey] = useState(false);
+  const [savingAnthropic, setSavingAnthropic] = useState(false);
+  const [savingOpenai, setSavingOpenai] = useState(false);
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+  
   // Fetch user preferences
   const userPreferences = useQuery(
     api.users.getUserPreferences,
     isAuthenticated ? undefined : "skip",
   );
+  
+  // Fetch user API keys (masked for display)
+  const userApiKeys = useQuery(
+    api.userApiKeys.getUserApiKeys,
+    isAuthenticated ? undefined : "skip",
+  );
+  
+  // Mutations for API keys
+  const setApiKey = useMutation(api.userApiKeys.setApiKey);
+  const deleteApiKey = useMutation(api.userApiKeys.deleteApiKey);
   
   // Mutation to update font size
   const setTodoFontSize = useMutation(api.users.setTodoFontSize);
@@ -33,6 +52,53 @@ export function KeyboardShortcutsModal({
   const handleFontSizeChange = async (fontSize: number) => {
     if (isAuthenticated) {
       await setTodoFontSize({ fontSize });
+    }
+  };
+  
+  // Handle saving API keys
+  const handleSaveAnthropicKey = async () => {
+    if (!anthropicKeyInput.trim()) return;
+    setSavingAnthropic(true);
+    setApiKeyError(null);
+    try {
+      await setApiKey({ provider: "anthropic", key: anthropicKeyInput.trim() });
+      setAnthropicKeyInput("");
+    } catch (error) {
+      setApiKeyError(error instanceof Error ? error.message : "Failed to save key");
+    } finally {
+      setSavingAnthropic(false);
+    }
+  };
+  
+  const handleSaveOpenaiKey = async () => {
+    if (!openaiKeyInput.trim()) return;
+    setSavingOpenai(true);
+    setApiKeyError(null);
+    try {
+      await setApiKey({ provider: "openai", key: openaiKeyInput.trim() });
+      setOpenaiKeyInput("");
+    } catch (error) {
+      setApiKeyError(error instanceof Error ? error.message : "Failed to save key");
+    } finally {
+      setSavingOpenai(false);
+    }
+  };
+  
+  const handleDeleteAnthropicKey = async () => {
+    setApiKeyError(null);
+    try {
+      await deleteApiKey({ provider: "anthropic" });
+    } catch (error) {
+      setApiKeyError(error instanceof Error ? error.message : "Failed to delete key");
+    }
+  };
+  
+  const handleDeleteOpenaiKey = async () => {
+    setApiKeyError(null);
+    try {
+      await deleteApiKey({ provider: "openai" });
+    } catch (error) {
+      setApiKeyError(error instanceof Error ? error.message : "Failed to delete key");
     }
   };
 
@@ -86,6 +152,7 @@ export function KeyboardShortcutsModal({
         { key: "p", description: "Pin/unpin hovered todo" },
         { key: "s", description: "Add subtask to focused todo" },
         { key: "m", description: "Open menu for focused todo" },
+        { key: "Shift + A", description: "Send focused todo to AI agent" },
         { key: "z", description: "Undo last mark as done" },
       ],
     },
@@ -249,6 +316,149 @@ export function KeyboardShortcutsModal({
                 <div className="font-size-preview" style={{ fontSize: `${currentFontSize}px` }}>
                   Preview: This is how your todo text will look
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* API Keys Section */}
+          {isAuthenticated && (
+            <div className="keyboard-shortcuts-category api-keys-section">
+              <h3>
+                <Key size={16} style={{ marginRight: 8, verticalAlign: "middle" }} />
+                API Keys
+              </h3>
+              <p className="keyboard-shortcuts-code-info">
+                Add your own API keys to use AI features. Keys are stored securely and only used for your requests.
+              </p>
+              
+              {apiKeyError && (
+                <div className="api-key-error">{apiKeyError}</div>
+              )}
+              
+              {/* Anthropic (Claude) API Key */}
+              <div className="api-key-field">
+                <div className="api-key-label">
+                  <span>Claude (Anthropic)</span>
+                  {userApiKeys?.hasAnthropicKey && (
+                    <span className="api-key-saved-badge">
+                      <Check size={12} /> Saved
+                    </span>
+                  )}
+                </div>
+                
+                {userApiKeys?.hasAnthropicKey ? (
+                  <div className="api-key-saved-row">
+                    <code className="api-key-masked">{userApiKeys.anthropicKey}</code>
+                    <button
+                      className="api-key-delete-btn"
+                      onClick={handleDeleteAnthropicKey}
+                      title="Remove API key"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="api-key-input-row">
+                    <div className="api-key-input-wrapper">
+                      <input
+                        type={showAnthropicKey ? "text" : "password"}
+                        className="api-key-input"
+                        placeholder="sk-ant-api03-..."
+                        value={anthropicKeyInput}
+                        onChange={(e) => setAnthropicKeyInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSaveAnthropicKey()}
+                      />
+                      <button
+                        type="button"
+                        className="api-key-toggle-visibility"
+                        onClick={() => setShowAnthropicKey(!showAnthropicKey)}
+                        title={showAnthropicKey ? "Hide key" : "Show key"}
+                      >
+                        {showAnthropicKey ? <EyeClosedIcon /> : <EyeOpenIcon />}
+                      </button>
+                    </div>
+                    <button
+                      className="api-key-save-btn"
+                      onClick={handleSaveAnthropicKey}
+                      disabled={!anthropicKeyInput.trim() || savingAnthropic}
+                    >
+                      {savingAnthropic ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                )}
+                
+                <a
+                  href="https://console.anthropic.com/settings/keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="api-key-help-link"
+                >
+                  Get your API key from console.anthropic.com
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+              
+              {/* OpenAI API Key */}
+              <div className="api-key-field">
+                <div className="api-key-label">
+                  <span>OpenAI</span>
+                  {userApiKeys?.hasOpenaiKey && (
+                    <span className="api-key-saved-badge">
+                      <Check size={12} /> Saved
+                    </span>
+                  )}
+                </div>
+                
+                {userApiKeys?.hasOpenaiKey ? (
+                  <div className="api-key-saved-row">
+                    <code className="api-key-masked">{userApiKeys.openaiKey}</code>
+                    <button
+                      className="api-key-delete-btn"
+                      onClick={handleDeleteOpenaiKey}
+                      title="Remove API key"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="api-key-input-row">
+                    <div className="api-key-input-wrapper">
+                      <input
+                        type={showOpenaiKey ? "text" : "password"}
+                        className="api-key-input"
+                        placeholder="sk-proj-..."
+                        value={openaiKeyInput}
+                        onChange={(e) => setOpenaiKeyInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSaveOpenaiKey()}
+                      />
+                      <button
+                        type="button"
+                        className="api-key-toggle-visibility"
+                        onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                        title={showOpenaiKey ? "Hide key" : "Show key"}
+                      >
+                        {showOpenaiKey ? <EyeClosedIcon /> : <EyeOpenIcon />}
+                      </button>
+                    </div>
+                    <button
+                      className="api-key-save-btn"
+                      onClick={handleSaveOpenaiKey}
+                      disabled={!openaiKeyInput.trim() || savingOpenai}
+                    >
+                      {savingOpenai ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                )}
+                
+                <a
+                  href="https://platform.openai.com/api-keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="api-key-help-link"
+                >
+                  Get your API key from platform.openai.com
+                  <ExternalLink size={12} />
+                </a>
               </div>
             </div>
           )}

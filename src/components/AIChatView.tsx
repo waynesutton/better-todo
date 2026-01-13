@@ -11,9 +11,11 @@ import {
   Cross2Icon,
   ImageIcon,
 } from "@radix-ui/react-icons";
-import { Loader2, Copy, Check, X } from "lucide-react";
+import { Loader2, Copy, Check, X, Trash2, RotateCcw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { ConfirmDialog } from "./ConfirmDialog";
+import { triggerHaptic, triggerSuccessHaptic } from "../lib/haptics";
 
 interface AIChatViewProps {
   date: string;
@@ -48,7 +50,7 @@ interface LinkAttachment {
 
 type Attachment = ImageAttachment | LinkAttachment;
 
-export function AIChatView({ date }: AIChatViewProps) {
+export function AIChatView({ date, onClose }: AIChatViewProps) {
   const { isAuthenticated } = useConvexAuth();
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -85,7 +87,12 @@ export function AIChatView({ date }: AIChatViewProps) {
   );
   const generateResponse = useAction(api.aiChatActions.generateResponse);
   const clearChat = useMutation(api.aiChats.clearChat);
+  const deleteChat = useMutation(api.aiChats.deleteChat);
   const generateUploadUrl = useMutation(api.aiChats.generateUploadUrl);
+
+  // Confirmation dialog states
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -164,13 +171,31 @@ export function AIChatView({ date }: AIChatViewProps) {
     adjustTextareaHeight();
   }, [inputValue]);
 
-  // Handle clearing the chat
+  // Handle clearing the chat (resets messages but keeps the chat)
   const handleClearChat = async () => {
     if (!chat) return;
     try {
+      triggerHaptic("medium");
       await clearChat({ chatId: chat._id });
+      triggerSuccessHaptic();
+      setShowClearConfirm(false);
     } catch (error) {
       console.error("Failed to clear chat:", error);
+    }
+  };
+
+  // Handle deleting the chat entirely from database
+  const handleDeleteChat = async () => {
+    if (!chat) return;
+    try {
+      triggerHaptic("medium");
+      await deleteChat({ chatId: chat._id });
+      triggerSuccessHaptic();
+      setShowDeleteConfirm(false);
+      // Close the chat view and go back to todos (removes from sidebar automatically via Convex reactivity)
+      onClose?.();
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
     }
   };
 
@@ -321,13 +346,29 @@ export function AIChatView({ date }: AIChatViewProps) {
 
     const messageContent = inputValue.trim();
 
-    // Check for "clear" command
-    if (messageContent === '"clear"' && attachments.length === 0) {
+    // Check for /clear command (clears messages but keeps chat)
+    if (messageContent.toLowerCase() === "/clear" && attachments.length === 0) {
       setInputValue("");
       if (inputRef.current) {
         inputRef.current.style.height = "auto";
       }
-      await handleClearChat();
+      // Show confirmation dialog instead of directly clearing
+      if (chat && chat.messages.length > 0) {
+        setShowClearConfirm(true);
+      }
+      return;
+    }
+
+    // Check for /delete command (deletes entire chat from database)
+    if (messageContent.toLowerCase() === "/delete" && attachments.length === 0) {
+      setInputValue("");
+      if (inputRef.current) {
+        inputRef.current.style.height = "auto";
+      }
+      // Show confirmation dialog for deletion
+      if (chat) {
+        setShowDeleteConfirm(true);
+      }
       return;
     }
 
@@ -433,8 +474,39 @@ export function AIChatView({ date }: AIChatViewProps) {
   const messages: ChatMessage[] = chat?.messages || [];
   const hasAttachments = attachments.length > 0;
 
+  const hasMessages = messages.length > 0;
+
   return (
     <div className="ai-chat-view">
+      {/* Header with actions */}
+      {hasMessages && (
+        <div className="ai-chat-header">
+          <div className="ai-chat-header-title">
+            <span>Chat</span>
+          </div>
+          <div className="ai-chat-header-actions">
+            <button
+              className="ai-chat-header-action"
+              onClick={() => setShowClearConfirm(true)}
+              title="Clear messages (/clear)"
+              aria-label="Clear messages"
+            >
+              <RotateCcw size={14} />
+              <span>Clear</span>
+            </button>
+            <button
+              className="ai-chat-header-action dangerous"
+              onClick={() => setShowDeleteConfirm(true)}
+              title="Delete chat (/delete)"
+              aria-label="Delete chat"
+            >
+              <Trash2 size={14} />
+              <span>Delete</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
       <div className="ai-chat-messages">
         {messages.map((message, index) => (
@@ -614,7 +686,7 @@ export function AIChatView({ date }: AIChatViewProps) {
           </button>
         </div>
         <div className="ai-chat-hint">
-          Press Enter to send, Shift+Enter for new line
+          Press Enter to send, Shift+Enter for new line. Type /clear or /delete for commands.
         </div>
       </div>
 
@@ -673,6 +745,30 @@ export function AIChatView({ date }: AIChatViewProps) {
           </div>
         </div>
       )}
+
+      {/* Clear chat confirmation dialog */}
+      <ConfirmDialog
+        isOpen={showClearConfirm}
+        title="Clear Chat"
+        message="Are you sure you want to clear all messages? This will reset the conversation but keep the chat."
+        confirmText="Clear"
+        cancelText="Cancel"
+        onConfirm={handleClearChat}
+        onCancel={() => setShowClearConfirm(false)}
+        isDangerous={false}
+      />
+
+      {/* Delete chat confirmation dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete Chat"
+        message="Are you sure you want to delete this chat? This will permanently remove all messages and cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteChat}
+        onCancel={() => setShowDeleteConfirm(false)}
+        isDangerous={true}
+      />
     </div>
   );
 }

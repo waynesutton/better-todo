@@ -83,6 +83,132 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.030 - 2026-01-12)
+
+- [x] **Persistent Navigation Icons** - Keep all view icons visible at all times
+  - Todos (checkbox), Notes (FileText), Chat (MessageCircle), and Agent (Sparkles) icons always visible
+  - Each icon toggles its respective view (click to open, click again to close)
+  - Added `nav-icon-active` CSS class with accent color for active state
+  - Icons still hidden on pinned/backlog views where features don't apply
+  - Simplified header icon logic in App.tsx
+
+## Completed Tasks (v.029 - 2026-01-12)
+
+- [x] **Per-User API Keys** - Users must provide their own API keys for AI features
+  - Added "API Keys" section in Keyboard Shortcuts Modal (press ?)
+  - Support for both Claude (Anthropic) and OpenAI API keys
+  - Keys stored securely in Convex database (encrypted at rest)
+  - Masked key display in UI (only last 4 characters visible)
+  - Help links to get API keys from console.anthropic.com and platform.openai.com
+  - Save and delete functionality per provider
+  - Show/hide password toggle for key input
+  - Each user must provide their own keys to use AI features
+
+- [x] **Backend: User API Keys Module** (`convex/userApiKeys.ts`)
+  - `getUserApiKeys` query returns masked keys for UI display
+  - `getApiKeyInternal` internal query returns full key for actions (not exposed to client)
+  - `setApiKey` mutation to save/update API keys
+  - `deleteApiKey` mutation to remove API keys
+  - Added `userApiKeys` table to schema with `by_user` index
+
+- [x] **Updated AI Actions to Require User Keys**
+  - `aiChatActions.ts` - Updated `generateResponse` to require user's Anthropic key
+  - `agentTaskActions.ts` - Updated `processAgentTask` and `processFollowUp` to require user API keys
+  - Helper functions require user API key parameter
+  - Clear error messages directing users to Settings if no key configured
+
+- [x] **Frontend: API Keys Management UI**
+  - New "API Keys" section in KeyboardShortcutsModal
+  - Input fields for Anthropic and OpenAI keys (password type)
+  - Show/hide toggle for each key input
+  - Save button per provider with loading state
+  - Masked display when key is saved with delete button
+  - Help links to provider API key pages
+  - Error handling with inline error display
+
+- [x] **CSS Styles for API Keys Section**
+  - `.api-keys-section` container with top border separator
+  - `.api-key-input-row` and `.api-key-input-wrapper` for input layout
+  - `.api-key-save-btn` and `.api-key-delete-btn` button styles
+  - `.api-key-help-link` for external links
+  - Mobile responsive styles for API key inputs
+
+## Completed Tasks (v.028 - 2026-01-12)
+
+- [x] **AI Chat Clear and Delete Commands** - Manage chat history
+  - Added `/clear` command to clear all messages (with confirmation dialog)
+  - Added `/delete` command to permanently delete chat from database (with warning)
+  - Added header buttons for Clear and Delete (visible when chat has messages)
+  - Delete removes chat from sidebar automatically via Convex reactivity
+  - Chat view closes after deletion and returns to todos
+  - Updated `AIChatView.tsx` with `onClose` callback integration
+
+- [x] **Agent Tasks Delete All** - Bulk delete functionality
+  - Added `deleteAllAgentTasks` mutation to `convex/agentTasks.ts`
+  - Supports filtering by date or folder
+  - Added "Delete All" button to AgentTasksView header
+  - Confirmation dialog shows count of tasks to be deleted
+  - Uses `Promise.all()` for parallel deletion
+
+- [x] **CSS Styles for New Controls**
+  - Added `.ai-chat-header-actions` and `.ai-chat-header-action` styles
+  - Added `.agent-tasks-delete-all` button styles
+  - Danger hover states with red color (#e16d76)
+  - Mobile responsive styles
+
+## Completed Tasks (v.027 - 2026-01-12)
+
+- [x] **Markdown Download for Full-Page Notes** - Download notes as .md files
+  - Added Download icon button to full-page notes toolbar
+  - Client-side download with sanitized filename
+  - Uses Blob and createObjectURL for browser download
+
+- [x] **Create Todos from Agent Results** - Parse AI output into actionable todos
+  - Added `createTodosFromAgent` mutation to `convex/agentTasks.ts`
+  - Parses markdown checkboxes, bullets, and numbered lists
+  - Creates todos in same date/folder context as agent task
+  - Uses `Promise.all()` for parallel todo insertion
+  - Added "Create Todos" button to AgentTasksView
+
+- [x] **Save Agent Results as Notes** - Preserve AI output as full-page notes
+  - Added `saveResultAsNote` mutation to `convex/agentTasks.ts`
+  - Saves entire conversation including follow-ups
+  - Creates note in same date/folder context
+  - Added "Save as Note" button to AgentTasksView
+
+- [x] **Persistent Agent Tasks Icon** - Always visible in header
+  - Removed condition hiding icon when in notes/chat views
+  - Icon now visible from any view (todos, notes, chat)
+  - Closes current view when switching to agent tasks
+
+- [x] **ESC Key Fullscreen Exit** - Smarter escape handling
+  - First ESC exits fullscreen mode if active
+  - Second ESC closes full-page notes view entirely
+  - Added `isFullscreenNotes` to keyboard handler dependencies
+
+- [x] **Mobile Responsiveness** - Action bar and agent tasks UI
+  - Added responsive styles for agent task action bar
+  - Touch-friendly button sizing
+  - Proper spacing and wrapping on small screens
+
+## Completed Tasks (v.026 - 2026-01-11)
+
+- [x] **AI Agent Tasks** - Send todos and notes to Claude or OpenAI for processing
+  - Added `agentTasks` table with conversation history support
+  - Indexes for efficient filtering by user, status, date, and folder
+  - `createAgentTask` mutation schedules background processing
+  - `addFollowUpMessage` mutation continues conversations in same thread
+  - `processAgentTask` and `processFollowUp` actions for AI processing
+  - Task types: Expand, Code, Summarize, Analyze, Other (custom instructions)
+  - Provider selection: Claude (Anthropic) or OpenAI
+  - Added `AgentTaskModal.tsx` for task configuration
+  - Added `AgentTasksView.tsx` for viewing results and conversations
+  - Markdown rendering with syntax-highlighted code blocks
+  - Keyboard shortcut `Shift + A` to send focused todo to agent
+  - Sparkles icon in header to access Agent Tasks view
+  - Per-date and per-folder task filtering
+  - Added `openai` package dependency
+
 ## Completed Tasks (v.025 - 2026-01-10)
 
 - [x] **Inline Todo Notes in Project Folders** - Fixed bug where notes showed across projects

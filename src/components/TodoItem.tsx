@@ -34,7 +34,8 @@ interface TodoItemProps {
   onDemoToggle?: (id: Id<"todos">) => void;
   isAuthenticated?: boolean;
   onRequireSignInForMenu?: () => void;
-  setPomodoroTriggered: (data: { todoId?: string; todoTitle?: string }) => void; // ✅ NEW
+  setPomodoroTriggered: (data: { todoId?: string; todoTitle?: string }) => void;
+  onSendToAgent?: (data: { todoId: string; content: string; folderId?: Id<"folders">; date?: string }) => void;
 }
 
 export function TodoItem({
@@ -61,7 +62,8 @@ export function TodoItem({
   onDemoToggle,
   isAuthenticated = false,
   onRequireSignInForMenu,
-  setPomodoroTriggered, // ✅ NEW
+  setPomodoroTriggered,
+  onSendToAgent,
 }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
@@ -459,11 +461,33 @@ export function TodoItem({
                     }
                     setShowMenu(false);
 
-                    setPomodoroTriggered({ todoId: id, todoTitle: content }); // 🆕 New: tell App to open modal
+                    setPomodoroTriggered({ todoId: id, todoTitle: content });
                   }}
                 >
                   Start Pomodoro
                 </div>
+                {/* Send to Agent */}
+                {onSendToAgent && (
+                  <div
+                    className="menu-item"
+                    onClick={() => {
+                      triggerHaptic("light");
+                      if (!isAuthenticated && onRequireSignInForMenu) {
+                        setShowMenu(false);
+                        onRequireSignInForMenu();
+                        return;
+                      }
+                      setShowMenu(false);
+                      onSendToAgent({
+                        todoId: id,
+                        content,
+                        folderId,
+                      });
+                    }}
+                  >
+                    Send to Agent
+                  </div>
+                )}
                 {/* Pin */}
                 {!completed && !isBacklogView && (
                   <div className="menu-item" onClick={handleTogglePin}>
