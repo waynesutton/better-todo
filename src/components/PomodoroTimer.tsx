@@ -69,7 +69,19 @@ export function PomodoroTimer({
   const updatePomodoroPreset = useMutation(api.pomodoro.updatePomodoroPreset);
   const fetchBackgroundImage = useAction(api.unsplash.fetchBackgroundImage);
 
-  // Initialize Web Worker
+  // Refs to store latest values for use in Worker callback (avoids recreating Worker)
+  const sessionRef = useRef(session);
+  const advancePomodoroPhaseRef = useRef(advancePomodoroPhase);
+  const completePomodoroRef = useRef(completePomodoro);
+
+  // Keep refs updated with latest values
+  useEffect(() => {
+    sessionRef.current = session;
+    advancePomodoroPhaseRef.current = advancePomodoroPhase;
+    completePomodoroRef.current = completePomodoro;
+  }, [session, advancePomodoroPhase, completePomodoro]);
+
+  // Initialize Web Worker - only once on mount
   useEffect(() => {
     workerRef.current = new Worker("/timer-worker.js");
 
@@ -97,30 +109,25 @@ export function PomodoroTimer({
         }
         setIsFullScreen(true);
 
-        //wayne code
-        // // Only call completePomodoro once per session
-        // if (session && !hasCalledComplete.current) {
-        //   hasCalledComplete.current = true;
-        //   completePomodoro({ sessionId: session._id });
-        // }
-
         // Goal 2
         // Handle phase transition when timer segment completes
+        // Use refs to get latest values without recreating Worker
         (async () => {
-          if (!session || hasCalledComplete.current) return;
+          const currentSession = sessionRef.current;
+          if (!currentSession || hasCalledComplete.current) return;
 
-          if (session.phase === "focus") {
-            await advancePomodoroPhase({ sessionId: session._id });
+          if (currentSession.phase === "focus") {
+            await advancePomodoroPhaseRef.current({ sessionId: currentSession._id });
             return;
           }
 
-          const nextCycle = (session.cycleIndex ?? 0) + 1;
-          const totalCycles = session.totalCycles ?? 1;
+          const nextCycle = (currentSession.cycleIndex ?? 0) + 1;
+          const totalCycles = currentSession.totalCycles ?? 1;
           if (nextCycle >= totalCycles) {
             hasCalledComplete.current = true;
-            await completePomodoro({ sessionId: session._id });
+            await completePomodoroRef.current({ sessionId: currentSession._id });
           } else {
-            await advancePomodoroPhase({ sessionId: session._id });
+            await advancePomodoroPhaseRef.current({ sessionId: currentSession._id });
           }
         })().catch(console.error);
       }
@@ -129,9 +136,16 @@ export function PomodoroTimer({
     return () => {
       if (workerRef.current) {
         workerRef.current.terminate();
+        workerRef.current = null;
       }
+      // Clean up all audio elements on unmount
+      activeAudioRef.current.forEach((audio) => {
+        audio.pause();
+        audio.src = "";
+      });
+      activeAudioRef.current = [];
     };
-  }, [session, completePomodoro]);
+  }, []); // Empty deps - Worker created only once
 
   // Sync with Convex session
   useEffect(() => {
@@ -194,62 +208,40 @@ export function PomodoroTimer({
     "/done.mp3",
   ];
 
-  // Play start sound
-  const playStartSound = () => {
+  // Helper to play audio with proper cleanup on success, failure, or error
+  const playAudio = (src: string) => {
     if (isMuted) return;
-    const audio = new Audio("/timer-start.mp3");
+    const audio = new Audio(src);
     audio.volume = 0.7;
     activeAudioRef.current.push(audio);
-    audio.play().catch(console.error);
-    audio.onended = () => {
-      activeAudioRef.current = activeAudioRef.current.filter(
-        (a) => a !== audio
-      );
+
+    const removeFromRef = () => {
+      activeAudioRef.current = activeAudioRef.current.filter((a) => a !== audio);
+      audio.src = ""; // Release the audio resource
     };
+
+    audio.onended = removeFromRef;
+    audio.onerror = removeFromRef;
+
+    audio.play().catch((err) => {
+      console.error("Audio play failed:", err);
+      removeFromRef(); // Clean up on play failure (e.g., autoplay blocked)
+    });
   };
+
+  // Play start sound
+  const playStartSound = () => playAudio("/timer-start.mp3");
 
   // Play 5-second countdown sound
-  const playCountdownSound = () => {
-    if (isMuted) return;
-    const audio = new Audio("/5-second-coutdown.mp3");
-    audio.volume = 0.7;
-    activeAudioRef.current.push(audio);
-    audio.play().catch(console.error);
-    audio.onended = () => {
-      activeAudioRef.current = activeAudioRef.current.filter(
-        (a) => a !== audio
-      );
-    };
-  };
+  const playCountdownSound = () => playAudio("/5-second-coutdown.mp3");
 
   // Play pause sound
-  const playPauseSound = () => {
-    if (isMuted) return;
-    const audio = new Audio("/pause.mp3");
-    audio.volume = 0.7;
-    activeAudioRef.current.push(audio);
-    audio.play().catch(console.error);
-    audio.onended = () => {
-      activeAudioRef.current = activeAudioRef.current.filter(
-        (a) => a !== audio
-      );
-    };
-  };
+  const playPauseSound = () => playAudio("/pause.mp3");
 
   // Play completion sound (rotates through list)
   const playCompletionSound = () => {
-    if (isMuted) return;
     const soundUrl = endSounds[lastEndSoundIndex.current];
-    const audio = new Audio(soundUrl);
-    audio.volume = 0.7;
-    activeAudioRef.current.push(audio);
-    audio.play().catch(console.error);
-    audio.onended = () => {
-      activeAudioRef.current = activeAudioRef.current.filter(
-        (a) => a !== audio
-      );
-    };
-
+    playAudio(soundUrl);
     // Move to next sound in rotation
     lastEndSoundIndex.current =
       (lastEndSoundIndex.current + 1) % endSounds.length;

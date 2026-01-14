@@ -324,18 +324,9 @@ export const updateFullPageNote = mutation({
     }
     const userId = identity.subject;
 
-    // Verify ownership using indexed query
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.id)
-        )
-      )
-      .unique();
-
-    if (!note) {
+    // Use direct get (O(1)) instead of filter query for ownership verification
+    const note = await ctx.db.get(args.id);
+    if (!note || note.userId !== userId) {
       throw new Error("Note not found or unauthorized");
     }
 
@@ -366,18 +357,9 @@ export const deleteFullPageNote = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify ownership without reading the document first
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.id)
-        )
-      )
-      .unique();
-
-    if (!note) {
+    // Use direct get (O(1)) instead of filter query for ownership verification
+    const note = await ctx.db.get(args.id);
+    if (!note || note.userId !== userId) {
       // Note doesn't exist or doesn't belong to user (idempotent)
       return null;
     }
@@ -433,9 +415,10 @@ export const getFullPageNoteCounts = query({
     }
     const userId = identity.subject;
 
+    // Use by_user index instead of filter scan for better performance
     const notes = await ctx.db
       .query("fullPageNotes")
-      .filter((q) => q.eq(q.field("userId"), userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     // Group notes by date and count them (only count notes with dates, exclude archived)
@@ -461,9 +444,10 @@ export const getFullPageNoteCountsByFolder = query({
     }
     const userId = identity.subject;
 
+    // Use by_user index instead of filter scan for better performance
     const notes = await ctx.db
       .query("fullPageNotes")
-      .filter((q) => q.eq(q.field("userId"), userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     // Group notes by folder and count them (only count notes with folders, exclude archived)
@@ -494,18 +478,9 @@ export const moveFullPageNoteToFolder = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify note ownership
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.noteId)
-        )
-      )
-      .unique();
-
-    if (!note) {
+    // Use direct get (O(1)) instead of filter query for ownership verification
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
       throw new Error("Note not found or unauthorized");
     }
 
@@ -542,18 +517,9 @@ export const moveFullPageNoteToDate = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify note ownership
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.noteId)
-        )
-      )
-      .unique();
-
-    if (!note) {
+    // Use direct get (O(1)) instead of filter query for ownership verification
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
       throw new Error("Note not found or unauthorized");
     }
 
@@ -638,18 +604,9 @@ export const addImageToNote = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify note ownership
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.noteId)
-        )
-      )
-      .unique();
-
-    if (!note) {
+    // Use direct get (O(1)) instead of filter query for ownership verification
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
       throw new Error("Note not found or unauthorized");
     }
 
@@ -679,18 +636,9 @@ export const removeImageFromNote = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify note ownership
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.noteId)
-        )
-      )
-      .unique();
-
-    if (!note) {
+    // Use direct get (O(1)) instead of filter query for ownership verification
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
       // Idempotent - note doesn't exist or doesn't belong to user
       return null;
     }
@@ -956,22 +904,13 @@ export const generateShareLink = mutation({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
-    
-    // Verify note ownership
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.noteId)
-        )
-      )
-      .unique();
-    
-    if (!note) {
+
+    // Use direct get (O(1)) instead of filter query for ownership verification
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
       throw new Error("Note not found or unauthorized");
     }
-    
+
     let slug: string;
     
     if (args.customSlug) {
@@ -1049,34 +988,25 @@ export const revokeShareLink = mutation({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
-    
-    // Verify note ownership
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.noteId)
-        )
-      )
-      .unique();
-    
-    if (!note) {
+
+    // Use direct get (O(1)) instead of filter query for ownership verification
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
       // Note doesn't exist or doesn't belong to user (idempotent)
       return null;
     }
-    
+
     // Only update if note is currently shared (idempotent)
     if (!note.isShared) {
       return null;
     }
-    
+
     // Patch directly to remove share settings
     await ctx.db.patch(args.noteId, {
       shareSlug: undefined,
       isShared: false,
     });
-    
+
     return null;
   },
 });
@@ -1094,32 +1024,23 @@ export const updateHideHeader = mutation({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
-    
-    // Verify note ownership
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.noteId)
-        )
-      )
-      .unique();
-    
-    if (!note) {
+
+    // Use direct get (O(1)) instead of filter query for ownership verification
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
       throw new Error("Note not found or unauthorized");
     }
-    
+
     // Early return if already set to desired value (idempotent)
     if (note.hideHeaderOnShare === args.hideHeaderOnShare) {
       return null;
     }
-    
+
     // Patch directly without re-reading
     await ctx.db.patch(args.noteId, {
       hideHeaderOnShare: args.hideHeaderOnShare,
     });
-    
+
     return null;
   },
 });
@@ -1140,22 +1061,13 @@ export const updateShareSlug = mutation({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
-    
-    // Verify note ownership
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.noteId)
-        )
-      )
-      .unique();
-    
-    if (!note) {
+
+    // Use direct get (O(1)) instead of filter query for ownership verification
+    const note = await ctx.db.get(args.noteId);
+    if (!note || note.userId !== userId) {
       throw new Error("Note not found or unauthorized");
     }
-    
+
     // Validate new slug format
     if (!validateSlugFormat(args.newSlug)) {
       throw new Error("Invalid slug format. Use 3-50 characters (letters, numbers, hyphens, underscores)");

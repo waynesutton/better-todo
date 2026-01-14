@@ -190,6 +190,7 @@ function App() {
   const pullStartYRef = useRef(0);
   const pullDistanceRef = useRef(0);
   const isRefreshingRef = useRef(false);
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Demo mode for logged out users (max 3 todos, no persistence)
   const [demoTodos, setDemoTodos] = useState<any[]>([]);
@@ -1126,10 +1127,16 @@ function App() {
       if (pullDistanceRef.current > 80 && !isRefreshingRef.current) {
         setIsRefreshing(true);
 
+        // Clear any existing timeout before setting a new one
+        if (refreshTimeoutRef.current) {
+          clearTimeout(refreshTimeoutRef.current);
+        }
+
         // Show refreshing state for 800ms (visual feedback even though data is realtime)
-        setTimeout(() => {
+        refreshTimeoutRef.current = setTimeout(() => {
           setIsRefreshing(false);
           setPullDistance(0);
+          refreshTimeoutRef.current = null;
         }, 800);
       } else {
         setPullDistance(0);
@@ -1148,6 +1155,11 @@ function App() {
       mainContent.removeEventListener("touchstart", handleTouchStart);
       mainContent.removeEventListener("touchmove", handleTouchMove);
       mainContent.removeEventListener("touchend", handleTouchEnd);
+      // Clean up any pending timeout on unmount
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+        refreshTimeoutRef.current = null;
+      }
     };
   }, []); // Empty deps - handlers read from refs
 
