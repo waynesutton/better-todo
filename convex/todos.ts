@@ -28,6 +28,7 @@ export const getTodosByDate = query({
       collapsed: v.boolean(),
       pinned: v.optional(v.boolean()),
       backlog: v.optional(v.boolean()),
+      completedAt: v.optional(v.number()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -76,6 +77,7 @@ export const getPinnedTodos = query({
       collapsed: v.boolean(),
       pinned: v.optional(v.boolean()),
       backlog: v.optional(v.boolean()),
+      completedAt: v.optional(v.number()),
     }),
   ),
   handler: async (ctx) => {
@@ -136,6 +138,7 @@ export const getBacklogTodos = query({
       collapsed: v.boolean(),
       pinned: v.optional(v.boolean()),
       backlog: v.optional(v.boolean()),
+      completedAt: v.optional(v.number()),
     }),
   ),
   handler: async (ctx) => {
@@ -198,6 +201,7 @@ export const getTodosByFolder = query({
       collapsed: v.boolean(),
       pinned: v.optional(v.boolean()),
       backlog: v.optional(v.boolean()),
+      completedAt: v.optional(v.number()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -401,14 +405,16 @@ export const updateTodo = mutation({
     if (args.pinned !== undefined) updates.pinned = args.pinned;
     if (args.backlog !== undefined) updates.backlog = args.backlog;
 
-    // If completing a todo, automatically archive it
-    // If uncompleting a todo, automatically unarchive it
+    // If completing a todo, automatically archive it and record completedAt
+    // If uncompleting a todo, automatically unarchive it and clear completedAt
     if (args.completed !== undefined) {
       updates.completed = args.completed;
       if (args.completed) {
         updates.archived = true;
+        updates.completedAt = Date.now();
       } else {
         updates.archived = false;
+        updates.completedAt = undefined;
       }
     }
 

@@ -2,7 +2,7 @@
 
 import { action } from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
 
 // Fetch a random nature image from Unsplash and update session
 // To change background image categories, modify the queries array below
@@ -40,7 +40,7 @@ export const fetchBackgroundImage = action({
       const imageUrl = data.urls?.regular;
 
       if (imageUrl) {
-        await ctx.runMutation(api.pomodoro.updateBackgroundImage, {
+        await ctx.runMutation(internal.pomodoro.updateBackgroundImage, {
           sessionId: args.sessionId,
           imageUrl,
         });

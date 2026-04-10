@@ -16,6 +16,7 @@ import type * as aiChatActions from "../aiChatActions.js";
 import type * as aiChats from "../aiChats.js";
 import type * as archivedDates from "../archivedDates.js";
 import type * as backlogLabel from "../backlogLabel.js";
+import type * as crons from "../crons.js";
 import type * as dateLabels from "../dateLabels.js";
 import type * as dates from "../dates.js";
 import type * as folders from "../folders.js";
@@ -31,6 +32,8 @@ import type * as todos from "../todos.js";
 import type * as unsplash from "../unsplash.js";
 import type * as userApiKeys from "../userApiKeys.js";
 import type * as users from "../users.js";
+import type * as weeklyRecap from "../weeklyRecap.js";
+import type * as weeklyRecapQueries from "../weeklyRecapQueries.js";
 
 import type {
   ApiFromModules,
@@ -55,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   aiChats: typeof aiChats;
   archivedDates: typeof archivedDates;
   backlogLabel: typeof backlogLabel;
+  crons: typeof crons;
   dateLabels: typeof dateLabels;
   dates: typeof dates;
   folders: typeof folders;
@@ -70,6 +74,8 @@ declare const fullApi: ApiFromModules<{
   unsplash: typeof unsplash;
   userApiKeys: typeof userApiKeys;
   users: typeof users;
+  weeklyRecap: typeof weeklyRecap;
+  weeklyRecapQueries: typeof weeklyRecapQueries;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

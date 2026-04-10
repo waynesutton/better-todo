@@ -7,7 +7,7 @@ import {
   ImageIcon,
   EyeOpenIcon,
 } from "@radix-ui/react-icons";
-import { X, Copy, Check, Link2, ExternalLinkIcon, Bot, Download, Play, Trash2 } from "lucide-react";
+import { X, Copy, Check, Link2, ExternalLinkIcon, Bot, Download, Play, Trash2, CalendarCheck } from "lucide-react";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -39,6 +39,7 @@ interface FullPageNoteTabsProps {
   onSendToAgent?: (data: { noteId: Id<"fullPageNotes">; content: string; title?: string; folderId?: Id<"folders">; date?: string }) => void;
   onRunNote?: (data: { noteId: Id<"fullPageNotes">; content: string; title?: string; folderId?: Id<"folders">; date?: string }) => void;
   onDeleteNote?: (noteId: Id<"fullPageNotes">) => void;
+  onGenerateWeeklyRecap?: (noteId: Id<"fullPageNotes">) => void;
 }
 
 export function FullPageNoteTabs({
@@ -60,6 +61,7 @@ export function FullPageNoteTabs({
   onSendToAgent,
   onRunNote,
   onDeleteNote,
+  onGenerateWeeklyRecap,
 }: FullPageNoteTabsProps) {
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const selectedTabRef = useRef<HTMLDivElement>(null);
@@ -288,6 +290,22 @@ export function FullPageNoteTabs({
               <Play size={16} />
             </button>
           )}
+
+          {/* Weekly Recap button - only on empty notes */}
+          {isAuthenticated && onGenerateWeeklyRecap && selectedNoteId && (() => {
+            const selectedNote = notes.find((n) => n._id === selectedNoteId);
+            const isEmpty = !selectedNote?.content || selectedNote.content.trim() === "";
+            if (!isEmpty) return null;
+            return (
+              <button
+                className="fullpage-note-tab-action-button"
+                onClick={() => onGenerateWeeklyRecap(selectedNoteId)}
+                title="Generate weekly recap of completed todos"
+              >
+                <CalendarCheck size={16} />
+              </button>
+            );
+          })()}
 
           {isAuthenticated && onShareNote && (
             <>

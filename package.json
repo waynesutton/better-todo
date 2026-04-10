@@ -9,7 +9,8 @@
     "dev:backend": "convex dev",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "convex-doctor": "convex-doctor"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.53",
@@ -48,6 +49,7 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "convex-doctor": "^0.3.3",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",

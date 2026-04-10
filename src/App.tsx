@@ -54,6 +54,19 @@ function App() {
     isAuthenticated ? undefined : "skip",
   );
 
+  // Sync browser timezone to Convex on first authenticated load
+  const setTimezoneIfMissing = useMutation(api.users.setTimezoneIfMissing);
+  const timezoneSyncedRef = useRef(false);
+  useEffect(() => {
+    if (isAuthenticated && userPreferences !== undefined && !timezoneSyncedRef.current) {
+      timezoneSyncedRef.current = true;
+      if (!userPreferences?.timezone) {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setTimezoneIfMissing({ timezone: tz });
+      }
+    }
+  }, [isAuthenticated, userPreferences, setTimezoneIfMissing]);
+
   // Streaks header visibility state (persisted in localStorage)
   const [showStreaksHeader, setShowStreaksHeader] = useState<boolean>(() => {
     const saved = localStorage.getItem("showStreaksHeader");
@@ -280,6 +293,7 @@ function App() {
   // Full-page notes mutations
   const createFullPageNote = useMutation(api.fullPageNotes.createFullPageNote);
   const deleteFullPageNote = useMutation(api.fullPageNotes.deleteFullPageNote);
+  const generateWeeklyRecap = useMutation(api.fullPageNotes.generateWeeklyRecapIntoNote);
 
   // Agent task mutation for "Run Note" functionality
   const createAgentTask = useMutation(api.agentTasks.createAgentTask);
@@ -1884,6 +1898,9 @@ function App() {
                         setIsFullscreenNotes(false);
                       }
                     }
+                  }}
+                  onGenerateWeeklyRecap={async (noteId) => {
+                    await generateWeeklyRecap({ noteId });
                   }}
                 />
                 {/* Full-page note view */}

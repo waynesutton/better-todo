@@ -4,6 +4,21 @@ import { internal } from "./_generated/api";
 
 const http = httpRouter();
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+// CORS preflight for /meta/share
+http.route({
+  path: "/meta/share",
+  method: "OPTIONS",
+  handler: httpAction(async () => {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }),
+});
+
 // Meta endpoint for shared notes (for Open Graph crawlers)
 http.route({
   path: "/meta/share",

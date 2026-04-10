@@ -1,6 +1,6 @@
-import { action, internalQuery, query } from "./_generated/server";
+import { action, internalAction, internalQuery, query } from "./_generated/server";
 import { v } from "convex/values";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 
 /**
  * Internal query to get database statistics.
@@ -115,7 +115,7 @@ export const getStats = action({
   handler: async (ctx) => {
     // Get total users from Clerk via backend action
     const totalUsers: number = await ctx.runAction(
-      api.stats.getUserCountFromClerk,
+      internal.stats.getUserCountFromClerk,
     );
 
     // Get database statistics via internal query
@@ -144,7 +144,7 @@ export const getStats = action({
  * Get the total number of users from Clerk.
  * This action calls Clerk's backend API to get an accurate count.
  */
-export const getUserCountFromClerk = action({
+export const getUserCountFromClerk = internalAction({
   args: {},
   returns: v.number(),
   handler: async (_ctx) => {

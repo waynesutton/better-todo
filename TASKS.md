@@ -83,6 +83,33 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.032 - 2026-04-10)
+
+- [x] **Weekly Recap** - Automated and manual weekly productivity summaries
+  - Added `completedAt` field and `by_user_and_completedAt` index to todos table
+  - Added `timezone` field to userPreferences table
+  - Created `weeklyRecapRuns` table for deduplication with `by_user_and_weekKey` index
+  - Updated `updateTodo` to set/clear `completedAt` on completion toggle
+  - Created `convex/weeklyRecap.ts` with Node.js internal actions (tick, generateRecapForUser, generateRecapIntoNote)
+  - Created `convex/weeklyRecapQueries.ts` with internal queries and mutations
+  - Created `convex/crons.ts` with hourly interval for weekly recap tick
+  - Added `generateWeeklyRecapIntoNote` public mutation to `convex/fullPageNotes.ts`
+  - Added `setTimezoneIfMissing` mutation to `convex/users.ts`
+  - Added CalendarCheck button to `FullPageNoteTabs.tsx` for manual trigger on empty notes
+  - Added timezone sync useEffect to `App.tsx`
+  - AI summarization with Claude/OpenAI and plain-text fallback
+
+- [x] **convex-doctor integration** - Static analysis for Convex backend health
+  - Installed convex-doctor as devDependency with npm script
+  - Created `convex-doctor.toml` with justified rule suppressions and CI threshold
+  - Improved score from 43 to 100
+  - Fixed `security/internal-api-misuse` in stats.ts and unsplash.ts/pomodoro.ts
+  - Fixed `correctness/node-query-mutation` by splitting weeklyRecap into two files
+  - Fixed `perf/loop-run-mutation` by consolidating queries in weeklyRecapQueries
+  - Added CORS OPTIONS handler to http.ts for `/meta/share`
+  - Created `convex.json` for missing config warning
+  - Created `.cursor/skills/convex-doctor/SKILL.md` and `.cursor/rules/convex-doctor.mdc`
+
 ## Completed Tasks (v.031 - 2026-01-13)
 
 - [x] **Executable Notes (Run Note)** - Turn notes into executable programs with AI tool use

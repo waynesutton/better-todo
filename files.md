@@ -4,14 +4,16 @@ This document describes the structure and purpose of each file in the Better Tod
 
 ## Root Configuration
 
-- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, @dnd-kit, Radix UI, react-markdown, remark-gfm, remark-breaks)
+- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, @dnd-kit, Radix UI, react-markdown, remark-gfm, remark-breaks, convex-doctor)
 - `tsconfig.json` - TypeScript configuration for React app
 - `tsconfig.node.json` - TypeScript configuration for Vite
 - `vite.config.ts` - Vite bundler configuration with React plugin
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (v.031 - Executable Notes / Run Note with AI tool use)
+- `changelog.md` - Version history with all features (v.032 - Weekly Recap and convex-doctor)
+- `convex-doctor.toml` - convex-doctor configuration with rule suppressions and CI threshold
+- `convex.json` - Convex deployment configuration
 - `files.md` - This file, project structure documentation
 - `TASKS.md` - Project tasks and development tracking
 
@@ -37,14 +39,19 @@ This document describes the structure and purpose of each file in the Better Tod
 - `write.mdc` - Writing style guide with AI detection avoidance patterns. Covers tweets, LinkedIn, blogs, READMEs, commits. Based on Wikipedia's documented AI tells and academic research.
 - `convex2.mdc` - Additional Convex guidelines
 - `rulesforconvex.mdc` - Convex-specific rules
+- `convex-doctor.mdc` - Cursor rule to prompt convex-doctor checks after backend changes
+
+## Cursor Skills (`.cursor/skills/`)
+
+- `convex-doctor/SKILL.md` - Skill for running and interpreting convex-doctor output, category weights, and remediation order
 
 ## Convex Backend (`convex/`)
 
 ### Database Schema
 
 - `schema.ts` - Database schema with tables:
-  - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, optional parentId, optional folderId, and pinned status
-    - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`, `by_user_and_folder`
+  - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, optional parentId, optional folderId, pinned status, and optional completedAt timestamp
+    - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`, `by_user_and_folder`, `by_user_and_completedAt`
     - Search index: `search_content` on content field for full-text search
     - Supports both date-based todos and dateless todos in project folders
   - **notes**: Stores multiple notes per date or folder with optional title, content, order, and collapsed state
@@ -66,7 +73,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user_and_month_group`, `by_user_and_date`
   - **pomodoroSessions**: Stores pomodoro timer sessions with work/break intervals, completed sessions, and user preferences
     - Index: `by_user`
-  - **userPreferences**: Stores per-user settings including todoFontSize
+  - **userPreferences**: Stores per-user settings including todoFontSize and IANA timezone
     - Index: `by_user`
   - **streaks**: Tracks user streak progress with currentStreak, longestStreak, lastCompletedDate, weeklyProgress, and totalTodosCompleted
     - Index: `by_user`
@@ -85,6 +92,9 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user`
     - Keys stored securely with Convex encryption at rest
     - Full keys only accessible via internal queries, client sees masked versions
+  - **weeklyRecapRuns**: Tracks generated weekly recap notes for deduplication
+    - Fields: userId, weekKey (ISO date of closing Friday), noteId, createdAt
+    - Index: `by_user_and_weekKey`
 
 ### Functions
 
@@ -144,6 +154,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - `revokeShareLink` - Revoke share link to make note private
   - `updateHideHeader` - Update hide header setting for shared note
   - `updateShareSlug` - Update custom slug for shared note
+  - `generateWeeklyRecapIntoNote` - Public mutation to trigger manual weekly recap into an empty note
 
 - `search.ts` - Full-text search functionality using Convex search indexes:
   - `searchAll` - Search across todos (by content) and notes (by title and content) and full-page notes
@@ -291,10 +302,28 @@ This document describes the structure and purpose of each file in the Better Tod
   - Keys stored securely with Convex encryption at rest
   - Scoped to authenticated user via userId index
 
+- `weeklyRecap.ts` - Weekly recap generation (Node.js actions):
+  - `tick` - Internal action called hourly by cron, checks each user for Friday 2pm in their timezone and enqueues recap generation
+  - `generateRecapForUser` - Internal action to generate a weekly recap note for a specific user
+  - `generateRecapIntoNote` - Internal action for manual recap into an existing empty note
+  - Timezone-aware week boundary calculations (Saturday to Friday 2pm)
+  - AI summarization using Claude or OpenAI with plain-text fallback
+
+- `weeklyRecapQueries.ts` - Internal queries and mutations for weekly recap:
+  - `getCompletedTodosInRange` - Get todos completed within a date range for a user
+  - `getExistingRecap` - Check if a recap already exists for a given week
+  - `getUserTimezone` - Get a user's IANA timezone
+  - `listUsersWithTimezone` - List all users with their timezone (bounded to 500)
+  - `createRecapNote` - Create a new full-page note for a recap
+  - `patchRecapNote` - Update an existing note with recap content
+
+- `crons.ts` - Cron job definitions:
+  - Hourly interval calling `internal.weeklyRecap.tick` for weekly recap processing
+
 - `stats.ts` - Statistics tracking (global and user-specific):
   - `getStats` - Action to get aggregate stats across all users (total users, todos, notes, pomodoro sessions, folders)
   - `getDatabaseStats` - Internal query to get database table counts
-  - `getUserCountFromClerk` - Action to get total user count from Clerk API
+  - `getUserCountFromClerk` - Internal action to get total user count from Clerk API
   - `getUserStats` - Query to get user-specific statistics for authenticated user (excludes total users, uses indexed queries for todos, notes, fullPageNotes, pomodoroSessions, folders, returns null if not authenticated)
 
 ### Authentication (Clerk Integration)
@@ -307,8 +336,9 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getUserId` - Helper function to get current user's ID from authentication context
   - `storeUser` - Store/update Clerk user data in Convex database
   - `getCurrentUser` - Get authenticated user information
-  - `getUserPreferences` - Get user's preferences including font size
+  - `getUserPreferences` - Get user's preferences including font size and timezone
   - `setTodoFontSize` - Update todo text font size for authenticated user
+  - `setTimezoneIfMissing` - Store user's IANA timezone if not already set
 - `http.ts` - HTTP routes for authentication callbacks (Clerk ready)
 
 ## React Frontend (`src/`)
@@ -662,6 +692,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Share button** for authenticated users to generate shareable links
   - Visual indicator if note is already shared
   - Open shared note in new tab button
+  - **Weekly Recap button** (CalendarCheck icon) visible on empty notes to trigger manual recap generation
 
 - `ShareLinkModal.tsx` - Shareable link management modal:
   - Custom slug input with validation and availability checking
@@ -819,9 +850,24 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.001 to v.030)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.031 (January 13, 2026)
+## Current Version: v.032 (April 10, 2026)
 
-### Latest Features (v.031) - Executable Notes (Run Note)
+### Latest Features (v.032) - Weekly Recap and convex-doctor
+
+- **Weekly Recap** - Automated Friday summaries of weekly completed todos
+  - Hourly cron checks user timezone for Friday 2pm, generates AI-summarized recap as a full-page note
+  - Manual trigger on empty full-page notes via CalendarCheck button
+  - Tracks `completedAt` on todos, dedupes with `weeklyRecapRuns` table
+  - Per-user IANA timezone synced from browser
+  - New files: `convex/weeklyRecap.ts`, `convex/weeklyRecapQueries.ts`, `convex/crons.ts`
+
+- **convex-doctor integration** - Static analysis tooling for backend health
+  - Score improved from 43 to 100
+  - Cursor skill and rule created for ongoing use
+  - Fixed internal API misuse, missing CORS, missing config
+  - `convex-doctor.toml` with justified suppressions
+
+### Previous Features (v.031) - Executable Notes (Run Note)
 
 - **Executable Notes (Run Note)** - Turn notes into executable programs with AI tool use
   - New "Run" task type interprets natural language and executes via tools
@@ -837,7 +883,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - moveTodosToDate, searchTodos, searchNotes for organization
   - getTodosForDate, archiveDate for queries and archiving
 
-### Previous Features (v.030) - Persistent Navigation Icons
+### Previous Features (v.030) - Persistent Navigation Icons (January 12, 2026)
 
 - **Persistent Navigation Icons** - All view icons now always visible in header
   - Todos (checkbox), Notes (file), Chat (message), and Agent (sparkles) icons always visible

@@ -112,6 +112,7 @@ export const getUserPreferences = query({
   returns: v.union(
     v.object({
       todoFontSize: v.number(),
+      timezone: v.optional(v.string()),
     }),
     v.null(),
   ),
@@ -132,6 +133,7 @@ export const getUserPreferences = query({
 
     return {
       todoFontSize: prefs.todoFontSize,
+      timezone: prefs.timezone,
     };
   },
 });
@@ -161,6 +163,39 @@ export const setTodoFontSize = mutation({
       await ctx.db.insert("userPreferences", {
         userId,
         todoFontSize: args.fontSize,
+      });
+    }
+
+    return null;
+  },
+});
+
+// Set user timezone if not already set (called once from client on auth)
+export const setTimezoneIfMissing = mutation({
+  args: {
+    timezone: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const existing = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (existing) {
+      if (!existing.timezone) {
+        await ctx.db.patch(existing._id, { timezone: args.timezone });
+      }
+    } else {
+      await ctx.db.insert("userPreferences", {
+        userId,
+        todoFontSize: 12,
+        timezone: args.timezone,
       });
     }
 

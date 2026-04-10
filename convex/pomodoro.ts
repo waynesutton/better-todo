@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 // Get active pomodoro session for current user
@@ -243,8 +243,8 @@ export const completePomodoro = mutation({
   },
 });
 
-// Update session with background image URL
-export const updateBackgroundImage = mutation({
+// Update session with background image URL (called from unsplash action)
+export const updateBackgroundImage = internalMutation({
   args: { sessionId: v.id("pomodoroSessions"), imageUrl: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {

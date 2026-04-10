@@ -29,6 +29,7 @@ export default defineSchema({
     collapsed: v.boolean(), // For header sections
     pinned: v.optional(v.boolean()), // For pinned todos
     backlog: v.optional(v.boolean()), // For backlog todos
+    completedAt: v.optional(v.number()), // Timestamp when completed (for weekly recap)
   })
     .index("by_user_and_date", ["userId", "date"])
     .index("by_user", ["userId"])
@@ -36,6 +37,7 @@ export default defineSchema({
     .index("by_user_and_backlog", ["userId", "backlog"])
     .index("by_user_and_folder", ["userId", "folderId"])
     .index("by_user_completed_archived", ["userId", "completed", "archived"])
+    .index("by_user_and_completedAt", ["userId", "completedAt"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],
@@ -149,6 +151,7 @@ export default defineSchema({
   userPreferences: defineTable({
     userId: v.string(),
     todoFontSize: v.number(), // Font size in pixels for .todo-text (default: 12)
+    timezone: v.optional(v.string()), // IANA timezone (e.g. "America/Los_Angeles") for weekly recap scheduling
   }).index("by_user", ["userId"]),
 
   // User API keys - stores per-user API keys for AI features
@@ -316,4 +319,12 @@ export default defineSchema({
     .index("by_user_and_status", ["userId", "status"])
     .index("by_user_and_date", ["userId", "date"])
     .index("by_user_and_folder", ["userId", "folderId"]),
+
+  // Weekly recap runs - dedupe table to prevent duplicate recap notes per week
+  weeklyRecapRuns: defineTable({
+    userId: v.string(),
+    weekKey: v.string(), // ISO date of closing Friday in user TZ (e.g. "2026-04-10")
+    noteId: v.id("fullPageNotes"),
+    createdAt: v.number(),
+  }).index("by_user_and_weekKey", ["userId", "weekKey"]),
 });

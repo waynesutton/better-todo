@@ -4,6 +4,45 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.032] - 2026-04-10
+
+### Added
+
+- **Weekly Recap** - Automated and manual weekly productivity summaries
+  - Hourly cron job checks each user's timezone for Friday 2pm
+  - AI-generated summary of completed todos (Saturday through Friday 2pm)
+  - Creates a dated full-page note with bullet-point accomplishments and original todo text
+  - Manual trigger via CalendarCheck button on empty full-page notes
+  - Supports both Claude and OpenAI for AI summaries, with plain-text fallback
+  - Per-user IANA timezone stored in userPreferences (synced from browser on first load)
+  - `completedAt` timestamp on todos for accurate weekly tracking
+  - `weeklyRecapRuns` dedupe table prevents duplicate recap notes
+  - New files: `convex/weeklyRecap.ts`, `convex/weeklyRecapQueries.ts`, `convex/crons.ts`
+
+- **convex-doctor integration** - Static analysis for Convex backend health
+  - Installed `convex-doctor` as devDependency with npm script
+  - Created `convex-doctor.toml` configuration with justified rule suppressions
+  - Score improved from 43 to 100 out of 100
+  - Cursor skill (`.cursor/skills/convex-doctor/SKILL.md`) and rule (`.cursor/rules/convex-doctor.mdc`) created
+
+### Changed
+
+- `convex/schema.ts` - Added `completedAt` field and `by_user_and_completedAt` index to todos, `timezone` to userPreferences, new `weeklyRecapRuns` table
+- `convex/todos.ts` - `updateTodo` now sets/clears `completedAt` on completion toggle
+- `convex/users.ts` - Added `setTimezoneIfMissing` mutation, `timezone` in `getUserPreferences` return
+- `convex/stats.ts` - Changed `getUserCountFromClerk` from public `action` to `internalAction`
+- `convex/pomodoro.ts` - Changed `updateBackgroundImage` from public `mutation` to `internalMutation`
+- `convex/unsplash.ts` - Uses `internal.pomodoro.updateBackgroundImage` instead of `api.*`
+- `convex/http.ts` - Added CORS OPTIONS handler for `/meta/share`
+- `convex/fullPageNotes.ts` - Added `generateWeeklyRecapIntoNote` public mutation
+- `src/App.tsx` - Added timezone sync on auth, weekly recap mutation wiring
+- `src/components/FullPageNoteTabs.tsx` - Added CalendarCheck button for empty notes
+
+### Fixed
+
+- Security: `ctx.runAction` calls now use `internal.*` references instead of `api.*` for server-to-server calls
+- Configuration: Added `convex.json` and CORS preflight handler
+
 ## [v.031] - 2026-01-13
 
 ### Added

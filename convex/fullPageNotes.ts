@@ -1,6 +1,7 @@
 import { query, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 // Get full-page notes by their IDs (for tabs)
 export const getFullPageNotesByIds = query({
@@ -1107,6 +1108,46 @@ export const updateShareSlug = mutation({
     const shareUrl = `${baseUrl}/share/${args.newSlug}`;
     
     return { shareUrl, slug: args.newSlug };
+  },
+});
+
+// Trigger weekly recap generation into an empty full-page note
+export const generateWeeklyRecapIntoNote = mutation({
+  args: {
+    noteId: v.id("fullPageNotes"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+
+    // Verify ownership via indexed query
+    const note = await ctx.db
+      .query("fullPageNotes")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.noteId))
+      .unique();
+
+    if (!note) {
+      throw new Error("Note not found or unauthorized");
+    }
+
+    // Only allow on empty notes
+    if (note.content.trim() !== "") {
+      throw new Error("Weekly recap can only be generated into an empty note");
+    }
+
+    // Schedule the internal action that fetches todos and calls AI
+    await ctx.scheduler.runAfter(0, internal.weeklyRecap.generateRecapIntoNote, {
+      userId,
+      noteId: args.noteId,
+      nowMs: Date.now(),
+    });
+
+    return null;
   },
 });
 
