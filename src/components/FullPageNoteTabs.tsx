@@ -7,7 +7,7 @@ import {
   ImageIcon,
   EyeOpenIcon,
 } from "@radix-ui/react-icons";
-import { X, Copy, Check, Link2, ExternalLinkIcon, Bot, Download, Play, Trash2, CalendarCheck } from "lucide-react";
+import { X, Copy, Check, Link2, ExternalLinkIcon, Bot, Download, Play, Trash2, CalendarCheck, Loader2 } from "lucide-react";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -72,6 +72,16 @@ export function FullPageNoteTabs({
   const updateNote = useMutation(api.fullPageNotes.updateFullPageNote);
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isGeneratingRecap, setIsGeneratingRecap] = useState(false);
+
+  // Stop the recap spinner once content arrives via Convex reactivity
+  useEffect(() => {
+    if (!isGeneratingRecap || !selectedNoteId) return;
+    const selectedNote = notes.find((n) => n._id === selectedNoteId);
+    if (selectedNote?.content && selectedNote.content.trim() !== "") {
+      setIsGeneratingRecap(false);
+    }
+  }, [notes, selectedNoteId, isGeneratingRecap]);
 
   // Scroll to selected tab when it changes
   useEffect(() => {
@@ -295,14 +305,28 @@ export function FullPageNoteTabs({
           {isAuthenticated && onGenerateWeeklyRecap && selectedNoteId && (() => {
             const selectedNote = notes.find((n) => n._id === selectedNoteId);
             const isEmpty = !selectedNote?.content || selectedNote.content.trim() === "";
-            if (!isEmpty) return null;
+            if (!isEmpty && !isGeneratingRecap) return null;
             return (
               <button
                 className="fullpage-note-tab-action-button"
-                onClick={() => onGenerateWeeklyRecap(selectedNoteId)}
-                title="Generate weekly recap of completed todos"
+                disabled={isGeneratingRecap}
+                onClick={async () => {
+                  if (isGeneratingRecap) return;
+                  setIsGeneratingRecap(true);
+                  try {
+                    await onGenerateWeeklyRecap(selectedNoteId);
+                  } finally {
+                    // Keep spinner until content arrives via Convex reactivity
+                    setTimeout(() => setIsGeneratingRecap(false), 15000);
+                  }
+                }}
+                title={isGeneratingRecap ? "Generating weekly recap..." : "Generate weekly recap of completed todos"}
               >
-                <CalendarCheck size={16} />
+                {isGeneratingRecap ? (
+                  <Loader2 size={16} className="agent-task-status-icon processing" />
+                ) : (
+                  <CalendarCheck size={16} />
+                )}
               </button>
             );
           })()}

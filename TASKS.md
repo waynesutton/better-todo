@@ -104,6 +104,8 @@ git push -u origin main
   - Added fallback query in `getCompletedTodosInRange` that scans by `_creationTime` when no `completedAt` index results
   - Wrapped `generateRecapIntoNote` in top-level try/catch so the note always gets content
   - Added `backfillCompletedAt` internal mutation for re-runnable data repair
+  - Added Loader2 spinner on CalendarCheck button while recap generates (clears on content arrival or 15s timeout)
+  - Delete and re-click works: manual path has no dedupe, creates fresh recap each time
 
 - [x] **convex-doctor integration** - Static analysis for Convex backend health
   - Installed convex-doctor as devDependency with npm script

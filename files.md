@@ -693,7 +693,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Share button** for authenticated users to generate shareable links
   - Visual indicator if note is already shared
   - Open shared note in new tab button
-  - **Weekly Recap button** (CalendarCheck icon) visible on empty notes to trigger manual recap generation
+  - **Weekly Recap button** (CalendarCheck icon) visible on empty notes to trigger manual recap generation, shows Loader2 spinner while generating
 
 - `ShareLinkModal.tsx` - Shareable link management modal:
   - Custom slug input with validation and availability checking

@@ -31,6 +31,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Recap fallback query** - `getCompletedTodosInRange` now falls back to `_creationTime` scanning when no `completedAt` index hits exist
 - **Recap error resilience** - `generateRecapIntoNote` wrapped in top-level try/catch so the note always gets content (error message if something fails, never blank)
 - **Backfill mutation** - Added `backfillCompletedAt` internal mutation for one-time or re-runnable data repair
+- **Recap loading spinner** - CalendarCheck button shows a spinning Loader2 icon while AI generates the recap, stops when content arrives via Convex reactivity (15s fallback timeout)
+- **Re-generate on delete** - Deleting a recap note and clicking the button on a new empty note creates a fresh recap (manual path has no dedupe check)
 
 ### Changed
 
