@@ -128,7 +128,7 @@ export const tick = internalAction({
   },
 });
 
-// Generate the weekly recap for a single user
+// Generate the weekly recap for a single user (called by cron)
 export const generateRecapForUser = internalAction({
   args: {
     userId: v.string(),
@@ -170,6 +170,7 @@ export const generateRecapForUser = internalAction({
         fridayDate,
       );
     } catch {
+      // Fall back to plain text if AI call fails for any reason
       content = buildPlainRecap(completedTodos, saturdayDate, fridayDate);
     }
 
@@ -185,7 +186,8 @@ export const generateRecapForUser = internalAction({
   },
 });
 
-// Generate recap for a specific note (used by manual trigger)
+// Generate recap for a specific note (used by manual trigger).
+// Wrapped in top-level try/catch so the note always gets content even on unexpected errors.
 export const generateRecapIntoNote = internalAction({
   args: {
     userId: v.string(),
@@ -194,38 +196,46 @@ export const generateRecapIntoNote = internalAction({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const timezone = await ctx.runQuery(
-      internal.weeklyRecapQueries.getUserTimezone,
-      { userId: args.userId },
-    );
+    let title = "Weekly Recap";
+    let content = "";
 
-    const { startMs, endMs, fridayDate, saturdayDate } =
-      getWeekTimestampBounds(args.nowMs, timezone);
+    try {
+      const timezone = await ctx.runQuery(
+        internal.weeklyRecapQueries.getUserTimezone,
+        { userId: args.userId },
+      );
 
-    const completedTodos = await ctx.runQuery(
-      internal.weeklyRecapQueries.getCompletedTodosInRange,
-      { userId: args.userId, startMs, endMs },
-    );
+      const { startMs, endMs, fridayDate, saturdayDate } =
+        getWeekTimestampBounds(args.nowMs, timezone);
 
-    const title = `Weekly Recap: ${formatShortDate(saturdayDate)} - ${formatShortDate(fridayDate)}`;
+      title = `Weekly Recap: ${formatShortDate(saturdayDate)} - ${formatShortDate(fridayDate)}`;
 
-    let content: string;
-    if (completedTodos.length === 0) {
-      content = `# ${title}\n\nNo todos were completed this week (${formatShortDate(saturdayDate)} - ${formatShortDate(fridayDate)}).`;
-    } else {
-      try {
-        content = await generateAISummary(
-          ctx,
-          args.userId,
-          completedTodos,
-          saturdayDate,
-          fridayDate,
-        );
-      } catch {
-        content = buildPlainRecap(completedTodos, saturdayDate, fridayDate);
+      const completedTodos = await ctx.runQuery(
+        internal.weeklyRecapQueries.getCompletedTodosInRange,
+        { userId: args.userId, startMs, endMs },
+      );
+
+      if (completedTodos.length === 0) {
+        content = `# ${title}\n\nNo todos were completed this week (${formatShortDate(saturdayDate)} - ${formatShortDate(fridayDate)}).`;
+      } else {
+        try {
+          content = await generateAISummary(
+            ctx,
+            args.userId,
+            completedTodos,
+            saturdayDate,
+            fridayDate,
+          );
+        } catch {
+          content = buildPlainRecap(completedTodos, saturdayDate, fridayDate);
+        }
       }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      content = `# ${title}\n\nFailed to generate recap: ${msg}\n\nPlease try again.`;
     }
 
+    // Always patch the note so it never stays blank
     await ctx.runMutation(internal.weeklyRecapQueries.patchRecapNote, {
       noteId: args.noteId,
       title,

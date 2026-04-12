@@ -310,12 +310,13 @@ This document describes the structure and purpose of each file in the Better Tod
   - AI summarization using Claude or OpenAI with plain-text fallback
 
 - `weeklyRecapQueries.ts` - Internal queries and mutations for weekly recap:
-  - `getCompletedTodosInRange` - Get todos completed within a date range for a user
+  - `getCompletedTodosInRange` - Get todos completed within a date range for a user (falls back to _creationTime for legacy todos without completedAt)
   - `getExistingRecap` - Check if a recap already exists for a given week
   - `getUserTimezone` - Get a user's IANA timezone
   - `listUsersWithTimezone` - List all users with their timezone (bounded to 500)
   - `createRecapNote` - Create a new full-page note for a recap
   - `patchRecapNote` - Update an existing note with recap content
+  - `backfillCompletedAt` - One-time internal mutation to set completedAt on all completed todos missing it (uses _creationTime as proxy)
 
 - `crons.ts` - Cron job definitions:
   - Hourly interval calling `internal.weeklyRecap.tick` for weekly recap processing

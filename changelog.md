@@ -25,6 +25,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Score improved from 43 to 100 out of 100
   - Cursor skill (`.cursor/skills/convex-doctor/SKILL.md`) and rule (`.cursor/rules/convex-doctor.mdc`) created
 
+### Fixed
+
+- **Weekly recap blank note** - Backfilled `completedAt` on 237 existing completed todos so the recap query finds historical data
+- **Recap fallback query** - `getCompletedTodosInRange` now falls back to `_creationTime` scanning when no `completedAt` index hits exist
+- **Recap error resilience** - `generateRecapIntoNote` wrapped in top-level try/catch so the note always gets content (error message if something fails, never blank)
+- **Backfill mutation** - Added `backfillCompletedAt` internal mutation for one-time or re-runnable data repair
+
 ### Changed
 
 - `convex/schema.ts` - Added `completedAt` field and `by_user_and_completedAt` index to todos, `timezone` to userPreferences, new `weeklyRecapRuns` table

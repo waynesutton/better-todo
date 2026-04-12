@@ -1,7 +1,9 @@
 import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
-// Get completed todos for a user within a timestamp range
+// Get completed todos for a user within a timestamp range.
+// Uses the completedAt index first. If nothing is found (pre-backfill data),
+// falls back to scanning completed todos by _creationTime as a proxy.
 export const getCompletedTodosInRange = internalQuery({
   args: {
     userId: v.string(),
@@ -16,7 +18,8 @@ export const getCompletedTodosInRange = internalQuery({
     }),
   ),
   handler: async (ctx, args) => {
-    const todos = await ctx.db
+    // Primary path: use the completedAt index
+    const indexed = await ctx.db
       .query("todos")
       .withIndex("by_user_and_completedAt", (q) =>
         q
@@ -26,12 +29,38 @@ export const getCompletedTodosInRange = internalQuery({
       )
       .collect();
 
-    return todos
+    const fromIndex = indexed
       .filter((t) => t.type === "todo" && !t.backlog && !t.folderId)
       .map((t) => ({
         content: t.content,
         date: t.date,
         completedAt: t.completedAt!,
+      }));
+
+    if (fromIndex.length > 0) return fromIndex;
+
+    // Fallback: scan all completed todos for this user whose _creationTime
+    // falls within range. Covers legacy todos without completedAt.
+    const allCompleted = await ctx.db
+      .query("todos")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    return allCompleted
+      .filter(
+        (t) =>
+          t.type === "todo" &&
+          t.completed &&
+          !t.backlog &&
+          !t.folderId &&
+          !t.completedAt &&
+          t._creationTime >= args.startMs &&
+          t._creationTime <= args.endMs,
+      )
+      .map((t) => ({
+        content: t.content,
+        date: t.date,
+        completedAt: t._creationTime,
       }));
   },
 });
@@ -149,5 +178,23 @@ export const patchRecapNote = internalMutation({
       content: args.content,
     });
     return null;
+  },
+});
+
+// One-time backfill: set completedAt on all completed todos that are missing it.
+// Uses _creationTime as a reasonable proxy for when the todo was completed.
+export const backfillCompletedAt = internalMutation({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    const todos = await ctx.db.query("todos").collect();
+    const missing = todos.filter((t) => t.completed && !t.completedAt);
+
+    const patches = missing.map((t) =>
+      ctx.db.patch(t._id, { completedAt: t._creationTime }),
+    );
+    await Promise.all(patches);
+
+    return missing.length;
   },
 });

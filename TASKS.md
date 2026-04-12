@@ -99,6 +99,12 @@ git push -u origin main
   - Added timezone sync useEffect to `App.tsx`
   - AI summarization with Claude/OpenAI and plain-text fallback
 
+- [x] **Weekly Recap Fix** - Blank note body on live site
+  - Backfilled `completedAt` on 237 existing completed todos (used `_creationTime` as proxy)
+  - Added fallback query in `getCompletedTodosInRange` that scans by `_creationTime` when no `completedAt` index results
+  - Wrapped `generateRecapIntoNote` in top-level try/catch so the note always gets content
+  - Added `backfillCompletedAt` internal mutation for re-runnable data repair
+
 - [x] **convex-doctor integration** - Static analysis for Convex backend health
   - Installed convex-doctor as devDependency with npm script
   - Created `convex-doctor.toml` with justified rule suppressions and CI threshold
