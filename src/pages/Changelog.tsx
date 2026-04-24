@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v031");
+  const [activeSection, setActiveSection] = useState("v032");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
+    { id: "v032", title: "v.032 - Apr 10, 2026" },
     { id: "v031", title: "v.031 - Jan 13, 2026" },
     { id: "v030", title: "v.030 - Jan 12, 2026" },
     { id: "v029", title: "v.029 - Jan 12, 2026" },
@@ -101,12 +102,162 @@ export function Changelog() {
 
       <div className="launch-container">
         {/* Each section mirrors the markdown changelog so anchors stay in sync. */}
-        <section id="v031" className="launch-section">
+        <section id="v032" className="launch-section">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">v.032 - April 10, 2026</h2>
+          <p className="changelog-subtitle">
+            Weekly Recap and convex-doctor
+          </p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Weekly Recap</strong> - Automated and manual weekly
+              productivity summaries
+              <ul className="nested-list">
+                <li>
+                  Hourly cron job checks each user&apos;s timezone for Friday
+                  2pm
+                </li>
+                <li>
+                  AI-generated summary of completed todos (Saturday through
+                  Friday 2pm)
+                </li>
+                <li>
+                  Creates a dated full-page note with bullet-point
+                  accomplishments and original todo text
+                </li>
+                <li>
+                  Manual trigger via CalendarCheck button on empty full-page
+                  notes
+                </li>
+                <li>
+                  Supports both Claude and OpenAI for AI summaries, with
+                  plain-text fallback
+                </li>
+                <li>
+                  Per-user IANA timezone stored in userPreferences (synced from
+                  browser on first load)
+                </li>
+                <li>
+                  <code>completedAt</code> timestamp on todos for accurate
+                  weekly tracking
+                </li>
+                <li>
+                  <code>weeklyRecapRuns</code> dedupe table prevents duplicate
+                  recap notes
+                </li>
+                <li>
+                  New files: <code>convex/weeklyRecap.ts</code>,{" "}
+                  <code>convex/weeklyRecapQueries.ts</code>,{" "}
+                  <code>convex/crons.ts</code>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>convex-doctor integration</strong> - Static analysis for
+              Convex backend health
+              <ul className="nested-list">
+                <li>
+                  Installed <code>convex-doctor</code> as devDependency with npm
+                  script
+                </li>
+                <li>
+                  Created <code>convex-doctor.toml</code> configuration with
+                  justified rule suppressions
+                </li>
+                <li>Score improved from 43 to 100 out of 100</li>
+                <li>
+                  Cursor skill and rule created for ongoing use
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Weekly recap blank note</strong> - Backfilled{" "}
+              <code>completedAt</code> on 237 existing completed todos so the
+              recap query finds historical data
+            </li>
+            <li>
+              <strong>Recap fallback query</strong> -{" "}
+              <code>getCompletedTodosInRange</code> now falls back to{" "}
+              <code>_creationTime</code> scanning when no{" "}
+              <code>completedAt</code> index hits exist
+            </li>
+            <li>
+              <strong>Recap error resilience</strong> -{" "}
+              <code>generateRecapIntoNote</code> wrapped in top-level try/catch
+              so the note always gets content
+            </li>
+            <li>
+              <strong>Backfill mutation</strong> - Added{" "}
+              <code>backfillCompletedAt</code> internal mutation for one-time or
+              re-runnable data repair
+            </li>
+            <li>
+              <strong>Recap loading spinner</strong> - CalendarCheck button shows
+              a spinning Loader2 icon while AI generates the recap
+            </li>
+            <li>
+              <strong>Re-generate on delete</strong> - Deleting a recap note and
+              clicking the button on a new empty note creates a fresh recap
+            </li>
+            <li>
+              <strong>Security</strong> - <code>ctx.runAction</code> calls now
+              use <code>internal.*</code> references instead of{" "}
+              <code>api.*</code> for server-to-server calls
+            </li>
+            <li>
+              <strong>Configuration</strong> - Added <code>convex.json</code>{" "}
+              and CORS preflight handler
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <code>convex/schema.ts</code> - Added <code>completedAt</code>{" "}
+              field and <code>by_user_and_completedAt</code> index to todos,{" "}
+              <code>timezone</code> to userPreferences, new{" "}
+              <code>weeklyRecapRuns</code> table
+            </li>
+            <li>
+              <code>convex/todos.ts</code> - <code>updateTodo</code> now
+              sets/clears <code>completedAt</code> on completion toggle
+            </li>
+            <li>
+              <code>convex/users.ts</code> - Added{" "}
+              <code>setTimezoneIfMissing</code> mutation
+            </li>
+            <li>
+              <code>convex/stats.ts</code> - Changed{" "}
+              <code>getUserCountFromClerk</code> from public action to
+              internalAction
+            </li>
+            <li>
+              <code>convex/pomodoro.ts</code> - Changed{" "}
+              <code>updateBackgroundImage</code> from public mutation to
+              internalMutation
+            </li>
+            <li>
+              <code>convex/fullPageNotes.ts</code> - Added{" "}
+              <code>generateWeeklyRecapIntoNote</code> public mutation
+            </li>
+            <li>
+              <code>src/components/FullPageNoteTabs.tsx</code> - Added
+              CalendarCheck button for empty notes with loading spinner
+            </li>
+          </ul>
+        </section>
+
+        <section id="v031" className="launch-section">
           <h2 className="section-title">v.031 - January 13, 2026</h2>
           <p className="changelog-subtitle">Executable Notes (Run Note)</p>
 

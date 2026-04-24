@@ -1135,11 +1135,6 @@ export const generateWeeklyRecapIntoNote = mutation({
       throw new Error("Note not found or unauthorized");
     }
 
-    // Only allow on empty notes
-    if (note.content.trim() !== "") {
-      throw new Error("Weekly recap can only be generated into an empty note");
-    }
-
     // Schedule the internal action that fetches todos and calls AI
     await ctx.scheduler.runAfter(0, internal.weeklyRecap.generateRecapIntoNote, {
       userId,

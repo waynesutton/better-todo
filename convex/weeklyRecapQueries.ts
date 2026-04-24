@@ -65,13 +65,13 @@ export const getCompletedTodosInRange = internalQuery({
   },
 });
 
-// Check if a recap already exists for this user + week
-export const getExistingRecap = internalQuery({
+// Delete existing recap run + note for a user + week so it can be regenerated
+export const deleteExistingRecap = internalMutation({
   args: {
     userId: v.string(),
     weekKey: v.string(),
   },
-  returns: v.union(v.id("fullPageNotes"), v.null()),
+  returns: v.null(),
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("weeklyRecapRuns")
@@ -80,7 +80,17 @@ export const getExistingRecap = internalQuery({
       )
       .unique();
 
-    return existing ? existing.noteId : null;
+    if (!existing) return null;
+
+    // Delete the recap note
+    const note = await ctx.db.get(existing.noteId);
+    if (note) {
+      await ctx.db.delete(note._id);
+    }
+
+    // Delete the run record
+    await ctx.db.delete(existing._id);
+    return null;
   },
 });
 
@@ -95,27 +105,6 @@ export const getUserTimezone = internalQuery({
       .unique();
 
     return prefs?.timezone ?? "America/Los_Angeles";
-  },
-});
-
-// List all users with their timezone (bounded to avoid unbounded collect)
-export const listUsersWithTimezone = internalQuery({
-  args: {},
-  returns: v.array(v.object({ userId: v.string(), timezone: v.string() })),
-  handler: async (ctx) => {
-    const users = await ctx.db.query("users").take(500);
-    const result: Array<{ userId: string; timezone: string }> = [];
-    for (const user of users) {
-      const prefs = await ctx.db
-        .query("userPreferences")
-        .withIndex("by_user", (q) => q.eq("userId", user.userId))
-        .unique();
-      result.push({
-        userId: user.userId,
-        timezone: prefs?.timezone ?? "America/Los_Angeles",
-      });
-    }
-    return result;
   },
 });
 

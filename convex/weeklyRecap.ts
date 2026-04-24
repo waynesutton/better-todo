@@ -97,38 +97,7 @@ function formatShortDate(dateStr: string): string {
   return `${parseInt(m)}/${parseInt(d)}`;
 }
 
-// Hourly cron tick: check each user and generate recap if it's their Friday 2pm
-export const tick = internalAction({
-  args: {},
-  returns: v.null(),
-  handler: async (ctx) => {
-    const nowMs = Date.now();
-
-    // Single query fetches all users with their timezone
-    const users = await ctx.runQuery(
-      internal.weeklyRecapQueries.listUsersWithTimezone,
-      {},
-    );
-
-    // Filter to only users whose local time is Friday 14:xx
-    const eligible = users.filter((user) => {
-      const { dow, hour } = getWeekBounds(nowMs, user.timezone);
-      return dow === 5 && hour === 14;
-    });
-
-    // Schedule recap generation for each eligible user
-    for (const user of eligible) {
-      await ctx.runAction(internal.weeklyRecap.generateRecapForUser, {
-        userId: user.userId,
-        nowMs,
-      });
-    }
-
-    return null;
-  },
-});
-
-// Generate the weekly recap for a single user (called by cron)
+// Generate the weekly recap for a single user (manual trigger)
 export const generateRecapForUser = internalAction({
   args: {
     userId: v.string(),
@@ -144,12 +113,11 @@ export const generateRecapForUser = internalAction({
     const { startMs, endMs, fridayDate, saturdayDate } =
       getWeekTimestampBounds(args.nowMs, timezone);
 
-    // Dedupe check
-    const existingNoteId = await ctx.runQuery(
-      internal.weeklyRecapQueries.getExistingRecap,
-      { userId: args.userId, weekKey: fridayDate },
-    );
-    if (existingNoteId) return null;
+    // Delete previous recap for this week so we can recreate
+    await ctx.runMutation(internal.weeklyRecapQueries.deleteExistingRecap, {
+      userId: args.userId,
+      weekKey: fridayDate,
+    });
 
     const completedTodos = await ctx.runQuery(
       internal.weeklyRecapQueries.getCompletedTodosInRange,
