@@ -11,7 +11,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (v.032 - Weekly Recap and convex-doctor)
+- `changelog.md` - Version history with all features (v.033 - Weekly Recap Manual Mode)
 - `convex-doctor.toml` - convex-doctor configuration with rule suppressions and CI threshold
 - `convex.json` - Convex deployment configuration
 - `files.md` - This file, project structure documentation
@@ -154,7 +154,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - `revokeShareLink` - Revoke share link to make note private
   - `updateHideHeader` - Update hide header setting for shared note
   - `updateShareSlug` - Update custom slug for shared note
-  - `generateWeeklyRecapIntoNote` - Public mutation to trigger manual weekly recap into an empty note
+  - `generateWeeklyRecapIntoNote` - Public mutation to trigger manual weekly recap into any note (overwrites existing content)
 
 - `search.ts` - Full-text search functionality using Convex search indexes:
   - `searchAll` - Search across todos (by content) and notes (by title and content) and full-page notes
@@ -302,24 +302,21 @@ This document describes the structure and purpose of each file in the Better Tod
   - Keys stored securely with Convex encryption at rest
   - Scoped to authenticated user via userId index
 
-- `weeklyRecap.ts` - Weekly recap generation (Node.js actions):
-  - `tick` - Internal action called hourly by cron, checks each user for Friday 2pm in their timezone and enqueues recap generation
-  - `generateRecapForUser` - Internal action to generate a weekly recap note for a specific user
-  - `generateRecapIntoNote` - Internal action for manual recap into an existing empty note
+- `weeklyRecap.ts` - Weekly recap generation (Node.js actions, manual trigger only):
+  - `generateRecapForUser` - Internal action to generate a weekly recap note for a specific user (deletes previous recap for same week before recreating)
+  - `generateRecapIntoNote` - Internal action for manual recap into an existing note (overwrites content)
   - Timezone-aware week boundary calculations (Saturday to Friday 2pm)
   - AI summarization using Claude or OpenAI with plain-text fallback
 
 - `weeklyRecapQueries.ts` - Internal queries and mutations for weekly recap:
   - `getCompletedTodosInRange` - Get todos completed within a date range for a user (falls back to _creationTime for legacy todos without completedAt)
-  - `getExistingRecap` - Check if a recap already exists for a given week
+  - `deleteExistingRecap` - Delete existing recap run and note for a user + week so it can be regenerated
   - `getUserTimezone` - Get a user's IANA timezone
-  - `listUsersWithTimezone` - List all users with their timezone (bounded to 500)
   - `createRecapNote` - Create a new full-page note for a recap
   - `patchRecapNote` - Update an existing note with recap content
   - `backfillCompletedAt` - One-time internal mutation to set completedAt on all completed todos missing it (uses _creationTime as proxy)
 
-- `crons.ts` - Cron job definitions:
-  - Hourly interval calling `internal.weeklyRecap.tick` for weekly recap processing
+- `crons.ts` - Cron job definitions (currently empty, no scheduled jobs)
 
 - `stats.ts` - Statistics tracking (global and user-specific):
   - `getStats` - Action to get aggregate stats across all users (total users, todos, notes, pomodoro sessions, folders)
@@ -693,7 +690,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - **Share button** for authenticated users to generate shareable links
   - Visual indicator if note is already shared
   - Open shared note in new tab button
-  - **Weekly Recap button** (CalendarCheck icon) visible on empty notes to trigger manual recap generation, shows Loader2 spinner while generating
+  - **Weekly Recap button** (CalendarCheck icon) to trigger manual recap generation (can overwrite existing content), shows Loader2 spinner while generating
 
 - `ShareLinkModal.tsx` - Shareable link management modal:
   - Custom slug input with validation and availability checking
@@ -851,16 +848,25 @@ This document describes the structure and purpose of each file in the Better Tod
 - `changelog.md` - Version history with all feature additions and changes (v1.001 to v.030)
 - `TASKS.md` - Project tasks and development tracking
 
-## Current Version: v.032 (April 10, 2026)
+## Current Version: v.033 (April 24, 2026)
 
-### Latest Features (v.032) - Weekly Recap and convex-doctor
+### Latest Features (v.033) - Weekly Recap Manual Mode
 
-- **Weekly Recap** - Automated Friday summaries of weekly completed todos
-  - Hourly cron checks user timezone for Friday 2pm, generates AI-summarized recap as a full-page note
-  - Manual trigger on empty full-page notes via CalendarCheck button
+- **Weekly Recap Manual Mode** - Recap is now fully manual, repeatable, and on demand
+  - Removed hourly cron job (no more automatic Friday 2pm trigger)
+  - Removed `tick` action and `listUsersWithTimezone` / `getExistingRecap` dead code
+  - `generateRecapForUser` now deletes previous recap for the same week before recreating
+  - `generateWeeklyRecapIntoNote` no longer requires an empty note (overwrites existing content)
+  - Added `deleteExistingRecap` internal mutation for cleanup before regeneration
+  - Run the recap as many times as needed from the CalendarCheck button
+
+### Previous Features (v.032) - Weekly Recap and convex-doctor
+
+- **Weekly Recap** - Weekly summaries of completed todos
+  - Manual trigger on full-page notes via CalendarCheck button
   - Tracks `completedAt` on todos, dedupes with `weeklyRecapRuns` table
   - Per-user IANA timezone synced from browser
-  - New files: `convex/weeklyRecap.ts`, `convex/weeklyRecapQueries.ts`, `convex/crons.ts`
+  - Files: `convex/weeklyRecap.ts`, `convex/weeklyRecapQueries.ts`, `convex/crons.ts`
 
 - **convex-doctor integration** - Static analysis tooling for backend health
   - Score improved from 43 to 100

@@ -4,15 +4,32 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.033] - 2026-04-24
+
+### Changed
+
+- **Weekly Recap Manual Mode** - Recap is now fully manual, repeatable, and on demand
+  - Removed hourly cron job (no more automatic Friday 2pm trigger)
+  - Removed `tick` internal action and `listUsersWithTimezone` / `getExistingRecap` dead code
+  - `generateRecapForUser` deletes previous recap for same week before recreating
+  - `generateWeeklyRecapIntoNote` no longer requires an empty note (overwrites existing content)
+  - Added `deleteExistingRecap` internal mutation for cleanup before regeneration
+  - Run the recap as many times as needed from the CalendarCheck button on any note
+
+### Removed
+
+- Hourly cron job in `convex/crons.ts` (now empty)
+- `tick` internal action from `convex/weeklyRecap.ts`
+- `getExistingRecap` and `listUsersWithTimezone` from `convex/weeklyRecapQueries.ts`
+
 ## [v.032] - 2026-04-10
 
 ### Added
 
 - **Weekly Recap** - Automated and manual weekly productivity summaries
-  - Hourly cron job checks each user's timezone for Friday 2pm
   - AI-generated summary of completed todos (Saturday through Friday 2pm)
   - Creates a dated full-page note with bullet-point accomplishments and original todo text
-  - Manual trigger via CalendarCheck button on empty full-page notes
+  - Manual trigger via CalendarCheck button on full-page notes
   - Supports both Claude and OpenAI for AI summaries, with plain-text fallback
   - Per-user IANA timezone stored in userPreferences (synced from browser on first load)
   - `completedAt` timestamp on todos for accurate weekly tracking

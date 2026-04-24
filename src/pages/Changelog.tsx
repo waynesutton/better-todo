@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v032");
+  const [activeSection, setActiveSection] = useState("v033");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
+    { id: "v033", title: "v.033 - Apr 24, 2026" },
     { id: "v032", title: "v.032 - Apr 10, 2026" },
     { id: "v031", title: "v.031 - Jan 13, 2026" },
     { id: "v030", title: "v.030 - Jan 12, 2026" },
@@ -102,12 +103,67 @@ export function Changelog() {
 
       <div className="launch-container">
         {/* Each section mirrors the markdown changelog so anchors stay in sync. */}
-        <section id="v032" className="launch-section">
+        <section id="v033" className="launch-section">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">v.033 - April 24, 2026</h2>
+          <p className="changelog-subtitle">Weekly Recap Manual Mode</p>
+
+          <h3 className="changelog-category">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Weekly Recap Manual Mode</strong> - Recap is now fully
+              manual, repeatable, and on demand
+              <ul className="nested-list">
+                <li>
+                  Removed hourly cron job (no more automatic Friday 2pm trigger)
+                </li>
+                <li>
+                  Removed <code>tick</code> internal action and{" "}
+                  <code>listUsersWithTimezone</code> /{" "}
+                  <code>getExistingRecap</code> dead code
+                </li>
+                <li>
+                  <code>generateRecapForUser</code> deletes previous recap for
+                  same week before recreating
+                </li>
+                <li>
+                  <code>generateWeeklyRecapIntoNote</code> no longer requires an
+                  empty note (overwrites existing content)
+                </li>
+                <li>
+                  Added <code>deleteExistingRecap</code> internal mutation for
+                  cleanup before regeneration
+                </li>
+                <li>
+                  Run the recap as many times as needed from the CalendarCheck
+                  button on any note
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Removed</h3>
+          <ul className="feature-list">
+            <li>
+              Hourly cron job in <code>convex/crons.ts</code> (now empty)
+            </li>
+            <li>
+              <code>tick</code> internal action from{" "}
+              <code>convex/weeklyRecap.ts</code>
+            </li>
+            <li>
+              <code>getExistingRecap</code> and{" "}
+              <code>listUsersWithTimezone</code> from{" "}
+              <code>convex/weeklyRecapQueries.ts</code>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v032" className="launch-section">
           <h2 className="section-title">v.032 - April 10, 2026</h2>
           <p className="changelog-subtitle">
             Weekly Recap and convex-doctor

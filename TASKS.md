@@ -83,6 +83,16 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.033 - 2026-04-24)
+
+- [x] **Weekly Recap Manual Mode** - Converted weekly recap from auto-cron to manual-only, repeatable trigger
+  - Removed hourly cron job from `convex/crons.ts` (file now exports empty cron config)
+  - Removed `tick` internal action from `convex/weeklyRecap.ts`
+  - Updated `generateRecapForUser` to delete previous recap before recreating (via new `deleteExistingRecap` mutation)
+  - Removed empty-note guard from `generateWeeklyRecapIntoNote` in `convex/fullPageNotes.ts` (can overwrite existing content)
+  - Added `deleteExistingRecap` internal mutation to `convex/weeklyRecapQueries.ts`
+  - Removed dead code: `getExistingRecap` and `listUsersWithTimezone` queries
+
 ## Completed Tasks (v.032 - 2026-04-10)
 
 - [x] **Weekly Recap** - Automated and manual weekly productivity summaries
