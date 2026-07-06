@@ -435,6 +435,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `TodoList.tsx` - Todo list container with:
   - Drag-and-drop functionality using @dnd-kit
   - **Pinned todos sorted to top** - Automatically displays pinned todos first on each date page
+  - **Todo input placement toggle** - PinTop/PinBottom icon button moves the input above the todo list (below header and date text) or back below the list; preference saved to localStorage (`todoInputAtTop`), works alongside the left/center alignment toggle
   - **Refined todo input UI** - Modern rounded container with ArrowUp submit button
     - Max width of 650px on desktop with `var(--bg-secondary)` background
     - ArrowUp icon button (24px, scales to 22px/20px/18px on smaller devices) from Radix UI
@@ -503,6 +504,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Remove from Project (when date is in a project)
     - Copy all non-archived todos to tomorrow, previous/next day, or custom date
     - Move to Next Day (moves incomplete todos to next day and archives originals)
+    - Move to Custom Date (moves incomplete todos to any chosen date and archives originals, via the same date picker as Copy to Custom Date)
     - Archive the entire date
     - Delete the date and all its content
   - Three-dot menu for dates inside projects with options:

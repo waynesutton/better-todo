@@ -1,0 +1,4 @@
+interface:
+  display_name: Convex self hosting
+  short_description: Set up and update Convex static self hosting with mandatory upstream checks
+  default_prompt: Integrate Convex self hosting in this app using the latest upstream instructions, ask the required clarifying questions first, then implement the minimal safe setup.

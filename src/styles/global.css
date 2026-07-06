@@ -3535,6 +3535,12 @@ button:active,
   margin-right: auto;
 }
 
+/* Top placement: above the todo list, below the header and date text */
+.inline-todo-input[data-position="top"] {
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
 .inline-todo-shell {
   display: flex;
   align-items: center;

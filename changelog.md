@@ -4,6 +4,27 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.035] - 2026-07-06
+
+### Added
+
+- **Todo Input Placement Toggle** - Move the add-todo input above or below the list
+  - New PinTop/PinBottom icon button inside the input shell (desktop only, next to the left/center alignment toggle)
+  - Top placement renders the input above the todo list, below the header and date text
+  - Default stays at the bottom, matching existing behavior
+  - Preference persists in localStorage (`todoInputAtTop`) and works independently of the left/center alignment setting
+  - Uses Radix `PinTopIcon`/`PinBottomIcon` to match the existing icon set
+
+## [v.034] - 2026-07-06
+
+### Added
+
+- **Move to Custom Date** - New option in the sidebar three-dot date menu
+  - Moves all incomplete todos from a date to any chosen date and archives the originals, matching how Move to Next Day works
+  - Opens the same date picker as Copy to Custom Date, with the confirm button switching between Copy and Move based on the selected action
+  - Available in both the main date list and dates inside project folders
+  - Reuses the existing `moveTodosToNextDay` Convex mutation (already accepts any target date), so no backend changes were needed
+
 ## [v.033] - 2026-04-24
 
 ### Changed

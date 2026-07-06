@@ -670,6 +670,8 @@ export function Sidebar({
   const { user } = useUser();
   const [showMenuForDate, setShowMenuForDate] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState<string | null>(null);
+  // Whether the date picker copies or moves todos to the chosen date
+  const [datePickerMode, setDatePickerMode] = useState<"copy" | "move">("copy");
   const [showRenameInput, setShowRenameInput] = useState<string | null>(null);
   const [customDate, setCustomDate] = useState("");
   const [customLabel, setCustomLabel] = useState("");
@@ -989,6 +991,25 @@ export function Sidebar({
         setCustomDate("");
       } catch (error) {
         console.error("Error copying to custom date:", error);
+        setShowMenuForDate(null);
+        setShowDatePicker(null);
+        setCustomDate("");
+      }
+    }
+  };
+
+  // Move all incomplete todos to a custom date and archive the source date todos
+  // Reuses the moveTodosToNextDay mutation which accepts any target date
+  const handleMoveToCustomDate = async (sourceDate: string) => {
+    if (customDate) {
+      try {
+        // The mutation is idempotent and returns early if source equals target
+        await moveTodosToNextDay({ sourceDate, targetDate: customDate });
+        setShowMenuForDate(null);
+        setShowDatePicker(null);
+        setCustomDate("");
+      } catch (error) {
+        console.error("Error moving to custom date:", error);
         setShowMenuForDate(null);
         setShowDatePicker(null);
         setCustomDate("");
@@ -1761,6 +1782,7 @@ export function Sidebar({
                         <div
                           className="menu-item"
                           onClick={() => {
+                            setDatePickerMode("copy");
                             setShowDatePicker(date);
                             setShowRenameInput(null);
                           }}
@@ -1772,6 +1794,16 @@ export function Sidebar({
                           onClick={() => handleMoveToNextDay(date)}
                         >
                           Move to Next Day
+                        </div>
+                        <div
+                          className="menu-item"
+                          onClick={() => {
+                            setDatePickerMode("move");
+                            setShowDatePicker(date);
+                            setShowRenameInput(null);
+                          }}
+                        >
+                          Move to Custom Date...
                         </div>
                         <div
                           className="menu-item"
@@ -1797,10 +1829,14 @@ export function Sidebar({
                         />
                         <button
                           className="date-picker-button"
-                          onClick={() => handleCopyToCustomDate(date)}
+                          onClick={() =>
+                            datePickerMode === "move"
+                              ? handleMoveToCustomDate(date)
+                              : handleCopyToCustomDate(date)
+                          }
                           disabled={!customDate}
                         >
-                          Copy
+                          {datePickerMode === "move" ? "Move" : "Copy"}
                         </button>
                         <button
                           className="date-picker-button cancel"
@@ -2080,6 +2116,7 @@ export function Sidebar({
                                 <div
                                   className="menu-item"
                                   onClick={() => {
+                                    setDatePickerMode("copy");
                                     setShowDatePicker(date);
                                     setShowRenameInput(null);
                                   }}
@@ -2091,6 +2128,16 @@ export function Sidebar({
                                   onClick={() => handleMoveToNextDay(date)}
                                 >
                                   Move to Next Day
+                                </div>
+                                <div
+                                  className="menu-item"
+                                  onClick={() => {
+                                    setDatePickerMode("move");
+                                    setShowDatePicker(date);
+                                    setShowRenameInput(null);
+                                  }}
+                                >
+                                  Move to Custom Date...
                                 </div>
                                 <div
                                   className="menu-item"
@@ -2118,10 +2165,14 @@ export function Sidebar({
                                 />
                                 <button
                                   className="date-picker-button"
-                                  onClick={() => handleCopyToCustomDate(date)}
+                                  onClick={() =>
+                                    datePickerMode === "move"
+                                      ? handleMoveToCustomDate(date)
+                                      : handleCopyToCustomDate(date)
+                                  }
                                   disabled={!customDate}
                                 >
-                                  Copy
+                                  {datePickerMode === "move" ? "Move" : "Copy"}
                                 </button>
                                 <button
                                   className="date-picker-button cancel"

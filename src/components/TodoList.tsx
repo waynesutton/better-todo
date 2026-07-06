@@ -23,7 +23,13 @@ import {
 } from "./NotesSection";
 import { Id } from "../../convex/_generated/dataModel";
 import { format, addDays, subDays } from "date-fns";
-import { ArrowUpIcon, PinLeftIcon, PinRightIcon } from "@radix-ui/react-icons";
+import {
+  ArrowUpIcon,
+  PinLeftIcon,
+  PinRightIcon,
+  PinTopIcon,
+  PinBottomIcon,
+} from "@radix-ui/react-icons";
 
 interface Todo {
   _id: Id<"todos">;
@@ -112,6 +118,11 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       const saved = localStorage.getItem("todoInputCentered");
       return saved === null ? true : saved === "true";
     });
+    const [isInputAtTop, setIsInputAtTop] = React.useState(() => {
+      // Load preference from localStorage, default to bottom (below the list)
+      const saved = localStorage.getItem("todoInputAtTop");
+      return saved === "true";
+    });
 
     // Detect mobile device
     React.useEffect(() => {
@@ -126,11 +137,20 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       return () => window.removeEventListener("resize", checkMobile);
     }, []);
 
-    // Toggle input position and save preference
+    // Toggle input alignment (centered vs left) and save preference
     const toggleInputPosition = () => {
       setIsInputCentered((prev) => {
         const newValue = !prev;
         localStorage.setItem("todoInputCentered", String(newValue));
+        return newValue;
+      });
+    };
+
+    // Toggle input placement (above vs below the todo list) and save preference
+    const toggleInputPlacement = () => {
+      setIsInputAtTop((prev) => {
+        const newValue = !prev;
+        localStorage.setItem("todoInputAtTop", String(newValue));
         return newValue;
       });
     };
@@ -421,6 +441,153 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       addNote: handleAddNote,
     }));
 
+    // Notion-like inline input, rendered above or below the list based on preference
+    const todoInputElement = (
+      <div
+        className="inline-todo-input"
+        data-centered={isInputCentered ? "true" : "false"}
+        data-position={isInputAtTop ? "top" : "bottom"}
+      >
+        <div className="inline-todo-shell">
+          <textarea
+            ref={todoInputRef}
+            className="notion-input"
+            placeholder={
+              isMobile
+                ? "Type to add a todo..."
+                : "Type to add a todo... (Shift+Enter for new lines, Enter to create)"
+            }
+            value={newTodoContent}
+            onChange={(e) => {
+              setNewTodoContent(e.target.value);
+              // Auto-resize textarea based on content
+              e.target.style.height = "auto";
+              e.target.style.height = e.target.scrollHeight + "px";
+            }}
+            onFocus={() => setFocusedInput(true)}
+            onPaste={(e) => {
+              const pastedText = e.clipboardData.getData("text");
+              const lines = pastedText
+                .split("\n")
+                .filter((line) => line.trim())
+                .map((line) =>
+                  line
+                    .replace(/^[\s-*•]+/, "")
+                    .replace(/^\[[ x]\]\s*/, "")
+                    .trim(),
+                )
+                .filter((line) => line);
+
+              if (lines.length > 1) {
+                e.preventDefault();
+                (async () => {
+                  try {
+                    for (const line of lines) {
+                      await createTodo({
+                        date: folderId ? undefined : date,
+                        folderId: folderId || undefined,
+                        content: line.trim(),
+                        type: "todo",
+                      });
+                    }
+                    setNewTodoContent("");
+                  } catch (err) {
+                    console.error("Error creating todos from paste:", err);
+                    if (onRequireSignIn) {
+                      onRequireSignIn();
+                    }
+                  }
+                })();
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Tab") {
+                // Tab to focus first todo
+                e.preventDefault();
+                if (activeTodos.length > 0 && onFocusFirstTodo) {
+                  // Blur the textarea first
+                  todoInputRef.current?.blur();
+                  // Call the callback to focus first todo
+                  onFocusFirstTodo(() => true);
+                }
+              } else if (e.key === "Enter" && !e.shiftKey && !isMobile) {
+                // On desktop: Enter saves the todo
+                e.preventDefault();
+                handleAddTodo();
+                // Reset textarea height
+                (e.target as HTMLTextAreaElement).style.height = "auto";
+              } else if (e.key === "Enter" && e.shiftKey && isMobile) {
+                // On mobile: Shift+Enter saves the todo
+                e.preventDefault();
+                handleAddTodo();
+                // Reset textarea height
+                (e.target as HTMLTextAreaElement).style.height = "auto";
+              } else if (e.key === "Enter") {
+                // Shift+Enter on desktop or Enter on mobile allows new lines
+                return;
+              }
+            }}
+            autoFocus={focusedInput}
+            rows={1}
+            spellCheck={false}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            data-gramm="false"
+            data-gramm_editor="false"
+            data-enable-grammarly="false"
+            data-1p-ignore
+            data-lpignore="true"
+            inputMode="text"
+          />
+          {!isMobile && (
+            <button
+              type="button"
+              className="inline-todo-pin-toggle"
+              onClick={toggleInputPlacement}
+              aria-label={
+                isInputAtTop
+                  ? "Move input below the list"
+                  : "Move input above the list"
+              }
+              title={
+                isInputAtTop
+                  ? "Move input below the list"
+                  : "Move input above the list"
+              }
+            >
+              {isInputAtTop ? <PinBottomIcon /> : <PinTopIcon />}
+            </button>
+          )}
+          {!isMobile && (
+            <button
+              type="button"
+              className="inline-todo-pin-toggle"
+              onClick={toggleInputPosition}
+              aria-label={
+                isInputCentered ? "Move input to left" : "Center input"
+              }
+              title={isInputCentered ? "Move input to left" : "Center input"}
+            >
+              {isInputCentered ? <PinLeftIcon /> : <PinRightIcon />}
+            </button>
+          )}
+          <button
+            type="button"
+            className="inline-todo-submit"
+            onClick={() => {
+              void handleSubmitNewTodo();
+            }}
+            disabled={!newTodoContent.trim()}
+            aria-label="Add todo"
+            title="Add todo"
+          >
+            <ArrowUpIcon />
+          </button>
+        </div>
+      </div>
+    );
+
     return (
       <div
         className="todo-container"
@@ -446,6 +613,9 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
             isAuthenticated={isAuthenticated}
           />
         )}
+
+        {/* Inline input at top - above the todo list, below header and date text */}
+        {!isPinnedView && !isBacklogView && isInputAtTop && todoInputElement}
 
         {/* Active todos with drag and drop */}
         <DndContext
@@ -566,134 +736,8 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
           </SortableContext>
         </DndContext>
 
-        {/* Notion-like inline input - hide on pinned view and backlog view */}
-        {!isPinnedView && !isBacklogView && (
-          <div
-            className="inline-todo-input"
-            data-centered={isInputCentered ? "true" : "false"}
-          >
-            <div className="inline-todo-shell">
-              <textarea
-                ref={todoInputRef}
-                className="notion-input"
-                placeholder={
-                  isMobile
-                    ? "Type to add a todo..."
-                    : "Type to add a todo... (Shift+Enter for new lines, Enter to create)"
-                }
-                value={newTodoContent}
-                onChange={(e) => {
-                  setNewTodoContent(e.target.value);
-                  // Auto-resize textarea based on content
-                  e.target.style.height = "auto";
-                  e.target.style.height = e.target.scrollHeight + "px";
-                }}
-                onFocus={() => setFocusedInput(true)}
-                onPaste={(e) => {
-                  const pastedText = e.clipboardData.getData("text");
-                  const lines = pastedText
-                    .split("\n")
-                    .filter((line) => line.trim())
-                    .map((line) =>
-                      line
-                        .replace(/^[\s-*•]+/, "")
-                        .replace(/^\[[ x]\]\s*/, "")
-                        .trim(),
-                    )
-                    .filter((line) => line);
-
-                  if (lines.length > 1) {
-                    e.preventDefault();
-                    (async () => {
-                      try {
-                        for (const line of lines) {
-                          await createTodo({
-                            date: folderId ? undefined : date,
-                            folderId: folderId || undefined,
-                            content: line.trim(),
-                            type: "todo",
-                          });
-                        }
-                        setNewTodoContent("");
-                      } catch (err) {
-                        console.error("Error creating todos from paste:", err);
-                        if (onRequireSignIn) {
-                          onRequireSignIn();
-                        }
-                      }
-                    })();
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Tab") {
-                    // Tab to focus first todo
-                    e.preventDefault();
-                    if (activeTodos.length > 0 && onFocusFirstTodo) {
-                      // Blur the textarea first
-                      todoInputRef.current?.blur();
-                      // Call the callback to focus first todo
-                      onFocusFirstTodo(() => true);
-                    }
-                  } else if (e.key === "Enter" && !e.shiftKey && !isMobile) {
-                    // On desktop: Enter saves the todo
-                    e.preventDefault();
-                    handleAddTodo();
-                    // Reset textarea height
-                    (e.target as HTMLTextAreaElement).style.height = "auto";
-                  } else if (e.key === "Enter" && e.shiftKey && isMobile) {
-                    // On mobile: Shift+Enter saves the todo
-                    e.preventDefault();
-                    handleAddTodo();
-                    // Reset textarea height
-                    (e.target as HTMLTextAreaElement).style.height = "auto";
-                  } else if (e.key === "Enter") {
-                    // Shift+Enter on desktop or Enter on mobile allows new lines
-                    return;
-                  }
-                }}
-                autoFocus={focusedInput}
-                rows={1}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                data-gramm="false"
-                data-gramm_editor="false"
-                data-enable-grammarly="false"
-                data-1p-ignore
-                data-lpignore="true"
-                inputMode="text"
-              />
-              {!isMobile && (
-                <button
-                  type="button"
-                  className="inline-todo-pin-toggle"
-                  onClick={toggleInputPosition}
-                  aria-label={
-                    isInputCentered ? "Move input to left" : "Center input"
-                  }
-                  title={
-                    isInputCentered ? "Move input to left" : "Center input"
-                  }
-                >
-                  {isInputCentered ? <PinLeftIcon /> : <PinRightIcon />}
-                </button>
-              )}
-              <button
-                type="button"
-                className="inline-todo-submit"
-                onClick={() => {
-                  void handleSubmitNewTodo();
-                }}
-                disabled={!newTodoContent.trim()}
-                aria-label="Add todo"
-                title="Add todo"
-              >
-                <ArrowUpIcon />
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Inline input at bottom (default) - hide on pinned view and backlog view */}
+        {!isPinnedView && !isBacklogView && !isInputAtTop && todoInputElement}
 
         {/* Add note button - hide on pinned view and backlog view */}
         {!isPinnedView && !isBacklogView && (

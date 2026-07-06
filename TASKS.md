@@ -83,6 +83,22 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.035 - 2026-07-06)
+
+- [x] **Todo Input Placement Toggle** - Input can now sit above or below the todo list (2026-07-06 18:35 UTC)
+  - Added PinTop/PinBottom toggle button to the input shell in `src/components/TodoList.tsx` (desktop only)
+  - Top placement renders above the list, below header and date text; bottom stays the default
+  - Preference saved to localStorage (`todoInputAtTop`); left/center alignment toggle unaffected
+  - Added `data-position` CSS rule in `src/styles/global.css`; verified with `npx tsc --noEmit`
+
+## Completed Tasks (v.034 - 2026-07-06)
+
+- [x] **Move to Custom Date** - New sidebar date menu option (2026-07-06 18:22 UTC)
+  - Added "Move to Custom Date..." to the three-dot date menu in `src/components/Sidebar.tsx` (main date list and project folder date list)
+  - Opens the existing date picker in "move" mode; button label switches between Copy and Move
+  - Reuses the existing `moveTodosToNextDay` mutation (accepts any target date, idempotent, archives source todos)
+  - No backend changes required; frontend typecheck passed
+
 ## Completed Tasks (v.033 - 2026-04-24)
 
 - [x] **Weekly Recap Manual Mode** - Converted weekly recap from auto-cron to manual-only, repeatable trigger
