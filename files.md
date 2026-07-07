@@ -316,7 +316,9 @@ This document describes the structure and purpose of each file in the Better Tod
   - `patchRecapNote` - Update an existing note with recap content
   - `backfillCompletedAt` - One-time internal mutation to set completedAt on all completed todos missing it (uses _creationTime as proxy)
 
-- `crons.ts` - Cron job definitions (currently empty, no scheduled jobs)
+- `crons.ts` - Cron job definitions (daily default todo cleanup at 12:00 UTC)
+
+- `crons_cleanup.ts` - Internal `cleanupDefaultDayTodos` mutation that deletes the untouched "what's the priority?" placeholder from placeholder-only past days so they drop off the sidebar (supports dryRun)
 
 - `stats.ts` - Statistics tracking (global and user-specific):
   - `getStats` - Action to get aggregate stats across all users (total users, todos, notes, pomodoro sessions, folders)

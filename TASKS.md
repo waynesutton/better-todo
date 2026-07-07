@@ -83,6 +83,15 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.036 - 2026-07-06)
+
+- [x] **Default Todo Cleanup Cron** - Daily job removes placeholder-only past days (2026-07-06 22:25 UTC)
+  - New `convex/crons_cleanup.ts` with `cleanupDefaultDayTodos` internal mutation (supports `dryRun`)
+  - Deletes the untouched "what's the priority?" todo when it is the only content on a past day, dropping the day from the sidebar
+  - Skips days with notes, full-page notes, archived todos, or edited placeholders; also cleans orphaned dateLabels/archivedDates rows
+  - Registered daily at 12:00 UTC in `convex/crons.ts`; tested on dev (13 stale days removed, verify pass clean, convex-doctor 100)
+  - First production run: `npx convex run crons_cleanup:cleanupDefaultDayTodos --prod` after deploy. PRD: prds/cleanup-default-day-todos.md
+
 ## Completed Tasks (v.035 - 2026-07-06)
 
 - [x] **Todo Input Placement Toggle** - Input can now sit above or below the todo list (2026-07-06 18:35 UTC)

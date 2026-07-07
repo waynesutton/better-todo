@@ -4,6 +4,18 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.036] - 2026-07-06
+
+### Added
+
+- **Default Todo Cleanup Cron** - Daily Convex cron that clears placeholder-only days
+  - If a past day only holds the untouched "what's the priority?" placeholder todo, the job deletes it so the day drops out of the sidebar date list
+  - New `convex/crons_cleanup.ts` with the `cleanupDefaultDayTodos` internal mutation, including a `dryRun` mode for safe previews
+  - Uses the todos `search_content` index to find candidates, then verifies each day has no other todos, notes, or active full-page notes before deleting
+  - Also removes orphaned `dateLabels` and `archivedDates` rows for cleaned days
+  - Scheduled daily at 12:00 UTC in `convex/crons.ts`
+  - Trigger the first production run after deploy: `npx convex run crons_cleanup:cleanupDefaultDayTodos --prod`
+
 ## [v.035] - 2026-07-06
 
 ### Added

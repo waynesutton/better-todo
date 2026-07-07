@@ -17,6 +17,7 @@ import type * as aiChats from "../aiChats.js";
 import type * as archivedDates from "../archivedDates.js";
 import type * as backlogLabel from "../backlogLabel.js";
 import type * as crons from "../crons.js";
+import type * as crons_cleanup from "../crons_cleanup.js";
 import type * as dateLabels from "../dateLabels.js";
 import type * as dates from "../dates.js";
 import type * as folders from "../folders.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   archivedDates: typeof archivedDates;
   backlogLabel: typeof backlogLabel;
   crons: typeof crons;
+  crons_cleanup: typeof crons_cleanup;
   dateLabels: typeof dateLabels;
   dates: typeof dates;
   folders: typeof folders;
