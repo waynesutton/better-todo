@@ -14,6 +14,7 @@ import {
 } from "@radix-ui/react-icons";
 import { Volume2, VolumeOff, Waves, Clock, Activity } from "lucide-react";
 import { Id } from "../../convex/_generated/dataModel";
+import { FloatingTimerButton } from "./FloatingTimerWindow";
 
 //
 interface PomodoroTimerProps {
@@ -525,6 +526,9 @@ export function PomodoroTimer({
             </div>
 
             <div className="pomodoro-controls">
+              {/* Float the timer out of the browser (Document PiP) */}
+              <FloatingTimerButton />
+
               {(isRunning || isPaused) && (
                 <button
                   className="pomodoro-control-button"

@@ -83,6 +83,26 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.038 - 2026-08-10)
+
+- [x] **Floating Todo and Timer Windows** - Pop todos and the Pomodoro timer out of the browser (2026-08-10 21:55 UTC)
+  - New `src/lib/useFloatWindow.ts` hook using the Document Picture-in-Picture API (always on top, Chromium) with a `window.open` popup fallback for Safari/Firefox
+  - Styles and theme (`data-theme`) copied into the float window; content rendered via React portal so Convex live queries keep working
+  - `src/components/FloatingTodoWindow.tsx`: header button (Phosphor PictureInPicture icon) opens a floating live todo list with checkbox toggle and quick add
+  - `src/components/FloatingTimerWindow.tsx`: button in the Pomodoro modal opens a floating live countdown with start, pause, resume, and stop
+  - Added `@phosphor-icons/react`; float styles in `global.css` using existing theme variables
+  - Verified: tsc clean, no lints. PRD: prds/floating-pip-windows.md
+
+## Completed Tasks (v.037 - 2026-08-10)
+
+- [x] **End of Day Auto Rollover** - Per-user setting to auto move yesterday's incomplete todos to today (2026-08-10 21:45 UTC)
+  - New `convex/rollover.ts` with hourly cron entry point, per-user rollover mutation, and one-time 30 day backfill
+  - Added `autoRolloverEnabled`, `lastAutoRolloverDate`, `rolloverBackfillAt` fields plus `by_autoRollover` index to `userPreferences`
+  - Rollover copies incomplete todos to today and archives originals (same semantics as manual Move to Next Day), then closes yesterday when it has no notes or active full page notes
+  - Runs once per local day per user (timezone aware, defaults to UTC); cron registered hourly at :05 in `convex/crons.ts`
+  - Settings modal gained an End of Day Auto Rollover section with On/Off toggle and a one-time Backfill last 30 days button showing moved/closed counts
+  - Verified: tsc clean, no lints, convex-doctor 100. PRD: prds/auto-rollover-end-of-day.md
+
 ## Completed Tasks (v.036 - 2026-07-06)
 
 - [x] **Default Todo Cleanup Cron** - Daily job removes placeholder-only past days (2026-07-06 22:25 UTC)

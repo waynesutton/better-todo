@@ -113,6 +113,8 @@ export const getUserPreferences = query({
     v.object({
       todoFontSize: v.number(),
       timezone: v.optional(v.string()),
+      autoRolloverEnabled: v.optional(v.boolean()),
+      rolloverBackfillAt: v.optional(v.number()),
     }),
     v.null(),
   ),
@@ -134,7 +136,44 @@ export const getUserPreferences = query({
     return {
       todoFontSize: prefs.todoFontSize,
       timezone: prefs.timezone,
+      autoRolloverEnabled: prefs.autoRolloverEnabled,
+      rolloverBackfillAt: prefs.rolloverBackfillAt,
     };
+  },
+});
+
+// Enable or disable end of day auto rollover of incomplete todos
+export const setAutoRollover = mutation({
+  args: {
+    enabled: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const existing = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (existing) {
+      // Early return if already in the desired state (idempotent)
+      if ((existing.autoRolloverEnabled ?? false) === args.enabled) {
+        return null;
+      }
+      await ctx.db.patch(existing._id, { autoRolloverEnabled: args.enabled });
+    } else {
+      await ctx.db.insert("userPreferences", {
+        userId,
+        todoFontSize: 12,
+        autoRolloverEnabled: args.enabled,
+      });
+    }
+
+    return null;
   },
 });
 

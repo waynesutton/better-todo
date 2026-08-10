@@ -152,7 +152,12 @@ export default defineSchema({
     userId: v.string(),
     todoFontSize: v.number(), // Font size in pixels for .todo-text (default: 12)
     timezone: v.optional(v.string()), // IANA timezone (e.g. "America/Los_Angeles") for weekly recap scheduling
-  }).index("by_user", ["userId"]),
+    autoRolloverEnabled: v.optional(v.boolean()), // Auto move previous day's incomplete todos to today at end of day
+    lastAutoRolloverDate: v.optional(v.string()), // YYYY-MM-DD (user timezone) of last auto rollover run, for once-per-day dedupe
+    rolloverBackfillAt: v.optional(v.number()), // Timestamp when the one-time 30 day backfill ran
+  })
+    .index("by_user", ["userId"])
+    .index("by_autoRollover", ["autoRolloverEnabled"]),
 
   // User API keys - stores per-user API keys for AI features
   userApiKeys: defineTable({

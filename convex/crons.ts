@@ -12,4 +12,14 @@ crons.cron(
   {},
 );
 
+// Hourly at :05: end of day auto rollover. Each opted-in user is processed
+// within the first hour after their local midnight (moves yesterday's
+// incomplete todos to today and closes yesterday if it has no notes).
+crons.cron(
+  "end of day auto rollover",
+  "5 * * * *",
+  internal.rollover.runDailyRollover,
+  {},
+);
+
 export default crons;

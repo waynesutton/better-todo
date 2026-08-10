@@ -26,6 +26,10 @@ export function KeyboardShortcutsModal({
   const [savingAnthropic, setSavingAnthropic] = useState(false);
   const [savingOpenai, setSavingOpenai] = useState(false);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+
+  // Auto rollover backfill state
+  const [backfillRunning, setBackfillRunning] = useState(false);
+  const [backfillResult, setBackfillResult] = useState<string | null>(null);
   
   // Fetch user preferences
   const userPreferences = useQuery(
@@ -47,6 +51,10 @@ export function KeyboardShortcutsModal({
   // Mutation to update font size
   const setTodoFontSize = useMutation(api.users.setTodoFontSize);
   
+  // Auto rollover mutations
+  const setAutoRollover = useMutation(api.users.setAutoRollover);
+  const backfillLast30Days = useMutation(api.rollover.backfillLast30Days);
+  
   // Font size options
   const fontSizes = [10, 12, 14, 16, 18, 24];
   const currentFontSize = userPreferences?.todoFontSize ?? 12;
@@ -54,6 +62,38 @@ export function KeyboardShortcutsModal({
   const handleFontSizeChange = async (fontSize: number) => {
     if (isAuthenticated) {
       await setTodoFontSize({ fontSize });
+    }
+  };
+  
+  // Auto rollover settings
+  const autoRolloverEnabled = userPreferences?.autoRolloverEnabled ?? false;
+  const backfillDone = !!userPreferences?.rolloverBackfillAt;
+  
+  const handleAutoRolloverChange = async (enabled: boolean) => {
+    if (isAuthenticated) {
+      await setAutoRollover({ enabled });
+    }
+  };
+  
+  const handleBackfill = async () => {
+    if (!isAuthenticated || backfillRunning || backfillDone) return;
+    setBackfillRunning(true);
+    setBackfillResult(null);
+    try {
+      const result = await backfillLast30Days({});
+      if (result.alreadyRan) {
+        setBackfillResult("Backfill already completed.");
+      } else {
+        setBackfillResult(
+          `Moved ${result.movedTodos} todo${result.movedTodos === 1 ? "" : "s"} to today and closed ${result.closedDays} day${result.closedDays === 1 ? "" : "s"}.`,
+        );
+      }
+    } catch (error) {
+      setBackfillResult(
+        error instanceof Error ? error.message : "Backfill failed. Try again.",
+      );
+    } finally {
+      setBackfillRunning(false);
     }
   };
   
@@ -369,6 +409,60 @@ export function KeyboardShortcutsModal({
                   Preview: This is how your todo text will look
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* End of Day Auto Rollover Section */}
+          {isAuthenticated && (
+            <div className="keyboard-shortcuts-category">
+              <h3>End of Day Auto Rollover</h3>
+              <p className="keyboard-shortcuts-code-info">
+                When a day ends, move its incomplete todos to the next day
+                automatically and close the previous day if it has no notes.
+              </p>
+              <div className="font-size-options">
+                <button
+                  className={`font-size-option ${autoRolloverEnabled ? "active" : ""}`}
+                  onClick={() => handleAutoRolloverChange(true)}
+                  title="Enable auto rollover"
+                >
+                  On
+                </button>
+                <button
+                  className={`font-size-option ${!autoRolloverEnabled ? "active" : ""}`}
+                  onClick={() => handleAutoRolloverChange(false)}
+                  title="Disable auto rollover"
+                >
+                  Off
+                </button>
+              </div>
+              <p
+                className="keyboard-shortcuts-code-info"
+                style={{ marginTop: 16 }}
+              >
+                One time backfill: apply the same rollover to the last 30 days.
+                Incomplete todos move to today and past days with no notes are
+                closed.
+              </p>
+              <button
+                className="api-key-save-btn"
+                onClick={handleBackfill}
+                disabled={backfillRunning || backfillDone}
+              >
+                {backfillDone
+                  ? "Backfill completed"
+                  : backfillRunning
+                    ? "Running..."
+                    : "Backfill last 30 days"}
+              </button>
+              {backfillResult && (
+                <p
+                  className="keyboard-shortcuts-code-info"
+                  style={{ marginTop: 8 }}
+                >
+                  {backfillResult}
+                </p>
+              )}
             </div>
           )}
 

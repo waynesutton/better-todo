@@ -11,6 +11,7 @@ import { ArchiveSection } from "./components/ArchiveSection";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { PomodoroTimer } from "./components/PomodoroTimer";
+import { FloatingTodoButton } from "./components/FloatingTodoWindow";
 import { FullPageNoteView } from "./components/FullPageNoteView";
 import { FullPageNoteTabs } from "./components/FullPageNoteTabs";
 import { ShareLinkModal } from "./components/ShareLinkModal";
@@ -1530,6 +1531,8 @@ function App() {
                     <Sparkles size={18} />
                   </button>
                 )}
+                {/* Float todos out of the browser (Document PiP) */}
+                <FloatingTodoButton date={selectedDate} />
                 <PomodoroTimer
                   triggerData={pomodoroTriggered}
                   openOnTrigger={true}

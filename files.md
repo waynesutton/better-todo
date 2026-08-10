@@ -4,7 +4,7 @@ This document describes the structure and purpose of each file in the Better Tod
 
 ## Root Configuration
 
-- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, @dnd-kit, Radix UI, react-markdown, remark-gfm, remark-breaks, convex-doctor)
+- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, Phosphor icons, @dnd-kit, Radix UI, react-markdown, remark-gfm, remark-breaks, convex-doctor)
 - `tsconfig.json` - TypeScript configuration for React app
 - `tsconfig.node.json` - TypeScript configuration for Vite
 - `vite.config.ts` - Vite bundler configuration with React plugin
@@ -73,7 +73,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user_and_month_group`, `by_user_and_date`
   - **pomodoroSessions**: Stores pomodoro timer sessions with work/break intervals, completed sessions, and user preferences
     - Index: `by_user`
-  - **userPreferences**: Stores per-user settings including todoFontSize and IANA timezone
+  - **userPreferences**: Stores per-user settings including todoFontSize, IANA timezone, auto rollover setting, last rollover date, and backfill timestamp
     - Index: `by_user`
   - **streaks**: Tracks user streak progress with currentStreak, longestStreak, lastCompletedDate, weeklyProgress, and totalTodosCompleted
     - Index: `by_user`
@@ -316,7 +316,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - `patchRecapNote` - Update an existing note with recap content
   - `backfillCompletedAt` - One-time internal mutation to set completedAt on all completed todos missing it (uses _creationTime as proxy)
 
-- `crons.ts` - Cron job definitions (daily default todo cleanup at 12:00 UTC)
+- `crons.ts` - Cron job definitions (daily default todo cleanup at 12:00 UTC, hourly end of day auto rollover at :05)
+
+- `rollover.ts` - End of day auto rollover functions:
+  - `runDailyRollover` - Internal cron entry point that schedules a per-user rollover for every opted-in user
+  - `processUserRollover` - Internal mutation that moves yesterday's incomplete todos to today (timezone aware, once per local day) and closes yesterday when it has no notes
+  - `backfillLast30Days` - One-time public mutation that applies the same rollover to the last 30 days and reports moved/closed counts
 
 - `crons_cleanup.ts` - Internal `cleanupDefaultDayTodos` mutation that deletes the untouched "what's the priority?" placeholder from placeholder-only past days so they drop off the sidebar (supports dryRun)
 
@@ -336,9 +341,10 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getUserId` - Helper function to get current user's ID from authentication context
   - `storeUser` - Store/update Clerk user data in Convex database
   - `getCurrentUser` - Get authenticated user information
-  - `getUserPreferences` - Get user's preferences including font size and timezone
+  - `getUserPreferences` - Get user's preferences including font size, timezone, auto rollover setting, and backfill state
   - `setTodoFontSize` - Update todo text font size for authenticated user
   - `setTimezoneIfMissing` - Store user's IANA timezone if not already set
+  - `setAutoRollover` - Enable or disable end of day auto rollover of incomplete todos
 - `http.ts` - HTTP routes for authentication callbacks (Clerk ready)
 
 ## React Frontend (`src/`)
@@ -630,6 +636,10 @@ This document describes the structure and purpose of each file in the Better Tod
     - Skips search queries when unauthenticated to prevent errors
     - Shows "Sign In to Search" modal when unauthenticated
 
+- `FloatingTodoWindow.tsx` - Floating on-screen todo window (Document Picture-in-Picture with popup fallback): header button with Phosphor PictureInPicture icon, live todo list with checkbox toggle and quick add, theme synced
+
+- `FloatingTimerWindow.tsx` - Floating on-screen Pomodoro timer window: button inside the Pomodoro modal, live countdown from the Convex session with start, pause, resume, restart, and stop controls
+
 - `PomodoroTimer.tsx` - Built-in productivity timer with:
   - **Duration toggle** - Switch between 25-minute, 50-minute, and 90-minute sessions
     - Waves icon for 25-minute focus mode
@@ -806,6 +816,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - Provides tactile feedback for user interactions
   - Supports iOS and Android devices with haptics capabilities
   - Lightweight utility with graceful fallback
+
+- `useFloatWindow.ts` - Shared hook that opens a floating always-on-top window (Document Picture-in-Picture on Chromium, popup fallback elsewhere), copies app stylesheets and theme into it, and returns a portal container so Convex live queries keep working inside
   - Enhanced mobile experience with physical feedback
 
 ### Styles (`src/styles/`)

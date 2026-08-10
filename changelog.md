@@ -4,6 +4,37 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.038] - 2026-08-10
+
+### Added
+
+- **Floating Todo Window** - Pop the day's todos out of the browser so they float on screen
+  - New PictureInPicture icon button (Phosphor Icons) in the header next to the timer
+  - Uses the Document Picture-in-Picture API on Chromium for a true always on top window, with a small popup fallback on Safari and Firefox
+  - Fully live: todos sync in real time through Convex, checkboxes toggle completion, and a quick add input creates todos
+  - Matches the current app theme and updates when the theme changes
+- **Floating Timer Window** - Pop the Pomodoro timer out of the browser
+  - New float button inside the Pomodoro modal controls
+  - Shows a live countdown, phase badge (Focus/Break with round count), and the linked todo title
+  - Start, pause, resume, restart, and stop controls all work from the float window
+  - The main tab keeps owning phase transitions and sounds
+- New shared `useFloatWindow` hook (`src/lib/useFloatWindow.ts`) that copies app styles into the float window and renders content through a React portal
+
+## [v.037] - 2026-08-10
+
+### Added
+
+- **End of Day Auto Rollover** - Opt-in setting that moves yesterday's incomplete todos to today automatically
+  - New settings section with an On/Off toggle in the shortcuts/settings modal
+  - Hourly Convex cron processes each opted-in user within the first hour after their local midnight (timezone aware, defaults to UTC, once per day)
+  - Incomplete todos are copied to today and the originals archived, matching the manual Move to Next Day behavior
+  - The previous day is closed (added to archived dates) when it held todos but has no notes or active full page notes
+  - New `convex/rollover.ts` with `runDailyRollover`, `processUserRollover`, and `backfillLast30Days`
+  - New `userPreferences` fields: `autoRolloverEnabled`, `lastAutoRolloverDate`, `rolloverBackfillAt` plus a `by_autoRollover` index
+- **One Time 30 Day Backfill** - Button in settings that applies the same rollover to the last 30 days
+  - Moves all incomplete todos from the past 30 days to today and closes past days with no notes
+  - Runs once per user, then stays disabled and reports how many todos moved and days closed
+
 ## [v.036] - 2026-07-06
 
 ### Added
