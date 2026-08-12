@@ -30,6 +30,7 @@ import {
   PinTopIcon,
   PinBottomIcon,
 } from "@radix-ui/react-icons";
+import { ArrowLineUp, ArrowLineDown } from "@phosphor-icons/react";
 
 interface Todo {
   _id: Id<"todos">;
@@ -123,6 +124,11 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       const saved = localStorage.getItem("todoInputAtTop");
       return saved === "true";
     });
+    const [addToTop, setAddToTop] = React.useState(() => {
+      // Load preference from localStorage, default to adding new todos at the bottom
+      const saved = localStorage.getItem("todoAddToTop");
+      return saved === "true";
+    });
 
     // Detect mobile device
     React.useEffect(() => {
@@ -151,6 +157,15 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       setIsInputAtTop((prev) => {
         const newValue = !prev;
         localStorage.setItem("todoInputAtTop", String(newValue));
+        return newValue;
+      });
+    };
+
+    // Toggle where new todos are added (top vs bottom of the list) and save preference
+    const toggleAddPosition = () => {
+      setAddToTop((prev) => {
+        const newValue = !prev;
+        localStorage.setItem("todoAddToTop", String(newValue));
         return newValue;
       });
     };
@@ -239,7 +254,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
           return;
         }
 
-        // Create demo todo
+        // Create demo todo (negative order puts it at the top when toggled)
         const newDemoTodo = {
           _id: `demo-${Date.now()}` as Id<"todos">,
           _creationTime: Date.now(),
@@ -249,7 +264,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
           type: "todo" as "todo" | "h1" | "h2" | "h3",
           completed: false,
           archived: false,
-          order: demoTodos.length,
+          order: addToTop ? -Date.now() : Date.now(),
           collapsed: false,
         };
 
@@ -292,6 +307,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
           folderId: folderId || undefined,
           content: content,
           type,
+          position: addToTop ? "top" : "bottom",
         });
 
         setNewTodoContent("");
@@ -482,12 +498,15 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
                 e.preventDefault();
                 (async () => {
                   try {
-                    for (const line of lines) {
+                    // When adding at the top, reverse so pasted lines keep their order
+                    const orderedLines = addToTop ? [...lines].reverse() : lines;
+                    for (const line of orderedLines) {
                       await createTodo({
                         date: folderId ? undefined : date,
                         folderId: folderId || undefined,
                         content: line.trim(),
                         type: "todo",
+                        position: addToTop ? "top" : "bottom",
                       });
                     }
                     setNewTodoContent("");
@@ -540,6 +559,23 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
             data-lpignore="true"
             inputMode="text"
           />
+          <button
+            type="button"
+            className="inline-todo-pin-toggle"
+            onClick={toggleAddPosition}
+            aria-label={
+              addToTop
+                ? "Add new todos at the bottom of the list"
+                : "Add new todos at the top of the list"
+            }
+            title={
+              addToTop
+                ? "Add new todos at the bottom of the list"
+                : "Add new todos at the top of the list"
+            }
+          >
+            {addToTop ? <ArrowLineDown size={15} /> : <ArrowLineUp size={15} />}
+          </button>
           {!isMobile && (
             <button
               type="button"

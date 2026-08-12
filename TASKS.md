@@ -83,6 +83,14 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.039 - 2026-08-12)
+
+- [x] **Todo Add Position Toggle** - Choose whether new todos are added at the top or bottom of the list (2026-08-12 19:07 UTC)
+  - `createTodo` in `convex/todos.ts` gains an optional `position` arg; top inserts use `order = -Date.now()` (no reads, no write conflicts), bottom stays the default
+  - New Phosphor ArrowLineUp/ArrowLineDown toggle button in the input shell in `src/components/TodoList.tsx`, shown on desktop and mobile
+  - Preference saved to localStorage (`todoAddToTop`); multi-line paste reverses lines at top so pasted order is preserved; demo mode todos respect the toggle
+  - Verified: tsc clean, no lints, convex-doctor 100. PRD: prds/todo-add-position-toggle.md
+
 ## Completed Tasks (v.038 - 2026-08-10)
 
 - [x] **Floating Todo and Timer Windows** - Pop todos and the Pomodoro timer out of the browser (2026-08-10 21:55 UTC)

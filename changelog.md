@@ -4,6 +4,17 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.039] - 2026-08-12
+
+### Added
+
+- **Todo Add Position Toggle** - Choose whether new todos land at the top or bottom of the list
+  - New ArrowLineUp/ArrowLineDown icon button (Phosphor Icons) inside the todo input shell, next to the placement and alignment toggles
+  - `createTodo` accepts an optional `position` argument; top inserts use a negative timestamp order so they sort first without reading existing todos (no write conflicts)
+  - Preference persists in localStorage (`todoAddToTop`) and defaults to bottom, matching existing behavior
+  - Multi-line paste keeps its reading order when adding at the top; demo mode todos respect the toggle too
+  - Shown on both desktop and mobile since it changes add behavior, not just layout
+
 ## [v.038] - 2026-08-10
 
 ### Added

@@ -105,7 +105,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getTodoCountsByFolder` - Get count of uncompleted todos per folder for sidebar badges
   - `getPinnedTodos` - Get all pinned todos for user (excluding folder-associated todos, including their subtasks)
   - `getUncompletedCounts` - Get count of uncompleted todos for each date (excludes folder-associated todos, for sidebar badges)
-  - `createTodo` - Create new todo with timestamp-based ordering (avoids write conflicts, supports both date and folderId parameters)
+  - `createTodo` - Create new todo with timestamp-based ordering (avoids write conflicts, supports both date and folderId parameters, optional `position` arg adds at top via negative timestamp or bottom by default)
   - `createSubtask` - Create a subtask under a parent todo (inherits folderId from parent)
   - `updateTodo` - Update todo (auto-archives on complete, auto-unarchives on uncheck, supports pin/unpin, triggers streak updates)
   - `deleteTodo` - Remove a todo (idempotent, uses indexed queries, parallel deletes for subtasks to avoid write conflicts, triggers streak updates)
@@ -444,6 +444,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Drag-and-drop functionality using @dnd-kit
   - **Pinned todos sorted to top** - Automatically displays pinned todos first on each date page
   - **Todo input placement toggle** - PinTop/PinBottom icon button moves the input above the todo list (below header and date text) or back below the list; preference saved to localStorage (`todoInputAtTop`), works alongside the left/center alignment toggle
+  - **Todo add position toggle** - Phosphor ArrowLineUp/ArrowLineDown icon button chooses whether new todos are added at the top or bottom of the list; preference saved to localStorage (`todoAddToTop`), applies to typed todos, multi-line paste (order preserved), and demo mode
   - **Refined todo input UI** - Modern rounded container with ArrowUp submit button
     - Max width of 650px on desktop with `var(--bg-secondary)` background
     - ArrowUp icon button (24px, scales to 22px/20px/18px on smaller devices) from Radix UI

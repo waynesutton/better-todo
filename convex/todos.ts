@@ -297,6 +297,7 @@ export const createTodo = mutation({
       v.literal("h3"),
     ),
     parentId: v.optional(v.id("todos")),
+    position: v.optional(v.union(v.literal("top"), v.literal("bottom"))),
   },
   returns: v.id("todos"),
   handler: async (ctx, args) => {
@@ -308,7 +309,8 @@ export const createTodo = mutation({
 
     // Use timestamp-based ordering instead of reading all todos
     // This avoids write conflicts when creating multiple todos rapidly
-    const order = Date.now();
+    // "top" uses a negative timestamp so the todo sorts before existing ones
+    const order = args.position === "top" ? -Date.now() : Date.now();
 
     return await ctx.db.insert("todos", {
       userId: userId,
