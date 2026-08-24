@@ -425,10 +425,13 @@ export function KanbanBoard({
 
   if (columnsQuery === undefined) {
     return (
-      <div className="kanban-board kanban-board-loading" aria-busy="true">
-        <div className="kanban-skeleton-column" />
-        <div className="kanban-skeleton-column" />
-        <div className="kanban-skeleton-column" />
+      // Same wrapper as the loaded board so the skeleton fills the same frame
+      <div className="kanban-wrapper">
+        <div className="kanban-board kanban-board-loading" aria-busy="true">
+          <div className="kanban-skeleton-column" />
+          <div className="kanban-skeleton-column" />
+          <div className="kanban-skeleton-column" />
+        </div>
       </div>
     );
   }

@@ -247,3 +247,27 @@ Two sources of truth for the same idea. `kanbanColumn` is a hand placement,
   write there buys nothing the board can't derive. Verified: `npx tsc --noEmit`
   clean, `npx eslint` clean on both files apart from pre-existing warnings,
   `npm run build` clean. Status: Done
+- 2026-08-24 17:40 UTC — Full height and mobile pass. Columns were hugging their
+  cards because `.kanban-column-body` carried `max-height: min(58vh, 520px)` and
+  nothing above it claimed height, so a short column ended in mid air and the
+  space beneath it was dead. Fixed by extending the app's existing flex chain
+  rather than adding viewport math: the todo container now carries
+  `data-view="board"`, board view makes it a flex column, the wrapper takes
+  `flex: 1`, and `.kanban-column-body` becomes the only scroller. That inherits
+  the `dvh` and safe area handling `#root` already does, so phones need no
+  special case. Two structural fixes fell out of it: the selection bar moved from
+  sticky to absolute (as a sticky row it shortened every column the moment a
+  selection existed) and the add column tile opts out of the stretch so it stays
+  a tile. Floors of 300px, and 200px under `max-height: 560px` for phone
+  landscape, keep a column usable when notes take the rest of the page; past the
+  floor the page scrolls so notes stay reachable. Touch got 32x44px drag grips,
+  the only way to move a card without a mouse. Verification needed a throwaway
+  static harness against the compiled stylesheet, because the board sits behind
+  auth and the browser tooling runs in its own unauthenticated session. At
+  1440x900 the board is 740px with four equal 728px columns and 51px to the
+  footer, all of it the Add Note button. At 532x356 the 200px floor holds, a
+  column body shows 72px of a 651px card list and scrolls, and the composer stays
+  visible above the footer. Board height is identical with and without the
+  selection bar, and holds its floor with eight notes below while the page
+  scrolls to reach them. Harness deleted after measuring. Verified:
+  `npx tsc --noEmit` clean, eslint clean, `npx vite build` clean. Status: Done

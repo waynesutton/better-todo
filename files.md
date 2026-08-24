@@ -11,7 +11,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (v.033 - Weekly Recap Manual Mode)
+- `changelog.md` - Version history with all features (latest: v.040 - Kanban Board View); mirrored in the app by `src/pages/Changelog.tsx`
 - `convex-doctor.toml` - convex-doctor configuration with rule suppressions and CI threshold
 - `convex.json` - Convex deployment configuration
 - `files.md` - This file, project structure documentation
@@ -383,6 +383,11 @@ This document describes the structure and purpose of each file in the Better Tod
   - Footer with technology credits
   - Accessible at `/launch` and `/about` routes
 
+- `src/pages/Changelog.tsx` - In-app changelog page at the `/changelog` route:
+  - Mirrors `changelog.md` as JSX sections, one per version from v.040 down to v1.001, each with Added/Changed/Fixed/Removed lists
+  - Sidebar version index with scroll-spy highlighting, plus a mobile hamburger toggle
+  - The `sections` array and the rendered `<section>` anchors must stay in sync; the newest version carries the page title and holds the default `activeSection`
+
 - `src/pages/NotFound.tsx` - Custom 404 Not Found page with:
   - Clean, minimal design matching app aesthetic
   - Large "404" heading with soft black text
@@ -466,10 +471,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - Dragging a selected card moves the whole selection, with a count badge on the drag overlay
   - Per column composer at the bottom, inline rename on double click, and a column menu for rename and delete with a ConfirmDialog
   - Column reorder is written optimistically so header drags feel instant, then handed back to the server
-  - Renders a skeleton while columns load, keeping the same footprint to avoid a layout jump
+  - Renders a skeleton while columns load, inside the same wrapper as the real board so it fills the same frame with no layout jump
+  - Fills the window: the board claims the height between the header and the footer and every column stretches to the same bottom edge, with each column body scrolling inside itself so headers and composers stay put
 
 - `TodoList.tsx` - Todo list container with:
   - **View mode switch** - A `viewMode` prop renders either the list or `KanbanBoard`; in board mode the shared todo input hides because each column has its own composer, and notes stay below the board
+  - Marks the container with `data-view="board" | "list"`, the hook the board's full height layout rules hang off in `global.css`
   - Drag-and-drop functionality using @dnd-kit
   - **Pinned todos sorted to top** - Automatically displays pinned todos first on each date page
   - **Todo input placement toggle** - PinTop/PinBottom icon button moves the input above the todo list (below header and date text) or back below the list; preference saved to localStorage (`todoInputAtTop`), works alongside the left/center alignment toggle
@@ -884,6 +891,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - System font stack for native look and feel
   - Kanban board styles (columns, cards, composers, add column tile, bulk selection bar) plus the Settings choice cards and section divider
   - Board theme tokens (`--board-line`, `--board-line-strong`, `--board-pick`, `--board-pick-ink`, `--board-wash`, `--board-muted`, `--board-lift`) with per theme overrides. The board reads structure from hairlines and emphasis from lit edges, so themes whose palette collapses those roles get a corrected value here. Cloud is the main case: its border, hover, and accent are all `#e8e8e8` and its secondary text equals primary, so it substitutes darker hairlines, ink as the emphasis color, a real hover wash, and a distinct muted gray
+  - Board full height layout, keyed off `.todo-container[data-view="board"]`: board view becomes a flex column so the height chain runs unbroken from `#root` to the column body, which is the only scroller (`overscroll-behavior: contain` keeps a flick from carrying on to the page). Column headers, composers, and context lines hold their size. The selection bar is absolute so a selection cannot shorten the columns, and the add column tile opts out of the stretch. Floors of 300px, and 200px under `max-height: 560px` for phone landscape, keep a column usable when notes take the rest of the page
 
 ## Documentation (`prds/`)
 
@@ -898,7 +906,7 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `README.md` - Complete project documentation with features, usage guide, and customization
 - `files.md` - This file, describing project structure and file purposes
-- `changelog.md` - Version history with all feature additions and changes (v1.001 to v.030)
+- `changelog.md` - Version history with all feature additions and changes (v1.001 to v.040)
 - `TASKS.md` - Project tasks and development tracking
 
 ## Current Version: v.033 (April 24, 2026)

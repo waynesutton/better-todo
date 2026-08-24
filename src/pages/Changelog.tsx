@@ -2,11 +2,18 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v033");
+  const [activeSection, setActiveSection] = useState("v040");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
+    { id: "v040", title: "v.040 - Aug 23, 2026" },
+    { id: "v039", title: "v.039 - Aug 12, 2026" },
+    { id: "v038", title: "v.038 - Aug 10, 2026" },
+    { id: "v037", title: "v.037 - Aug 10, 2026" },
+    { id: "v036", title: "v.036 - Jul 6, 2026" },
+    { id: "v035", title: "v.035 - Jul 6, 2026" },
+    { id: "v034", title: "v.034 - Jul 6, 2026" },
     { id: "v033", title: "v.033 - Apr 24, 2026" },
     { id: "v032", title: "v.032 - Apr 10, 2026" },
     { id: "v031", title: "v.031 - Jan 13, 2026" },
@@ -103,12 +110,504 @@ export function Changelog() {
 
       <div className="launch-container">
         {/* Each section mirrors the markdown changelog so anchors stay in sync. */}
-        <section id="v033" className="launch-section">
+        <section id="v040" className="launch-section">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">v.040 - August 23, 2026</h2>
+          <p className="changelog-subtitle">Kanban Board View</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Kanban Board View</strong> - Every day and project can now
+              be read as a board instead of a list
+              <ul className="nested-list">
+                <li>
+                  Four columns out of the box: To do, Doing, Done, Backlog. Add
+                  up to 12, rename by double clicking the title, delete from the
+                  column menu (cards move to the leftmost column, never
+                  orphaned)
+                </li>
+                <li>
+                  Drag cards inside a column to reorder and across columns to
+                  change state. Drag column headers by their grip to reorder the
+                  board
+                </li>
+                <li>
+                  Dropping a card in Done completes and archives it. Dragging it
+                  back out revives it. Both paths feed the streak counter, same
+                  as checking the box in list view
+                </li>
+                <li>
+                  Each column has its own composer at the bottom, so new work
+                  enters where you are already looking. Cards created in Done
+                  arrive completed
+                </li>
+                <li>
+                  Group select with Cmd/Ctrl/Shift click. A bottom bar shows the
+                  count and one button per column for a bulk move. Escape clears
+                </li>
+                <li>
+                  Dragging any selected card moves the whole selection together,
+                  with a count badge on the drag overlay
+                </li>
+                <li>
+                  Existing card menus, subtasks, pins, timers, and Send to agent
+                  all work unchanged. Card menus portal to the body so a
+                  scrolling column cannot clip them
+                </li>
+                <li>
+                  New <code>convex/kanban.ts</code> with <code>getColumns</code>
+                  , <code>addColumn</code>, <code>renameColumn</code>,{" "}
+                  <code>deleteColumn</code>, <code>reorderColumns</code>,{" "}
+                  <code>createTodoInColumn</code>, and{" "}
+                  <code>moveTodosToColumn</code>. The client sends the
+                  destination column&apos;s full ordered id list so the server
+                  never read-modify-writes, keeping concurrent drags conflict
+                  free
+                </li>
+                <li>
+                  New <code>kanbanColumns</code> table plus{" "}
+                  <code>kanbanColumn</code> and <code>kanbanOrder</code> on{" "}
+                  <code>todos</code>
+                </li>
+                <li>
+                  Columns fall back to virtual defaults until the first edit, so
+                  a new account sees a working board with zero writes
+                </li>
+                <li>
+                  Board view is hidden on the Pinned and Backlog views, where
+                  columns have no meaning
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>List and board toggle</strong> - Kanban/Rows icon button
+              in the header (Phosphor Icons), plus <code>Shift + B</code>
+              <ul className="nested-list">
+                <li>
+                  The toggle is per day and per project, saved in localStorage
+                  and pruned to the 60 most recent scopes
+                </li>
+                <li>
+                  Switching a page never changes your saved default
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Default Todo View setting</strong> - Choose List or Board
+              as the starting view for every day and project
+              <ul className="nested-list">
+                <li>
+                  New <code>defaultTodoView</code> field on{" "}
+                  <code>userPreferences</code> with a{" "}
+                  <code>setDefaultTodoView</code> mutation
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Board theme tokens</strong> - Seven{" "}
+              <code>--board-*</code> CSS variables (line, line-strong, pick,
+              pick-ink, wash, muted, lift) that carry the board&apos;s
+              structure, emphasis, and depth roles across Dark, Light, Tan, and
+              Cloud
+              <ul className="nested-list">
+                <li>
+                  The board leans on hairlines harder than the rest of the app: a
+                  column is its border, and a drop target is its lit edge. Tokens
+                  let each theme correct only the roles its palette cannot
+                  express
+                </li>
+                <li>
+                  Cloud collapses border, hover, and accent into one gray and
+                  gives secondary text the same value as primary, which left
+                  columns and drop targets invisible. It now uses a darker
+                  hairline, its own ink as the emphasis color, a real hover wash,
+                  and a distinct muted gray
+                </li>
+                <li>
+                  Dark swaps white for near-black on its blue swatch (white
+                  measured 2.8:1) and doubles shadow weight, since a soft black
+                  shadow disappears on a mid-dark surface
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Keyboard Shortcuts modal is now Settings</strong> -
+              Renamed with a GearSix icon (Phosphor Icons) in both the modal
+              header and the sidebar button
+              <ul className="nested-list">
+                <li>
+                  Settings controls now sit at the top: Default Todo View, Todo
+                  Text Font Size, End of Day Auto Rollover, API Keys, Code Blocks
+                </li>
+                <li>
+                  The shortcut tables moved to the bottom, under a Keyboard
+                  Shortcuts divider
+                </li>
+                <li>
+                  Added <code>Shift + B</code> to the navigation shortcuts list
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Board fills the window</strong> - Columns used to hug their
+              cards, so a short column ended in mid air and the space under it
+              was dead. The board now claims the height between the header and
+              the footer and every column stretches to the same bottom edge
+              (August 24, 2026)
+              <ul className="nested-list">
+                <li>
+                  Board view marks the container with{" "}
+                  <code>data-view=&quot;board&quot;</code> and turns it into a
+                  flex column, so the height chain runs unbroken from{" "}
+                  <code>#root</code> down to the column body. The board inherits
+                  the app&apos;s existing <code>dvh</code> and safe area handling
+                  instead of doing viewport math of its own
+                </li>
+                <li>
+                  Column headers, composers, and date context lines hold their
+                  size; only the card list scrolls. The composer stays reachable
+                  at the bottom of a full column, no scrolling required
+                </li>
+                <li>
+                  A 300px floor keeps a column usable when notes take the rest of
+                  the page, dropping to 200px on short windows such as a phone in
+                  landscape. Past the floor the page scrolls, so notes stay
+                  reachable
+                </li>
+                <li>
+                  The bulk selection bar floats over the board instead of taking
+                  a row, so selecting cards no longer shortens every column
+                </li>
+                <li>
+                  Column scroll uses{" "}
+                  <code>overscroll-behavior: contain</code>, so flicking to the
+                  end of a column does not carry on and scroll the page
+                </li>
+                <li>
+                  Drag grips grew to a 32x44px target on touch, the only way to
+                  drag a card or column on a phone
+                </li>
+              </ul>
+            </li>
+            <li>
+              <code>TodoItem</code> gained a <code>card</code> variant used by
+              the board: the wrapper owns the sortable, the drag handle is
+              supplied by the board, and the menu portals with viewport
+              coordinates
+            </li>
+            <li>
+              Drop targets and the active Settings choice now draw a doubled edge
+              (border plus inset ring) instead of a hue change alone, so the
+              state does not depend on color perception
+            </li>
+            <li>
+              Board secondary text (column counts, empty states, date context,
+              composer placeholder) dropped its <code>opacity</code> values for
+              real muted colors, bringing 10px and 12px labels above 4.5:1 in
+              every theme
+            </li>
+            <li>
+              Every board control has an explicit <code>:focus-visible</code>{" "}
+              ring, and the composer gained a focus ring instead of relying on a
+              background tint alone
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <code>Shift + A</code> (send hovered todo to an agent) prefilled an
+              empty task because the handler read <code>todo.text</code>, a field
+              that does not exist, instead of <code>todo.content</code>
+            </li>
+            <li>
+              Active header nav icons were nearly invisible in the Cloud theme,
+              whose <code>--accent</code> is a near-background gray. Cloud now
+              uses its ink for the active state, which also fixes the list/board
+              toggle reading as off while board view was on
+            </li>
+            <li>
+              Completed cards showed twice in board view, once in the Done column
+              and again in the footer Done section. The footer section is now
+              hidden while the board is open, since the Done column is the
+              board&apos;s archive (August 24, 2026)
+            </li>
+            <li>
+              Checking a card off in list view left the board showing it under
+              its old column, and unchecking one from the list&apos;s Done
+              section left it parked in Done as an active card. Completion now
+              outranks the saved column placement when the board decides where a
+              card sits, so both views agree without any extra writes (August 24,
+              2026)
+            </li>
+          </ul>
+        </section>
+
+        <section id="v039" className="launch-section">
+          <h2 className="section-title">v.039 - August 12, 2026</h2>
+          <p className="changelog-subtitle">Todo Add Position Toggle</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Todo Add Position Toggle</strong> - Choose whether new
+              todos land at the top or bottom of the list
+              <ul className="nested-list">
+                <li>
+                  New ArrowLineUp/ArrowLineDown icon button (Phosphor Icons)
+                  inside the todo input shell, next to the placement and
+                  alignment toggles
+                </li>
+                <li>
+                  <code>createTodo</code> accepts an optional{" "}
+                  <code>position</code> argument; top inserts use a negative
+                  timestamp order so they sort first without reading existing
+                  todos (no write conflicts)
+                </li>
+                <li>
+                  Preference persists in localStorage (<code>todoAddToTop</code>)
+                  and defaults to bottom, matching existing behavior
+                </li>
+                <li>
+                  Multi-line paste keeps its reading order when adding at the
+                  top; demo mode todos respect the toggle too
+                </li>
+                <li>
+                  Shown on both desktop and mobile since it changes add behavior,
+                  not just layout
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v038" className="launch-section">
+          <h2 className="section-title">v.038 - August 10, 2026</h2>
+          <p className="changelog-subtitle">Floating Windows</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Floating Todo Window</strong> - Pop the day&apos;s todos
+              out of the browser so they float on screen
+              <ul className="nested-list">
+                <li>
+                  New PictureInPicture icon button (Phosphor Icons) in the header
+                  next to the timer
+                </li>
+                <li>
+                  Uses the Document Picture-in-Picture API on Chromium for a true
+                  always on top window, with a small popup fallback on Safari and
+                  Firefox
+                </li>
+                <li>
+                  Fully live: todos sync in real time through Convex, checkboxes
+                  toggle completion, and a quick add input creates todos
+                </li>
+                <li>
+                  Matches the current app theme and updates when the theme
+                  changes
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Floating Timer Window</strong> - Pop the Pomodoro timer out
+              of the browser
+              <ul className="nested-list">
+                <li>New float button inside the Pomodoro modal controls</li>
+                <li>
+                  Shows a live countdown, phase badge (Focus/Break with round
+                  count), and the linked todo title
+                </li>
+                <li>
+                  Start, pause, resume, restart, and stop controls all work from
+                  the float window
+                </li>
+                <li>
+                  The main tab keeps owning phase transitions and sounds
+                </li>
+              </ul>
+            </li>
+            <li>
+              New shared <code>useFloatWindow</code> hook (
+              <code>src/lib/useFloatWindow.ts</code>) that copies app styles into
+              the float window and renders content through a React portal
+            </li>
+          </ul>
+        </section>
+
+        <section id="v037" className="launch-section">
+          <h2 className="section-title">v.037 - August 10, 2026</h2>
+          <p className="changelog-subtitle">End of Day Auto Rollover</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>End of Day Auto Rollover</strong> - Opt-in setting that
+              moves yesterday&apos;s incomplete todos to today automatically
+              <ul className="nested-list">
+                <li>
+                  New settings section with an On/Off toggle in the
+                  shortcuts/settings modal
+                </li>
+                <li>
+                  Hourly Convex cron processes each opted-in user within the
+                  first hour after their local midnight (timezone aware, defaults
+                  to UTC, once per day)
+                </li>
+                <li>
+                  Incomplete todos are copied to today and the originals
+                  archived, matching the manual Move to Next Day behavior
+                </li>
+                <li>
+                  The previous day is closed (added to archived dates) when it
+                  held todos but has no notes or active full page notes
+                </li>
+                <li>
+                  New <code>convex/rollover.ts</code> with{" "}
+                  <code>runDailyRollover</code>,{" "}
+                  <code>processUserRollover</code>, and{" "}
+                  <code>backfillLast30Days</code>
+                </li>
+                <li>
+                  New <code>userPreferences</code> fields:{" "}
+                  <code>autoRolloverEnabled</code>,{" "}
+                  <code>lastAutoRolloverDate</code>,{" "}
+                  <code>rolloverBackfillAt</code> plus a{" "}
+                  <code>by_autoRollover</code> index
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>One Time 30 Day Backfill</strong> - Button in settings that
+              applies the same rollover to the last 30 days
+              <ul className="nested-list">
+                <li>
+                  Moves all incomplete todos from the past 30 days to today and
+                  closes past days with no notes
+                </li>
+                <li>
+                  Runs once per user, then stays disabled and reports how many
+                  todos moved and days closed
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v036" className="launch-section">
+          <h2 className="section-title">v.036 - July 6, 2026</h2>
+          <p className="changelog-subtitle">Default Todo Cleanup Cron</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Default Todo Cleanup Cron</strong> - Daily Convex cron that
+              clears placeholder-only days
+              <ul className="nested-list">
+                <li>
+                  If a past day only holds the untouched &quot;what&apos;s the
+                  priority?&quot; placeholder todo, the job deletes it so the day
+                  drops out of the sidebar date list
+                </li>
+                <li>
+                  New <code>convex/crons_cleanup.ts</code> with the{" "}
+                  <code>cleanupDefaultDayTodos</code> internal mutation,
+                  including a <code>dryRun</code> mode for safe previews
+                </li>
+                <li>
+                  Uses the todos <code>search_content</code> index to find
+                  candidates, then verifies each day has no other todos, notes, or
+                  active full-page notes before deleting
+                </li>
+                <li>
+                  Also removes orphaned <code>dateLabels</code> and{" "}
+                  <code>archivedDates</code> rows for cleaned days
+                </li>
+                <li>
+                  Scheduled daily at 12:00 UTC in <code>convex/crons.ts</code>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v035" className="launch-section">
+          <h2 className="section-title">v.035 - July 6, 2026</h2>
+          <p className="changelog-subtitle">Todo Input Placement Toggle</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Todo Input Placement Toggle</strong> - Move the add-todo
+              input above or below the list
+              <ul className="nested-list">
+                <li>
+                  New PinTop/PinBottom icon button inside the input shell
+                  (desktop only, next to the left/center alignment toggle)
+                </li>
+                <li>
+                  Top placement renders the input above the todo list, below the
+                  header and date text
+                </li>
+                <li>Default stays at the bottom, matching existing behavior</li>
+                <li>
+                  Preference persists in localStorage (
+                  <code>todoInputAtTop</code>) and works independently of the
+                  left/center alignment setting
+                </li>
+                <li>
+                  Uses Radix <code>PinTopIcon</code>/<code>PinBottomIcon</code>{" "}
+                  to match the existing icon set
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v034" className="launch-section">
+          <h2 className="section-title">v.034 - July 6, 2026</h2>
+          <p className="changelog-subtitle">Move to Custom Date</p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Move to Custom Date</strong> - New option in the sidebar
+              three-dot date menu
+              <ul className="nested-list">
+                <li>
+                  Moves all incomplete todos from a date to any chosen date and
+                  archives the originals, matching how Move to Next Day works
+                </li>
+                <li>
+                  Opens the same date picker as Copy to Custom Date, with the
+                  confirm button switching between Copy and Move based on the
+                  selected action
+                </li>
+                <li>
+                  Available in both the main date list and dates inside project
+                  folders
+                </li>
+                <li>
+                  Reuses the existing <code>moveTodosToNextDay</code> Convex
+                  mutation (already accepts any target date), so no backend
+                  changes were needed
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v033" className="launch-section">
           <h2 className="section-title">v.033 - April 24, 2026</h2>
           <p className="changelog-subtitle">Weekly Recap Manual Mode</p>
 

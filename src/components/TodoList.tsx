@@ -637,6 +637,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
     return (
       <div
         className="todo-container"
+        data-view={showBoard ? "board" : "list"}
         onClick={(e) => {
           // Focus input when clicking on empty space
           if (

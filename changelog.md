@@ -37,10 +37,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Settings controls now sit at the top: Default Todo View, Todo Text Font Size, End of Day Auto Rollover, API Keys, Code Blocks
   - The shortcut tables moved to the bottom, under a Keyboard Shortcuts divider
   - Added `Shift + B` to the navigation shortcuts list
+- **In-app changelog page caught up** - `src/pages/Changelog.tsx` had stalled at v.033 while this file reached v.040, so seven releases were invisible in the app. Added v.034 through v.040 as sections, moved the page title onto v.040, and extended the sidebar version index (2026-08-24)
 - `TodoItem` gained a `card` variant used by the board: the wrapper owns the sortable, the drag handle is supplied by the board, and the menu portals with viewport coordinates
 - Drop targets and the active Settings choice now draw a doubled edge (border plus inset ring) instead of a hue change alone, so the state does not depend on color perception
 - Board secondary text (column counts, empty states, date context, composer placeholder) dropped its `opacity` values for real muted colors, bringing 10px and 12px labels above 4.5:1 in every theme
 - Every board control has an explicit `:focus-visible` ring, and the composer gained a focus ring instead of relying on a background tint alone
+- **Board fills the window** - Columns used to hug their cards, so a short column ended in mid air and the space under it was dead. The board now claims the height between the header and the footer and every column stretches to the same bottom edge, with each column body scrolling inside itself (2026-08-24)
+  - Board view marks the container with `data-view="board"` and turns it into a flex column, so the height chain runs unbroken from `#root` down to the column body. The board inherits the app's existing `dvh` and safe area handling instead of doing viewport math of its own
+  - Column headers, composers, and date context lines hold their size; only the card list scrolls. The composer stays reachable at the bottom of a full column, no scrolling required
+  - A 300px floor keeps a column usable when notes take the rest of the page, dropping to 200px on short windows such as a phone in landscape. Past the floor the page scrolls, so notes stay reachable
+  - The bulk selection bar floats over the board instead of taking a row, so selecting cards no longer shortens every column
+  - Column scroll uses `overscroll-behavior: contain`, so flicking to the end of a column does not carry on and scroll the page
+  - Drag grips grew to a 32x44px target on touch, the only way to drag a card or column on a phone
+  - Measured at 1440x900 and at 532x356: all columns equal height, board bottom clear of the footer, card lists scrolling internally, and board height unchanged whether the selection bar is up or not
 
 ### Fixed
 

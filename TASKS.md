@@ -116,6 +116,22 @@ git push -u origin main
   - Kept as a read time rule rather than a write in `updateTodo`, so the hot completion path gains no extra writes and no new conflict window
   - Verified: tsc clean, eslint clean on both files (only pre-existing warnings), production build clean. PRD: prds/kanban-board-view.md
 
+- [x] **Board full height and mobile** - Columns reach the bottom of the window at every size (2026-08-24 17:40 UTC)
+  - `src/components/TodoList.tsx`: the todo container carries `data-view="board" | "list"`, the hook the board's layout rules hang off
+  - `src/styles/global.css`: board view turns the container into a flex column, `.kanban-wrapper` takes `flex: 1`, and `.kanban-board` stretches its columns. `.kanban-column-body` is the only scroller (`flex: 1`, `overflow-y: auto`, `overscroll-behavior: contain`); header, composer, and context hold their size with `flex-shrink: 0`. Removed the old `max-height: min(58vh, 520px)` cap that made columns hug their cards
+  - `.kanban-selection-bar` moved from sticky to absolute so a selection no longer shortens every column. `.kanban-add-column` opts out of the stretch with `align-self: flex-start`
+  - Floor of 300px on the wrapper, 200px under `max-height: 560px` (phone landscape). Past the floor the page scrolls so notes stay reachable
+  - Touch: drag grips at 32x44px, `-webkit-overflow-scrolling: touch` on column bodies, and tighter `add-note-button` margins in board view to hand ~80px back to the columns
+  - `src/components/KanbanBoard.tsx`: the loading skeleton renders inside `.kanban-wrapper` so it fills the same frame as the real board, no layout jump on first paint
+  - Verified in a throwaway static harness against the compiled stylesheet, since the board sits behind auth. At 1440x900: board 740px, all four columns 728px and equal, 51px to the footer and all of it the Add Note button. At 532x356: the 200px floor holds, a column body shows 72px of a 651px list and scrolls, the composer stays visible, and nothing overlaps the footer. Board height is 200px whether the selection bar is up or not, and holds its floor with eight notes below while the page scrolls
+  - Verified: tsc clean, eslint clean, production build clean. PRD: prds/kanban-board-view.md
+
+- [x] **In-app changelog page caught up to v.040** - Seven releases were missing from the app (2026-08-24 17:55 UTC)
+  - `src/pages/Changelog.tsx`: the page had stalled at v.033 while `changelog.md` reached v.040. Added sections for v.034 (Move to Custom Date), v.035 (Todo Input Placement Toggle), v.036 (Default Todo Cleanup Cron), v.037 (End of Day Auto Rollover), v.038 (Floating Windows), v.039 (Todo Add Position Toggle), and v.040 (Kanban Board View)
+  - Moved the page title and intro onto v.040 as the new top section, extended the sidebar `sections` index, and changed the default `activeSection` from `v033` to `v040` so scroll-spy starts on the newest release
+  - `files.md`: added a `src/pages/Changelog.tsx` entry, which was never documented, and corrected two stale `changelog.md` descriptions that still read v.033 and v.030
+  - Verified in the browser: 39 sidebar links against 39 rendered sections, no missing anchors, no orphan sections, one `h1`. tsc clean, eslint clean, production build clean
+
 ## Completed Tasks (v.039 - 2026-08-12)
 
 - [x] **Todo Add Position Toggle** - Choose whether new todos are added at the top or bottom of the list (2026-08-12 19:07 UTC)

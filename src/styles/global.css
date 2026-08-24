@@ -12199,18 +12199,55 @@ button:active,
   --board-lift: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
+/* Board mode turns the page into a fixed frame. The board claims the height
+   left between the header and the footer and each column scrolls inside itself,
+   so columns reach the bottom of the window instead of ending under their last
+   card. The chain is pure flex from #root, which already handles dvh and safe
+   areas on phones, so the board needs no viewport math of its own. */
+.todo-container[data-view="board"] {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Only the board flexes. Notes keep their natural size and push the page into
+   scrolling once they outgrow the window. */
+.todo-container[data-view="board"] > * {
+  flex-shrink: 0;
+}
+
+.todo-container[data-view="board"] > .kanban-wrapper {
+  flex: 1;
+  /* Floor keeps a column usable once notes take the rest of the page */
+  min-height: 300px;
+}
+
+/* The list view needs breathing room above this button because it follows loose
+   rows. The board ends in a hard column edge, so the gap can close and hand the
+   height back to the columns. */
+.todo-container[data-view="board"] > .add-note-button {
+  margin-top: 10px;
+  margin-bottom: 2px;
+}
+
 .kanban-wrapper {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  min-height: 0;
 }
 
 .kanban-board {
   display: flex;
-  align-items: flex-start;
+  /* Stretch, not flex-start: columns take the board's full height */
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
   gap: 12px;
   overflow-x: auto;
-  overflow-y: visible;
-  padding: 4px 4px 20px;
+  /* Columns own vertical scrolling, so the board itself never scrolls down */
+  overflow-y: hidden;
+  padding: 4px 4px 8px;
   scrollbar-width: thin;
   /* Scroll one column at a time so a flick never lands mid column */
   scroll-snap-type: x proximity;
@@ -12232,7 +12269,7 @@ button:active,
 /* Loading placeholder, same footprint as real columns to avoid a layout jump */
 .kanban-board-loading .kanban-skeleton-column {
   width: 288px;
-  height: 220px;
+  min-height: 220px;
   flex-shrink: 0;
   border: 1px solid var(--board-line);
   border-radius: 8px;
@@ -12263,6 +12300,8 @@ button:active,
   flex-direction: column;
   width: 288px;
   flex-shrink: 0;
+  /* Stretched by the board, but never taller than it: the body scrolls */
+  max-height: 100%;
   scroll-snap-align: start;
   border: 1px solid var(--board-line);
   border-radius: 8px;
@@ -12289,6 +12328,7 @@ button:active,
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
   padding: 8px 8px 8px 4px;
   border-bottom: 1px solid var(--board-line);
 }
@@ -12402,14 +12442,19 @@ button:active,
   cursor: not-allowed;
 }
 
+/* The only part of a column that scrolls. Takes whatever height the header and
+   composer leave behind, which is why the column can be full height. */
 .kanban-column-body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
   padding: 8px 6px;
   min-height: 72px;
-  max-height: min(58vh, 520px);
   overflow-y: auto;
+  /* A flick that reaches the end stays put instead of scrolling the page */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
 }
 
@@ -12542,6 +12587,7 @@ button:active,
   display: flex;
   align-items: flex-end;
   gap: 4px;
+  flex-shrink: 0;
   padding: 6px;
   border-top: 1px solid var(--board-line);
 }
@@ -12603,6 +12649,7 @@ button:active,
 }
 
 .kanban-column-context {
+  flex-shrink: 0;
   padding: 0 8px 6px;
   color: var(--board-muted);
   font-size: 10px;
@@ -12612,6 +12659,8 @@ button:active,
 /* Add column tile: an outline, so it never competes with a real column */
 .kanban-add-column {
   flex-shrink: 0;
+  /* Opt out of the board's stretch so the tile stays a tile, not a tall box */
+  align-self: flex-start;
   width: 172px;
   padding-top: 4px;
 }
@@ -12661,16 +12710,18 @@ button:active,
   justify-content: flex-end;
 }
 
-/* Bulk action bar. Floats above the board while a selection is alive. */
+/* Bulk action bar. Floats over the board while a selection is alive. Absolute
+   rather than in flow so starting a selection never resizes the columns. */
 .kanban-selection-bar {
-  position: sticky;
+  position: absolute;
+  left: 4px;
+  right: 4px;
   bottom: 12px;
   z-index: 40;
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin: 0 4px;
   padding: 8px 10px;
   border: 1px solid var(--board-line-strong);
   border-radius: 8px;
@@ -12821,7 +12872,7 @@ button:active,
 @media (max-width: 768px) {
   .kanban-board {
     gap: 10px;
-    padding-bottom: 16px;
+    padding-bottom: 4px;
     scroll-snap-type: x mandatory;
   }
 
@@ -12829,27 +12880,28 @@ button:active,
     width: min(84vw, 320px);
   }
 
-  .kanban-column-body {
-    max-height: none;
-  }
-
+  /* The grip is the only way to drag on touch, so it gets a real 44px target */
   .kanban-card-grip,
   .kanban-column-grip {
     color: var(--board-muted);
-    min-width: 28px;
-    min-height: 32px;
+    min-width: 32px;
+    min-height: 44px;
   }
 
   .kanban-add-column {
     width: min(60vw, 172px);
   }
 
-  .kanban-selection-bar {
-    bottom: 76px;
-  }
-
   .settings-choice {
     flex: 1 1 100%;
+  }
+}
+
+/* Short window, usually a phone in landscape: drop the floor so the board still
+   fits between the header and footer instead of forcing the page to scroll */
+@media (max-height: 560px) {
+  .todo-container[data-view="board"] > .kanban-wrapper {
+    min-height: 200px;
   }
 }
 
