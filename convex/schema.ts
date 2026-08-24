@@ -30,6 +30,8 @@ export default defineSchema({
     pinned: v.optional(v.boolean()), // For pinned todos
     backlog: v.optional(v.boolean()), // For backlog todos
     completedAt: v.optional(v.number()), // Timestamp when completed (for weekly recap)
+    kanbanColumn: v.optional(v.string()), // Board column key (see kanbanColumns.key)
+    kanbanOrder: v.optional(v.number()), // Position within the board column
   })
     .index("by_user_and_date", ["userId", "date"])
     .index("by_user", ["userId"])
@@ -155,9 +157,23 @@ export default defineSchema({
     autoRolloverEnabled: v.optional(v.boolean()), // Auto move previous day's incomplete todos to today at end of day
     lastAutoRolloverDate: v.optional(v.string()), // YYYY-MM-DD (user timezone) of last auto rollover run, for once-per-day dedupe
     rolloverBackfillAt: v.optional(v.number()), // Timestamp when the one-time 30 day backfill ran
+    defaultTodoView: v.optional(
+      v.union(v.literal("list"), v.literal("board")),
+    ), // Default todo layout for new dates and projects
   })
     .index("by_user", ["userId"])
     .index("by_autoRollover", ["autoRolloverEnabled"]),
+
+  // Kanban board columns - one row per user per column
+  kanbanColumns: defineTable({
+    userId: v.string(),
+    key: v.string(), // Stable identifier stored on todos.kanbanColumn
+    label: v.string(), // Display name, user editable
+    order: v.number(), // Left to right position
+    isDone: v.optional(v.boolean()), // Cards dropped here are marked complete
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_key", ["userId", "key"]),
 
   // User API keys - stores per-user API keys for AI features
   userApiKeys: defineTable({

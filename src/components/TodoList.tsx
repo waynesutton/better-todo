@@ -31,6 +31,7 @@ import {
   PinBottomIcon,
 } from "@radix-ui/react-icons";
 import { ArrowLineUp, ArrowLineDown } from "@phosphor-icons/react";
+import { KanbanBoard } from "./KanbanBoard";
 
 interface Todo {
   _id: Id<"todos">;
@@ -46,6 +47,8 @@ interface Todo {
   collapsed: boolean;
   pinned?: boolean;
   backlog?: boolean;
+  kanbanColumn?: string;
+  kanbanOrder?: number;
 }
 
 export interface TodoListProps {
@@ -73,6 +76,8 @@ export interface TodoListProps {
   setPomodoroTriggered: (data: { todoId?: string; todoTitle?: string }) => void;
   onSendToAgent?: (data: { todoId: string; content: string; folderId?: Id<"folders">; date?: string }) => void;
   onRunNote?: (data: { noteId: Id<"notes">; content: string; title?: string; date?: string; folderId?: Id<"folders"> }) => void;
+  /** "board" swaps the todo list for the Kanban board. Notes stay put. */
+  viewMode?: "list" | "board";
 }
 
 export interface TodoListRef {
@@ -106,6 +111,7 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       setPomodoroTriggered,
       onSendToAgent,
       onRunNote,
+      viewMode = "list",
     },
     ref,
   ) => {
@@ -457,6 +463,10 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
       addNote: handleAddNote,
     }));
 
+    // The board replaces the list on day and project pages only. Pinned and
+    // backlog are cross-date views, where columns would have no shared meaning.
+    const showBoard = viewMode === "board" && !isPinnedView && !isBacklogView;
+
     // Notion-like inline input, rendered above or below the list based on preference
     const todoInputElement = (
       <div
@@ -651,9 +661,40 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
         )}
 
         {/* Inline input at top - above the todo list, below header and date text */}
-        {!isPinnedView && !isBacklogView && isInputAtTop && todoInputElement}
+        {!isPinnedView &&
+          !isBacklogView &&
+          !showBoard &&
+          isInputAtTop &&
+          todoInputElement}
+
+        {/* Board view: columns own their own composers, so the shared input hides */}
+        {showBoard && (
+          <KanbanBoard
+            todos={todos}
+            date={date}
+            isBoardOfFolder={Boolean(folderId)}
+            folderId={folderId ?? undefined}
+            folders={folders}
+            onMoveToPreviousDay={handleMoveToPreviousDay}
+            onMoveToNextDay={handleMoveToNextDay}
+            onMoveToTomorrow={handleMoveToTomorrow}
+            onMoveToToday={handleMoveToToday}
+            onMoveToCustomDate={handleMoveToCustomDate}
+            onMoveToFolder={handleMoveToFolder}
+            onHoverChange={onTodoHover}
+            openMenuForTodoId={openMenuForTodoId}
+            openMenuTrigger={openMenuTrigger}
+            isAuthenticated={isAuthenticated}
+            onRequireSignInForMenu={onRequireSignInForMenu}
+            onRequireSignIn={onRequireSignIn}
+            setPomodoroTriggered={setPomodoroTriggered}
+            onSendToAgent={onSendToAgent}
+            firstComposerRef={todoInputRef}
+          />
+        )}
 
         {/* Active todos with drag and drop */}
+        {!showBoard && (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -771,9 +812,14 @@ export const TodoList = forwardRef<TodoListRef, TodoListProps>(
             })}
           </SortableContext>
         </DndContext>
+        )}
 
         {/* Inline input at bottom (default) - hide on pinned view and backlog view */}
-        {!isPinnedView && !isBacklogView && !isInputAtTop && todoInputElement}
+        {!isPinnedView &&
+          !isBacklogView &&
+          !showBoard &&
+          !isInputAtTop &&
+          todoInputElement}
 
         {/* Add note button - hide on pinned view and backlog view */}
         {!isPinnedView && !isBacklogView && (

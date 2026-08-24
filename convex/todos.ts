@@ -29,6 +29,8 @@ export const getTodosByDate = query({
       pinned: v.optional(v.boolean()),
       backlog: v.optional(v.boolean()),
       completedAt: v.optional(v.number()),
+      kanbanColumn: v.optional(v.string()),
+      kanbanOrder: v.optional(v.number()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -78,6 +80,8 @@ export const getPinnedTodos = query({
       pinned: v.optional(v.boolean()),
       backlog: v.optional(v.boolean()),
       completedAt: v.optional(v.number()),
+      kanbanColumn: v.optional(v.string()),
+      kanbanOrder: v.optional(v.number()),
     }),
   ),
   handler: async (ctx) => {
@@ -139,6 +143,8 @@ export const getBacklogTodos = query({
       pinned: v.optional(v.boolean()),
       backlog: v.optional(v.boolean()),
       completedAt: v.optional(v.number()),
+      kanbanColumn: v.optional(v.string()),
+      kanbanOrder: v.optional(v.number()),
     }),
   ),
   handler: async (ctx) => {
@@ -202,6 +208,8 @@ export const getTodosByFolder = query({
       pinned: v.optional(v.boolean()),
       backlog: v.optional(v.boolean()),
       completedAt: v.optional(v.number()),
+      kanbanColumn: v.optional(v.string()),
+      kanbanOrder: v.optional(v.number()),
     }),
   ),
   handler: async (ctx, args) => {

@@ -36,6 +36,44 @@ interface TodoItemProps {
   onRequireSignInForMenu?: () => void;
   setPomodoroTriggered: (data: { todoId?: string; todoTitle?: string }) => void;
   onSendToAgent?: (data: { todoId: string; content: string; folderId?: Id<"folders">; date?: string }) => void;
+  /**
+   * "list" renders the row as its own sortable item. "card" hands drag and
+   * ordering to a Kanban wrapper, so the internal sortable hook goes inert and
+   * the menu portals to the body to escape the scrolling column.
+   */
+  variant?: "list" | "card";
+  dragHandle?: React.ReactNode;
+  isSelected?: boolean;
+  selectionMode?: boolean;
+  onSelect?: (id: Id<"todos">, additive: boolean) => void;
+  /** Lets the board move the card into or out of its Done column on check */
+  onCompletedChange?: (next: boolean) => void;
+}
+
+// Menu placement. List rows portal with document coordinates; Kanban cards live
+// inside a scrolling column, so they use viewport coordinates and flip upward
+// when there is not enough room below the button.
+const APPROX_MENU_HEIGHT = 320;
+const MENU_WIDTH = 180;
+
+function menuCoordsFromRect(rect: DOMRect, isCard: boolean) {
+  if (!isCard) {
+    return {
+      top: rect.bottom + window.scrollY,
+      left: rect.left + window.scrollX,
+    };
+  }
+
+  const left = Math.max(
+    8,
+    Math.min(rect.left, window.innerWidth - MENU_WIDTH - 8),
+  );
+  const fitsBelow = rect.bottom + APPROX_MENU_HEIGHT <= window.innerHeight - 8;
+  const top = fitsBelow
+    ? rect.bottom + 4
+    : Math.max(8, rect.top - APPROX_MENU_HEIGHT);
+
+  return { top, left };
 }
 
 export function TodoItem({
@@ -64,7 +102,14 @@ export function TodoItem({
   onRequireSignInForMenu,
   setPomodoroTriggered,
   onSendToAgent,
+  variant = "list",
+  dragHandle,
+  isSelected = false,
+  selectionMode = false,
+  onSelect,
+  onCompletedChange,
 }: TodoItemProps) {
+  const isCard = variant === "card";
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
   const [showMenu, setShowMenu] = useState(false);
@@ -102,18 +147,17 @@ export function TodoItem({
   useEffect(() => {
     if (openMenuTrigger && menuButtonRef.current) {
       const rect = menuButtonRef.current.getBoundingClientRect();
-      setMenuPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-      });
+      setMenuPosition(menuCoordsFromRect(rect, isCard));
       setShowMenu(true);
     }
-  }, [openMenuTrigger]);
+  }, [openMenuTrigger, isCard]);
 
   const updateTodo = useMutation(api.todos.updateTodo);
   const deleteTodo = useMutation(api.todos.deleteTodo);
   const createSubtask = useMutation(api.todos.createSubtask);
 
+  // In card variant the Kanban wrapper owns the sortable, so this hook runs
+  // against an id that is never registered and stays disabled to avoid a clash
   const {
     attributes,
     listeners,
@@ -121,19 +165,27 @@ export function TodoItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: id });
+  } = useSortable({ id: isCard ? `${id}::inert` : id, disabled: isCard });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const style = isCard
+    ? undefined
+    : {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+      };
 
   const handleCheckboxToggle = async () => {
     triggerSelectionHaptic();
 
     if (isDemoMode && onDemoToggle) {
       onDemoToggle(id);
+      return;
+    }
+
+    // On the board, checking a card also moves it to/from the Done column
+    if (onCompletedChange) {
+      onCompletedChange(!completed);
       return;
     }
 
@@ -273,12 +325,53 @@ export function TodoItem({
     triggerSelectionHaptic();
     if (!showMenu && menuButtonRef.current) {
       const rect = menuButtonRef.current.getBoundingClientRect();
-      setMenuPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-      });
+      setMenuPosition(menuCoordsFromRect(rect, isCard));
     }
     setShowMenu(!showMenu);
+  };
+
+  // Modifier click selects instead of editing. Once a selection exists a plain
+  // click keeps extending it, so the second and third pick need no modifier.
+  const handleRowClick = (e: React.MouseEvent) => {
+    if (!isCard || !onSelect) {
+      return false;
+    }
+    const additive = e.metaKey || e.ctrlKey || e.shiftKey;
+    if (additive || selectionMode) {
+      e.preventDefault();
+      e.stopPropagation();
+      onSelect(id, additive);
+      return true;
+    }
+    return false;
+  };
+
+  // Cards portal their menu to the body with viewport coordinates so a
+  // scrolling Kanban column cannot clip it. List rows keep the inline dropdown.
+  const renderMenuShell = (children: React.ReactNode) => {
+    if (!isCard) {
+      return (
+        <div className="menu-dropdown" ref={menuDropdownRef}>
+          {children}
+        </div>
+      );
+    }
+
+    return createPortal(
+      <div
+        className="menu-dropdown"
+        ref={menuDropdownRef}
+        style={{
+          position: "fixed",
+          top: `${menuPosition.top}px`,
+          left: `${menuPosition.left}px`,
+          zIndex: 10000,
+        }}
+      >
+        {children}
+      </div>,
+      document.body,
+    );
   };
 
   // Handle ESC key and clicks outside to close menu
@@ -324,16 +417,23 @@ export function TodoItem({
   return (
     <>
       <div
-        ref={setNodeRef}
+        ref={isCard ? undefined : setNodeRef}
         style={style}
-        className={`todo-item ${pinned && !isPinnedView ? "pinned" : ""}`}
+        className={`todo-item ${pinned && !isPinnedView ? "pinned" : ""} ${
+          isCard ? "todo-item-card" : ""
+        } ${isSelected ? "selected" : ""}`}
         onMouseEnter={() => onHoverChange?.(id)}
         onMouseLeave={() => onHoverChange?.(null)}
+        onClick={isCard ? handleRowClick : undefined}
       >
-        {/* Drag handle */}
-        <div {...attributes} {...listeners} className="drag-handle">
-          ⋮⋮
-        </div>
+        {/* Drag handle. Cards use the handle supplied by the board wrapper. */}
+        {isCard ? (
+          dragHandle
+        ) : (
+          <div {...attributes} {...listeners} className="drag-handle">
+            ⋮⋮
+          </div>
+        )}
 
         {/* Pin icon for pinned todos (only on date pages, not in pinned section) */}
         {pinned && !isPinnedView && (
@@ -345,7 +445,10 @@ export function TodoItem({
         {/* Checkbox for all items */}
         <div
           className={`todo-checkbox ${completed ? "checked" : ""}`}
-          onClick={handleCheckboxToggle}
+          onClick={(e) => {
+            e.stopPropagation();
+            void handleCheckboxToggle();
+          }}
         >
           {completed && "✓"}
         </div>
@@ -404,7 +507,13 @@ export function TodoItem({
                       ? "todo-header-h3"
                       : ""
               }`}
-              onClick={() => setIsEditing(true)}
+              onClick={(e) => {
+                // Selecting takes precedence over opening the editor
+                if (handleRowClick(e)) {
+                  return;
+                }
+                setIsEditing(true);
+              }}
             >
               {content}
             </div>
@@ -416,7 +525,10 @@ export function TodoItem({
           <button
             ref={menuButtonRef}
             className="menu-button"
-            onClick={handleMenuToggle}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMenuToggle();
+            }}
           >
             ⋯
           </button>
@@ -428,7 +540,7 @@ export function TodoItem({
                   ref={archivedMenuRef}
                   className="menu-dropdown"
                   style={{
-                    position: "absolute",
+                    position: isCard ? "fixed" : "absolute",
                     top: `${menuPosition.top}px`,
                     left: `${menuPosition.left}px`,
                     zIndex: 10000,
@@ -448,7 +560,8 @@ export function TodoItem({
                 document.body
               )
             ) : (
-              <div className="menu-dropdown" ref={menuDropdownRef}>
+              renderMenuShell(
+                <>
                 {/* Start Pomodoro */}
                 <div
                   className="menu-item"
@@ -661,7 +774,8 @@ export function TodoItem({
                 <div className="menu-item danger" onClick={handleDeleteClick}>
                   Delete
                 </div>
-              </div>
+                </>,
+              )
             ))}
         </div>
 

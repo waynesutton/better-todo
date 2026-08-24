@@ -83,6 +83,39 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.040 - 2026-08-23)
+
+- [x] **Kanban Board View** - Per day and per project board with drag and drop, custom columns, and group move (2026-08-23 06:05 UTC)
+  - New `convex/kanban.ts`: `getColumns`, `addColumn`, `renameColumn`, `deleteColumn`, `reorderColumns`, `createTodoInColumn`, `moveTodosToColumn`
+  - New `kanbanColumns` table plus `kanbanColumn` and `kanbanOrder` on `todos` in `convex/schema.ts`; the four todo queries in `convex/todos.ts` return both new fields
+  - `moveTodosToColumn` takes the destination column's full ordered id list so the mutation patches without a read-modify-write, avoiding conflicts on rapid drags; only dragged cards flip completion, so reordering neighbours never completes them
+  - Columns fall back to virtual defaults (To do, Doing, Done, Backlog) until the first edit, so a new account gets a working board with zero writes
+  - New `src/components/KanbanBoard.tsx` with dnd-kit sortable columns and cards, a drop zone per column body so empty columns accept cards, group select via Cmd/Ctrl/Shift click, a bulk move bar, and a drag overlay with a count badge
+  - `src/components/TodoItem.tsx` gained a `card` variant: the board owns the sortable, supplies the drag handle, intercepts checkbox toggles via `onCompletedChange`, and the menu portals to the body with viewport coordinates so a scrolling column cannot clip it
+  - `src/components/TodoList.tsx` switches on a `viewMode` prop and hides the shared input in board mode since each column has its own composer
+  - `src/App.tsx`: Kanban/Rows header toggle, `Shift + B` shortcut, and per scope overrides in localStorage pruned to 60 entries
+  - Board view is suppressed on the Pinned and Backlog views
+  - Fixed an existing bug in the `Shift + A` send to agent handler that read `todo.text` instead of `todo.content`
+  - Verified: tsc clean, eslint clean on all touched files, production build clean. PRD: prds/kanban-board-view.md
+- [x] **Default Todo View setting** - List or Board as the starting view for every day and project (2026-08-23 06:05 UTC)
+  - New `defaultTodoView` field on `userPreferences` and a `setDefaultTodoView` mutation in `convex/users.ts`
+- [x] **Keyboard Shortcuts modal renamed to Settings** - GearSix icon, settings on top, shortcut tables at the bottom (2026-08-23 06:05 UTC)
+  - `src/components/KeyboardShortcutsModal.tsx` reordered: Default Todo View, Font Size, Auto Rollover, API Keys, Code Blocks, then a Keyboard Shortcuts divider with the tables
+  - `src/components/Sidebar.tsx` button relabeled to Settings with a GearSix icon
+  - `Shift + B` added to the navigation shortcuts list
+- [x] **Board theme parity** - Kanban UI verified and corrected across Dark, Light, Tan, and Cloud (2026-08-24 07:35 UTC)
+  - Added seven `--board-*` tokens in `src/styles/global.css` (line, line-strong, pick, pick-ink, wash, muted, lift) with per theme overrides, replacing every direct `--accent`, `--border-color`, `--bg-hover`, `--text-secondary`, and hardcoded shadow in the board and Settings choice CSS
+  - Root cause in Cloud: `--border-color`, `--bg-hover`, and `--accent` are all `#e8e8e8` and `--text-secondary` equals `--text-primary`, so columns, drop targets, selection rings, and the active Settings choice had no visible edge. Cloud now uses `#c9c9c9` hairlines, `#171717` ink as its emphasis color (already its checkbox and button color), an `#e2e2e2` wash, and a `#5f5f5f` muted gray
+  - Dark: `--board-pick-ink` is now near-black on the blue swatch (white measured 2.8:1) and `--board-lift` doubles to `rgba(0,0,0,0.5)` since a soft black shadow vanishes on a mid dark surface
+  - Drop targets and the active Settings choice gained an inset ring so the state is a doubled edge, not color alone; board secondary text dropped `opacity` for real muted colors, clearing 4.5:1 at 10px and 12px in all four themes; added `:focus-visible` rings for every board control plus the composer
+  - Fixed `.search-button.nav-icon-active` in Cloud, where an active header icon rendered as a near background gray
+  - Verified: rendered the compiled CSS against all four themes in a static harness and inspected column structure, drop target, card hover, selection ring, drag overlay, count badge, and Settings choice cards; tsc clean, production build clean
+- [x] **Done state sync between board and list** - The two views now agree on what is finished (2026-08-24 15:55 UTC)
+  - `src/App.tsx`: new `boardViewActive` flag hides the footer `ArchiveSection` while the board is open, so a completed card no longer renders in both the Done column and the Done section below it
+  - `src/components/KanbanBoard.tsx`: `resolveColumn` now checks `completed`/`archived` before `kanbanColumn`, and refuses to place an active card in a done column. `todos.updateTodo` never touches `kanbanColumn`, so checking a card off in list view used to leave the board showing it under Doing, and unchecking one from the Done section left it parked in Done as an active card
+  - Kept as a read time rule rather than a write in `updateTodo`, so the hot completion path gains no extra writes and no new conflict window
+  - Verified: tsc clean, eslint clean on both files (only pre-existing warnings), production build clean. PRD: prds/kanban-board-view.md
+
 ## Completed Tasks (v.039 - 2026-08-12)
 
 - [x] **Todo Add Position Toggle** - Choose whether new todos are added at the top or bottom of the list (2026-08-12 19:07 UTC)
@@ -684,7 +717,7 @@ git push -u origin main
 - [ ] Week view
 - [ ] Month view
 - [ ] Gantt chart for project planning
-- [ ] Kanban board view
+- [x] Kanban board view (shipped in v.040)
 
 ### Data Management
 

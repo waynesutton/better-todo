@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { Cross2Icon, EyeOpenIcon, EyeClosedIcon } from "@radix-ui/react-icons";
 import { Copy, Check, Key, Trash2, ExternalLink, ChevronDown, Pause, Play } from "lucide-react";
+import { GearSix, Kanban, Keyboard, Rows } from "@phosphor-icons/react";
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -50,6 +51,15 @@ export function KeyboardShortcutsModal({
   
   // Mutation to update font size
   const setTodoFontSize = useMutation(api.users.setTodoFontSize);
+
+  // Default view for todos: list or Kanban board
+  const setDefaultTodoView = useMutation(api.users.setDefaultTodoView);
+  const defaultTodoView = userPreferences?.defaultTodoView ?? "list";
+
+  const handleDefaultTodoViewChange = async (view: "list" | "board") => {
+    if (!isAuthenticated || view === defaultTodoView) return;
+    await setDefaultTodoView({ view });
+  };
   
   // Auto rollover mutations
   const setAutoRollover = useMutation(api.users.setAutoRollover);
@@ -208,6 +218,7 @@ export function KeyboardShortcutsModal({
       items: [
         { key: "t", description: "Jump to today" },
         { key: "Shift + T", description: "Toggle theme" },
+        { key: "Shift + B", description: "Switch between list and board" },
         { key: "Shift + S", description: "Toggle streaks header" },
         { key: "⌘ + .", description: "Toggle sidebar collapse" },
         { key: "↑/↓", description: "Navigate between todos" },
@@ -284,7 +295,10 @@ export function KeyboardShortcutsModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="keyboard-shortcuts-header">
-          <h2>Keyboard Shortcuts</h2>
+          <h2>
+            <GearSix size={18} weight="regular" />
+            Settings
+          </h2>
           <button
             className="keyboard-shortcuts-close"
             onClick={onClose}
@@ -311,79 +325,40 @@ export function KeyboardShortcutsModal({
             </button>
           )}
           
-          {shortcuts.map((category) => (
-            <div
-              key={category.category}
-              className="keyboard-shortcuts-category"
-            >
-              <h3>{category.category}</h3>
-              <div className="keyboard-shortcuts-list">
-                {category.items.map((item, index) => (
-                  <div key={index} className="keyboard-shortcuts-item">
-                    <div className="keyboard-shortcuts-key">
-                      {item.key.split(" or ").map((key, i) => (
-                        <span key={i}>
-                          <kbd>{key}</kbd>
-                          {i < item.key.split(" or ").length - 1 && " or "}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="keyboard-shortcuts-description">
-                      {item.description}
-                    </div>
-                  </div>
-                ))}
+          {/* Default Todo View Section */}
+          {isAuthenticated && (
+            <div className="keyboard-shortcuts-category">
+              <h3>Default Todo View</h3>
+              <p className="keyboard-shortcuts-code-info">
+                Pick what a day or project opens with. Shift + B still switches
+                the page you are on without changing this default.
+              </p>
+              <div className="settings-choice-row">
+                <button
+                  className={`settings-choice ${defaultTodoView === "list" ? "active" : ""}`}
+                  onClick={() => handleDefaultTodoViewChange("list")}
+                  aria-pressed={defaultTodoView === "list"}
+                >
+                  <Rows size={15} />
+                  <span className="settings-choice-label">List</span>
+                  <span className="settings-choice-hint">
+                    One column, top to bottom
+                  </span>
+                </button>
+                <button
+                  className={`settings-choice ${defaultTodoView === "board" ? "active" : ""}`}
+                  onClick={() => handleDefaultTodoViewChange("board")}
+                  aria-pressed={defaultTodoView === "board"}
+                >
+                  <Kanban size={15} />
+                  <span className="settings-choice-label">Board</span>
+                  <span className="settings-choice-hint">
+                    Drag cards across columns
+                  </span>
+                </button>
               </div>
             </div>
-          ))}
-
-          {/* Code Blocks Section */}
-          <div className="keyboard-shortcuts-category">
-            <h3>{codeBlocksInfo.category}</h3>
-            <p className="keyboard-shortcuts-code-info">
-              {codeBlocksInfo.description}
-            </p>
-            <div className="keyboard-shortcuts-code-grid">
-              {codeLanguages.map((lang) => (
-                <div key={lang.code} className="keyboard-shortcuts-code-item">
-                  <div className="keyboard-shortcuts-code-label">
-                    {lang.label}
-                  </div>
-                  <div className="keyboard-shortcuts-code-options">
-                    <button
-                      className="keyboard-shortcuts-code-button"
-                      onClick={() => handleCopyCode(lang.code)}
-                      title={`Copy ${lang.code}`}
-                    >
-                      <code>{lang.code}</code>
-                      {copiedCode === lang.code ? (
-                        <Check size={14} />
-                      ) : (
-                        <Copy size={14} />
-                      )}
-                    </button>
-                    {lang.alt && (
-                      <>
-                        <span className="keyboard-shortcuts-code-or">or</span>
-                        <button
-                          className="keyboard-shortcuts-code-button"
-                          onClick={() => handleCopyCode(lang.alt)}
-                          title={`Copy ${lang.alt}`}
-                        >
-                          <code>{lang.alt}</code>
-                          {copiedCode === lang.alt ? (
-                            <Check size={14} />
-                          ) : (
-                            <Copy size={14} />
-                          )}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Font Size Customization Section */}
           {isAuthenticated && (
@@ -643,6 +618,86 @@ export function KeyboardShortcutsModal({
               </div>
             </div>
           )}
+
+          {/* Code Blocks Section */}
+          <div className="keyboard-shortcuts-category">
+            <h3>{codeBlocksInfo.category}</h3>
+            <p className="keyboard-shortcuts-code-info">
+              {codeBlocksInfo.description}
+            </p>
+            <div className="keyboard-shortcuts-code-grid">
+              {codeLanguages.map((lang) => (
+                <div key={lang.code} className="keyboard-shortcuts-code-item">
+                  <div className="keyboard-shortcuts-code-label">
+                    {lang.label}
+                  </div>
+                  <div className="keyboard-shortcuts-code-options">
+                    <button
+                      className="keyboard-shortcuts-code-button"
+                      onClick={() => handleCopyCode(lang.code)}
+                      title={`Copy ${lang.code}`}
+                    >
+                      <code>{lang.code}</code>
+                      {copiedCode === lang.code ? (
+                        <Check size={14} />
+                      ) : (
+                        <Copy size={14} />
+                      )}
+                    </button>
+                    {lang.alt && (
+                      <>
+                        <span className="keyboard-shortcuts-code-or">or</span>
+                        <button
+                          className="keyboard-shortcuts-code-button"
+                          onClick={() => handleCopyCode(lang.alt)}
+                          title={`Copy ${lang.alt}`}
+                        >
+                          <code>{lang.alt}</code>
+                          {copiedCode === lang.alt ? (
+                            <Check size={14} />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Keyboard shortcuts live at the bottom, below the settings */}
+          <div className="settings-section-divider">
+            <Keyboard size={15} />
+            <span>Keyboard Shortcuts</span>
+          </div>
+
+          {shortcuts.map((category) => (
+            <div
+              key={category.category}
+              className="keyboard-shortcuts-category"
+            >
+              <h3>{category.category}</h3>
+              <div className="keyboard-shortcuts-list">
+                {category.items.map((item, index) => (
+                  <div key={index} className="keyboard-shortcuts-item">
+                    <div className="keyboard-shortcuts-key">
+                      {item.key.split(" or ").map((key, i) => (
+                        <span key={i}>
+                          <kbd>{key}</kbd>
+                          {i < item.key.split(" or ").length - 1 && " or "}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="keyboard-shortcuts-description">
+                      {item.description}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>,

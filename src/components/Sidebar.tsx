@@ -15,11 +15,8 @@ import {
   ChevronRight,
   Eye,
 } from "lucide-react";
-import {
-  KeyboardIcon,
-  InfoCircledIcon,
-  Half2Icon,
-} from "@radix-ui/react-icons";
+import { InfoCircledIcon, Half2Icon } from "@radix-ui/react-icons";
+import { GearSix } from "@phosphor-icons/react";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Id } from "../../convex/_generated/dataModel";
 import {
@@ -3088,12 +3085,13 @@ export function Sidebar({
                 <button
                   className="convex-link"
                   onClick={onShowKeyboardShortcuts}
+                  aria-label="Settings"
                 >
-                  <KeyboardIcon width="18" height="18" />
+                  <GearSix size={18} weight="regular" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={8}>
-                Keyboard shortcuts
+                Settings
               </TooltipContent>
             </Tooltip>
           )}

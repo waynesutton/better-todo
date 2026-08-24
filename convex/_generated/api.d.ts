@@ -23,6 +23,7 @@ import type * as dates from "../dates.js";
 import type * as folders from "../folders.js";
 import type * as fullPageNotes from "../fullPageNotes.js";
 import type * as http from "../http.js";
+import type * as kanban from "../kanban.js";
 import type * as monthGroups from "../monthGroups.js";
 import type * as notes from "../notes.js";
 import type * as pomodoro from "../pomodoro.js";
@@ -67,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   folders: typeof folders;
   fullPageNotes: typeof fullPageNotes;
   http: typeof http;
+  kanban: typeof kanban;
   monthGroups: typeof monthGroups;
   notes: typeof notes;
   pomodoro: typeof pomodoro;

@@ -4658,6 +4658,12 @@ button:active,
   background-color: var(--bg-secondary);
 }
 
+/* Cloud's accent is a near background gray, so an active nav icon would read as
+   turned off. Ink is that theme's real emphasis color. */
+:root[data-theme="cloud"] .search-button.nav-icon-active {
+  color: var(--text-primary);
+}
+
 .hamburger-button {
   background: transparent;
   border: none;
@@ -12139,4 +12145,717 @@ button:active,
 .float-timer-button.danger:hover {
   color: #e5534b;
   border-color: #e5534b;
+}
+
+/* ==========================================================================
+   Kanban board
+   Columns are quiet panels on the same surface as the page. Separation comes
+   from a single hairline border, never a different background, so the board
+   reads as one continuous space instead of a strip of cards.
+
+   Board tokens exist because the board leans on hairlines and emphasis edges
+   harder than the rest of the app: a column IS its border, and a drop target
+   IS its lit edge. Themes whose palette collapses those roles get a corrected
+   value here instead of a per rule override further down.
+   ========================================================================== */
+
+:root {
+  --board-line: var(--border-color); /* column and divider hairline */
+  --board-line-strong: var(--text-secondary); /* hovered card edge */
+  --board-pick: var(--accent); /* drop target, selection, focus */
+  --board-pick-ink: #ffffff; /* text on a filled --board-pick */
+  --board-wash: var(--bg-hover); /* quiet fill under hover and drop */
+  --board-muted: var(--text-secondary); /* counts, hints, placeholders */
+  --board-lift: 0 6px 18px rgba(0, 0, 0, 0.14); /* floating surfaces */
+}
+
+/* Dark: white on #4a9eff is only 2.8:1, and a soft black shadow disappears
+   against a mid dark surface. */
+:root[data-theme="dark"] {
+  --board-line-strong: #4b5665;
+  --board-pick-ink: #10151b;
+  --board-lift: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme="light"] {
+  --board-line-strong: #b8b8bf;
+}
+
+:root[data-theme="tan"] {
+  --board-line-strong: #cfcac3;
+}
+
+/* Cloud collapses four roles into one gray: border, hover, and accent are all
+   #e8e8e8, and secondary text equals primary. Untouched, columns and drop
+   targets would be invisible here. Ink is this theme's real emphasis color,
+   already used for its checkbox and primary button. */
+:root[data-theme="cloud"] {
+  --board-line: #c9c9c9;
+  --board-line-strong: #b4b4b4;
+  --board-pick: #171717;
+  --board-pick-ink: #ededed;
+  --board-wash: #e2e2e2;
+  --board-muted: #5f5f5f;
+  --board-lift: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.kanban-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.kanban-board {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 4px 4px 20px;
+  scrollbar-width: thin;
+  /* Scroll one column at a time so a flick never lands mid column */
+  scroll-snap-type: x proximity;
+}
+
+.kanban-board::-webkit-scrollbar {
+  height: 8px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+  background: var(--board-line);
+  border-radius: 4px;
+}
+
+.kanban-board::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Loading placeholder, same footprint as real columns to avoid a layout jump */
+.kanban-board-loading .kanban-skeleton-column {
+  width: 288px;
+  height: 220px;
+  flex-shrink: 0;
+  border: 1px solid var(--board-line);
+  border-radius: 8px;
+  opacity: 0.5;
+  animation: kanban-pulse 1.4s ease-in-out infinite;
+}
+
+.kanban-board-loading .kanban-skeleton-column:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.kanban-board-loading .kanban-skeleton-column:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes kanban-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.kanban-column {
+  display: flex;
+  flex-direction: column;
+  width: 288px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  border: 1px solid var(--board-line);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* Drop target reads as a lit edge, not a filled block. The inset ring doubles
+   the edge weight so the signal survives themes with a low contrast accent. */
+.kanban-column.drop-target {
+  border-color: var(--board-pick);
+  background: var(--board-wash);
+  box-shadow: inset 0 0 0 1px var(--board-pick);
+}
+
+.kanban-column.column-dragging {
+  opacity: 0.55;
+}
+
+.kanban-column-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px 8px 4px;
+  border-bottom: 1px solid var(--board-line);
+}
+
+.kanban-column-grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  min-height: 24px;
+  color: transparent;
+  cursor: grab;
+  transition: color 0.15s ease;
+  touch-action: none;
+}
+
+.kanban-column-header:hover .kanban-column-grip,
+.kanban-column-grip:focus-visible {
+  color: var(--board-muted);
+}
+
+.kanban-column-grip:active {
+  cursor: grabbing;
+}
+
+.kanban-column-title {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--font-todo);
+  font-weight: 500;
+  text-align: left;
+  cursor: text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kanban-column-count {
+  color: var(--board-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  min-width: 16px;
+  text-align: right;
+}
+
+.kanban-column-input {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--board-pick);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--font-todo);
+  outline: none;
+}
+
+.kanban-column-menu-anchor {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.kanban-column-menu {
+  min-width: 150px;
+}
+
+.kanban-column-menu .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.kanban-column-menu .menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Shared small square button used across the board chrome */
+.kanban-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--board-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.kanban-icon-button:hover:not(:disabled) {
+  background: var(--board-wash);
+  color: var(--text-primary);
+}
+
+.kanban-icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.kanban-column-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 6px;
+  min-height: 72px;
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.kanban-column-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.kanban-column-body::-webkit-scrollbar-thumb {
+  background: var(--board-line);
+  border-radius: 3px;
+}
+
+.kanban-column-empty {
+  margin: 0;
+  padding: 14px 8px;
+  color: var(--board-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.kanban-card {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.kanban-card:hover {
+  border-color: var(--board-line-strong);
+  background: var(--board-wash);
+}
+
+.kanban-card.card-dragging {
+  opacity: 0.35;
+}
+
+.kanban-card-subtask {
+  margin-left: 12px;
+}
+
+.kanban-card-grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  min-height: 24px;
+  padding: 0;
+  color: transparent;
+  cursor: grab;
+  transition: color 0.15s ease;
+  touch-action: none;
+}
+
+.kanban-card:hover .kanban-card-grip,
+.kanban-card-grip:focus-visible {
+  color: var(--board-muted);
+}
+
+/* Card variant of a todo row: no fixed 90% width, full column instead */
+.todo-item-card {
+  width: 100%;
+  padding: 4px 4px;
+  margin-bottom: 0;
+  border-radius: 6px;
+  align-items: flex-start;
+}
+
+.todo-item-card.selected {
+  background: var(--board-wash);
+  box-shadow: inset 0 0 0 1px var(--board-pick);
+}
+
+.todo-item-card .todo-content {
+  min-width: 0;
+}
+
+.todo-item-card .todo-text {
+  overflow-wrap: anywhere;
+}
+
+/* What follows the finger during a drag */
+.kanban-card-overlay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 268px;
+  padding: 7px 10px;
+  border: 1px solid var(--board-pick);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  box-shadow: var(--board-lift);
+  cursor: grabbing;
+}
+
+.kanban-card-overlay-text {
+  color: var(--text-primary);
+  font-size: var(--font-todo);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kanban-card-overlay-count {
+  flex-shrink: 0;
+  min-width: 18px;
+  padding: 1px 5px;
+  border-radius: 9px;
+  background: var(--board-pick);
+  color: var(--board-pick-ink);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.kanban-column-overlay {
+  padding: 8px 12px;
+  border: 1px solid var(--board-pick);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  box-shadow: var(--board-lift);
+  color: var(--text-primary);
+  font-size: var(--font-todo);
+  font-weight: 500;
+  cursor: grabbing;
+}
+
+/* Per column composer. Sits at the bottom so new work enters where you look. */
+.kanban-column-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 6px;
+  border-top: 1px solid var(--board-line);
+}
+
+.kanban-composer-input {
+  flex: 1;
+  min-width: 0;
+  max-height: 96px;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--font-todo);
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+}
+
+.kanban-composer-input::placeholder {
+  color: var(--board-muted);
+  opacity: 1;
+}
+
+/* Inset fill plus a hairline ring, so focus is visible even where the theme
+   accent has almost no contrast */
+.kanban-composer-input:focus {
+  background: var(--bg-secondary);
+  box-shadow: 0 0 0 1px var(--board-pick);
+}
+
+.kanban-composer-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--board-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.kanban-composer-submit:hover:not(:disabled) {
+  background: var(--board-wash);
+  color: var(--text-primary);
+}
+
+.kanban-composer-submit:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.kanban-column-context {
+  padding: 0 8px 6px;
+  color: var(--board-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Add column tile: an outline, so it never competes with a real column */
+.kanban-add-column {
+  flex-shrink: 0;
+  width: 172px;
+  padding-top: 4px;
+}
+
+.kanban-add-column-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 40px;
+  padding: 10px;
+  border: 1px dashed var(--board-line-strong);
+  border-radius: 8px;
+  background: none;
+  color: var(--board-muted);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.kanban-add-column-button:hover:not(:disabled) {
+  border-color: var(--board-pick);
+  color: var(--text-primary);
+}
+
+.kanban-add-column-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.kanban-add-column-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--board-line);
+  border-radius: 8px;
+}
+
+.kanban-add-column-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+/* Bulk action bar. Floats above the board while a selection is alive. */
+.kanban-selection-bar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--board-line-strong);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  box-shadow: var(--board-lift);
+  animation: kanban-selection-in 0.16s ease-out;
+}
+
+@keyframes kanban-selection-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kanban-selection-count {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.kanban-selection-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--board-line-strong);
+}
+
+.kanban-selection-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--board-muted);
+  font-size: 12px;
+}
+
+.kanban-selection-targets {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.kanban-selection-target {
+  padding: 4px 9px;
+  border: 1px solid var(--board-line-strong);
+  border-radius: 5px;
+  background: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.kanban-selection-target:hover {
+  border-color: var(--board-pick);
+  background: var(--board-wash);
+}
+
+/* One focus ring for every control on the board. Themes with a washed out
+   accent fall back to their ink, so keyboard position is never guesswork. */
+.kanban-icon-button:focus-visible,
+.kanban-composer-submit:focus-visible,
+.kanban-selection-target:focus-visible,
+.kanban-add-column-button:focus-visible,
+.kanban-column-title:focus-visible,
+.settings-choice:focus-visible {
+  outline: 2px solid var(--board-pick);
+  outline-offset: 1px;
+}
+
+/* Settings modal: paired choice cards for the default view */
+.settings-choice-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settings-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  flex: 1 1 160px;
+  padding: 10px 12px;
+  border: 1px solid var(--board-line-strong);
+  border-radius: 6px;
+  background: none;
+  color: var(--board-muted);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
+}
+
+.settings-choice:hover {
+  background: var(--board-wash);
+  color: var(--text-primary);
+}
+
+/* Doubled edge, not just a hue change, so the picked view is obvious in every
+   theme and readable without relying on color alone */
+.settings-choice.active {
+  border-color: var(--board-pick);
+  box-shadow: inset 0 0 0 1px var(--board-pick);
+  color: var(--text-primary);
+}
+
+.settings-choice-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.settings-choice-hint {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--board-muted);
+}
+
+/* Divider that marks where settings end and shortcuts begin */
+.settings-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 28px 0 4px;
+  padding-top: 18px;
+  border-top: 1px solid var(--board-line);
+  color: var(--board-muted);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Phone: one column at a time, and grips stay visible since there is no hover */
+@media (max-width: 768px) {
+  .kanban-board {
+    gap: 10px;
+    padding-bottom: 16px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .kanban-column {
+    width: min(84vw, 320px);
+  }
+
+  .kanban-column-body {
+    max-height: none;
+  }
+
+  .kanban-card-grip,
+  .kanban-column-grip {
+    color: var(--board-muted);
+    min-width: 28px;
+    min-height: 32px;
+  }
+
+  .kanban-add-column {
+    width: min(60vw, 172px);
+  }
+
+  .kanban-selection-bar {
+    bottom: 76px;
+  }
+
+  .settings-choice {
+    flex: 1 1 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kanban-selection-bar,
+  .kanban-board-loading .kanban-skeleton-column {
+    animation: none;
+  }
 }

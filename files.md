@@ -50,7 +50,7 @@ This document describes the structure and purpose of each file in the Better Tod
 ### Database Schema
 
 - `schema.ts` - Database schema with tables:
-  - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, optional parentId, optional folderId, pinned status, and optional completedAt timestamp
+  - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, optional parentId, optional folderId, pinned status, optional completedAt timestamp, and optional kanbanColumn/kanbanOrder for board placement
     - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`, `by_user_and_folder`, `by_user_and_completedAt`
     - Search index: `search_content` on content field for full-text search
     - Supports both date-based todos and dateless todos in project folders
@@ -73,8 +73,11 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user_and_month_group`, `by_user_and_date`
   - **pomodoroSessions**: Stores pomodoro timer sessions with work/break intervals, completed sessions, and user preferences
     - Index: `by_user`
-  - **userPreferences**: Stores per-user settings including todoFontSize, IANA timezone, auto rollover setting, last rollover date, and backfill timestamp
+  - **userPreferences**: Stores per-user settings including todoFontSize, IANA timezone, auto rollover setting, last rollover date, backfill timestamp, and defaultTodoView (list or board)
     - Index: `by_user`
+  - **kanbanColumns**: Stores each user's board columns with key, label, order, and isDone flag
+    - Index: `by_user`, `by_user_and_key`
+    - Seeded with To do, Doing, Done, Backlog on the first column mutation; until then the query returns virtual defaults so no writes are needed
   - **streaks**: Tracks user streak progress with currentStreak, longestStreak, lastCompletedDate, weeklyProgress, and totalTodosCompleted
     - Index: `by_user`
   - **fullPageNotes**: Stores full-page notes with userId, optional date, optional folderId, title, content, order, collapsed, pinnedToTop, and archived status
@@ -118,6 +121,15 @@ This document describes the structure and purpose of each file in the Better Tod
   - `archiveAllTodos` - Archive all active todos for a specific date
   - `deleteAllTodos` - Delete all active todos for a specific date
   - `deleteAllArchivedTodos` - Delete all archived todos for a specific date
+
+- `kanban.ts` - Queries and mutations for the Kanban board view:
+  - `getColumns` - Get the user's board columns, falling back to virtual defaults (To do, Doing, Done, Backlog) before any edit so no writes are needed
+  - `addColumn` - Add a column to the end of the board (slugged key, unique per user, max 12 columns)
+  - `renameColumn` - Rename a column while keeping its key, so cards stay put (idempotent, skips the write when the label is unchanged)
+  - `deleteColumn` - Delete a column, reassign its cards to the leftmost remaining column, and renumber the rest in parallel
+  - `reorderColumns` - Persist a new left to right order from the full key list
+  - `createTodoInColumn` - Create a card straight into a column with timestamp ordering; cards created in a Done column arrive completed and archived
+  - `moveTodosToColumn` - Move one or more cards into a column and write that column's full new order from the client-supplied id list, so the mutation patches without a read-modify-write; only dragged cards flip completion, and completion changes schedule a streak update
 
 - `notes.ts` - Queries and mutations for notes operations:
   - `getNotesByDate` - Get all notes for a specific date (excludes folder notes)
@@ -341,10 +353,11 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getUserId` - Helper function to get current user's ID from authentication context
   - `storeUser` - Store/update Clerk user data in Convex database
   - `getCurrentUser` - Get authenticated user information
-  - `getUserPreferences` - Get user's preferences including font size, timezone, auto rollover setting, and backfill state
+  - `getUserPreferences` - Get user's preferences including font size, timezone, auto rollover setting, backfill state, and default todo view
   - `setTodoFontSize` - Update todo text font size for authenticated user
   - `setTimezoneIfMissing` - Store user's IANA timezone if not already set
   - `setAutoRollover` - Enable or disable end of day auto rollover of incomplete todos
+  - `setDefaultTodoView` - Set whether days and projects open as a list or a Kanban board
 - `http.ts` - HTTP routes for authentication callbacks (Clerk ready)
 
 ## React Frontend (`src/`)
@@ -400,8 +413,13 @@ This document describes the structure and purpose of each file in the Better Tod
     - Space/e to mark todo as done
     - z to undo last completion
     - / or c to focus input
-    - ? to show keyboard shortcuts modal with code block syntax reference
+    - ? to open the Settings modal with preferences and the shortcuts reference
     - Shift + S to toggle streaks header button visibility
+    - Shift + B to switch the current day or project between list and board
+  - **Todo view mode** - Header list/board toggle (Phosphor Rows/Kanban icons) sets the view for the day or project you are on
+    - Per-scope overrides live in localStorage (`todoViewOverrides`) so a day can differ from your default, and the map is pruned to the 60 most recent scopes
+    - Falls back to the `defaultTodoView` preference from Settings, defaulting to list
+    - Hidden on the pinned and backlog views, where a board has no columns to fill
   - Hovered todo tracking for keyboard shortcuts
   - Auto-select hovered todo when not explicitly navigating
   - **Full-page note folder handling** - Opens notes from folders and highlights folder in sidebar
@@ -439,8 +457,19 @@ This document describes the structure and purpose of each file in the Better Tod
   - Custom confirmation dialog for delete actions
   - Auto-textarea expansion for multi-line content
   - Hover tracking for keyboard shortcuts
+  - **Card variant** (`variant="card"`) used by the Kanban board: the board owns the sortable and supplies the drag handle, `onCompletedChange` lets the board intercept checkbox toggles so a completed card also moves to the Done column, modifier clicks select instead of opening the editor, and the menu portals to the body with fixed viewport coordinates so a scrolling column cannot clip it
+
+- `KanbanBoard.tsx` - Kanban board view for a day or project:
+  - Columns and cards are both dnd-kit sortables in one DndContext, with a dedicated drop zone on each column body so empty columns accept cards
+  - Cards resolve to a column by completion first, then their saved `kanbanColumn`, then Backlog for backlogged work, then the leftmost active column. Completion outranks the saved placement in both directions, so checking a card off in list view moves it to Done on the board and unchecking one pulls it back into the first active column
+  - Group select with Cmd/Ctrl/Shift click; once a selection exists plain clicks keep extending it. A bottom bar shows the count with one button per column for a bulk move, and Escape clears
+  - Dragging a selected card moves the whole selection, with a count badge on the drag overlay
+  - Per column composer at the bottom, inline rename on double click, and a column menu for rename and delete with a ConfirmDialog
+  - Column reorder is written optimistically so header drags feel instant, then handed back to the server
+  - Renders a skeleton while columns load, keeping the same footprint to avoid a layout jump
 
 - `TodoList.tsx` - Todo list container with:
+  - **View mode switch** - A `viewMode` prop renders either the list or `KanbanBoard`; in board mode the shared todo input hides because each column has its own composer, and notes stay below the board
   - Drag-and-drop functionality using @dnd-kit
   - **Pinned todos sorted to top** - Automatically displays pinned todos first on each date page
   - **Todo input placement toggle** - PinTop/PinBottom icon button moves the input above the todo list (below header and date text) or back below the list; preference saved to localStorage (`todoInputAtTop`), works alongside the left/center alignment toggle
@@ -506,6 +535,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - "+ Add Project" button at bottom (only shows when authenticated)
   - Active date highlighting (#0076C6 accent color)
   - Theme toggle (half-moon icon) at bottom of sidebar above login link
+  - Settings button (Phosphor GearSix icon) in the footer, opens the Settings modal that holds preferences and the keyboard shortcuts reference
   - Three-dot menu per date with options:
     - Copy Link (copies shareable URL to clipboard, e.g., `/d/2026-01-02`)
     - Add/edit/remove custom date label
@@ -552,9 +582,12 @@ This document describes the structure and purpose of each file in the Better Tod
   - Replaces browser default confirm/alert dialogs
   - Responsive width for mobile compatibility
 
-- `KeyboardShortcutsModal.tsx` - Keyboard shortcuts reference modal with:
+- `KeyboardShortcutsModal.tsx` - Settings modal (titled "Settings" with a Phosphor GearSix icon) holding preferences first and the keyboard shortcuts reference at the bottom:
+  - Order: API docs link, Default todo view, Todo text font size, End of day auto rollover, API keys, Code blocks, then a divider and the full shortcuts list
+  - **Default todo view** (authenticated users only): choose List or Board for every new day and project; a per-day toggle in the header still overrides it
   - Comprehensive keyboard shortcuts documentation
   - **Sidebar collapse shortcut**: Cmd+. (Mac) or Ctrl+. (Windows/Linux) to toggle sidebar
+  - **View toggle shortcut**: Shift + B switches the current day or project between list and board
   - **Code Blocks section** with copyable language syntax:
     - CSS, JavaScript, TypeScript, HTML, JSON, Python, Go, Rust
     - Click-to-copy buttons for each language syntax
@@ -569,7 +602,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Organized by categories (Navigation, Todo Management, Search, Pomodoro Timer)
   - **Pomodoro shortcuts**: Shift + F to open timer, f to enter full-screen mode
   - **Streaks shortcut**: Shift + S to toggle streaks header button visibility
-  - Accessible via ? key or keyboard shortcuts button
+  - Accessible via ? key or the Settings button in the sidebar footer
   - Theme-aware styling matching app design
 
 - `NotesSection.tsx` - Daily notes feature with full markdown support:
@@ -618,6 +651,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Auto-collapses when new todos are added
   - Supports moving archived items to other dates via three-dot menu
   - Portal-rendered menus prevent clipping
+  - Hidden while the Kanban board is open, since the board's Done column already holds the same cards
   - Clean, borderless design
 
 - `SearchModal.tsx` - Full-text search modal with:
@@ -848,6 +882,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - Feature showcase styles for logged out users
   - Demo mode styling for unauthenticated user experience
   - System font stack for native look and feel
+  - Kanban board styles (columns, cards, composers, add column tile, bulk selection bar) plus the Settings choice cards and section divider
+  - Board theme tokens (`--board-line`, `--board-line-strong`, `--board-pick`, `--board-pick-ink`, `--board-wash`, `--board-muted`, `--board-lift`) with per theme overrides. The board reads structure from hairlines and emphasis from lit edges, so themes whose palette collapses those roles get a corrected value here. Cloud is the main case: its border, hover, and accent are all `#e8e8e8` and its secondary text equals primary, so it substitutes darker hairlines, ink as the emphasis color, a real hover wash, and a distinct muted gray
 
 ## Documentation (`prds/`)
 

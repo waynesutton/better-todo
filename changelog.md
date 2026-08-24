@@ -4,6 +4,51 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.040] - 2026-08-23
+
+### Added
+
+- **Kanban Board View** - Every day and project can now be read as a board instead of a list
+  - Four columns out of the box: To do, Doing, Done, Backlog. Add up to 12, rename by double clicking the title, delete from the column menu (cards move to the leftmost column, never orphaned)
+  - Drag cards inside a column to reorder and across columns to change state. Drag column headers by their grip to reorder the board
+  - Dropping a card in Done completes and archives it. Dragging it back out revives it. Both paths feed the streak counter, same as checking the box in list view
+  - Each column has its own composer at the bottom, so new work enters where you are already looking. Cards created in Done arrive completed
+  - Group select with Cmd/Ctrl/Shift click. Once a selection exists, plain clicks keep extending it. A bottom bar shows the count and one button per column for a bulk move. Escape clears
+  - Dragging any selected card moves the whole selection together, with a count badge on the drag overlay
+  - Existing card menus, subtasks, pins, timers, and Send to agent all work unchanged. Card menus portal to the body so a scrolling column cannot clip them
+  - New `convex/kanban.ts` with `getColumns`, `addColumn`, `renameColumn`, `deleteColumn`, `reorderColumns`, `createTodoInColumn`, and `moveTodosToColumn`. The client sends the destination column's full ordered id list so the server never read-modify-writes, keeping concurrent drags conflict free
+  - New `kanbanColumns` table plus `kanbanColumn` and `kanbanOrder` on `todos`
+  - Columns fall back to virtual defaults until the first edit, so a new account sees a working board with zero writes
+  - Board view is hidden on the Pinned and Backlog views, where columns have no meaning
+- **List and board toggle** - Kanban/Rows icon button in the header (Phosphor Icons), plus `Shift + B`
+  - The toggle is per day and per project, saved in localStorage and pruned to the 60 most recent scopes
+  - Switching a page never changes your saved default
+- **Default Todo View setting** - Choose List or Board as the starting view for every day and project
+  - New `defaultTodoView` field on `userPreferences` with a `setDefaultTodoView` mutation
+- **Board theme tokens** - Seven `--board-*` CSS variables (line, line-strong, pick, pick-ink, wash, muted, lift) that carry the board's structure, emphasis, and depth roles across Dark, Light, Tan, and Cloud
+  - The board leans on hairlines harder than the rest of the app: a column is its border, and a drop target is its lit edge. Tokens let each theme correct only the roles its palette cannot express
+  - Cloud collapses border, hover, and accent into one gray (`#e8e8e8`) and gives secondary text the same value as primary, which left columns and drop targets invisible. It now uses a darker hairline, its own ink as the emphasis color, a real hover wash, and a distinct muted gray
+  - Dark swaps white for near-black on its blue swatch (white was 2.8:1) and doubles shadow weight, since a soft black shadow disappears on a mid-dark surface
+  - Verified all four themes against the compiled CSS: column structure, drop target, card hover, selection ring, drag overlay, count badge, and the Settings choice cards
+
+### Changed
+
+- **Keyboard Shortcuts modal is now Settings** - Renamed with a GearSix icon (Phosphor Icons) in both the modal header and the sidebar button
+  - Settings controls now sit at the top: Default Todo View, Todo Text Font Size, End of Day Auto Rollover, API Keys, Code Blocks
+  - The shortcut tables moved to the bottom, under a Keyboard Shortcuts divider
+  - Added `Shift + B` to the navigation shortcuts list
+- `TodoItem` gained a `card` variant used by the board: the wrapper owns the sortable, the drag handle is supplied by the board, and the menu portals with viewport coordinates
+- Drop targets and the active Settings choice now draw a doubled edge (border plus inset ring) instead of a hue change alone, so the state does not depend on color perception
+- Board secondary text (column counts, empty states, date context, composer placeholder) dropped its `opacity` values for real muted colors, bringing 10px and 12px labels above 4.5:1 in every theme
+- Every board control has an explicit `:focus-visible` ring, and the composer gained a focus ring instead of relying on a background tint alone
+
+### Fixed
+
+- `Shift + A` (send hovered todo to an agent) prefilled an empty task because the handler read `todo.text`, a field that does not exist, instead of `todo.content`
+- Active header nav icons were nearly invisible in the Cloud theme, whose `--accent` is a near-background gray. Cloud now uses its ink for the active state, which also fixes the list/board toggle reading as off while board view was on
+- Completed cards showed twice in board view, once in the Done column and again in the footer Done section. The footer section is now hidden while the board is open, since the Done column is the board's archive (2026-08-24)
+- Checking a card off in list view left the board showing it under its old column, and unchecking one from the list's Done section left it parked in Done as an active card. Completion now outranks the saved column placement when the board decides where a card sits, so both views agree without any extra writes (2026-08-24)
+
 ## [v.039] - 2026-08-12
 
 ### Added

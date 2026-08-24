@@ -115,6 +115,9 @@ export const getUserPreferences = query({
       timezone: v.optional(v.string()),
       autoRolloverEnabled: v.optional(v.boolean()),
       rolloverBackfillAt: v.optional(v.number()),
+      defaultTodoView: v.optional(
+        v.union(v.literal("list"), v.literal("board")),
+      ),
     }),
     v.null(),
   ),
@@ -138,7 +141,43 @@ export const getUserPreferences = query({
       timezone: prefs.timezone,
       autoRolloverEnabled: prefs.autoRolloverEnabled,
       rolloverBackfillAt: prefs.rolloverBackfillAt,
+      defaultTodoView: prefs.defaultTodoView,
     };
+  },
+});
+
+// Set the default todo layout used for dates and projects with no local override
+export const setDefaultTodoView = mutation({
+  args: {
+    view: v.union(v.literal("list"), v.literal("board")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const existing = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (existing) {
+      // Idempotent: skip the write when the preference already matches
+      if ((existing.defaultTodoView ?? "list") === args.view) {
+        return null;
+      }
+      await ctx.db.patch(existing._id, { defaultTodoView: args.view });
+    } else {
+      await ctx.db.insert("userPreferences", {
+        userId,
+        todoFontSize: 12,
+        defaultTodoView: args.view,
+      });
+    }
+
+    return null;
   },
 });
 

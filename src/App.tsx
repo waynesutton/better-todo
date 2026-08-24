@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useUser } from "@clerk/clerk-react";
@@ -34,6 +34,7 @@ import {
   FileTextIcon,
   CheckboxIcon,
 } from "@radix-ui/react-icons";
+import { Kanban, Rows } from "@phosphor-icons/react";
 import { Id } from "../convex/_generated/dataModel";
 import { useTheme } from "./context/ThemeContext";
 import { triggerSelectionHaptic, triggerSuccessHaptic } from "./lib/haptics";
@@ -67,6 +68,19 @@ function App() {
       }
     }
   }, [isAuthenticated, userPreferences, setTimezoneIfMissing]);
+
+  // Per-page list/board overrides. The saved default in Settings decides the
+  // starting view; toggling only changes the day or project you are looking at.
+  const [todoViewOverrides, setTodoViewOverrides] = useState<
+    Record<string, "list" | "board">
+  >(() => {
+    try {
+      const saved = localStorage.getItem("todoViewOverrides");
+      return saved ? (JSON.parse(saved) as Record<string, "list" | "board">) : {};
+    } catch {
+      return {};
+    }
+  });
 
   // Streaks header visibility state (persisted in localStorage)
   const [showStreaksHeader, setShowStreaksHeader] = useState<boolean>(() => {
@@ -120,6 +134,40 @@ function App() {
       setSelectedDate(""); // Clear date when viewing folder
     }
   }, [urlFolderSlug, folderFromSlug]);
+
+  // Resolve the active view: page override first, then the saved default
+  const todoViewScope = selectedFolder
+    ? `folder:${selectedFolder}`
+    : `date:${selectedDate}`;
+  const defaultTodoView = userPreferences?.defaultTodoView ?? "list";
+  const todoViewMode = todoViewOverrides[todoViewScope] ?? defaultTodoView;
+  const canUseBoardView =
+    selectedDate !== "pinned" && selectedDate !== "backlog";
+  // The board's Done column already holds completed cards, so the footer
+  // archive section would show the same items a second time
+  const boardViewActive = canUseBoardView && todoViewMode === "board";
+
+  const toggleTodoViewMode = useCallback(() => {
+    if (!canUseBoardView) return;
+    setTodoViewOverrides((prev) => {
+      const next = { ...prev };
+      const resolved = prev[todoViewScope] ?? defaultTodoView;
+      const flipped = resolved === "board" ? "list" : "board";
+      if (flipped === defaultTodoView) {
+        // Back to the default, so drop the override instead of storing it
+        delete next[todoViewScope];
+      } else {
+        next[todoViewScope] = flipped;
+      }
+      // Keep the map from growing without bound as days accumulate
+      const keys = Object.keys(next);
+      if (keys.length > 60) {
+        for (const key of keys.slice(0, keys.length - 60)) delete next[key];
+      }
+      localStorage.setItem("todoViewOverrides", JSON.stringify(next));
+      return next;
+    });
+  }, [canUseBoardView, todoViewScope, defaultTodoView]);
 
   // Check if mobile on initial load (hide sidebar completely by default on mobile)
   const isMobile = window.innerWidth <= 768;
@@ -957,6 +1005,12 @@ function App() {
         });
       }
 
+      // Toggle list and board view with Shift + B
+      if ((e.key === "B" || e.key === "b") && e.shiftKey) {
+        e.preventDefault();
+        toggleTodoViewMode();
+      }
+
       // Send focused todo to agent with Shift + A
       if ((e.key === "A" || e.key === "a") && e.shiftKey) {
         e.preventDefault();
@@ -972,8 +1026,8 @@ function App() {
               isOpen: true,
               sourceId: todo._id,
               sourceType: "todo",
-              sourceContent: todo.text,
-              sourceTitle: todo.text.slice(0, 100),
+              sourceContent: todo.content,
+              sourceTitle: todo.content.slice(0, 100),
               folderId: selectedFolder ?? undefined,
               date:
                 selectedDate !== "pinned" && selectedDate !== "backlog"
@@ -1054,6 +1108,7 @@ function App() {
     folderFullPageNotes,
     openFullPageNoteTabs,
     toggleTheme,
+    toggleTodoViewMode,
   ]);
 
   // Reset focused index when todos change
@@ -1422,6 +1477,37 @@ function App() {
                     <CheckboxIcon style={{ width: 18, height: 18 }} />
                   </button>
                 )}
+                {/* List / board toggle - only where columns have meaning */}
+                {canUseBoardView &&
+                  isAuthenticated &&
+                  !showFullPageNotes &&
+                  !showAIChat &&
+                  !showAgentTasks && (
+                    <button
+                      className={`search-button ${todoViewMode === "board" ? "nav-icon-active" : ""}`}
+                      onClick={() => {
+                        triggerSelectionHaptic();
+                        toggleTodoViewMode();
+                      }}
+                      title={
+                        todoViewMode === "board"
+                          ? "Switch to list (Shift+B)"
+                          : "Switch to board (Shift+B)"
+                      }
+                      aria-label={
+                        todoViewMode === "board"
+                          ? "Switch to list view"
+                          : "Switch to board view"
+                      }
+                      aria-pressed={todoViewMode === "board"}
+                    >
+                      {todoViewMode === "board" ? (
+                        <Rows size={18} />
+                      ) : (
+                        <Kanban size={18} />
+                      )}
+                    </button>
+                  )}
                 {/* Full-page notes icon - always visible on regular date pages and folders */}
                 {selectedDate !== "pinned" && selectedDate !== "backlog" && (
                   <button
@@ -1943,6 +2029,7 @@ function App() {
                 demoTodos={demoTodos}
                 setDemoTodos={setDemoTodos}
                 isAuthenticated={!authIsLoading && isAuthenticated}
+                viewMode={isAuthenticated ? todoViewMode : "list"}
                 setPomodoroTriggered={setPomodoroTriggered}
                 onSendToAgent={(data) => {
                   setAgentTaskModalData({
@@ -1974,10 +2061,11 @@ function App() {
 
           {/* Sticky footer with archive and bulk actions */}
           <div className="main-content-footer">
-            {/* Archive section - only show for authenticated users and not on full-page notes, AI chat, or agent tasks view */}
+            {/* Archive section - only show for authenticated users and not on full-page notes, AI chat, agent tasks, or the board view */}
             {!showFullPageNotes &&
               !showAIChat &&
               !showAgentTasks &&
+              !boardViewActive &&
               archivedTodos.length > 0 &&
               isAuthenticated && (
                 <ArchiveSection
