@@ -95,11 +95,23 @@ export interface KanbanBoardProps extends SharedCardProps {
 
 const MAX_COLUMNS = 12;
 
+// Where a card with no placement of its own lives. Anchored to the seeded
+// "todo" column rather than "whichever column is leftmost", so adding a column
+// or dragging one to the front never drags untouched cards along with it.
+// Matches homeColumn in convex/kanban.ts.
+function homeColumn(columns: BoardColumn[]): BoardColumn {
+  return (
+    columns.find((c) => c.key === "todo" && !c.isDone) ??
+    columns.find((c) => !c.isDone) ??
+    columns[0]
+  );
+}
+
 // Where a card belongs. Completion is shared with the list view, so it outranks
 // the hand placement in `kanbanColumn`: checking a card off anywhere sends it to
-// Done, and unchecking it pulls it back into the leftmost active column. Only
-// active cards keep their placement. Backlogged work defaults to Backlog, so an
-// existing day reads correctly on first open.
+// Done, and unchecking it pulls it back to the home column. Only active cards
+// keep their placement. Backlogged work defaults to Backlog, so an existing day
+// reads correctly on first open.
 function resolveColumn(todo: KanbanTodo, columns: BoardColumn[]): string {
   if (todo.completed || todo.archived) {
     return (columns.find((c) => c.isDone) ?? columns[0]).key;
@@ -114,7 +126,26 @@ function resolveColumn(todo: KanbanTodo, columns: BoardColumn[]): string {
     const backlog = columns.find((c) => c.key === "backlog");
     if (backlog) return backlog.key;
   }
-  return (columns.find((c) => !c.isDone) ?? columns[0]).key;
+  return homeColumn(columns).key;
+}
+
+// The board sorts by kanbanOrder when a card has one and falls back to the
+// list-view order, which is a creation timestamp.
+function sortValue(todo: KanbanTodo): number {
+  return todo.kanbanOrder ?? todo.order;
+}
+
+// A board position that sorts a new card into `index` without renumbering the
+// column: the midpoint between its neighbours. Repeatedly inserting into the
+// same gap shrinks the interval, and the next drag through the column
+// renormalises everything back to whole numbers.
+function positionForIndex(cards: KanbanTodo[], index: number): number {
+  const before = index > 0 ? sortValue(cards[index - 1]) : null;
+  const after = index < cards.length ? sortValue(cards[index]) : null;
+  if (before === null && after === null) return Date.now();
+  if (before === null) return after! - 1;
+  if (after === null) return before + 1;
+  return (before + after) / 2;
 }
 
 export function KanbanBoard({
@@ -361,9 +392,7 @@ export function KanbanBoard({
   // Checking a card off the board keeps its column in sync with its state
   const handleCompletedChange = useCallback(
     (todo: KanbanTodo, next: boolean) => {
-      const doneColumn = columns.find((c) => c.isDone);
-      const activeColumn = columns.find((c) => !c.isDone);
-      const target = next ? doneColumn : activeColumn;
+      const target = next ? columns.find((c) => c.isDone) : homeColumn(columns);
       if (!target) return;
 
       const targetIds = (grouped[target.key] ?? [])
@@ -442,6 +471,21 @@ export function KanbanBoard({
   const dragGroupSize =
     activeCardId && selected.has(activeCardId) ? selected.size : 1;
 
+  // Says where the cards go, so the dialog is not a bare "are you sure"
+  const deleteMessage = (() => {
+    if (!pendingDelete) return "";
+    const count = (grouped[pendingDelete.key] ?? []).length;
+    if (count === 0) {
+      return `Delete "${pendingDelete.label}"? It is empty, so nothing else changes.`;
+    }
+    const fallback = homeColumn(
+      columns.filter((c) => c.key !== pendingDelete.key),
+    );
+    return `Delete "${pendingDelete.label}"? Its ${
+      count === 1 ? "card moves" : `${count} cards move`
+    } to ${fallback?.label ?? "the first column"}. No cards are deleted.`;
+  })();
+
   return (
     <div className="kanban-wrapper">
       <DndContext
@@ -478,13 +522,20 @@ export function KanbanBoard({
                   })
                 }
                 onRequestDelete={() => setPendingDelete(column)}
-                onCreateCard={async (content) => {
+                onCreateCard={async (content, index) => {
+                  const cards = grouped[column.key] ?? [];
                   try {
                     await createTodoInColumn({
                       date: isBoardOfFolder ? undefined : date,
                       folderId: shared.folderId,
                       content,
                       columnKey: column.key,
+                      // Only sent for a placed insert; a card added at the end
+                      // keeps falling back to its creation timestamp
+                      kanbanOrder:
+                        index >= cards.length
+                          ? undefined
+                          : positionForIndex(cards, index),
                     });
                   } catch (error) {
                     console.error("Error creating card:", error);
@@ -619,14 +670,7 @@ export function KanbanBoard({
       <ConfirmDialog
         isOpen={pendingDelete !== null}
         title="Delete column"
-        message={
-          pendingDelete
-            ? `Delete "${pendingDelete.label}"? Its cards move to ${
-                columns.find((c) => c.key !== pendingDelete.key)?.label ??
-                "the first column"
-              }.`
-            : ""
-        }
+        message={deleteMessage}
         confirmText="Delete column"
         cancelText="Keep it"
         isDangerous
@@ -651,7 +695,7 @@ interface KanbanColumnProps {
   onCompletedChange: (todo: KanbanTodo, next: boolean) => void;
   onRename: (label: string) => void;
   onRequestDelete: () => void;
-  onCreateCard: (content: string) => Promise<void>;
+  onCreateCard: (content: string, index: number) => Promise<void>;
   composerRef?: React.RefObject<HTMLTextAreaElement>;
   shared: SharedCardProps;
 }
@@ -678,6 +722,9 @@ function KanbanColumn({
   const [renaming, setRenaming] = useState(false);
   const [label, setLabel] = useState(column.label);
   const [draft, setDraft] = useState("");
+  // Index of the open in-column composer, so only one line is ever open
+  const [insertAt, setInsertAt] = useState<number | null>(null);
+  const [insertDraft, setInsertDraft] = useState("");
   const internalComposerRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = composerRef ?? internalComposerRef;
   const menuRef = useRef<HTMLDivElement>(null);
@@ -732,8 +779,128 @@ function KanbanColumn({
     const content = draft.trim();
     if (!content) return;
     setDraft("");
-    await onCreateCard(content);
+    await onCreateCard(content, cards.length);
   };
+
+  // A card typed into one of the in-column lines. The composer stays open one
+  // line lower so a run of cards lands in the order they were typed.
+  const submitInsert = async (index: number) => {
+    const content = insertDraft.trim();
+    if (!content) {
+      setInsertAt(null);
+      return;
+    }
+    setInsertDraft("");
+    setInsertAt(index + 1);
+    await onCreateCard(content, index);
+  };
+
+  const closeInsert = () => {
+    setInsertAt(null);
+    setInsertDraft("");
+  };
+
+  // Describes a gap for a screen reader, since a hairline says nothing on its own
+  const insertLabel = (index: number) => {
+    if (index === 0) return `Add a card to the top of ${column.label}`;
+    const below = cards[index];
+    return below
+      ? `Add a card above ${below.content}`
+      : `Add a card to the bottom of ${column.label}`;
+  };
+
+  // The line between two cards: a hairline that opens a composer on click. The
+  // first one carries a label because it doubles as the add to top control.
+  const insertLine = (index: number) => (
+    <button
+      key={`insert:${index}`}
+      type="button"
+      className={`kanban-insert-line ${index === 0 ? "is-first" : ""}`}
+      onClick={() => {
+        setInsertDraft("");
+        setInsertAt(index);
+      }}
+      aria-label={insertLabel(index)}
+      title={index === 0 ? "Add to top" : "Add a card here"}
+    >
+      <span className="kanban-insert-mark" aria-hidden="true">
+        <Plus size={11} />
+      </span>
+      {index === 0 && <span className="kanban-insert-label">Add to top</span>}
+      <span className="kanban-insert-rule" aria-hidden="true" />
+    </button>
+  );
+
+  // One stable key so the composer is moved rather than remounted as cards land
+  // above it, which is what lets a run of cards be typed without re-clicking.
+  const insertComposer = (index: number) => (
+    <div className="kanban-insert-composer" key="insert-composer">
+      <textarea
+        className="kanban-composer-input"
+        value={insertDraft}
+        placeholder={
+          index === 0
+            ? `Add to the top of ${column.label.toLowerCase()}`
+            : "Add a card here"
+        }
+        rows={1}
+        autoFocus
+        onChange={(e) => {
+          setInsertDraft(e.target.value);
+          e.target.style.height = "auto";
+          e.target.style.height = `${e.target.scrollHeight}px`;
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            void submitInsert(index);
+            (e.target as HTMLTextAreaElement).style.height = "auto";
+          }
+          if (e.key === "Escape") closeInsert();
+        }}
+        // Clicking away puts the line back rather than trapping the pointer
+        onBlur={() => {
+          if (!insertDraft.trim()) closeInsert();
+        }}
+        spellCheck={false}
+        data-gramm="false"
+        aria-label={insertLabel(index)}
+      />
+      <button
+        type="button"
+        className="kanban-composer-submit"
+        onClick={() => void submitInsert(index)}
+        disabled={!insertDraft.trim()}
+        aria-label="Add card"
+        title="Add card"
+      >
+        <Plus size={13} />
+      </button>
+    </div>
+  );
+
+  // A flat child list rather than a fragment per card, so the composer keeps its
+  // identity as it moves between gaps
+  const body: React.ReactNode[] = [];
+  cards.forEach((todo, index) => {
+    body.push(insertAt === index ? insertComposer(index) : insertLine(index));
+    body.push(
+      <KanbanCard
+        key={todo._id}
+        todo={todo}
+        columnKey={column.key}
+        isSelected={selected.has(todo._id)}
+        selectionMode={selectionMode}
+        onSelect={onSelect}
+        onCompletedChange={onCompletedChange}
+        shared={shared}
+      />,
+    );
+  });
+  // Typing past the last card keeps the composer open under it
+  if (insertAt !== null && insertAt >= cards.length && cards.length > 0) {
+    body.push(insertComposer(cards.length));
+  }
 
   return (
     <section
@@ -778,14 +945,19 @@ function KanbanColumn({
           <button
             type="button"
             className="kanban-column-title"
-            onDoubleClick={() => setRenaming(true)}
-            title="Double click to rename"
+            onClick={() => setRenaming(true)}
+            title="Rename column"
           >
             {column.label}
           </button>
         )}
 
-        <span className="kanban-column-count">{cards.length}</span>
+        <span
+          className="kanban-column-count"
+          title={`${cards.length} ${cards.length === 1 ? "card" : "cards"}`}
+        >
+          {cards.length}
+        </span>
 
         <div className="kanban-column-menu-anchor" ref={menuRef}>
           <button
@@ -793,15 +965,22 @@ function KanbanColumn({
             className="kanban-icon-button"
             onClick={() => setMenuOpen((prev) => !prev)}
             aria-label={`${column.label} column options`}
+            aria-haspopup="menu"
             aria-expanded={menuOpen}
+            title="Column options"
           >
             <DotsThree size={16} />
           </button>
           {menuOpen && (
-            <div className="menu-dropdown kanban-column-menu">
+            <div
+              className="menu-dropdown kanban-column-menu"
+              role="menu"
+              aria-label={`${column.label} column options`}
+            >
               <button
                 type="button"
                 className="menu-item"
+                role="menuitem"
                 onClick={() => {
                   setMenuOpen(false);
                   setRenaming(true);
@@ -812,12 +991,36 @@ function KanbanColumn({
               </button>
               <button
                 type="button"
+                className="menu-item"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  // An empty column has no line to open, so send the cursor to
+                  // the composer that is already there
+                  if (cards.length === 0) {
+                    inputRef.current?.focus();
+                    return;
+                  }
+                  setInsertDraft("");
+                  setInsertAt(0);
+                }}
+              >
+                <Plus size={13} />
+                Add card to top
+              </button>
+              <span className="menu-separator" aria-hidden="true" />
+              <button
+                type="button"
                 className="menu-item danger"
+                role="menuitem"
                 onClick={() => {
                   setMenuOpen(false);
                   onRequestDelete();
                 }}
                 disabled={!canDelete}
+                title={
+                  canDelete ? undefined : "A board needs at least one column"
+                }
               >
                 <Trash size={13} />
                 Delete column
@@ -832,25 +1035,14 @@ function KanbanColumn({
           items={cards.map((c) => c._id)}
           strategy={verticalListSortingStrategy}
         >
-          {cards.map((todo) => (
-            <KanbanCard
-              key={todo._id}
-              todo={todo}
-              columnKey={column.key}
-              isSelected={selected.has(todo._id)}
-              selectionMode={selectionMode}
-              onSelect={onSelect}
-              onCompletedChange={onCompletedChange}
-              shared={shared}
-            />
-          ))}
+          {body}
         </SortableContext>
 
         {cards.length === 0 && (
           <p className="kanban-column-empty">
             {column.isDone
-              ? "Finished cards land here."
-              : "Drop a card here or add one below."}
+              ? "Cards land here when you check them off."
+              : "Drag a card here, or add one below."}
           </p>
         )}
       </div>

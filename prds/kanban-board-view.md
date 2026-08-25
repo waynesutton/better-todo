@@ -1,7 +1,7 @@
 # Kanban board view and Settings modal rename
 
 Created: 2026-08-23 22:40 UTC
-Last Updated: 2026-08-24 07:35 UTC
+Last Updated: 2026-08-25 03:40 UTC
 Status: Done
 
 ## Problem
@@ -271,3 +271,46 @@ Two sources of truth for the same idea. `kanbanColumn` is a hand placement,
   selection bar, and holds its floor with eight notes below while the page
   scrolls to reach them. Harness deleted after measuring. Verified:
   `npx tsc --noEmit` clean, eslint clean, `npx vite build` clean. Status: Done
+- 2026-08-25 03:40 UTC — Insertion, menu, and To do drift pass. Four reports, two
+  of them the same root cause.
+
+  Cards leaving To do when a column was added: a card that has never been dragged
+  has no `kanbanColumn`, and `resolveColumn` resolved that to "leftmost active
+  column". That is a position, not an identity, so any change to the column set
+  or order could move a whole stack of untouched cards, and `deleteColumn` used
+  the same rule server side. Replaced with a `homeColumn` helper defined twice on
+  purpose, once in `convex/kanban.ts` and once in `src/components/KanbanBoard.tsx`,
+  anchored to the seeded `todo` key with an ordered fallback for boards that no
+  longer have one. `handleCompletedChange` uses it too, so unchecking a card
+  returns it to To do rather than to whatever now sits first.
+
+  Add a card at any line: every gap in a column is now a hairline button that
+  opens a composer in place, with a labelled Add to top control at the head and
+  the existing composer still at the foot. The ordering problem was writing an
+  insert without renumbering the column, solved with fractional positions:
+  `positionForIndex` sends the midpoint of the two neighbours and
+  `createTodoInColumn` accepts an optional `kanbanOrder` validated by a new
+  `safePosition` that keeps floats, unlike `safeOrder` which truncates for column
+  indices. Repeated inserts into one gap shrink the interval and the next drag
+  through the column renormalises to whole numbers. The composer needed one more
+  fix to be usable for a run of cards: rendering it inside a per card fragment
+  moved it to a new position in the tree on every insert, so React remounted it
+  and focus was lost. The column body is now a flat child list with a single
+  stable key on the composer, so React moves the node and the caret stays put.
+
+  Column menu: `.kanban-column-menu .menu-item` was borrowing the list view's
+  `.menu-item`, which is authored for divs, so the board's buttons kept native
+  chrome, centered text, and the harder `--border-color` edge. Stripped the
+  chrome and moved the dropdown onto `--board-line` and `--board-lift`. One trap
+  worth noting: the reset also killed the base `:hover` fill, since
+  `.kanban-column-menu .menu-item` and `.menu-item:hover` carry equal specificity
+  and the board rule is later in the file, so hover had to be restated with
+  `--board-wash`. The menu gained Add card to top and put Delete column behind a
+  separator, rename moved from a double click to a single click on the title so
+  it is reachable by keyboard and on touch, and the delete dialog now names the
+  column, counts its cards, says where they land, and says nothing is deleted.
+
+  Verified: `npx tsc --noEmit` clean, `npx eslint` clean on both files,
+  `npx vite build` clean, `npx convex-doctor` 100/100 with one pre-existing
+  `convex.json` config warning. Board is behind auth, so on-screen confirmation
+  of the insert lines in all four themes is the user's. Status: Done

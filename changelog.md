@@ -9,10 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **Kanban Board View** - Every day and project can now be read as a board instead of a list
-  - Four columns out of the box: To do, Doing, Done, Backlog. Add up to 12, rename by double clicking the title, delete from the column menu (cards move to the leftmost column, never orphaned)
+  - Four columns out of the box: To do, Doing, Done, Backlog. Add up to 12, rename from the title or the column menu, delete from the column menu (cards move to To do, never orphaned)
   - Drag cards inside a column to reorder and across columns to change state. Drag column headers by their grip to reorder the board
   - Dropping a card in Done completes and archives it. Dragging it back out revives it. Both paths feed the streak counter, same as checking the box in list view
   - Each column has its own composer at the bottom, so new work enters where you are already looking. Cards created in Done arrive completed
+  - **Add a card at any line** - Every gap between two cards is a click target. Click one and a composer opens in place, so a card can be typed into the middle of a column instead of being added at the end and dragged up. The top gap keeps a visible Add to top control, and the column menu carries the same action for keyboard and touch (2026-08-24)
+    - Enter keeps the composer open one line lower, so a run of cards lands in the order it was typed. Escape or clicking away with an empty composer puts the line back
+    - `createTodoInColumn` takes an optional `kanbanOrder`, and the client sends the midpoint between the two neighbouring cards, so an insert writes one row instead of renumbering the column
   - Group select with Cmd/Ctrl/Shift click. Once a selection exists, plain clicks keep extending it. A bottom bar shows the count and one button per column for a bulk move. Escape clears
   - Dragging any selected card moves the whole selection together, with a count badge on the drag overlay
   - Existing card menus, subtasks, pins, timers, and Send to agent all work unchanged. Card menus portal to the body so a scrolling column cannot clip them
@@ -50,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Column scroll uses `overscroll-behavior: contain`, so flicking to the end of a column does not carry on and scroll the page
   - Drag grips grew to a 32x44px target on touch, the only way to drag a card or column on a phone
   - Measured at 1440x900 and at 532x356: all columns equal height, board bottom clear of the footer, card lists scrolling internally, and board height unchanged whether the selection bar is up or not
+- **Column menu now carries the whole column** - Rename, Add card to top, then Delete column behind a separator. Renaming takes a single click on the title instead of a double click, so it is reachable by keyboard and on touch, and the delete confirmation names the column, counts its cards, says where they land, and says nothing is deleted (2026-08-24)
 
 ### Fixed
 
@@ -57,6 +61,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Active header nav icons were nearly invisible in the Cloud theme, whose `--accent` is a near-background gray. Cloud now uses its ink for the active state, which also fixes the list/board toggle reading as off while board view was on
 - Completed cards showed twice in board view, once in the Done column and again in the footer Done section. The footer section is now hidden while the board is open, since the Done column is the board's archive (2026-08-24)
 - Checking a card off in list view left the board showing it under its old column, and unchecking one from the list's Done section left it parked in Done as an active card. Completion now outranks the saved column placement when the board decides where a card sits, so both views agree without any extra writes (2026-08-24)
+- Adding a column pulled cards out of To do. A card that has never been dragged has no column of its own, and the board used to read that as "whichever active column is leftmost", so any change to the column order or set could move a whole stack of untouched cards. Home is now the seeded To do column, front to back, and the same rule runs on the server when a column is deleted, so To do stays To do (2026-08-24)
+- The column menu rendered as native buttons: centered text, hard edges, and a black hairline that read as a browser dialog rather than part of the board. It now uses the board's hairline, lift, and hover wash, with left aligned rows, muted icons, and its own focus ring (2026-08-24)
 
 ## [v.039] - 2026-08-12
 

@@ -126,9 +126,9 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getColumns` - Get the user's board columns, falling back to virtual defaults (To do, Doing, Done, Backlog) before any edit so no writes are needed
   - `addColumn` - Add a column to the end of the board (slugged key, unique per user, max 12 columns)
   - `renameColumn` - Rename a column while keeping its key, so cards stay put (idempotent, skips the write when the label is unchanged)
-  - `deleteColumn` - Delete a column, reassign its cards to the leftmost remaining column, and renumber the rest in parallel
+  - `deleteColumn` - Delete a column, reassign its cards to the board's home column (the seeded To do, so nothing lands somewhere arbitrary), and renumber the rest in parallel
   - `reorderColumns` - Persist a new left to right order from the full key list
-  - `createTodoInColumn` - Create a card straight into a column with timestamp ordering; cards created in a Done column arrive completed and archived
+  - `createTodoInColumn` - Create a card straight into a column with timestamp ordering, or at an explicit fractional `kanbanOrder` when the card is inserted between two others; cards created in a Done column arrive completed and archived
   - `moveTodosToColumn` - Move one or more cards into a column and write that column's full new order from the client-supplied id list, so the mutation patches without a read-modify-write; only dragged cards flip completion, and completion changes schedule a streak update
 
 - `notes.ts` - Queries and mutations for notes operations:
@@ -466,10 +466,13 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `KanbanBoard.tsx` - Kanban board view for a day or project:
   - Columns and cards are both dnd-kit sortables in one DndContext, with a dedicated drop zone on each column body so empty columns accept cards
-  - Cards resolve to a column by completion first, then their saved `kanbanColumn`, then Backlog for backlogged work, then the leftmost active column. Completion outranks the saved placement in both directions, so checking a card off in list view moves it to Done on the board and unchecking one pulls it back into the first active column
+  - Cards resolve to a column by completion first, then their saved `kanbanColumn`, then Backlog for backlogged work, then the board's home column. Completion outranks the saved placement in both directions, so checking a card off in list view moves it to Done on the board and unchecking one pulls it back home
+  - `homeColumn` is where a card with no placement of its own lives: the seeded To do column by key, not whichever column happens to be leftmost, so adding or dragging a column never pulls untouched cards along with it. Mirrors the same helper in `convex/kanban.ts`
   - Group select with Cmd/Ctrl/Shift click; once a selection exists plain clicks keep extending it. A bottom bar shows the count with one button per column for a bulk move, and Escape clears
   - Dragging a selected card moves the whole selection, with a count badge on the drag overlay
-  - Per column composer at the bottom, inline rename on double click, and a column menu for rename and delete with a ConfirmDialog
+  - Three ways to add a card: the composer at the foot of the column, a labelled Add to top control at its head, and a hairline insert control in every gap between cards. Clicking a gap opens a composer in place, Enter keeps it open one line lower so a run of cards keeps its typed order, and Escape or an empty blur restores the line. `positionForIndex` sends the midpoint of the two neighbouring cards as `kanbanOrder`, so an insert writes one row instead of renumbering the column
+  - The column body is a flat child list with one stable key on the open composer, so React moves the node instead of remounting it as cards land above and the caret stays put
+  - Column menu holds Rename, Add card to top, then Delete column behind a separator; the delete ConfirmDialog names the column, counts its cards, and says where they land. Renaming also works from a single click on the title
   - Column reorder is written optimistically so header drags feel instant, then handed back to the server
   - Renders a skeleton while columns load, inside the same wrapper as the real board so it fills the same frame with no layout jump
   - Fills the window: the board claims the height between the header and the footer and every column stretches to the same bottom edge, with each column body scrolling inside itself so headers and composers stay put

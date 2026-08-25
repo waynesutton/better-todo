@@ -12398,20 +12398,72 @@ button:active,
   align-items: center;
 }
 
+/* The board's own dropdown skin. Uses the board hairline and lift instead of
+   the list view's harder --border-color edge, so the menu reads as part of the
+   column it opens from in every theme. */
 .kanban-column-menu {
-  min-width: 150px;
+  min-width: 168px;
+  padding: 4px;
+  border-color: var(--board-line);
+  border-radius: 8px;
+  box-shadow: var(--board-lift);
 }
 
+/* .menu-item is authored for the list view's divs, so the board's buttons need
+   the native button chrome stripped before it can look the same. */
 .kanban-column-menu .menu-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--text-primary);
+  font-family: inherit;
   font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  appearance: none;
+}
+
+.kanban-column-menu .menu-item svg {
+  flex-shrink: 0;
+  color: var(--board-muted);
+}
+
+/* Stripping the chrome above also erased the hover fill that .menu-item sets
+   earlier in this file, so the board restates it with its own wash. */
+.kanban-column-menu .menu-item:hover:not(:disabled) {
+  background: var(--board-wash);
+}
+
+.kanban-column-menu .menu-item.danger:hover:not(:disabled) {
+  background: rgba(225, 109, 118, 0.12);
+}
+
+.kanban-column-menu .menu-item:hover:not(:disabled) svg {
+  color: inherit;
+}
+
+.kanban-column-menu .menu-item.danger svg {
+  color: inherit;
+}
+
+.kanban-column-menu .menu-separator {
+  display: block;
+  margin: 4px 0;
+  background: var(--board-line);
 }
 
 .kanban-column-menu .menu-item:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.kanban-column-menu .menu-item:disabled:hover {
+  background: none;
 }
 
 /* Shared small square button used across the board chrome */
@@ -12473,6 +12525,101 @@ button:active,
   color: var(--board-muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+/* The line between two cards. Collapsed to a thin strip so a column of cards
+   still reads as a stack, and it only draws itself once the pointer or the
+   keyboard is on it. The first line keeps a label because it doubles as the
+   add to top control and needs to be findable without hovering. */
+.kanban-insert-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 14px;
+  margin: -3px 0;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--board-muted);
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  /* Driven by a variable rather than a descendant selector so that hovering one
+     line still outranks the column wide reveal */
+  opacity: var(--insert-visibility, 0);
+  transition: opacity 0.12s ease;
+}
+
+.kanban-column-body:hover {
+  --insert-visibility: 0.6;
+}
+
+.kanban-insert-line.is-first {
+  opacity: 0.6;
+}
+
+.kanban-insert-line:hover,
+.kanban-insert-line:focus-visible {
+  opacity: 1;
+}
+
+/* Hairline sits under the plus and stretches, so the eye reads the gap the card
+   will occupy rather than a floating button */
+.kanban-insert-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--board-line);
+}
+
+.kanban-insert-line:hover .kanban-insert-rule,
+.kanban-insert-line:focus-visible .kanban-insert-rule {
+  background: var(--board-pick);
+}
+
+.kanban-insert-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.kanban-insert-line:hover .kanban-insert-mark,
+.kanban-insert-line:focus-visible .kanban-insert-mark {
+  background: var(--board-pick);
+  color: var(--board-pick-ink);
+}
+
+.kanban-insert-label {
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+/* A composer opened on a line: same fill and ring as the column composer, so
+   an inserted card is typed in the shape it will take. */
+.kanban-insert-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 2px 0;
+}
+
+/* Touch has no hover, so the lines stay faintly drawn instead of waiting for a
+   pointer that will never arrive */
+@media (hover: none) {
+  .kanban-column-body {
+    --insert-visibility: 0.45;
+  }
+
+  /* Taller so the line is a comfortable thumb target. It runs the full width of
+     the column, which is what keeps it findable at this height. */
+  .kanban-insert-line {
+    height: 24px;
+    margin: -6px 0;
+  }
 }
 
 .kanban-card {
@@ -12789,14 +12936,18 @@ button:active,
 }
 
 /* One focus ring for every control on the board. Themes with a washed out
-   accent fall back to their ink, so keyboard position is never guesswork. */
+   accent fall back to their ink, so keyboard position is never guesswork.
+   !important is required because a global reset near the top of this file drops
+   every outline with !important of its own. */
 .kanban-icon-button:focus-visible,
 .kanban-composer-submit:focus-visible,
 .kanban-selection-target:focus-visible,
 .kanban-add-column-button:focus-visible,
 .kanban-column-title:focus-visible,
+.kanban-insert-line:focus-visible,
+.kanban-column-menu .menu-item:focus-visible,
 .settings-choice:focus-visible {
-  outline: 2px solid var(--board-pick);
+  outline: 2px solid var(--board-pick) !important;
   outline-offset: 1px;
 }
 

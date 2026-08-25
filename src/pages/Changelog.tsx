@@ -127,9 +127,8 @@ export function Changelog() {
               <ul className="nested-list">
                 <li>
                   Four columns out of the box: To do, Doing, Done, Backlog. Add
-                  up to 12, rename by double clicking the title, delete from the
-                  column menu (cards move to the leftmost column, never
-                  orphaned)
+                  up to 12, rename from the title or the column menu, delete
+                  from the column menu (cards move to To do, never orphaned)
                 </li>
                 <li>
                   Drag cards inside a column to reorder and across columns to
@@ -145,6 +144,22 @@ export function Changelog() {
                   Each column has its own composer at the bottom, so new work
                   enters where you are already looking. Cards created in Done
                   arrive completed
+                </li>
+                <li>
+                  Add a card at any line: every gap between two cards is a click
+                  target, and clicking one opens a composer in place, so a card
+                  can be typed into the middle of a column instead of being
+                  added at the end and dragged up. The top gap keeps a visible
+                  Add to top control, and the column menu carries the same
+                  action. Enter keeps the composer open one line lower, so a run
+                  of cards lands in the order it was typed
+                </li>
+                <li>
+                  The column menu carries the whole column: Rename, Add card to
+                  top, then Delete column behind a separator. It now wears the
+                  board&apos;s hairline, lift, and hover wash instead of native
+                  button chrome, and the delete confirmation names the column,
+                  counts its cards, and says where they land
                 </li>
                 <li>
                   Group select with Cmd/Ctrl/Shift click. A bottom bar shows the
@@ -348,6 +363,22 @@ export function Changelog() {
               outranks the saved column placement when the board decides where a
               card sits, so both views agree without any extra writes (August 24,
               2026)
+            </li>
+            <li>
+              Adding a column pulled cards out of To do. A card that has never
+              been dragged has no column of its own, and the board used to read
+              that as &quot;whichever active column is leftmost&quot;, so any
+              change to the column order or set could move a whole stack of
+              untouched cards. Home is now the seeded To do column, front to
+              back, and the same rule runs on the server when a column is
+              deleted, so To do stays To do (August 24, 2026)
+            </li>
+            <li>
+              The column menu rendered as native buttons: centered text, hard
+              edges, and a black hairline that read as a browser dialog rather
+              than part of the board. It now uses the board&apos;s hairline,
+              lift, and hover wash, with left aligned rows, muted icons, and its
+              own focus ring (August 24, 2026)
             </li>
           </ul>
         </section>

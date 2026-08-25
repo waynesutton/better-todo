@@ -28,6 +28,31 @@ function safeOrder(value: number): number {
   return Math.max(0, Math.min(100000, Math.trunc(value)));
 }
 
+// A card inserted between two others gets the midpoint of their positions, so
+// the client can place it without renumbering the column. Those midpoints are
+// fractional and can sit anywhere on the timestamp scale `order` uses, so this
+// keeps the float instead of truncating it.
+function safePosition(value: number): number {
+  if (!Number.isFinite(value)) {
+    throw new Error("Invalid card position");
+  }
+  return Math.max(-1e15, Math.min(1e15, value));
+}
+
+// Where cards belong when they have no placement of their own, and where they
+// land when their column is deleted. Anchored to the seeded "todo" key rather
+// than "whichever column is leftmost", so adding or dragging a column never
+// pulls untouched cards out of To do. The board resolves the same way.
+function homeColumn<T extends { key: string; isDone?: boolean }>(
+  columns: Array<T>,
+): T {
+  return (
+    columns.find((column) => column.key === "todo" && !column.isDone) ??
+    columns.find((column) => !column.isDone) ??
+    columns[0]
+  );
+}
+
 // Write the defaults for a user who has never edited their columns, so later
 // mutations have real rows to patch. Idempotent.
 async function ensureColumns(
@@ -193,7 +218,7 @@ export const renameColumn = mutation({
   },
 });
 
-// Delete a column and move its cards to the leftmost remaining column
+// Delete a column and move its cards to the board's home column
 export const deleteColumn = mutation({
   args: {
     key: v.string(),
@@ -217,7 +242,7 @@ export const deleteColumn = mutation({
     }
 
     const remaining = columns.filter((column) => column.key !== args.key);
-    const fallback = remaining[0];
+    const fallback = homeColumn(remaining);
 
     // Reassign this column's cards so nothing is orphaned
     const userTodos = await ctx.db
@@ -280,13 +305,16 @@ export const reorderColumns = mutation({
 });
 
 // Create a card straight into a board column. Mirrors todos.createTodo but
-// stamps the column so the card does not land in the default one first.
+// stamps the column so the card does not land in the default one first, and
+// takes an optional position so the card can enter anywhere in the column
+// instead of only at the end.
 export const createTodoInColumn = mutation({
   args: {
     date: v.optional(v.string()),
     folderId: v.optional(v.id("folders")),
     content: v.string(),
     columnKey: v.string(),
+    kanbanOrder: v.optional(v.number()),
   },
   returns: v.id("todos"),
   handler: async (ctx, args) => {
@@ -323,6 +351,10 @@ export const createTodoInColumn = mutation({
       order: now,
       collapsed: false,
       kanbanColumn: args.columnKey,
+      kanbanOrder:
+        args.kanbanOrder === undefined
+          ? undefined
+          : safePosition(args.kanbanOrder),
     });
   },
 });
