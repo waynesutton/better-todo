@@ -83,6 +83,27 @@ git push -u origin main
 
 - None currently
 
+## Completed Tasks (v.041 - 2026-08-28)
+
+- [x] **Kanban performance** - Cut the read amplification and the render churn the board introduced (2026-08-28 01:40 UTC)
+  - `npx convex insights` on production returned one warning: `todos.js:deleteTodo` retried on OCC conflicts 6 times in 72 hours against `todos`, every event with `occ_retry_count: 0`, so they resolved on the first retry rather than failing
+  - Root cause on the backend: ownership checks written as `withIndex("by_user").filter(_id)` read a user's whole todo range to find one document, so any concurrent write invalidated the transaction. Same shape in subtask lookups, `kanban.deleteColumn`, and `kanban.moveTodosToColumn`, which collected all user todos to resolve a handful of ids. A drag fires a mutation per drop, so the board made a latent problem visible
+  - `convex/schema.ts`: added `by_user_and_kanbanColumn` and `by_user_and_parent` on `todos`
+  - `convex/todos.ts`: new `getOwnedTodo` (direct `ctx.db.get` plus a userId comparison, read set of one) and `getSubtasksOf` (parallel indexed queries), applied to `createSubtask`, `updateTodo`, `deleteTodo`, `reorderTodos`, `moveTodoToDate`, and `moveTodoToFolder`. `getAvailableDates` now reads `fullPageNotes` through `by_user` instead of an unindexed filter that scanned the table across every user
+  - `convex/kanban.ts`: `deleteColumn` finds orphans through the new index; `moveTodosToColumn` `get`s only the ids it was handed and checks ownership per card, so a foreign id is skipped rather than failing the batch
+  - Root cause on the client: the per-card prop bundle was built by rest spread, handing every card a new object each render, and neither `KanbanColumn` nor `KanbanCard` was memoised. `onDragOver` sets `hoverColumnKey` on every pointer move, so one drag re-rendered every `TodoItem` on the board dozens of times
+  - `src/components/KanbanBoard.tsx`: shared props are a `useMemo`, column callbacks are `useCallback` keyed by column key so one function serves every column, and both column and card are wrapped in `React.memo`. A hover change now re-renders only the two columns whose `isDropTarget` flipped
+  - Verified: tsc clean, eslint clean on all six files (one pre-existing `no-explicit-any` in `updateTodo`), production build clean, `convex-doctor --score` 100, both indexes live on dev. PRD: prds/kanban-performance-and-composers.md
+- [x] **Board view for rolled-over days** - A day whose work moved forward no longer reads as finished (2026-08-28 01:40 UTC)
+  - `moveTodosToNextDay` and the rollover cron copy a todo to the new date and patch the original with `archived: true`, leaving a stub. `resolveColumn` sent every archived card to Done, and `TodoList` passed `todos` straight through in board view while filtering them in list view, so the previous day's board showed all of its work as complete
+  - `src/components/KanbanBoard.tsx`: new `isOnBoard` keeps a card when it is completed or not archived, dropping archived-but-incomplete stubs the way list view does. `resolveColumn` routes only `completed: true` cards to Done
+  - `convex/todos.ts` and `convex/rollover.ts`: `copyTodosToDate`, `moveTodosToNextDay`, and `rolloverDay` all carry `kanbanColumn` to the new row, so in-progress work lands in the same column on the new day instead of resetting to the default
+  - Verified: tsc clean, eslint clean, production build clean. PRD: prds/kanban-performance-and-composers.md
+- [x] **Permanent composer at both ends of a column** - Adding to the top no longer needs a hover target or a menu (2026-08-28 01:40 UTC)
+  - `src/components/KanbanBoard.tsx`: a second composer above the cards that inserts at index 0, so typing a run of cards keeps the newest on top. Insert lines now start at index 1, since the top and bottom positions have their own inputs. The column menu's "Add card to top" focuses the top composer instead of duplicating its behaviour
+  - `src/styles/global.css`: new `.kanban-column-composer.is-top` variant that divides itself from the header below rather than above; removed the now-unused first-line label styles
+  - Verified: tsc clean, eslint clean, production build clean. PRD: prds/kanban-performance-and-composers.md
+
 ## Completed Tasks (v.040 - 2026-08-23)
 
 - [x] **Kanban Board View** - Per day and per project board with drag and drop, custom columns, and group move (2026-08-23 06:05 UTC)

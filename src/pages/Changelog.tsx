@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v040");
+  const [activeSection, setActiveSection] = useState("v041");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
+    { id: "v041", title: "v.041 - Aug 28, 2026" },
     { id: "v040", title: "v.040 - Aug 23, 2026" },
     { id: "v039", title: "v.039 - Aug 12, 2026" },
     { id: "v038", title: "v.038 - Aug 10, 2026" },
@@ -110,12 +111,103 @@ export function Changelog() {
 
       <div className="launch-container">
         {/* Each section mirrors the markdown changelog so anchors stay in sync. */}
-        <section id="v040" className="launch-section">
+        <section id="v041" className="launch-section">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">v.041 - August 28, 2026</h2>
+          <p className="changelog-subtitle">
+            Board performance and column composers
+          </p>
+
+          <h3 className="changelog-category">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Board performance</strong> - The app slowed down after the
+              Kanban board shipped. Two causes, one on each side of the wire
+              <ul className="nested-list">
+                <li>
+                  Convex insights on production reported one warning:
+                  <code>deleteTodo</code> retried on write conflicts six times
+                  in 72 hours, each one resolving on the first retry rather than
+                  failing
+                </li>
+                <li>
+                  On the backend, ownership checks were reading a user&apos;s
+                  entire todo range to find one document. That made every todo
+                  they own part of the transaction, so any concurrent write
+                  invalidated it. A drag fires one mutation per drop, which is
+                  what turned a latent problem into a visible one
+                </li>
+                <li>
+                  Two new indexes and a pair of shared helpers cut those reads
+                  to a single document, across deleting, updating, reordering,
+                  and moving a todo. Listing your dates no longer scans the
+                  notes table either
+                </li>
+                <li>
+                  On the client, every card was handed a fresh set of props on
+                  each render and neither columns nor cards were memoised. Since
+                  hover state updates on every pointer move, one drag
+                  re-rendered every card on the board. Now a hover change
+                  touches only the two columns whose highlight actually changed
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>The previous day&apos;s board after a rollover</strong> - A
+              day whose unfinished work moved forward read as if everything had
+              been completed
+              <ul className="nested-list">
+                <li>
+                  Moving a todo to another date copies it and archives the
+                  original, leaving a stub behind. The board was sending every
+                  archived card to Done, and unlike list view it never filtered
+                  the stubs out
+                </li>
+                <li>
+                  Only genuinely completed cards land in Done now, and stubs left
+                  by a move are dropped from the board the way list view drops
+                  them
+                </li>
+                <li>
+                  Rolling work to the next day keeps each card&apos;s column, so
+                  something you had in Doing opens tomorrow in Doing instead of
+                  back in To do
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Changed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>A permanent input at both ends of every column</strong> -
+              Adding a card to the top no longer needs a hover target or a trip
+              through the column menu
+              <ul className="nested-list">
+                <li>
+                  Each column now has an input above its cards and below them.
+                  The top one adds to the front, so typing a run of cards keeps
+                  the newest on top
+                </li>
+                <li>
+                  The gaps between cards still open an inline composer on click.
+                  Those lines now cover only the space between cards, since both
+                  ends have their own input
+                </li>
+                <li>
+                  The column menu&apos;s Add card to top jumps to the top input
+                  rather than doing its own thing
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v040" className="launch-section">
           <h2 className="section-title">v.040 - August 23, 2026</h2>
           <p className="changelog-subtitle">Kanban Board View</p>
 

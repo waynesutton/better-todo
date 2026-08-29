@@ -1,6 +1,46 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
+
+// Load one todo and confirm the caller owns it.
+//
+// The alternative, querying by_user and matching _id, walks the user's entire
+// todo range and pulls every one of those documents into the transaction's read
+// set. Any unrelated todo write then conflicts with it, which is what made
+// board drags and deletes retry. A direct get reads exactly one document.
+async function getOwnedTodo(
+  ctx: QueryCtx | MutationCtx,
+  userId: string,
+  id: Id<"todos">,
+): Promise<Doc<"todos"> | null> {
+  const todo = await ctx.db.get(id);
+  if (!todo || todo.userId !== userId) {
+    return null;
+  }
+  return todo;
+}
+
+// Fetch the direct children of the given todos using the parent index.
+// Scoping by parent keeps these queries from re-running on every todo write.
+async function getSubtasksOf(
+  ctx: QueryCtx | MutationCtx,
+  userId: string,
+  parentIds: Array<Id<"todos">>,
+): Promise<Array<Doc<"todos">>> {
+  const groups = await Promise.all(
+    parentIds.map((parentId) =>
+      ctx.db
+        .query("todos")
+        .withIndex("by_user_and_parent", (q) =>
+          q.eq("userId", userId).eq("parentId", parentId),
+        )
+        .collect(),
+    ),
+  );
+  return groups.flat();
+}
 
 // Get all todos for a specific date
 export const getTodosByDate = query({
@@ -100,14 +140,10 @@ export const getPinnedTodos = query({
       .collect();
 
     // Get subtasks (children) of pinned todos
-    const pinnedTodoIds = new Set(pinnedTodos.map((t) => t._id));
-    const allTodos = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    const subtasks = allTodos.filter(
-      (todo) => todo.parentId && pinnedTodoIds.has(todo.parentId),
+    const subtasks = await getSubtasksOf(
+      ctx,
+      userId,
+      pinnedTodos.map((t) => t._id),
     );
 
     // Combine pinned todos and their subtasks
@@ -163,14 +199,10 @@ export const getBacklogTodos = query({
       .collect();
 
     // Get subtasks (children) of backlog todos
-    const backlogTodoIds = new Set(backlogTodos.map((t) => t._id));
-    const allTodos = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    const subtasks = allTodos.filter(
-      (todo) => todo.parentId && backlogTodoIds.has(todo.parentId),
+    const subtasks = await getSubtasksOf(
+      ctx,
+      userId,
+      backlogTodos.map((t) => t._id),
     );
 
     // Combine backlog todos and their subtasks
@@ -228,14 +260,10 @@ export const getTodosByFolder = query({
       .collect();
 
     // Get subtasks (children) of folder todos
-    const folderTodoIds = new Set(folderTodos.map((t) => t._id));
-    const allTodos = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    const subtasks = allTodos.filter(
-      (todo) => todo.parentId && folderTodoIds.has(todo.parentId),
+    const subtasks = await getSubtasksOf(
+      ctx,
+      userId,
+      folderTodos.map((t) => t._id),
     );
 
     // Combine folder todos and their subtasks
@@ -269,10 +297,11 @@ export const getAvailableDates = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
-    // Get all full page notes with dates
+    // Get all full page notes with dates, scoped by index so this does not
+    // scan every user's notes
     const fullPageNotes = await ctx.db
       .query("fullPageNotes")
-      .filter((q) => q.eq(q.field("userId"), userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     // Collect dates from todos (excluding folder todos)
@@ -349,13 +378,7 @@ export const createSubtask = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to get parent and verify ownership
-    const parent = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.parentId))
-      .unique();
-
+    const parent = await getOwnedTodo(ctx, userId, args.parentId);
     if (!parent) {
       throw new Error("Parent todo not found or unauthorized");
     }
@@ -398,13 +421,7 @@ export const updateTodo = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify ownership without reading first
-    const todo = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.id))
-      .unique();
-
+    const todo = await getOwnedTodo(ctx, userId, args.id);
     if (!todo) {
       throw new Error("Todo not found or unauthorized");
     }
@@ -467,31 +484,21 @@ export const deleteTodo = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify ownership in one operation
-    const todo = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.id))
-      .unique();
-
     // Idempotent: if todo doesn't exist or wrong user, return early
+    const todo = await getOwnedTodo(ctx, userId, args.id);
     if (!todo) {
       return null;
     }
 
-    // Get subtasks (won't create conflicts since we're just reading for IDs)
-    const subtasks = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("parentId"), args.id))
-      .collect();
+    // Subtasks come from the parent index so the read set stays small
+    const subtasks = await getSubtasksOf(ctx, userId, [args.id]);
 
     // Delete todo and all subtasks in parallel to minimize conflicts
     const deleteOperations = [
       ctx.db.delete(args.id),
       ...subtasks.map((subtask) => ctx.db.delete(subtask._id)),
     ];
-    
+
     await Promise.all(deleteOperations);
 
     // Update streak if this was a regular date-based todo
@@ -506,7 +513,7 @@ export const deleteTodo = mutation({
         date: todo.date,
       });
     }
-    
+
     return null;
   },
 });
@@ -525,13 +532,7 @@ export const reorderTodos = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify ownership
-    const todo = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.todoId))
-      .unique();
-
+    const todo = await getOwnedTodo(ctx, userId, args.todoId);
     if (!todo) {
       throw new Error("Todo not found or unauthorized");
     }
@@ -582,13 +583,7 @@ export const moveTodoToDate = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify ownership
-    const todo = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.todoId))
-      .unique();
-
+    const todo = await getOwnedTodo(ctx, userId, args.todoId);
     if (!todo) {
       throw new Error("Todo not found or unauthorized");
     }
@@ -622,25 +617,14 @@ export const moveTodoToFolder = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify todo ownership
-    const todo = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.todoId))
-      .unique();
-
+    const todo = await getOwnedTodo(ctx, userId, args.todoId);
     if (!todo) {
       throw new Error("Todo not found or unauthorized");
     }
 
-    // Use indexed query to verify folder exists and belongs to user
-    const folder = await ctx.db
-      .query("folders")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.folderId))
-      .unique();
-
-    if (!folder) {
+    // Verify the folder exists and belongs to the user
+    const folder = await ctx.db.get(args.folderId);
+    if (!folder || folder.userId !== userId) {
       throw new Error("Folder not found or unauthorized");
     }
 
@@ -674,13 +658,13 @@ export const copyTodosToDate = mutation({
     const userId = identity.subject;
 
     // Get all non-archived todos from source date
-    const sourceTodos = await ctx.db
+    const sourceDayTodos = await ctx.db
       .query("todos")
       .withIndex("by_user_and_date", (q) =>
         q.eq("userId", userId).eq("date", args.sourceDate),
       )
-      .filter((q) => q.eq(q.field("archived"), false))
       .collect();
+    const sourceTodos = sourceDayTodos.filter((todo) => !todo.archived);
 
     // Get the highest order number for the target date
     const existingTodos = await ctx.db
@@ -707,6 +691,8 @@ export const copyTodosToDate = mutation({
         archived: false,
         order: maxOrder,
         collapsed: todo.collapsed,
+        // Keep board placement so the copy lands in the same column
+        kanbanColumn: todo.kanbanColumn,
       });
     }
 
@@ -735,18 +721,15 @@ export const moveTodosToNextDay = mutation({
     }
 
     // Get all non-archived, non-completed todos from source date
-    const sourceTodos = await ctx.db
+    const sourceDayTodos = await ctx.db
       .query("todos")
       .withIndex("by_user_and_date", (q) =>
         q.eq("userId", userId).eq("date", args.sourceDate),
       )
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("archived"), false),
-          q.eq(q.field("completed"), false),
-        ),
-      )
       .collect();
+    const sourceTodos = sourceDayTodos.filter(
+      (todo) => !todo.archived && !todo.completed,
+    );
 
     // If no todos to move, return early (idempotent)
     if (sourceTodos.length === 0) {
@@ -767,6 +750,9 @@ export const moveTodosToNextDay = mutation({
         archived: false,
         order: baseOrder + index,
         collapsed: todo.collapsed,
+        // Keep board placement so in-progress work lands in the same column
+        // on the new day instead of resetting to the default column
+        kanbanColumn: todo.kanbanColumn,
       }),
     );
 
@@ -795,13 +781,13 @@ export const archiveAllTodos = mutation({
     const userId = identity.subject;
 
     // Get all active (non-archived) todos for this date
-    const todos = await ctx.db
+    const dayTodos = await ctx.db
       .query("todos")
       .withIndex("by_user_and_date", (q) =>
         q.eq("userId", userId).eq("date", args.date),
       )
-      .filter((q) => q.eq(q.field("archived"), false))
       .collect();
+    const todos = dayTodos.filter((todo) => !todo.archived);
 
     // Archive all todos in parallel to avoid write conflicts
     const updates = todos.map((todo) =>
@@ -827,13 +813,13 @@ export const deleteAllTodos = mutation({
     const userId = identity.subject;
 
     // Get all active (non-archived) todos for this date
-    const todos = await ctx.db
+    const dayTodos = await ctx.db
       .query("todos")
       .withIndex("by_user_and_date", (q) =>
         q.eq("userId", userId).eq("date", args.date),
       )
-      .filter((q) => q.eq(q.field("archived"), false))
       .collect();
+    const todos = dayTodos.filter((todo) => !todo.archived);
 
     // Delete all todos in parallel to avoid write conflicts
     const deletions = todos.map((todo) => ctx.db.delete(todo._id));
@@ -857,13 +843,13 @@ export const deleteAllArchivedTodos = mutation({
     const userId = identity.subject;
 
     // Get all archived todos for this date
-    const todos = await ctx.db
+    const dayTodos = await ctx.db
       .query("todos")
       .withIndex("by_user_and_date", (q) =>
         q.eq("userId", userId).eq("date", args.date),
       )
-      .filter((q) => q.eq(q.field("archived"), true))
       .collect();
+    const todos = dayTodos.filter((todo) => todo.archived);
 
     // Delete all archived todos in parallel to avoid write conflicts
     const deletions = todos.map((todo) => ctx.db.delete(todo._id));
@@ -887,13 +873,13 @@ export const archiveAllTodosInFolder = mutation({
     const userId = identity.subject;
 
     // Get all active (non-archived) todos for this folder
-    const todos = await ctx.db
+    const folderTodos = await ctx.db
       .query("todos")
       .withIndex("by_user_and_folder", (q) =>
         q.eq("userId", userId).eq("folderId", args.folderId),
       )
-      .filter((q) => q.eq(q.field("archived"), false))
       .collect();
+    const todos = folderTodos.filter((todo) => !todo.archived);
 
     // Archive all todos in parallel to avoid write conflicts
     const updates = todos.map((todo) =>
@@ -919,13 +905,13 @@ export const deleteAllTodosInFolder = mutation({
     const userId = identity.subject;
 
     // Get all active (non-archived) todos for this folder
-    const todos = await ctx.db
+    const folderTodos = await ctx.db
       .query("todos")
       .withIndex("by_user_and_folder", (q) =>
         q.eq("userId", userId).eq("folderId", args.folderId),
       )
-      .filter((q) => q.eq(q.field("archived"), false))
       .collect();
+    const todos = folderTodos.filter((todo) => !todo.archived);
 
     // Delete all todos in parallel to avoid write conflicts
     const deletions = todos.map((todo) => ctx.db.delete(todo._id));
@@ -949,13 +935,13 @@ export const deleteAllArchivedTodosInFolder = mutation({
     const userId = identity.subject;
 
     // Get all archived todos for this folder
-    const todos = await ctx.db
+    const folderTodos = await ctx.db
       .query("todos")
       .withIndex("by_user_and_folder", (q) =>
         q.eq("userId", userId).eq("folderId", args.folderId),
       )
-      .filter((q) => q.eq(q.field("archived"), true))
       .collect();
+    const todos = folderTodos.filter((todo) => todo.archived);
 
     // Delete all archived todos in parallel to avoid write conflicts
     const deletions = todos.map((todo) => ctx.db.delete(todo._id));

@@ -4,6 +4,31 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.041] - 2026-08-28
+
+### Fixed
+
+- **Board performance** - The app slowed down after the Kanban board shipped. Two causes, one on each side of the wire
+  - `npx convex insights` on production reported one warning: `todos.js:deleteTodo` retried on OCC conflicts 6 times in 72 hours against the `todos` table, every event resolving on the first retry rather than failing permanently
+  - Backend: ownership checks were written as `withIndex("by_user").filter(_id)`, which reads a user's entire todo range to find one document. That made the read set every todo the user owns, so any concurrent write invalidated the transaction. The same shape was in subtask lookups, `deleteColumn`, and `moveTodosToColumn`, which collected all user todos to resolve a handful of ids. Since a drag fires a mutation per drop, the board turned a latent problem into a visible one
+  - Two new indexes on `todos`: `by_user_and_kanbanColumn` and `by_user_and_parent`. New `getOwnedTodo` helper does a direct `get` plus a userId comparison, so a read set of one document replaces a full range scan. New `getSubtasksOf` helper runs parallel indexed queries. Applied across `createSubtask`, `updateTodo`, `deleteTodo`, `reorderTodos`, `moveTodoToDate`, and `moveTodoToFolder`
+  - `getAvailableDates` now reads `fullPageNotes` through an index instead of an unindexed filter that scanned the table across every user
+  - `moveTodosToColumn` reads only the ids it was handed and checks ownership per card, so a stale client id is skipped instead of failing the batch
+  - Client: the per-card prop bundle was rebuilt by rest spread on every render, and neither the column nor the card was memoised. Because `onDragOver` sets hover state on every pointer move, one drag re-rendered every card on the board dozens of times. Shared props are now a `useMemo`, column callbacks are stable and keyed by column, and both column and card are wrapped in `React.memo`
+  - `convex-doctor --score` holds at 100
+- **Previous day's board after a rollover** - A day whose unfinished work moved forward read as if everything had been completed
+  - Moving a todo to another date copies it and archives the original, leaving a stub behind. The board sent every archived card to Done, and unlike list view it never filtered the stubs out
+  - Cards now stay on the board only when they are completed or not archived, and only genuinely completed cards land in Done
+  - `moveTodosToNextDay`, `copyTodosToDate`, and the rollover cron all carry `kanbanColumn` forward, so work in progress lands in the same column on the new day instead of resetting to To do
+
+### Changed
+
+- **A permanent composer at both ends of every column** - Adding a card to the top no longer needs a hover target or a trip through the column menu
+  - Each column now has an input above its cards and below them. The top one inserts at index 0, so typing a run of cards keeps the newest on top
+  - The gaps between cards still open an inline composer on click. Those lines now cover only the space between cards, since both ends have their own permanent input
+  - The column menu's "Add card to top" focuses the top composer rather than doing its own thing
+  - Empty columns now read "Drag a card here, or add one above or below"
+
 ## [v.040] - 2026-08-23
 
 ### Added

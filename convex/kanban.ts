@@ -1,7 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 
 // Default columns every board starts with. Returned as virtual rows until the
@@ -244,14 +244,15 @@ export const deleteColumn = mutation({
     const remaining = columns.filter((column) => column.key !== args.key);
     const fallback = homeColumn(remaining);
 
-    // Reassign this column's cards so nothing is orphaned
-    const userTodos = await ctx.db
+    // Reassign this column's cards so nothing is orphaned. Indexed on the
+    // column key so the read covers only those cards, not every todo the user
+    // owns, which would make any concurrent todo write conflict with this.
+    const orphans = await ctx.db
       .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user_and_kanbanColumn", (q) =>
+        q.eq("userId", userId).eq("kanbanColumn", args.key),
+      )
       .collect();
-    const orphans = userTodos.filter(
-      (todo) => todo.kanbanColumn === args.key,
-    );
 
     const reorders = remaining
       .map((column, index) =>
@@ -376,7 +377,7 @@ export const moveTodosToColumn = mutation({
     }
     const userId = identity.subject;
 
-    if (args.orderedIds.length > 500) {
+    if (args.orderedIds.length > 500 || args.todoIds.length > 500) {
       throw new Error("Too many cards in one move");
     }
 
@@ -387,13 +388,18 @@ export const moveTodosToColumn = mutation({
     }
     const isDoneColumn = column.isDone ?? false;
 
-    // One indexed read scoped to this user, used for both ownership checks
-    // and for skipping writes that would not change anything
-    const owned = await ctx.db
-      .query("todos")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-    const byId = new Map(owned.map((todo) => [todo._id, todo]));
+    // Read only the cards this move touches. Collecting the whole by_user range
+    // instead would put every todo the user owns in this transaction's read
+    // set, so any unrelated todo write during a drag would conflict with it.
+    const ids = Array.from(new Set([...args.orderedIds, ...args.todoIds]));
+    const docs = await Promise.all(ids.map((id) => ctx.db.get(id)));
+    const byId = new Map<Id<"todos">, Doc<"todos">>();
+    for (const doc of docs) {
+      // Ownership check per card, so an id from another user is simply ignored
+      if (doc && doc.userId === userId) {
+        byId.set(doc._id, doc);
+      }
+    }
 
     const moving = new Set<string>(args.todoIds);
     const now = Date.now();

@@ -40,6 +40,11 @@ export default defineSchema({
     .index("by_user_and_folder", ["userId", "folderId"])
     .index("by_user_completed_archived", ["userId", "completed", "archived"])
     .index("by_user_and_completedAt", ["userId", "completedAt"])
+    // Lets deleteColumn find a column's cards without scanning every todo
+    .index("by_user_and_kanbanColumn", ["userId", "kanbanColumn"])
+    // Lets subtask lookups skip the full by_user range, which otherwise makes
+    // every todo write invalidate any query that reads children
+    .index("by_user_and_parent", ["userId", "parentId"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],

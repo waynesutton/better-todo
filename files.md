@@ -11,7 +11,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (latest: v.040 - Kanban Board View); mirrored in the app by `src/pages/Changelog.tsx`
+- `changelog.md` - Version history with all features (latest: v.041 - Kanban performance and column composers); mirrored in the app by `src/pages/Changelog.tsx`
 - `convex-doctor.toml` - convex-doctor configuration with rule suppressions and CI threshold
 - `convex.json` - Convex deployment configuration
 - `files.md` - This file, project structure documentation
@@ -51,7 +51,8 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `schema.ts` - Database schema with tables:
   - **todos**: Stores todo items with content, type (todo/h1/h2/h3), completion status, order, date, optional parentId, optional folderId, pinned status, optional completedAt timestamp, and optional kanbanColumn/kanbanOrder for board placement
-    - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`, `by_user_and_folder`, `by_user_and_completedAt`
+    - Index: `by_user_and_date`, `by_user`, `by_user_and_pinned`, `by_user_and_folder`, `by_user_and_completedAt`, `by_user_and_kanbanColumn`, `by_user_and_parent`
+    - `by_user_and_kanbanColumn` lets `deleteColumn` find a column's cards without scanning every todo; `by_user_and_parent` keeps subtask lookups off the full `by_user` range, which otherwise made every todo write invalidate any query reading children
     - Search index: `search_content` on content field for full-text search
     - Supports both date-based todos and dateless todos in project folders
   - **notes**: Stores multiple notes per date or folder with optional title, content, order, and collapsed state
@@ -102,7 +103,8 @@ This document describes the structure and purpose of each file in the Better Tod
 ### Functions
 
 - `todos.ts` - Queries and mutations for todo operations:
-  - `getAvailableDates` - Get all dates with todos (excludes folder-associated todos)
+  - Two shared helpers keep transactions narrow: `getOwnedTodo` does a direct `ctx.db.get` plus a userId comparison, so an ownership check reads one document instead of the user's whole todo range, and `getSubtasksOf` runs parallel `by_user_and_parent` queries. Both replaced `withIndex("by_user").filter(...)` patterns that were producing OCC retries under concurrent writes
+  - `getAvailableDates` - Get all dates with todos (excludes folder-associated todos); reads `fullPageNotes` through `by_user` rather than an unindexed filter that scanned the table across every user
   - `getTodosByDate` - Get todos for a specific date (excludes folder-associated todos)
   - `getTodosByFolder` - Get todos for a specific project folder (including subtasks)
   - `getTodoCountsByFolder` - Get count of uncompleted todos per folder for sidebar badges
@@ -116,8 +118,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - `moveTodoToDate` - Move todo to different date
   - `moveTodoToFolder` - Move todo to project folder (removes date association)
   - `moveTodoFromFolderToDate` - Move todo from folder to specific date (removes folder association)
-  - `copyTodosToDate` - Copy all non-archived todos to another date
-  - `moveTodosToNextDay` - Move all non-completed, non-archived todos to next day (copies to target, archives source, idempotent with parallel operations)
+  - `copyTodosToDate` - Copy all non-archived todos to another date, preserving `kanbanColumn` so a copy lands in the same board column
+  - `moveTodosToNextDay` - Move all non-completed, non-archived todos to next day (copies to target, archives source, idempotent with parallel operations); carries `kanbanColumn` forward so in-progress work keeps its column instead of resetting to To do
   - `archiveAllTodos` - Archive all active todos for a specific date
   - `deleteAllTodos` - Delete all active todos for a specific date
   - `deleteAllArchivedTodos` - Delete all archived todos for a specific date
@@ -126,10 +128,10 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getColumns` - Get the user's board columns, falling back to virtual defaults (To do, Doing, Done, Backlog) before any edit so no writes are needed
   - `addColumn` - Add a column to the end of the board (slugged key, unique per user, max 12 columns)
   - `renameColumn` - Rename a column while keeping its key, so cards stay put (idempotent, skips the write when the label is unchanged)
-  - `deleteColumn` - Delete a column, reassign its cards to the board's home column (the seeded To do, so nothing lands somewhere arbitrary), and renumber the rest in parallel
+  - `deleteColumn` - Delete a column, reassign its cards to the board's home column (the seeded To do, so nothing lands somewhere arbitrary), and renumber the rest in parallel; finds the orphaned cards through `by_user_and_kanbanColumn` instead of scanning every todo the user owns
   - `reorderColumns` - Persist a new left to right order from the full key list
   - `createTodoInColumn` - Create a card straight into a column with timestamp ordering, or at an explicit fractional `kanbanOrder` when the card is inserted between two others; cards created in a Done column arrive completed and archived
-  - `moveTodosToColumn` - Move one or more cards into a column and write that column's full new order from the client-supplied id list, so the mutation patches without a read-modify-write; only dragged cards flip completion, and completion changes schedule a streak update
+  - `moveTodosToColumn` - Move one or more cards into a column and write that column's full new order from the client-supplied id list, so the mutation patches without a read-modify-write; reads only the ids it was handed and checks ownership per card, so a stale id is skipped rather than failing the batch. Only dragged cards flip completion, and completion changes schedule a streak update
 
 - `notes.ts` - Queries and mutations for notes operations:
   - `getNotesByDate` - Get all notes for a specific date (excludes folder notes)
@@ -332,7 +334,7 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `rollover.ts` - End of day auto rollover functions:
   - `runDailyRollover` - Internal cron entry point that schedules a per-user rollover for every opted-in user
-  - `processUserRollover` - Internal mutation that moves yesterday's incomplete todos to today (timezone aware, once per local day) and closes yesterday when it has no notes
+  - `processUserRollover` - Internal mutation that moves yesterday's incomplete todos to today (timezone aware, once per local day) and closes yesterday when it has no notes; the copied rows keep their `kanbanColumn` so a rolled-over card opens in the same board column
   - `backfillLast30Days` - One-time public mutation that applies the same rollover to the last 30 days and reports moved/closed counts
 
 - `crons_cleanup.ts` - Internal `cleanupDefaultDayTodos` mutation that deletes the untouched "what's the priority?" placeholder from placeholder-only past days so they drop off the sidebar (supports dryRun)
@@ -466,13 +468,15 @@ This document describes the structure and purpose of each file in the Better Tod
 
 - `KanbanBoard.tsx` - Kanban board view for a day or project:
   - Columns and cards are both dnd-kit sortables in one DndContext, with a dedicated drop zone on each column body so empty columns accept cards
-  - Cards resolve to a column by completion first, then their saved `kanbanColumn`, then Backlog for backlogged work, then the board's home column. Completion outranks the saved placement in both directions, so checking a card off in list view moves it to Done on the board and unchecking one pulls it back home
+  - Cards resolve to a column by completion first, then their saved `kanbanColumn`, then Backlog for backlogged work, then the board's home column. Only genuinely completed cards go to Done, so a card archived by a move to another date does not read as finished
+  - `isOnBoard` keeps a card when it is completed or not archived. Moving a todo to a new date copies it and archives the original, so without this filter a rolled-off day would show every stub in Done and read as if all its work had been done
   - `homeColumn` is where a card with no placement of its own lives: the seeded To do column by key, not whichever column happens to be leftmost, so adding or dragging a column never pulls untouched cards along with it. Mirrors the same helper in `convex/kanban.ts`
   - Group select with Cmd/Ctrl/Shift click; once a selection exists plain clicks keep extending it. A bottom bar shows the count with one button per column for a bulk move, and Escape clears
   - Dragging a selected card moves the whole selection, with a count badge on the drag overlay
-  - Three ways to add a card: the composer at the foot of the column, a labelled Add to top control at its head, and a hairline insert control in every gap between cards. Clicking a gap opens a composer in place, Enter keeps it open one line lower so a run of cards keeps its typed order, and Escape or an empty blur restores the line. `positionForIndex` sends the midpoint of the two neighbouring cards as `kanbanOrder`, so an insert writes one row instead of renumbering the column
+  - Three ways to add a card: a permanent composer at the head of the column, another at its foot, and a hairline insert control in each gap between cards. The top composer inserts at index 0 so a run of cards keeps the newest on top. Clicking a gap opens a composer in place, Enter keeps it open one line lower so a run of cards keeps its typed order, and Escape or an empty blur restores the line. `positionForIndex` sends the midpoint of the two neighbouring cards as `kanbanOrder`, so an insert writes one row instead of renumbering the column
+  - Memoised for drag performance: the per-card prop bundle is a `useMemo` and the column callbacks are `useCallback` keyed by column key, so `React.memo` on the column and card components actually holds. Hover state updates on every pointer move during a drag, and without this each move re-rendered every `TodoItem` on the board
   - The column body is a flat child list with one stable key on the open composer, so React moves the node instead of remounting it as cards land above and the caret stays put
-  - Column menu holds Rename, Add card to top, then Delete column behind a separator; the delete ConfirmDialog names the column, counts its cards, and says where they land. Renaming also works from a single click on the title
+  - Column menu holds Rename, Add card to top (which focuses the top composer), then Delete column behind a separator; the delete ConfirmDialog names the column, counts its cards, and says where they land. Renaming also works from a single click on the title
   - Column reorder is written optimistically so header drags feel instant, then handed back to the server
   - Renders a skeleton while columns load, inside the same wrapper as the real board so it fills the same frame with no layout jump
   - Fills the window: the board claims the height between the header and the footer and every column stretches to the same bottom edge, with each column body scrolling inside itself so headers and composers stay put
@@ -904,12 +908,14 @@ This document describes the structure and purpose of each file in the Better Tod
 - `full-page-notes-feature.plan.md` - Comprehensive documentation of full-page notes feature
 - `cl.plan.md` - Clerk authentication implementation plan and notes
 - `menu-button-alignment-fix.md` - Documentation of menu button alignment fix using pseudo-element approach
+- `kanban-board-view.md` - Kanban board feature plan, theme parity work, and full height layout notes
+- `kanban-performance-and-composers.md` - The board slowdown traced through Convex insights (OCC retries from range-scan ownership checks, plus drag-time re-render churn), the rolled-over day board fix, and the top and bottom column composers
 
 ## Root Documentation
 
 - `README.md` - Complete project documentation with features, usage guide, and customization
 - `files.md` - This file, describing project structure and file purposes
-- `changelog.md` - Version history with all feature additions and changes (v1.001 to v.040)
+- `changelog.md` - Version history with all feature additions and changes (v1.001 to v.041)
 - `TASKS.md` - Project tasks and development tracking
 
 ## Current Version: v.033 (April 24, 2026)

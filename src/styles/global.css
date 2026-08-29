@@ -12529,8 +12529,8 @@ button:active,
 
 /* The line between two cards. Collapsed to a thin strip so a column of cards
    still reads as a stack, and it only draws itself once the pointer or the
-   keyboard is on it. The first line keeps a label because it doubles as the
-   add to top control and needs to be findable without hovering. */
+   keyboard is on it. The top and bottom positions have their own permanent
+   composers, so these lines only cover the gaps between cards. */
 .kanban-insert-line {
   display: flex;
   align-items: center;
@@ -12553,10 +12553,6 @@ button:active,
 
 .kanban-column-body:hover {
   --insert-visibility: 0.6;
-}
-
-.kanban-insert-line.is-first {
-  opacity: 0.6;
 }
 
 .kanban-insert-line:hover,
@@ -12591,11 +12587,6 @@ button:active,
 .kanban-insert-line:focus-visible .kanban-insert-mark {
   background: var(--board-pick);
   color: var(--board-pick-ink);
-}
-
-.kanban-insert-label {
-  flex-shrink: 0;
-  letter-spacing: 0.02em;
 }
 
 /* A composer opened on a line: same fill and ring as the column composer, so
@@ -12729,7 +12720,8 @@ button:active,
   cursor: grabbing;
 }
 
-/* Per column composer. Sits at the bottom so new work enters where you look. */
+/* Per column composer. One at the bottom and one at the top, so either end of a
+   column is one click away without hunting for a hover target. */
 .kanban-column-composer {
   display: flex;
   align-items: flex-end;
@@ -12737,6 +12729,12 @@ button:active,
   flex-shrink: 0;
   padding: 6px;
   border-top: 1px solid var(--board-line);
+}
+
+/* The top one divides itself from the header below instead of above */
+.kanban-column-composer.is-top {
+  border-top: none;
+  border-bottom: 1px solid var(--board-line);
 }
 
 .kanban-composer-input {

@@ -59,6 +59,10 @@ async function rolloverDay(
         archived: false,
         order: baseOrder + index,
         collapsed: todo.collapsed,
+        // Keep the board placement so work in progress arrives in the same
+        // column tomorrow. No kanbanOrder, so it sorts to the column's end by
+        // its fresh order timestamp.
+        kanbanColumn: todo.kanbanColumn,
       }),
       ctx.db.patch(todo._id, { archived: true }),
     ]);
