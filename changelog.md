@@ -4,6 +4,22 @@ All notable changes to Better Todo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Agent Tasks setting** - Turn Agent Tasks off in Settings (press ?) so it is hidden for that user (2026-08-31)
+  - New `agentTasksEnabled` field on `userPreferences`. Missing or true keeps the feature on
+  - Off hides the sparkles header icon, Send to Agent, Run Note, the Agent Tasks view, Shift + A, and the shortcut row
+  - `createAgentTask` rejects the write if the setting is off
+
+### Fixed
+
+- **Copy day order** - Todos copied or rolled to another day now keep the same top to bottom order as the source day (2026-08-31)
+  - `copyTodosToDate` was inserting in `_creationTime` order, which is wrong after a drag reorder
+  - Source todos are sorted by `order` first. Same sort on `moveTodosToNextDay` and the rollover cron
+  - Copy no longer reads the target day to compute max order. Inserts run in parallel with timestamp plus index, which is faster and avoids write conflicts
+
 ## [v.041] - 2026-08-28
 
 ### Fixed

@@ -118,6 +118,7 @@ export const getUserPreferences = query({
       defaultTodoView: v.optional(
         v.union(v.literal("list"), v.literal("board")),
       ),
+      agentTasksEnabled: v.optional(v.boolean()),
     }),
     v.null(),
   ),
@@ -142,7 +143,55 @@ export const getUserPreferences = query({
       autoRolloverEnabled: prefs.autoRolloverEnabled,
       rolloverBackfillAt: prefs.rolloverBackfillAt,
       defaultTodoView: prefs.defaultTodoView,
+      agentTasksEnabled: prefs.agentTasksEnabled,
     };
+  },
+});
+
+// Missing or true means Agent Tasks is on. Only an explicit false hides it.
+export async function areAgentTasksEnabled(
+  ctx: QueryCtx | MutationCtx,
+  userId: string,
+): Promise<boolean> {
+  const prefs = await ctx.db
+    .query("userPreferences")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+  return prefs?.agentTasksEnabled !== false;
+}
+
+// Show or hide Agent Tasks for this user
+export const setAgentTasksEnabled = mutation({
+  args: {
+    enabled: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const existing = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (existing) {
+      // Idempotent: skip the write when the preference already matches
+      if ((existing.agentTasksEnabled ?? true) === args.enabled) {
+        return null;
+      }
+      await ctx.db.patch(existing._id, { agentTasksEnabled: args.enabled });
+    } else {
+      await ctx.db.insert("userPreferences", {
+        userId,
+        todoFontSize: 12,
+        agentTasksEnabled: args.enabled,
+      });
+    }
+
+    return null;
   },
 });
 

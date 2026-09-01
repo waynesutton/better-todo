@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export function Changelog() {
-  const [activeSection, setActiveSection] = useState("v041");
+  const [activeSection, setActiveSection] = useState("v042");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep this list in sync with the <section> anchors rendered below.
   const sections = [
+    { id: "v042", title: "v.042 - Aug 31, 2026" },
     { id: "v041", title: "v.041 - Aug 28, 2026" },
     { id: "v040", title: "v.040 - Aug 23, 2026" },
     { id: "v039", title: "v.039 - Aug 12, 2026" },
@@ -111,12 +112,57 @@ export function Changelog() {
 
       <div className="launch-container">
         {/* Each section mirrors the markdown changelog so anchors stay in sync. */}
-        <section id="v041" className="launch-section">
+        <section id="v042" className="launch-section">
           <h1 className="launch-title">Changelog</h1>
           <p className="launch-intro">
             All notable changes to Better Todo are documented here.
           </p>
 
+          <h2 className="section-title">v.042 - August 31, 2026</h2>
+          <p className="changelog-subtitle">
+            Copy order and Agent Tasks setting
+          </p>
+
+          <h3 className="changelog-category">Added</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Agent Tasks setting</strong> - Turn Agent Tasks off in
+              Settings so it is hidden for that user
+              <ul className="nested-list">
+                <li>
+                  Press ? and use the On/Off buttons. Off hides the sparkles
+                  header icon, Send to Agent, Run Note, the Agent Tasks view,
+                  and Shift + A
+                </li>
+                <li>
+                  The setting is per user. Leaving it unset keeps Agent Tasks on
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3 className="changelog-category">Fixed</h3>
+          <ul className="feature-list">
+            <li>
+              <strong>Copy day order</strong> - Todos copied or rolled to
+              another day now keep the same top to bottom order as the source
+              day
+              <ul className="nested-list">
+                <li>
+                  Copy was inserting in creation time, which is wrong after you
+                  drag to reorder
+                </li>
+                <li>
+                  Source todos are sorted by their list order first, then
+                  inserted in parallel, so the copy is faster and does not
+                  collide with other writes on that day
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section id="v041" className="launch-section">
           <h2 className="section-title">v.041 - August 28, 2026</h2>
           <p className="changelog-subtitle">
             Board performance and column composers

@@ -6,6 +6,10 @@ git add .
 git commit -a -m "description"
 git push -u origin main
 
+## Recently Completed
+
+- 2026-08-31 16:43 UTC - Copy and rollover keep source-day todo order, copy inserts in parallel, Agent Tasks can be turned off per user in Settings. PRD: prds/copy-order-and-agent-tasks-toggle.md
+
 ## Completed Tasks
 
 - [x] Set up React 18 with TypeScript and Vite

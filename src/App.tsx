@@ -55,6 +55,8 @@ function App() {
     api.users.getUserPreferences,
     isAuthenticated ? undefined : "skip",
   );
+  // Missing or true keeps Agent Tasks on. Explicit false hides it.
+  const agentTasksEnabled = userPreferences?.agentTasksEnabled !== false;
 
   // Sync browser timezone to Convex on first authenticated load
   const setTimezoneIfMissing = useMutation(api.users.setTimezoneIfMissing);
@@ -286,6 +288,14 @@ function App() {
     folderId?: Id<"folders">;
     date?: string;
   } | null>(null);
+
+  // Close Agent Tasks UI if the user turns the setting off
+  useEffect(() => {
+    if (!agentTasksEnabled) {
+      setShowAgentTasks(false);
+      setAgentTaskModalData(null);
+    }
+  }, [agentTasksEnabled]);
 
   // Apply user's custom font size to todo text and full-page notes
   useEffect(() => {
@@ -1015,6 +1025,7 @@ function App() {
       if ((e.key === "A" || e.key === "a") && e.shiftKey) {
         e.preventDefault();
         if (
+          agentTasksEnabled &&
           isAuthenticated &&
           activeTodos.length > 0 &&
           focusedTodoIndex >= 0 &&
@@ -1109,6 +1120,7 @@ function App() {
     openFullPageNoteTabs,
     toggleTheme,
     toggleTodoViewMode,
+    agentTasksEnabled,
   ]);
 
   // Reset focused index when todos change
@@ -1590,8 +1602,10 @@ function App() {
                       <MessageCircle size={18} />
                     </button>
                   )}
-                {/* Agent Tasks icon - always visible on date pages and folders */}
-                {selectedDate !== "pinned" && selectedDate !== "backlog" && (
+                {/* Agent Tasks icon - hidden when the user turns it off in Settings */}
+                {agentTasksEnabled &&
+                  selectedDate !== "pinned" &&
+                  selectedDate !== "backlog" && (
                   <button
                     className={`search-button ${showAgentTasks ? "nav-icon-active" : ""}`}
                     onClick={() => {
@@ -1816,34 +1830,46 @@ function App() {
                     setDemoTodos={setDemoTodos}
                     isAuthenticated={!authIsLoading && isAuthenticated}
                     setPomodoroTriggered={setPomodoroTriggered}
-                    onSendToAgent={(data) => {
-                      setAgentTaskModalData({
-                        isOpen: true,
-                        sourceId: data.todoId,
-                        sourceType: "todo",
-                        sourceContent: data.content,
-                        folderId: data.folderId,
-                        date: selectedDate !== "pinned" && selectedDate !== "backlog" ? selectedDate : undefined,
-                      });
-                    }}
-                    onRunNote={async (data) => {
-                      // Directly create an agent task with "run" type for inline notes
-                      await createAgentTask({
-                        sourceId: data.noteId,
-                        sourceType: "fullPageNote", // Using fullPageNote type for consistency
-                        sourceContent: data.content,
-                        sourceTitle: data.title,
-                        provider: "claude",
-                        taskType: "run",
-                        folderId: data.folderId,
-                        date: data.date,
-                      });
-                      setShowAgentTasks(true);
-                    }}
+                    onSendToAgent={
+                      agentTasksEnabled
+                        ? (data) => {
+                            setAgentTaskModalData({
+                              isOpen: true,
+                              sourceId: data.todoId,
+                              sourceType: "todo",
+                              sourceContent: data.content,
+                              folderId: data.folderId,
+                              date:
+                                selectedDate !== "pinned" &&
+                                selectedDate !== "backlog"
+                                  ? selectedDate
+                                  : undefined,
+                            });
+                          }
+                        : undefined
+                    }
+                    onRunNote={
+                      agentTasksEnabled
+                        ? async (data) => {
+                            // Directly create an agent task with "run" type for inline notes
+                            await createAgentTask({
+                              sourceId: data.noteId,
+                              sourceType: "fullPageNote", // Using fullPageNote type for consistency
+                              sourceContent: data.content,
+                              sourceTitle: data.title,
+                              provider: "claude",
+                              taskType: "run",
+                              folderId: data.folderId,
+                              date: data.date,
+                            });
+                            setShowAgentTasks(true);
+                          }
+                        : undefined
+                    }
                   />
                 </div>
               </div>
-            ) : showAgentTasks ? (
+            ) : showAgentTasks && agentTasksEnabled ? (
               <AgentTasksView
                 onClose={() => setShowAgentTasks(false)}
                 date={selectedDate !== "pinned" && selectedDate !== "backlog" ? selectedDate : undefined}
@@ -1941,36 +1967,46 @@ function App() {
                   }}
                   cursorInCodeBlock={cursorInCodeBlock}
                   onShareNote={() => setShowShareLinkModal(true)}
-                  onSendToAgent={(data) => {
-                    const note = allFullPageNotes.find((n) => n._id === data.noteId);
-                    setAgentTaskModalData({
-                      isOpen: true,
-                      sourceId: data.noteId,
-                      sourceType: "fullPageNote",
-                      sourceContent: data.content,
-                      sourceTitle: data.title,
-                      folderId: note?.folderId,
-                      date: note?.date,
-                    });
-                  }}
-                  onRunNote={async (data) => {
-                    // Directly create an agent task with "run" type - no modal needed
-                    const note = allFullPageNotes.find((n) => n._id === data.noteId);
-                    if (note) {
-                      await createAgentTask({
-                        sourceId: data.noteId,
-                        sourceType: "fullPageNote",
-                        sourceContent: data.content,
-                        sourceTitle: data.title,
-                        provider: "claude", // Default to Claude for run tasks
-                        taskType: "run",
-                        folderId: note.folderId,
-                        date: note.date,
-                      });
-                      // Open agent tasks view to show execution
-                      setShowAgentTasks(true);
-                    }
-                  }}
+                  onSendToAgent={
+                    agentTasksEnabled
+                      ? (data) => {
+                          const note = allFullPageNotes.find(
+                            (n) => n._id === data.noteId,
+                          );
+                          setAgentTaskModalData({
+                            isOpen: true,
+                            sourceId: data.noteId,
+                            sourceType: "fullPageNote",
+                            sourceContent: data.content,
+                            sourceTitle: data.title,
+                            folderId: note?.folderId,
+                            date: note?.date,
+                          });
+                        }
+                      : undefined
+                  }
+                  onRunNote={
+                    agentTasksEnabled
+                      ? async (data) => {
+                          const note = allFullPageNotes.find(
+                            (n) => n._id === data.noteId,
+                          );
+                          if (note) {
+                            await createAgentTask({
+                              sourceId: data.noteId,
+                              sourceType: "fullPageNote",
+                              sourceContent: data.content,
+                              sourceTitle: data.title,
+                              provider: "claude",
+                              taskType: "run",
+                              folderId: note.folderId,
+                              date: note.date,
+                            });
+                            setShowAgentTasks(true);
+                          }
+                        }
+                      : undefined
+                  }
                   onDeleteNote={async (noteId) => {
                     // Delete the note and close the tab
                     await deleteFullPageNote({ id: noteId });
@@ -2031,30 +2067,41 @@ function App() {
                 isAuthenticated={!authIsLoading && isAuthenticated}
                 viewMode={isAuthenticated ? todoViewMode : "list"}
                 setPomodoroTriggered={setPomodoroTriggered}
-                onSendToAgent={(data) => {
-                  setAgentTaskModalData({
-                    isOpen: true,
-                    sourceId: data.todoId,
-                    sourceType: "todo",
-                    sourceContent: data.content,
-                    folderId: data.folderId,
-                    date: selectedDate !== "pinned" && selectedDate !== "backlog" ? selectedDate : undefined,
-                  });
-                }}
-                onRunNote={async (data) => {
-                  // Directly create an agent task with "run" type for inline notes
-                  await createAgentTask({
-                    sourceId: data.noteId,
-                    sourceType: "fullPageNote", // Using fullPageNote type for consistency
-                    sourceContent: data.content,
-                    sourceTitle: data.title,
-                    provider: "claude",
-                    taskType: "run",
-                    folderId: data.folderId,
-                    date: data.date,
-                  });
-                  setShowAgentTasks(true);
-                }}
+                onSendToAgent={
+                  agentTasksEnabled
+                    ? (data) => {
+                        setAgentTaskModalData({
+                          isOpen: true,
+                          sourceId: data.todoId,
+                          sourceType: "todo",
+                          sourceContent: data.content,
+                          folderId: data.folderId,
+                          date:
+                            selectedDate !== "pinned" &&
+                            selectedDate !== "backlog"
+                              ? selectedDate
+                              : undefined,
+                        });
+                      }
+                    : undefined
+                }
+                onRunNote={
+                  agentTasksEnabled
+                    ? async (data) => {
+                        await createAgentTask({
+                          sourceId: data.noteId,
+                          sourceType: "fullPageNote",
+                          sourceContent: data.content,
+                          sourceTitle: data.title,
+                          provider: "claude",
+                          taskType: "run",
+                          folderId: data.folderId,
+                          date: data.date,
+                        });
+                        setShowAgentTasks(true);
+                      }
+                    : undefined
+                }
               />
             )}
           </div>
@@ -2197,7 +2244,9 @@ function App() {
         )}
 
         {/* Agent Task Modal */}
-        {agentTaskModalData && agentTaskModalData.isOpen && (
+        {agentTasksEnabled &&
+          agentTaskModalData &&
+          agentTaskModalData.isOpen && (
           <AgentTaskModal
             isOpen={agentTaskModalData.isOpen}
             onClose={() => setAgentTaskModalData(null)}

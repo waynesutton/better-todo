@@ -11,7 +11,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (latest: v.041 - Kanban performance and column composers); mirrored in the app by `src/pages/Changelog.tsx`
+- `changelog.md` - Version history with all features (latest: Unreleased copy-order fix and Agent Tasks setting, then v.041); mirrored in the app by `src/pages/Changelog.tsx`
 - `convex-doctor.toml` - convex-doctor configuration with rule suppressions and CI threshold
 - `convex.json` - Convex deployment configuration
 - `files.md` - This file, project structure documentation
@@ -74,7 +74,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user_and_month_group`, `by_user_and_date`
   - **pomodoroSessions**: Stores pomodoro timer sessions with work/break intervals, completed sessions, and user preferences
     - Index: `by_user`
-  - **userPreferences**: Stores per-user settings including todoFontSize, IANA timezone, auto rollover setting, last rollover date, backfill timestamp, and defaultTodoView (list or board)
+  - **userPreferences**: Stores per-user settings including todoFontSize, IANA timezone, auto rollover setting, last rollover date, backfill timestamp, defaultTodoView (list or board), and agentTasksEnabled (false hides Agent Tasks for that user)
     - Index: `by_user`
   - **kanbanColumns**: Stores each user's board columns with key, label, order, and isDone flag
     - Index: `by_user`, `by_user_and_key`
@@ -118,7 +118,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - `moveTodoToDate` - Move todo to different date
   - `moveTodoToFolder` - Move todo to project folder (removes date association)
   - `moveTodoFromFolderToDate` - Move todo from folder to specific date (removes folder association)
-  - `copyTodosToDate` - Copy all non-archived todos to another date, preserving `kanbanColumn` so a copy lands in the same board column
+  - `copyTodosToDate` - Copy all non-archived todos to another day in the source day's visual order, preserving `kanbanColumn`. Inserts in parallel with timestamp-based order so the target day is not read
   - `moveTodosToNextDay` - Move all non-completed, non-archived todos to next day (copies to target, archives source, idempotent with parallel operations); carries `kanbanColumn` forward so in-progress work keeps its column instead of resetting to To do
   - `archiveAllTodos` - Archive all active todos for a specific date
   - `deleteAllTodos` - Delete all active todos for a specific date
@@ -264,8 +264,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getAgentTasks` - Get tasks filtered by date or folder for current user
   - `getAgentTaskCounts` - Get counts of tasks by status for sidebar badges
   - `getAgentTask` - Get single task by ID with ownership check
-  - `createAgentTask` - Create new agent task and schedule processing
-  - `deleteAgentTask` - Remove task with ownership verification
+  - `createAgentTask` - Create new agent task and schedule processing. Rejects the write when Agent Tasks is off in Settings
+  - `deleteAgentTask` - Remove task with ownership verification via a direct get
   - `deleteAllAgentTasks` - Bulk delete all tasks (with optional date/folder filter)
   - `addFollowUpMessage` - Add follow-up message to existing conversation
   - `createTodosFromAgent` - Parse agent results into individual todos
@@ -355,11 +355,13 @@ This document describes the structure and purpose of each file in the Better Tod
   - `getUserId` - Helper function to get current user's ID from authentication context
   - `storeUser` - Store/update Clerk user data in Convex database
   - `getCurrentUser` - Get authenticated user information
-  - `getUserPreferences` - Get user's preferences including font size, timezone, auto rollover setting, backfill state, and default todo view
+  - `getUserPreferences` - Get user's preferences including font size, timezone, auto rollover setting, backfill state, default todo view, and Agent Tasks visibility
   - `setTodoFontSize` - Update todo text font size for authenticated user
   - `setTimezoneIfMissing` - Store user's IANA timezone if not already set
   - `setAutoRollover` - Enable or disable end of day auto rollover of incomplete todos
   - `setDefaultTodoView` - Set whether days and projects open as a list or a Kanban board
+  - `setAgentTasksEnabled` - Show or hide Agent Tasks for the current user
+  - `areAgentTasksEnabled` - Helper used by createAgentTask. Missing preference means on
 - `http.ts` - HTTP routes for authentication callbacks (Clerk ready)
 
 ## React Frontend (`src/`)
@@ -597,8 +599,9 @@ This document describes the structure and purpose of each file in the Better Tod
   - Responsive width for mobile compatibility
 
 - `KeyboardShortcutsModal.tsx` - Settings modal (titled "Settings" with a Phosphor GearSix icon) holding preferences first and the keyboard shortcuts reference at the bottom:
-  - Order: API docs link, Default todo view, Todo text font size, End of day auto rollover, API keys, Code blocks, then a divider and the full shortcuts list
+  - Order: API docs link, Default todo view, Todo text font size, Agent Tasks on/off, End of day auto rollover, API keys, Code blocks, then a divider and the full shortcuts list
   - **Default todo view** (authenticated users only): choose List or Board for every new day and project; a per-day toggle in the header still overrides it
+  - **Agent Tasks** (authenticated users only): On/Off toggle. Off hides the sparkles icon, Send to Agent, Run Note, and Shift + A for that user
   - Comprehensive keyboard shortcuts documentation
   - **Sidebar collapse shortcut**: Cmd+. (Mac) or Ctrl+. (Windows/Linux) to toggle sidebar
   - **View toggle shortcut**: Shift + B switches the current day or project between list and board
@@ -910,12 +913,13 @@ This document describes the structure and purpose of each file in the Better Tod
 - `menu-button-alignment-fix.md` - Documentation of menu button alignment fix using pseudo-element approach
 - `kanban-board-view.md` - Kanban board feature plan, theme parity work, and full height layout notes
 - `kanban-performance-and-composers.md` - The board slowdown traced through Convex insights (OCC retries from range-scan ownership checks, plus drag-time re-render churn), the rolled-over day board fix, and the top and bottom column composers
+- `copy-order-and-agent-tasks-toggle.md` - Day copy kept source `_creationTime` instead of visual `order`, copy inserts were sequential, and Agent Tasks had no per-user off switch
 
 ## Root Documentation
 
 - `README.md` - Complete project documentation with features, usage guide, and customization
 - `files.md` - This file, describing project structure and file purposes
-- `changelog.md` - Version history with all feature additions and changes (v1.001 to v.041)
+- `changelog.md` - Version history with all feature additions and changes (v1.001 to Unreleased)
 - `TASKS.md` - Project tasks and development tracking
 
 ## Current Version: v.033 (April 24, 2026)

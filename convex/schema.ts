@@ -165,6 +165,7 @@ export default defineSchema({
     defaultTodoView: v.optional(
       v.union(v.literal("list"), v.literal("board")),
     ), // Default todo layout for new dates and projects
+    agentTasksEnabled: v.optional(v.boolean()), // Hide Agent Tasks UI when false. Missing means on.
   })
     .index("by_user", ["userId"])
     .index("by_autoRollover", ["autoRolloverEnabled"]),

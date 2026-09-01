@@ -1,6 +1,22 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
+import type { QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
+import { areAgentTasksEnabled } from "./users";
+
+// Direct get plus userId check. Avoids scanning the user's full task range.
+async function getOwnedAgentTask(
+  ctx: QueryCtx | MutationCtx,
+  userId: string,
+  id: Id<"agentTasks">,
+): Promise<Doc<"agentTasks"> | null> {
+  const task = await ctx.db.get(id);
+  if (!task || task.userId !== userId) {
+    return null;
+  }
+  return task;
+}
 
 // Validators for reuse
 const providerValidator = v.union(v.literal("claude"), v.literal("openai"));
@@ -193,6 +209,10 @@ export const createAgentTask = mutation({
     }
     const userId = identity.subject;
 
+    if (!(await areAgentTasksEnabled(ctx, userId))) {
+      throw new Error("Agent tasks are turned off in Settings");
+    }
+
     // Create task with pending status
     const taskId = await ctx.db.insert("agentTasks", {
       userId,
@@ -238,12 +258,7 @@ export const deleteAgentTask = mutation({
     }
     const userId = identity.subject;
 
-    // Verify ownership using indexed query
-    const task = await ctx.db
-      .query("agentTasks")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.id))
-      .unique();
+    const task = await getOwnedAgentTask(ctx, userId, args.id);
 
     if (!task) {
       return null; // Idempotent - task doesn't exist or not owned
@@ -318,12 +333,7 @@ export const addFollowUpMessage = mutation({
     }
     const userId = identity.subject;
 
-    // Verify ownership using indexed query
-    const task = await ctx.db
-      .query("agentTasks")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.taskId))
-      .unique();
+    const task = await getOwnedAgentTask(ctx, userId, args.taskId);
 
     if (!task) {
       throw new Error("Task not found");
@@ -371,12 +381,7 @@ export const createTodosFromAgent = mutation({
     }
     const userId = identity.subject;
 
-    // Verify ownership using indexed query
-    const task = await ctx.db
-      .query("agentTasks")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.taskId))
-      .unique();
+    const task = await getOwnedAgentTask(ctx, userId, args.taskId);
 
     if (!task) {
       throw new Error("Task not found");
@@ -469,12 +474,7 @@ export const saveResultAsNote = mutation({
     }
     const userId = identity.subject;
 
-    // Verify ownership using indexed query
-    const task = await ctx.db
-      .query("agentTasks")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.taskId))
-      .unique();
+    const task = await getOwnedAgentTask(ctx, userId, args.taskId);
 
     if (!task) {
       throw new Error("Task not found");
@@ -668,12 +668,7 @@ export const retryAgentTask = mutation({
     }
     const userId = identity.subject;
 
-    // Verify ownership using indexed query
-    const task = await ctx.db
-      .query("agentTasks")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.taskId))
-      .unique();
+    const task = await getOwnedAgentTask(ctx, userId, args.taskId);
 
     if (!task) {
       throw new Error("Task not found");
@@ -722,12 +717,7 @@ export const clearTaskConversation = mutation({
     }
     const userId = identity.subject;
 
-    // Verify ownership using indexed query
-    const task = await ctx.db
-      .query("agentTasks")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.taskId))
-      .unique();
+    const task = await getOwnedAgentTask(ctx, userId, args.taskId);
 
     if (!task) {
       throw new Error("Task not found");

@@ -56,6 +56,15 @@ export function KeyboardShortcutsModal({
   const setDefaultTodoView = useMutation(api.users.setDefaultTodoView);
   const defaultTodoView = userPreferences?.defaultTodoView ?? "list";
 
+  // Agent Tasks: missing/undefined means on
+  const setAgentTasksEnabled = useMutation(api.users.setAgentTasksEnabled);
+  const agentTasksEnabled = userPreferences?.agentTasksEnabled !== false;
+
+  const handleAgentTasksEnabledChange = async (enabled: boolean) => {
+    if (!isAuthenticated || enabled === agentTasksEnabled) return;
+    await setAgentTasksEnabled({ enabled });
+  };
+
   const handleDefaultTodoViewChange = async (view: "list" | "board") => {
     if (!isAuthenticated || view === defaultTodoView) return;
     await setDefaultTodoView({ view });
@@ -239,7 +248,9 @@ export function KeyboardShortcutsModal({
         { key: "p", description: "Pin/unpin hovered todo" },
         { key: "s", description: "Add subtask to focused todo" },
         { key: "m", description: "Open menu for focused todo" },
-        { key: "Shift + A", description: "Send focused todo to AI agent" },
+        ...(agentTasksEnabled
+          ? [{ key: "Shift + A", description: "Send focused todo to AI agent" }]
+          : []),
         { key: "z", description: "Undo last mark as done" },
       ],
     },
@@ -383,6 +394,33 @@ export function KeyboardShortcutsModal({
                 <div className="font-size-preview" style={{ fontSize: `${currentFontSize}px` }}>
                   Preview: This is how your todo text will look
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Agent Tasks visibility */}
+          {isAuthenticated && (
+            <div className="keyboard-shortcuts-category">
+              <h3>Agent Tasks</h3>
+              <p className="keyboard-shortcuts-code-info">
+                Send todos and notes to Claude or OpenAI. Turn this off to hide
+                the Agent Tasks icon, Send to Agent, Run Note, and Shift + A.
+              </p>
+              <div className="font-size-options">
+                <button
+                  className={`font-size-option ${agentTasksEnabled ? "active" : ""}`}
+                  onClick={() => handleAgentTasksEnabledChange(true)}
+                  title="Show Agent Tasks"
+                >
+                  On
+                </button>
+                <button
+                  className={`font-size-option ${!agentTasksEnabled ? "active" : ""}`}
+                  onClick={() => handleAgentTasksEnabledChange(false)}
+                  title="Hide Agent Tasks"
+                >
+                  Off
+                </button>
               </div>
             </div>
           )}

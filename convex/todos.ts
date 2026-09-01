@@ -664,37 +664,34 @@ export const copyTodosToDate = mutation({
         q.eq("userId", userId).eq("date", args.sourceDate),
       )
       .collect();
-    const sourceTodos = sourceDayTodos.filter((todo) => !todo.archived);
+    // Index order is creation time. Sort by visual order so the copy
+    // matches the source day after drag-and-drop.
+    const sourceTodos = sourceDayTodos
+      .filter((todo) => !todo.archived)
+      .sort((a, b) => a.order - b.order);
 
-    // Get the highest order number for the target date
-    const existingTodos = await ctx.db
-      .query("todos")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", userId).eq("date", args.targetDate),
-      )
-      .collect();
-
-    let maxOrder =
-      existingTodos.length > 0
-        ? Math.max(...existingTodos.map((t) => t.order))
-        : -1;
-
-    // Copy each todo to the target date
-    for (const todo of sourceTodos) {
-      maxOrder++;
-      await ctx.db.insert("todos", {
-        userId: userId,
-        date: args.targetDate,
-        content: todo.content,
-        type: todo.type,
-        completed: false,
-        archived: false,
-        order: maxOrder,
-        collapsed: todo.collapsed,
-        // Keep board placement so the copy lands in the same column
-        kanbanColumn: todo.kanbanColumn,
-      });
+    if (sourceTodos.length === 0) {
+      return null;
     }
+
+    // Timestamp + index keeps relative order without reading the target day
+    const baseOrder = Date.now();
+    await Promise.all(
+      sourceTodos.map((todo, index) =>
+        ctx.db.insert("todos", {
+          userId: userId,
+          date: args.targetDate,
+          content: todo.content,
+          type: todo.type,
+          completed: false,
+          archived: false,
+          order: baseOrder + index,
+          collapsed: todo.collapsed,
+          // Keep board placement so the copy lands in the same column
+          kanbanColumn: todo.kanbanColumn,
+        }),
+      ),
+    );
 
     return null;
   },
@@ -727,9 +724,9 @@ export const moveTodosToNextDay = mutation({
         q.eq("userId", userId).eq("date", args.sourceDate),
       )
       .collect();
-    const sourceTodos = sourceDayTodos.filter(
-      (todo) => !todo.archived && !todo.completed,
-    );
+    const sourceTodos = sourceDayTodos
+      .filter((todo) => !todo.archived && !todo.completed)
+      .sort((a, b) => a.order - b.order);
 
     // If no todos to move, return early (idempotent)
     if (sourceTodos.length === 0) {

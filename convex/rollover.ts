@@ -44,8 +44,10 @@ async function rolloverDay(
     )
     .collect();
 
-  // Move incomplete, non-archived todos to the target day
-  const incomplete = dayTodos.filter((t) => !t.archived && !t.completed);
+  // Move incomplete, non-archived todos to the target day in visual order
+  const incomplete = dayTodos
+    .filter((t) => !t.archived && !t.completed)
+    .sort((a, b) => a.order - b.order);
   if (incomplete.length > 0) {
     // Timestamp-based ordering avoids reading the target day's todos
     const baseOrder = Date.now();
