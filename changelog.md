@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Drag to reorder in the floating window** - The floated out todo list is now sortable, so the order can be changed without going back to the main window (2026-08-31)
+  - Hover a todo to reveal a grip on the left, then drag it up or down. Same `@dnd-kit` sortable the main list uses
+  - Only the incomplete section is draggable. Completed todos stay below the Done divider, where their order carries no meaning
+  - The float window shows a subset of the day, so the visible index is not the stored index. The drop is anchored to whichever todo it lands next to, and that neighbour's position in the full day list is what gets sent to `reorderTodos`. A day with headers or archived rows lands the todo where it was dropped instead of somewhere near it
+  - Autoscroll is off inside the float window. `@dnd-kit/core` measures autoscroll bounds against the bare `window` rather than the dragged node's own window, which is the main browser window when the content lives in a Picture-in-Picture document
+
 - **Agent Tasks setting** - Turn Agent Tasks off in Settings (press ?) so it is hidden for that user (2026-08-31)
   - New `agentTasksEnabled` field on `userPreferences`. Missing or true keeps the feature on
   - Off hides the sparkles header icon, Send to Agent, Run Note, the Agent Tasks view, Shift + A, and the shortcut row

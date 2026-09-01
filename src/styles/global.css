@@ -12022,14 +12022,45 @@ button:active,
 .float-todo-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
   padding: 6px 8px;
   border-radius: 6px;
-  cursor: pointer;
 }
 
 .float-todo-row:hover {
   background: var(--bg-hover);
+}
+
+/* Drag grip. Hidden until hover, same pattern as the main list */
+.float-todo-grip {
+  flex-shrink: 0;
+  padding: 0 1px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: transparent;
+  cursor: grab;
+  touch-action: none;
+  transition: color 0.15s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.float-todo-row:hover .float-todo-grip {
+  color: var(--text-secondary);
+}
+
+.float-todo-grip:active {
+  cursor: grabbing;
+}
+
+/* Completed rows keep the grip column so their text stays aligned */
+.float-todo-grip.is-static {
+  cursor: default;
+  color: transparent;
+}
+
+.float-todo-row.completed:hover .float-todo-grip.is-static {
+  color: transparent;
 }
 
 .float-todo-row input[type="checkbox"] {
@@ -12043,6 +12074,7 @@ button:active,
   flex: 1;
   line-height: 1.45;
   word-break: break-word;
+  cursor: pointer;
 }
 
 .float-todo-row.completed .float-todo-text {

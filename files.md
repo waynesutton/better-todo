@@ -688,7 +688,7 @@ This document describes the structure and purpose of each file in the Better Tod
     - Skips search queries when unauthenticated to prevent errors
     - Shows "Sign In to Search" modal when unauthenticated
 
-- `FloatingTodoWindow.tsx` - Floating on-screen todo window (Document Picture-in-Picture with popup fallback): header button with Phosphor PictureInPicture icon, live todo list with checkbox toggle and quick add, theme synced
+- `FloatingTodoWindow.tsx` - Floating on-screen todo window (Document Picture-in-Picture with popup fallback): header button with Phosphor PictureInPicture icon, live todo list with checkbox toggle and quick add, theme synced. Incomplete todos are drag sortable by a hover grip using `@dnd-kit`, with autoscroll disabled and the drop anchored to its new neighbour so the index sent to `reorderTodos` matches the full day list
 
 - `FloatingTimerWindow.tsx` - Floating on-screen Pomodoro timer window: button inside the Pomodoro modal, live countdown from the Convex session with start, pause, resume, restart, and stop controls
 
@@ -914,6 +914,7 @@ This document describes the structure and purpose of each file in the Better Tod
 - `kanban-board-view.md` - Kanban board feature plan, theme parity work, and full height layout notes
 - `kanban-performance-and-composers.md` - The board slowdown traced through Convex insights (OCC retries from range-scan ownership checks, plus drag-time re-render churn), the rolled-over day board fix, and the top and bottom column composers
 - `copy-order-and-agent-tasks-toggle.md` - Day copy kept source `_creationTime` instead of visual `order`, copy inserts were sequential, and Agent Tasks had no per-user off switch
+- `float-window-todo-reorder.md` - Drag sorting inside the floating PiP todo window, why autoscroll is disabled there, and how a visible-list drop is translated into an index in the full day list
 
 ## Root Documentation
 

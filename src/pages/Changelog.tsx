@@ -120,11 +120,26 @@ export function Changelog() {
 
           <h2 className="section-title">v.042 - August 31, 2026</h2>
           <p className="changelog-subtitle">
-            Copy order and Agent Tasks setting
+            Float window reorder, copy order, and Agent Tasks setting
           </p>
 
           <h3 className="changelog-category">Added</h3>
           <ul className="feature-list">
+            <li>
+              <strong>Drag to reorder in the floating window</strong> - The
+              floated out todo list is now sortable, so you can change the order
+              without going back to the main window
+              <ul className="nested-list">
+                <li>
+                  Hover a todo to reveal a grip on the left, then drag it up or
+                  down. The main window updates live
+                </li>
+                <li>
+                  Only the unfinished section is draggable. Completed todos stay
+                  below the Done divider
+                </li>
+              </ul>
+            </li>
             <li>
               <strong>Agent Tasks setting</strong> - Turn Agent Tasks off in
               Settings so it is hidden for that user
