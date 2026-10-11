@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import math
 import re
+from datetime import datetime
 
 from . import http, providers, query, schema, signals
 
@@ -24,6 +26,95 @@ ENTITY_MISS_PENALTY = 25.0
 # still outranks a thin first-party one; this only lifts first-party off the
 # neutral floor so it survives into the visible band.
 FIRST_PARTY_AUTHOR_CREDIT = 5.0
+
+_DISCOVERY_ENGAGEMENT_FIELDS = {
+    "reddit": ("score", "num_comments"),
+    "hackernews": ("points", "comments"),
+    "digg": ("postCount", "uniqueAuthors"),
+    "x": ("likes", "reposts", "replies", "quotes"),
+}
+
+
+def discovery_engagement_total(item: schema.SourceItem) -> float:
+    """Return comparable native interaction counts for discovery evidence."""
+    fields = _DISCOVERY_ENGAGEMENT_FIELDS.get(item.source)
+    if fields is None:
+        fields = tuple(
+            field
+            for field in item.engagement
+            if field.lower() not in {"rank", "rank_score", "upvote_ratio", "rating"}
+        )
+    return sum(
+        float(item.engagement.get(field) or 0)
+        for field in fields
+        if isinstance(item.engagement.get(field), (int, float))
+        and not isinstance(item.engagement.get(field), bool)
+    )
+
+
+def engagement_velocity_score(
+    item: schema.SourceItem,
+    *,
+    as_of_date: str,
+) -> float:
+    """Weight native engagement by age, with an explicit first-week boost."""
+    engagement = discovery_engagement_total(item)
+    if engagement <= 0:
+        return 0.0
+    try:
+        published = datetime.fromisoformat((item.published_at or "").replace("Z", "+00:00")).date()
+        as_of = datetime.fromisoformat(as_of_date.replace("Z", "+00:00")).date()
+        age_days = max(0, (as_of - published).days)
+    except (TypeError, ValueError):
+        age_days = 30
+    recency_weight = 1.0 / math.sqrt(age_days + 1)
+    if age_days < 7:
+        recency_weight *= 1.5
+    return round(engagement * recency_weight, 4)
+
+
+def discovery_velocity_score(
+    items: list[schema.SourceItem],
+    *,
+    as_of_date: str,
+) -> float:
+    """Score a topic cluster and reward independent cross-source confirmation."""
+    raw = sum(engagement_velocity_score(item, as_of_date=as_of_date) for item in items)
+    source_count = len({item.source for item in items})
+    corroboration = 1.0 + (0.15 * max(0, source_count - 1))
+    return round(raw * corroboration, 4)
+
+
+# Discovery confidence floor. The named 2026-07-12 failure mode: quiet feeds
+# left the sweep ranking noise against noise, and it dutifully emitted five
+# 1-like tweets as a "trend list". The floor makes "nothing solid this window"
+# a first-class outcome instead. Constants are deliberately tunable:
+# - FLOOR_MIN_ENGAGEMENT kills absolute junk (a 1-like tweet can never rank).
+# - A topic then clears via EITHER independent cross-source confirmation
+#   (>= FLOOR_MIN_SOURCES) OR a genuinely strong single-source spike
+#   (>= FLOOR_SINGLE_SOURCE_ENGAGEMENT) - a 1,600-point single-source HN
+#   thread is a real story, a 30-upvote single-source meme is not.
+FLOOR_MIN_ENGAGEMENT = 25.0
+FLOOR_MIN_SOURCES = 2
+FLOOR_SINGLE_SOURCE_ENGAGEMENT = 200.0
+
+
+def passes_discovery_floor(
+    *,
+    source_count: int,
+    engagement_total: float,
+    item_count: int,
+) -> bool:
+    """Whether a discovery topic's evidence is strong enough to show a user.
+
+    Below this floor the honest output is "nothing solid this window", not a
+    ranked list of whatever survived the sweep.
+    """
+    if item_count <= 0 or engagement_total < FLOOR_MIN_ENGAGEMENT:
+        return False
+    if source_count >= FLOOR_MIN_SOURCES:
+        return True
+    return engagement_total >= FLOOR_SINGLE_SOURCE_ENGAGEMENT
 
 # Engagement rescue: a high-engagement X post that is on-topic (entity-grounded
 # or first-party) cannot be fully zeroed by the other penalties. The floor is a

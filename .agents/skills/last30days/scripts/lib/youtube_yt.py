@@ -56,7 +56,7 @@ def reset_transcript_fetch_stats() -> None:
 # Max words to keep from each transcript
 TRANSCRIPT_MAX_WORDS = 5000
 
-from . import dates, http, log, subproc
+from . import dates, health, http, log, subproc
 from .query import infer_query_intent
 
 from .relevance import token_overlap_relevance as _compute_relevance
@@ -71,6 +71,9 @@ _TRANSCRIPT_MAX_RETRIES = 2
 _TRANSCRIPT_BACKOFF_BASE = 2.0  # seconds; multiplied by (attempt + 1)
 _TRANSCRIPT_TIMEOUT = 30  # seconds per yt-dlp attempt (keyless: no fallback to fail over to)
 _TRANSCRIPT_FAST_TIMEOUT = 12  # seconds per attempt when a ScrapeCreators fallback exists
+# Comments are enrichment, not core evidence: keep the budget tight so a slow
+# comment API can never dominate a run's wall clock (bounded to 3 videos).
+_COMMENT_TIMEOUT = 20
 _SC_LOW_CREDIT_THRESHOLD = 50  # warn once ScrapeCreators credits drop below this
 # Transient = worth retrying (and definitely not "no captions").
 _TRANSIENT_RE = re.compile(
@@ -141,6 +144,21 @@ def extract_transcript_highlights(transcript: str, topic: str, limit: int = 5) -
 
 def _log(msg: str):
     log.source_log("YouTube", msg, tty_only=False)
+
+
+def classify_run_failure(detail: str) -> str:
+    """Map yt-dlp's text-only throttling and bot-gate errors."""
+    text = detail.lower()
+    if any(marker in text for marker in ("yt-dlp not installed", "yt-dlp not found")):
+        return health.SKIPPED_UNCONFIGURED
+    if any(
+        marker in text
+        for marker in ("http error 429", "confirm you're not a bot", "confirm you’re not a bot", "bot-gate")
+    ):
+        return health.RATE_LIMITED
+    if any(marker in text for marker in ("sign in", "login required", "cookies are no longer valid")):
+        return health.AUTH_FAILED
+    return http.classify_failure(message=detail)
 
 
 def is_ytdlp_installed() -> bool:
@@ -833,8 +851,8 @@ def fetch_transcripts_parallel(
     with tempfile.TemporaryDirectory() as temp_dir:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
-                executor.submit(
-                    fetch_transcript, vid, temp_dir, statuses[vid], token,
+                http.submit_with_context(
+                    executor, fetch_transcript, vid, temp_dir, statuses[vid], token,
                 ): vid
                 for vid in video_ids
             }
@@ -960,7 +978,7 @@ def search_and_transcribe(
                 items.append(item)
 
     # Sort merged results by views descending
-    items.sort(key=lambda x: x.get("engagement", {}).get("views", 0), reverse=True)
+    items.sort(key=lambda x: x.get("engagement", {}).get("views") or 0, reverse=True)
 
     if not items:
         return search_result
@@ -1058,7 +1076,10 @@ def enrich_with_comments(
     Returns:
         Items list (mutated in place) with top_comments added to enriched items.
     """
-    if not items or not token or max_videos <= 0:
+    if not items or max_videos <= 0:
+        return items
+    # yt-dlp needs no key, so an empty token is only fatal when it is absent too.
+    if not token and not is_ytdlp_installed():
         return items
 
     ranked = sorted(items, key=_total_engagement, reverse=True)
@@ -1082,7 +1103,7 @@ def enrich_with_comments(
 
     enriched_count = 0
     with ThreadPoolExecutor(max_workers=min(4, len(top_items))) as executor:
-        futures = {executor.submit(_enrich_one, item): item for item in top_items}
+        futures = {http.submit_with_context(executor, _enrich_one, item): item for item in top_items}
         for future in as_completed(futures):
             if future.result():
                 enriched_count += 1
@@ -1091,21 +1112,108 @@ def enrich_with_comments(
     return items
 
 
+def _ytdlp_comments_result(
+    video_id: str,
+    max_comments: int = 5,
+) -> tuple[List[Dict[str, Any]], bool]:
+    """Fetch top comments via yt-dlp, returning ``(comments, ran_cleanly)``.
+
+    The bool distinguishes "yt-dlp succeeded, this video simply has no
+    comments" (True, []) from "yt-dlp was absent or errored" (False, []), so
+    the caller only spends a ScrapeCreators credit on a genuine failure — not
+    on a video that legitimately has zero comments. Mirrors the transcript
+    path, which is likewise careful not to bill SC for a caption-less video.
+
+    Comments are sorted by top so a low ``max_comments`` still returns the
+    highest-voted ones rather than an arbitrary slice.
+    """
+    if not is_ytdlp_installed():
+        return [], False
+
+    cmd = _wrap_ytdlp_cmd([
+        "yt-dlp",
+        "--write-comments",
+        "--skip-download",
+        "--dump-single-json",
+        "--no-warnings",
+        "--ignore-config",
+        "--extractor-args",
+        f"youtube:comment_sort=top;max_comments={max_comments},all,{max_comments}",
+        f"https://www.youtube.com/watch?v={video_id}",
+    ])
+
+    try:
+        result = subproc.run_with_timeout(cmd, timeout=_COMMENT_TIMEOUT)
+    except Exception as exc:
+        _log(f"yt-dlp comment fetch failed for {video_id}: {exc}")
+        return [], False
+
+    if result.returncode != 0 or not result.stdout:
+        _log(f"yt-dlp comment fetch failed for {video_id} (exit {result.returncode})")
+        return [], False
+
+    try:
+        payload = json.loads(result.stdout)
+    except (ValueError, TypeError) as exc:
+        _log(f"yt-dlp comment JSON parse failed for {video_id}: {exc}")
+        return [], False
+
+    comments = []
+    for c in (payload.get("comments") or [])[:max_comments]:
+        text = c.get("text") or ""
+        if not text:
+            continue
+        comments.append({
+            "author": c.get("author") or "",
+            "text": text[:400],
+            "likes": c.get("like_count") or 0,
+            "date": c.get("_time_text") or "",
+        })
+    return comments, True
+
+
+def _fetch_video_comments_ytdlp(
+    video_id: str,
+    max_comments: int = 5,
+) -> List[Dict[str, Any]]:
+    """Comments for a video via yt-dlp (free, keyless), or [] on any failure.
+
+    Thin list-returning wrapper over ``_ytdlp_comments_result`` for callers
+    that don't need to tell a clean empty result from a failure.
+    """
+    return _ytdlp_comments_result(video_id, max_comments)[0]
+
+
 def _fetch_video_comments(
     video_id: str,
     token: str,
     max_comments: int = 5,
 ) -> List[Dict[str, Any]]:
-    """Fetch comments for a single YouTube video via ScrapeCreators.
+    """Fetch comments for one video, preferring the free yt-dlp path.
+
+    yt-dlp is tried first because it is keyless and costs nothing.
+    ScrapeCreators stays as the backstop for when yt-dlp is absent or gets
+    throttled, and is only called when a token is actually configured.
 
     Args:
         video_id: YouTube video ID
-        token: ScrapeCreators API key
+        token: ScrapeCreators API key (may be empty — yt-dlp needs none)
         max_comments: Maximum comments to return
 
     Returns:
         List of comment dicts with author, text, likes, date.
     """
+    ytdlp_comments, ran_cleanly = _ytdlp_comments_result(video_id, max_comments)
+    if ytdlp_comments:
+        return ytdlp_comments
+    # Clean run with no comments -> the video simply has none. Don't spend an
+    # SC credit chasing comments that aren't there; only fall back on failure.
+    if ran_cleanly:
+        return []
+
+    if not token:
+        return []
+
     video_url = f"https://www.youtube.com/watch?v={video_id}"
     try:
         data = http.get(
@@ -1334,13 +1442,16 @@ def _sc_fetch_transcript(video_id: str, token: str) -> Optional[str]:
     """
     video_url = f"https://www.youtube.com/watch?v={video_id}"
     try:
-        data = http.get(
-            f"{SCRAPECREATORS_YT_BASE}/video/transcript",
-            params={"url": video_url},
-            headers=http.scrapecreators_headers(token),
-            timeout=30,
-            retries=1,
-        )
+        # Isolate SC transcript fetch errors from the pipeline-level
+        # capture_failures() context.
+        with http.capture_failures() as _tf:
+            data = http.get(
+                f"{SCRAPECREATORS_YT_BASE}/video/transcript",
+                params={"url": video_url},
+                headers=http.scrapecreators_headers(token),
+                timeout=30,
+                retries=1,
+            )
     except Exception as exc:
         _log(f"SC transcript error for {video_id}: {exc}")
         return None

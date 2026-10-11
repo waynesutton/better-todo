@@ -3,24 +3,11 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
-
-// Load one todo and confirm the caller owns it.
-//
-// The alternative, querying by_user and matching _id, walks the user's entire
-// todo range and pulls every one of those documents into the transaction's read
-// set. Any unrelated todo write then conflicts with it, which is what made
-// board drags and deletes retry. A direct get reads exactly one document.
-async function getOwnedTodo(
-  ctx: QueryCtx | MutationCtx,
-  userId: string,
-  id: Id<"todos">,
-): Promise<Doc<"todos"> | null> {
-  const todo = await ctx.db.get(id);
-  if (!todo || todo.userId !== userId) {
-    return null;
-  }
-  return todo;
-}
+import {
+  createTodoForUser,
+  getOwnedTodo,
+  updateTodoForUser,
+} from "./lib/userData";
 
 // Fetch the direct children of the given todos using the parent index.
 // Scoping by parent keeps these queries from re-running on every todo write.
@@ -342,25 +329,7 @@ export const createTodo = mutation({
     if (!identity) {
       throw new Error("Not authenticated");
     }
-    const userId = identity.subject;
-
-    // Use timestamp-based ordering instead of reading all todos
-    // This avoids write conflicts when creating multiple todos rapidly
-    // "top" uses a negative timestamp so the todo sorts before existing ones
-    const order = args.position === "top" ? -Date.now() : Date.now();
-
-    return await ctx.db.insert("todos", {
-      userId: userId,
-      date: args.date,
-      folderId: args.folderId,
-      content: args.content,
-      type: args.type,
-      completed: false,
-      archived: false,
-      order: order,
-      parentId: args.parentId,
-      collapsed: args.type !== "todo", // Headers start collapsed
-    });
+    return await createTodoForUser(ctx, identity.subject, args);
   },
 });
 
@@ -426,47 +395,14 @@ export const updateTodo = mutation({
       throw new Error("Todo not found or unauthorized");
     }
 
-    const updates: Record<string, any> = {};
-    if (args.content !== undefined) updates.content = args.content;
-    if (args.collapsed !== undefined) updates.collapsed = args.collapsed;
-    if (args.pinned !== undefined) updates.pinned = args.pinned;
-    if (args.backlog !== undefined) updates.backlog = args.backlog;
-
-    // If completing a todo, automatically archive it and record completedAt
-    // If uncompleting a todo, automatically unarchive it and clear completedAt
-    if (args.completed !== undefined) {
-      updates.completed = args.completed;
-      if (args.completed) {
-        updates.archived = true;
-        updates.completedAt = Date.now();
-      } else {
-        updates.archived = false;
-        updates.completedAt = undefined;
-      }
-    }
-
-    if (args.archived !== undefined) {
-      updates.archived = args.archived;
-    }
-
-    // Patch the todo with updates
-    await ctx.db.patch(args.id, updates);
-
-    // If completed status changed or archived status changed, update streak
-    // Only track streaks for regular date-based todos (not folder/backlog/pinned todos)
-    if (
-      (args.completed !== undefined || args.archived !== undefined) &&
-      todo.date &&
-      !todo.folderId &&
-      !todo.backlog &&
-      !todo.pinned
-    ) {
-      await ctx.scheduler.runAfter(0, internal.streaks.updateStreak, {
-        userId,
-        date: todo.date,
-      });
-    }
-
+    await updateTodoForUser(ctx, todo, {
+      content: args.content,
+      completed: args.completed,
+      collapsed: args.collapsed,
+      archived: args.archived,
+      pinned: args.pinned,
+      backlog: args.backlog,
+    });
     return null;
   },
 });

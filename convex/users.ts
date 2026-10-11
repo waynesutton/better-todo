@@ -19,6 +19,15 @@ export const storeUser = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // Callers can only write their own profile row
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    if (identity.subject !== args.userId) {
+      throw new Error("Not authorized");
+    }
+
     // Check if user already exists
     const existing = await ctx.db
       .query("users")

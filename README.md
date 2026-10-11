@@ -39,7 +39,6 @@ An open source, real-time to-do list with notes and AI writing assistant that ne
   - **Duration toggle while paused** - change duration (25, 50, 90 min) when timer is paused in modal or full-screen
   - **Theme-aware phase badges** - Focus and Break badges adapt to your selected theme
   - **Smooth full-screen transitions** - no flash when entering full-screen mode
-- **Unsplash background images** - Optional beautiful nature images in Pomodoro full-screen mode with glass morphism overlay
 - **AI Writing Assistant** - Built-in AI chat powered by Claude for writing assistance
   - Access from MessageCircle icon in header on any date page
   - Each date has its own separate chat session with full conversation history
@@ -323,12 +322,6 @@ At the bottom of each date's todo list:
 - **Visual countdown** displays time remaining in MM:SS format
 - **Keyboard shortcuts** - ESC to close full-screen, f to enter full-screen
 - **Session persistence** - timer state syncs across tabs via Convex
-- **Unsplash background images** - Optional beautiful nature images in full-screen mode
-  - Random search queries: "landscape nature", "cities", "ocean", "sky"
-  - Apple-style glass morphism overlay when background is enabled
-  - Toggle button to show/hide background images
-  - New image fetches each time full-screen mode opens
-
 ### AI Writing Assistant
 
 - **Built-in AI chat** accessible from the MessageCircle icon in header on any date page
@@ -392,6 +385,48 @@ Authenticated users can customize the font size of todo text:
 - Setting persists across sessions and devices
 - Works in both light and dark themes
 
+## Connect an AI assistant (MCP)
+
+Grok Bot, Claude, Cursor and other MCP clients can read and write your todos, day notes, full page notes and projects. Each connection acts only as you, and you can revoke it anytime.
+
+Your MCP URL is shown in Settings (press `?`) under Connected agents. It looks like `https://<deployment>.convex.site/mcp`.
+
+**Grok Bot or any client that takes an API key**
+
+1. Open Settings, Connected agents, and create an API key. It is shown once
+2. Open "Grok Bot setup prompt", copy it, and paste it into Grok Bot. The prompt has the MCP URL but not your key
+3. Grok Bot asks for the key in a masked secret field, so it never lands in chat. If it can't, add a custom MCP connector yourself with the URL above and the header `Authorization: Bearer <key>`
+
+**Claude, Cursor and other OAuth clients**
+
+Paste the MCP URL into the client. It opens `/connect`, where you sign in and approve the scopes.
+
+**What agents can do**
+
+| Tool | Scope |
+| --- | --- |
+| `list_today`, `search` | `todos:read` |
+| `add_todo`, `complete_todo`, `update_todo` | `todos:write` |
+| `get_note` | `notes:read` |
+| `add_note`, `update_note` | `notes:write` |
+| `list_projects`, `get_project` | `projects:read` |
+
+There are no delete tools. Agents can refer to items by text ("the rent todo"). If the match is unclear, the tool returns candidates and the agent asks you. Every write shows up under Recent activity in Settings.
+
+**Smart matching (optional)**
+
+Set `TYPESAFE_API_KEY` with `npx convex env set TYPESAFE_API_KEY <key>`. Only the match phrase and candidate titles are sent to TypeSafe. Without the key, matching still works on exact and unique text.
+
+**Gateways**
+
+You can put an MCP gateway such as [Executor](https://executor.sh/docs) in front of this server to share one connection across tools. The server works fine without one.
+
+**Development notes**
+
+- The Convex admin MCP (`npx convex mcp`) is for development only. Never give it to Grok Bot or another assistant: it can read every user's data
+- `npm test` runs the MCP test suite. `npx convex run mcpEval:run` checks smart matching against synthetic cases
+- Production needs `npx convex env set MCP_CONSENT_URL https://your-domain/connect --prod`
+
 ## Project Structure
 
 ```
@@ -408,11 +443,14 @@ better-todo/
 │   ├── folders.ts             # Custom project management
 │   ├── monthGroups.ts         # Auto-grouped month management
 │   ├── pomodoro.ts            # Pomodoro timer functionality
-│   ├── unsplash.ts            # Unsplash background image fetching
 │   ├── search.ts              # Search functionality
 │   ├── aiChats.ts             # AI chat queries and mutations
 │   ├── aiChatActions.ts       # AI chat actions (Claude API integration)
-│   └── http.ts                # HTTP routes for auth
+│   ├── mcp.ts                 # MCP server, tools and scopes for AI assistants
+│   ├── mcpTools.ts            # Internal functions the MCP tools call
+│   ├── mcpActivity.ts         # Agent activity log and cleanup
+│   ├── lib/                   # Shared helpers (time, userData, typesafe)
+│   └── http.ts                # HTTP routes (auth, share meta, MCP)
 ├── src/
 │   ├── components/            # React components
 │   │   ├── TodoItem.tsx       # Individual todo component
@@ -535,10 +573,6 @@ npx convex deploy
      VITE_CONVEX_URL=https://your-deployment.convex.cloud
      VITE_CLERK_PUBLISHABLE_KEY=pk_test_XXXXXXXXXXXXXXXXXXXXXXXX
      ```
-   - For Unsplash background images in Pomodoro timer (optional):
-     - Add `UNSPLASH_ACCESS_KEY` to your Convex deployment environment variables
-     - Get your free access key from [Unsplash Developers](https://unsplash.com/developers)
-     - This enables beautiful nature backgrounds in Pomodoro full-screen mode
    - For AI Writing Assistant (optional):
      - Add `ANTHROPIC_API_KEY` to your Convex deployment environment variables
      - Get your API key from [Anthropic Console](https://console.anthropic.com)
@@ -556,8 +590,6 @@ npx convex deploy
 The app supports continuous deployment, so every push to your main branch will trigger a new deployment.
 
 **Note:** All environment variables prefixed with `VITE_` are exposed to the frontend during build time. Never include sensitive information like API keys in these variables.
-
-**Unsplash Integration:** The `UNSPLASH_ACCESS_KEY` is stored securely in your Convex deployment environment variables (not exposed to frontend) and is only used server-side for fetching background images.
 
 **AI Writing Assistant:** The `ANTHROPIC_API_KEY` is stored securely in your Convex deployment environment variables (not exposed to frontend) and is only used server-side for calling Claude's API. The AI chat feature is optional and the app works completely without it.
 

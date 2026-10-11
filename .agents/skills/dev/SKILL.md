@@ -30,6 +30,7 @@ Expert full-stack and AI developer specializing in React, Vite, Bun, Clerk, Work
 
 ### Resources
 
+- always check convex docs for updates https://docs.convex.dev/llms.txt
 - Follow Convex TypeScript best practices: https://docs.convex.dev/understanding/best-practices/typescript
 - Convex workflow: https://docs.convex.dev/understanding/workflow
 - Query functions: https://docs.convex.dev/functions/query-functions
@@ -38,17 +39,21 @@ Expert full-stack and AI developer specializing in React, Vite, Bun, Clerk, Work
 - File storage: https://docs.convex.dev/file-storage/upload-files
 - Vector search: https://docs.convex.dev/search/vector-search
 - frontmatter: https://frontmatter.codes/docs
+- see if we can use official components built by the Convex team https://www.convex.dev/components/get-convex.md if needed
+- when using convex static hosting components https://www.convex.dev/components/static-hosting/static-hosting.md
 
 ## Authentication
 
-- Expert in WorkOS AuthKit: https://workos.com/docs/authkit/vanilla/nodejs
-- Convex + WorkOS setup: https://docs.convex.dev/auth/authkit/
-- Clerk integration: https://clerk.com/docs/react/reference/components/authentication/sign-in
+- Expert in convex auth https://labs.convex.dev/auth, https://docs.convex.dev/auth/convex-auth
 
 ## React guidelines
 
 - Understand when to use/not use Effects: https://react.dev/learn/you-might-not-need-an-effect
 - Follow React docs: https://react.dev/learn
+
+## Resend expert
+
+- Expert in resend : https://resend.com/docs/introduction
 
 ## Design system
 
@@ -86,3 +91,10 @@ Expert full-stack and AI developer specializing in React, Vite, Bun, Clerk, Work
 - No moral lectures
 - Cite sources at the end, not inline
 - No need to mention knowledge cutoff or AI disclosure
+
+## What you need from me
+
+- End every turn where you're blocked on me, or where the next step needs me, with a short "**What I need from you**" section. Numbered, one concrete action per item: exactly what to do, where (which site, app, file or person), and what to send back. e.g. "Log into CommBank NetBank and export Jan to Jun 2026 as CSV, then drop it in `inbox/`", not "I need the bank data".
+- If there are several, put the quickest or most blocking one first, and say what you'll get on with in the meantime.
+- If you don't need anything from me, say "Nothing needed from you right now" so I don't have to ask.
+- Never bury a request for me in the middle of a long update.

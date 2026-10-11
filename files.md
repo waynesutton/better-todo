@@ -4,14 +4,16 @@ This document describes the structure and purpose of each file in the Better Tod
 
 ## Root Configuration
 
-- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, Phosphor icons, @dnd-kit, Radix UI, react-markdown, remark-gfm, remark-breaks, convex-doctor)
+- `package.json` - Project dependencies and scripts (React 18, TypeScript, Convex, Clerk, Lucide icons, Phosphor icons, @dnd-kit, Radix UI, react-markdown, remark-gfm, remark-breaks, convex-doctor, @convex-dev/mcp, vitest, convex-test)
 - `tsconfig.json` - TypeScript configuration for React app
 - `tsconfig.node.json` - TypeScript configuration for Vite
 - `vite.config.ts` - Vite bundler configuration with React plugin
+- `vitest.config.ts` - Vitest config for Convex tests (edge runtime, `convex/**/*.test.ts`, inlines convex-test). Run with `npm test`
+- `netlify.toml` - Netlify build, redirects, and headers (`/connect` sends `frame-ancestors 'none'` and `X-Frame-Options: DENY`)
 - `index.html` - HTML entry point with meta tags for SEO and social sharing
 - `.gitignore` - Git ignore patterns
 - `README.md` - Complete project documentation
-- `changelog.md` - Version history with all features (latest: Unreleased copy-order fix and Agent Tasks setting, then v.041); mirrored in the app by `src/pages/Changelog.tsx`
+- `changelog.md` - Version history with all features (latest: Unreleased MCP agents, copy-order fix and Agent Tasks setting, then v.041); mirrored in the app by `src/pages/Changelog.tsx`
 - `convex-doctor.toml` - convex-doctor configuration with rule suppressions and CI threshold
 - `convex.json` - Convex deployment configuration
 - `files.md` - This file, project structure documentation
@@ -74,6 +76,8 @@ This document describes the structure and purpose of each file in the Better Tod
     - Index: `by_user_and_month_group`, `by_user_and_date`
   - **pomodoroSessions**: Stores pomodoro timer sessions with work/break intervals, completed sessions, and user preferences
     - Index: `by_user`
+  - **mcpActivity**: One row per MCP agent write (userId, connectionId, clientId, tool, short summary, targetDate, matchConfidence, createdAt). No tokens or full note content. Deleted after 30 days
+    - Index: `by_userId_and_createdAt`, `by_createdAt`
   - **userPreferences**: Stores per-user settings including todoFontSize, IANA timezone, auto rollover setting, last rollover date, backfill timestamp, defaultTodoView (list or board), and agentTasksEnabled (false hides Agent Tasks for that user)
     - Index: `by_user`
   - **kanbanColumns**: Stores each user's board columns with key, label, order, and isDone flag
@@ -182,10 +186,10 @@ This document describes the structure and purpose of each file in the Better Tod
     - Deletes all todos, notes, archived date entries, and custom labels for the authenticated user's date
     - Throws error if user is not authenticated
 
-- `dateLabels.ts` - Custom date label management:
-  - `getDateLabels` - Get all custom labels for dates
-  - `setDateLabel` - Add or update a custom text label for a date
-  - `removeDateLabel` - Remove a custom label from a date
+- `dateLabels.ts` - Custom date label management, scoped to the signed in user:
+  - `getDateLabels` - Get the caller's custom labels for dates (empty when signed out)
+  - `setDateLabel` - Add or update a custom text label for a date (requires auth, skips unchanged writes)
+  - `removeDateLabel` - Remove a custom label from a date (requires auth)
 
 - `archivedDates.ts` - Archive management:
   - `getArchivedDates` - Get list of archived dates
@@ -216,22 +220,15 @@ This document describes the structure and purpose of each file in the Better Tod
   - `unarchiveMonthGroup` - Restore archived month group
   - `deleteMonthGroup` - Delete month group and all associations
 
-- `pomodoro.ts` - Pomodoro timer functionality:
+- `pomodoro.ts` - Pomodoro timer functionality (ownership via `getOwnedSession`, a direct get plus userId check that also matches guest sessions):
   - `getPomodoroSession` - Get current pomodoro session for user
   - `startPomodoro` - Create new pomodoro session with optional duration (defaults to 25 minutes, supports 50 and 90 minutes, increments global statistics counter)
   - `pausePomodoro` - Pause current session with remaining time
   - `resumePomodoro` - Resume paused session
   - `stopPomodoro` - Stop and delete current session
   - `completePomodoro` - Mark session as completed (uses indexed queries, idempotent to prevent write conflicts)
-  - `updateBackgroundImage` - Update session with Unsplash background image URL (uses indexed queries, idempotent check)
   - `updatePomodoroPreset` - Update session duration while paused (single patch, no stop/start cycle for smooth UI)
-
-- `unsplash.ts` - Unsplash background image fetching:
-  - `fetchBackgroundImage` - Fetches random images from Unsplash API
-  - Uses Node.js action with "use node" directive
-  - Secure access to UNSPLASH_ACCESS_KEY environment variable
-  - Random search queries: "landscape nature", "cities", "ocean", "sky"
-  - Updates pomodoro session with image URL for full-screen backgrounds
+  - `advancePomodoroPhase` - Move between focus and break, complete after the last cycle
 
 - `streaks.ts` - Streak tracking (AI-free):
   - `getStreakStatus` - Get current user's streak data (current streak, longest streak, weekly progress, total completed, last completed date)
@@ -330,7 +327,30 @@ This document describes the structure and purpose of each file in the Better Tod
   - `patchRecapNote` - Update an existing note with recap content
   - `backfillCompletedAt` - One-time internal mutation to set completedAt on all completed todos missing it (uses _creationTime as proxy)
 
-- `crons.ts` - Cron job definitions (daily default todo cleanup at 12:00 UTC, hourly end of day auto rollover at :05)
+- `crons.ts` - Cron job definitions (daily default todo cleanup at 12:00 UTC, hourly end of day auto rollover at :05, daily MCP activity cleanup)
+
+- `convex.config.ts` - Registers the `agent` and `@convex-dev/mcp` components
+
+- `mcp.ts` - MCP server for AI assistants (Grok Bot, Claude, Cursor), built on `@convex-dev/mcp`:
+  - Server name, instructions, and consent URL (`MCP_CONSENT_URL`, default `https://better-todo.co/connect`)
+  - Scopes `todos:read`, `todos:write`, `notes:read`, `notes:write`, `projects:read`
+  - Tools `list_today`, `search`, `add_todo`, `add_note`, `complete_todo`, `update_todo`, `update_note`, `get_note`, `list_projects`, `get_project`
+  - Resolves `match` phrases by exact id, exact or unique substring text, then TypeSafe ranking; unclear matches return candidates
+  - Exports the component API (`getAuthRequest`, `findAuthRequest`, `authorize`, `listConnections`, `revokeConnection`, `createApiKey`) and internal `createApiKeyForUser`
+
+- `mcpTools.ts` - Internal queries and mutations the MCP tools call. All act as `user.userId`, check ownership of every id, filter results by scope, and log writes to `mcpActivity`
+
+- `mcpActivity.ts` - `listMyAgentActivity` (caller's last 20 agent actions for Settings) and internal `cleanupOldActivity` (deletes rows older than 30 days in batches)
+
+- `mcpEval.ts` - Internal action `run` that scores TypeSafe matching against 18 synthetic cases. `npx convex run mcpEval:run`
+
+- `mcp.test.ts` - convex-test suite: lint, timezone dates, writes plus activity, cross-user isolation, read-only 403, ambiguous matches, TypeSafe fallbacks
+
+- `lib/time.ts` - Timezone helpers (`todayFor`, `formatDateInTz`, `isValidDate`, `getUserTimezone`), America/Los_Angeles fallback
+
+- `lib/userData.ts` - Shared ownership checks and create/update helpers for todos and notes, used by UI mutations, agent tool mutations, and MCP tools
+
+- `lib/typesafe.ts` - TypeSafe client (`pickCandidate`, 3 second timeout, null on any failure) and deterministic `matchInCode`
 
 - `rollover.ts` - End of day auto rollover functions:
   - `runDailyRollover` - Internal cron entry point that schedules a per-user rollover for every opted-in user
@@ -353,7 +373,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - Token validation with Clerk's JWKS endpoint
 - `users.ts` - User management and preferences functions:
   - `getUserId` - Helper function to get current user's ID from authentication context
-  - `storeUser` - Store/update Clerk user data in Convex database
+  - `storeUser` - Store/update Clerk user data in Convex database (caller can only write their own row)
   - `getCurrentUser` - Get authenticated user information
   - `getUserPreferences` - Get user's preferences including font size, timezone, auto rollover setting, backfill state, default todo view, and Agent Tasks visibility
   - `setTodoFontSize` - Update todo text font size for authenticated user
@@ -362,7 +382,7 @@ This document describes the structure and purpose of each file in the Better Tod
   - `setDefaultTodoView` - Set whether days and projects open as a list or a Kanban board
   - `setAgentTasksEnabled` - Show or hide Agent Tasks for the current user
   - `areAgentTasksEnabled` - Helper used by createAgentTask. Missing preference means on
-- `http.ts` - HTTP routes for authentication callbacks (Clerk ready)
+- `http.ts` - HTTP routes: `/meta/share` and the MCP routes (`/mcp`, OAuth endpoints) via `mcp.registerRoutes`
 
 ## React Frontend (`src/`)
 
@@ -375,6 +395,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - Properly configured for both development and production environments
 
 ### Pages (`src/pages/`)
+
+- `src/pages/Connect.tsx` - `/connect` MCP consent page: Clerk sign in, code entry, scopes, unverified client name, device code confirmation, redirect host, refuses to render in a frame
 
 - `src/pages/Launch.tsx` - Launch/about page featuring:
   - Comprehensive feature showcase with navigation sidebar
@@ -598,7 +620,8 @@ This document describes the structure and purpose of each file in the Better Tod
   - Replaces browser default confirm/alert dialogs
   - Responsive width for mobile compatibility
 
-- `KeyboardShortcutsModal.tsx` - Settings modal (titled "Settings" with a Phosphor GearSix icon) holding preferences first and the keyboard shortcuts reference at the bottom:
+- `ConnectedAgentsSection.tsx` - Settings section for MCP: copyable MCP URL, create API key (shown once), collapsed Grok Bot setup prompt with copy button (no key, asks for it via a masked secret request), connection list with revoke confirm, recent agent activity
+- `KeyboardShortcutsModal.tsx` - Settings modal (Connected agents section follows API keys) (titled "Settings" with a Phosphor GearSix icon) holding preferences first and the keyboard shortcuts reference at the bottom:
   - Order: API docs link, Default todo view, Todo text font size, Agent Tasks on/off, End of day auto rollover, API keys, Code blocks, then a divider and the full shortcuts list
   - **Default todo view** (authenticated users only): choose List or Board for every new day and project; a per-day toggle in the header still overrides it
   - **Agent Tasks** (authenticated users only): On/Off toggle. Off hides the sparkles icon, Send to Agent, Run Note, and Shift + A for that user

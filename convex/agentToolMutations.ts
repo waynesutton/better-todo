@@ -3,6 +3,12 @@
 
 import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
+import {
+  createTodoForUser,
+  getOwnedFullPageNote,
+  getOwnedTodo,
+  updateTodoForUser,
+} from "./lib/userData";
 
 // Create a new todo item
 export const agentCreateTodo = internalMutation({
@@ -20,19 +26,11 @@ export const agentCreateTodo = internalMutation({
   }),
   handler: async (ctx, args) => {
     try {
-      // Use timestamp-based ordering for new items
-      const order = Date.now();
-
-      const todoId = await ctx.db.insert("todos", {
-        userId: args.userId,
+      const todoId = await createTodoForUser(ctx, args.userId, {
         content: args.content,
+        type: "todo",
         date: args.date,
         folderId: args.folderId,
-        type: "todo",
-        completed: false,
-        archived: false,
-        order,
-        collapsed: false,
         pinned: args.pinned ?? false,
       });
 
@@ -60,24 +58,16 @@ export const agentUpdateTodo = internalMutation({
   }),
   handler: async (ctx, args) => {
     try {
-      // Verify ownership via indexed query
-      const todo = await ctx.db
-        .query("todos")
-        .withIndex("by_user", (q) => q.eq("userId", args.userId))
-        .filter((q) => q.eq(q.field("_id"), args.todoId))
-        .unique();
-
+      const todo = await getOwnedTodo(ctx, args.userId, args.todoId);
       if (!todo) {
         return { success: false, error: "Todo not found or not owned by user" };
       }
 
-      // Build patch object with only provided fields
-      const patch: Record<string, unknown> = {};
-      if (args.content !== undefined) patch.content = args.content;
-      if (args.pinned !== undefined) patch.pinned = args.pinned;
-
-      if (Object.keys(patch).length > 0) {
-        await ctx.db.patch(args.todoId, patch);
+      if (args.content !== undefined || args.pinned !== undefined) {
+        await updateTodoForUser(ctx, todo, {
+          content: args.content,
+          pinned: args.pinned,
+        });
       }
 
       return { success: true };
@@ -102,13 +92,7 @@ export const agentCompleteTodo = internalMutation({
   }),
   handler: async (ctx, args) => {
     try {
-      // Verify ownership via indexed query
-      const todo = await ctx.db
-        .query("todos")
-        .withIndex("by_user", (q) => q.eq("userId", args.userId))
-        .filter((q) => q.eq(q.field("_id"), args.todoId))
-        .unique();
-
+      const todo = await getOwnedTodo(ctx, args.userId, args.todoId);
       if (!todo) {
         return { success: false, error: "Todo not found or not owned by user" };
       }
@@ -118,11 +102,8 @@ export const agentCompleteTodo = internalMutation({
         return { success: true };
       }
 
-      // Complete and archive the todo
-      await ctx.db.patch(args.todoId, {
-        completed: true,
-        archived: true,
-      });
+      // Same path as the UI: archives, records completedAt, updates streaks
+      await updateTodoForUser(ctx, todo, { completed: true });
 
       return { success: true };
     } catch (error) {
@@ -146,13 +127,7 @@ export const agentDeleteTodo = internalMutation({
   }),
   handler: async (ctx, args) => {
     try {
-      // Verify ownership via indexed query
-      const todo = await ctx.db
-        .query("todos")
-        .withIndex("by_user", (q) => q.eq("userId", args.userId))
-        .filter((q) => q.eq(q.field("_id"), args.todoId))
-        .unique();
-
+      const todo = await getOwnedTodo(ctx, args.userId, args.todoId);
       if (!todo) {
         // Idempotent - return success if not found
         return { success: true };
@@ -220,13 +195,7 @@ export const agentUpdateNote = internalMutation({
   }),
   handler: async (ctx, args) => {
     try {
-      // Verify ownership via indexed query
-      const note = await ctx.db
-        .query("fullPageNotes")
-        .withIndex("by_user_and_date", (q) => q.eq("userId", args.userId))
-        .filter((q) => q.eq(q.field("_id"), args.noteId))
-        .unique();
-
+      const note = await getOwnedFullPageNote(ctx, args.userId, args.noteId);
       if (!note) {
         return { success: false, error: "Note not found or not owned by user" };
       }
@@ -266,12 +235,7 @@ export const agentMoveTodosToDate = internalMutation({
     try {
       // Verify ownership and move in parallel
       const movePromises = args.todoIds.map(async (todoId) => {
-        const todo = await ctx.db
-          .query("todos")
-          .withIndex("by_user", (q) => q.eq("userId", args.userId))
-          .filter((q) => q.eq(q.field("_id"), todoId))
-          .unique();
-
+        const todo = await getOwnedTodo(ctx, args.userId, todoId);
         if (todo) {
           await ctx.db.patch(todoId, { date: args.targetDate });
           return true;
@@ -320,17 +284,17 @@ export const agentSearchTodos = internalQuery({
       .take(20);
 
     // Filter by date and completion status
-    let filtered = results;
-    
+    let matches = results;
+
     if (args.date) {
-      filtered = filtered.filter((t) => t.date === args.date);
-    }
-    
-    if (!args.includeCompleted) {
-      filtered = filtered.filter((t) => !t.completed);
+      matches = matches.filter((t) => t.date === args.date);
     }
 
-    return filtered.map((t) => ({
+    if (!args.includeCompleted) {
+      matches = matches.filter((t) => !t.completed);
+    }
+
+    return matches.map((t) => ({
       _id: t._id,
       content: t.content,
       date: t.date,
@@ -420,12 +384,12 @@ export const agentGetTodosForDate = internalQuery({
       )
       .collect();
 
-    let filtered = todos;
+    let matches = todos;
     if (!args.includeCompleted) {
-      filtered = filtered.filter((t) => !t.completed);
+      matches = matches.filter((t) => !t.completed);
     }
 
-    return filtered.map((t) => ({
+    return matches.map((t) => ({
       _id: t._id,
       content: t.content,
       completed: t.completed,

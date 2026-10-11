@@ -76,6 +76,7 @@ Rules for the commit message:
 - Subject line under 50 characters
 - No period at the end of the subject
 - Body bullets only when the change touches more than two concerns
+- If the working tree holds more than one unrelated piece of work, output one message per suggested commit
 - If the session was purely a docs sync with no code changes, use `docs: sync task, changelog, and files`
 
 ## Checklist

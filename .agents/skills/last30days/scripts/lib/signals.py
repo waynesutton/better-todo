@@ -24,6 +24,7 @@ SOURCE_QUALITY = {
     "instagram": 0.58,
     "tiktok": 0.58,
     "jobs": 0.72,
+    "corpus": 0.75,
 }
 
 
@@ -47,7 +48,7 @@ def local_relevance(
     # often have titles that don't keyword-match the query (e.g., "YE - FATHER
     # (feat. TRAVIS SCOTT)" doesn't match "kanye west"). The engagement signals
     # say "this is important" even when text overlap is weak.
-    if item.source == "youtube" and item.engagement.get("views", 0) > 100_000:
+    if item.source == "youtube" and (item.engagement.get("views") or 0) > 100_000:
         score = max(score, 0.3)
 
     # Project-mode GitHub floor: items fetched via --github-repo are explicitly
@@ -209,6 +210,19 @@ def _tiktok_engagement(item: schema.SourceItem) -> float | None:
     return (0.45 * views) + (0.27 * likes) + (0.18 * comments) + (0.10 * top_comment)
 
 
+def _instagram_engagement(item: schema.SourceItem) -> float | None:
+    # Mirrors _tiktok_engagement: reels are video-shaped, and a highly-liked top
+    # comment carves out 10% of the signal (via comment_like_count -> score) so
+    # crowd-loved IG comments lift their post's ranking like YouTube/TikTok.
+    views = log1p_safe(item.engagement.get("views"))
+    likes = log1p_safe(item.engagement.get("likes"))
+    comments = log1p_safe(item.engagement.get("comments"))
+    top_comment = _top_comment_score(item)
+    if not any([views, likes, comments, top_comment]):
+        return None
+    return (0.45 * views) + (0.27 * likes) + (0.18 * comments) + (0.10 * top_comment)
+
+
 def _generic_engagement(item: schema.SourceItem) -> float | None:
     if not item.engagement:
         return None
@@ -225,6 +239,8 @@ def engagement_raw(item: schema.SourceItem) -> float | None:
         return _youtube_engagement(item)
     if item.source == "tiktok":
         return _tiktok_engagement(item)
+    if item.source == "instagram":
+        return _instagram_engagement(item)
     weights = ENGAGEMENT_WEIGHTS.get(item.source)
     if weights:
         return _weighted_engagement(item, weights)
@@ -295,7 +311,7 @@ def _passes_engagement_floor(item: schema.SourceItem, sole_source: bool) -> bool
         return True
     if sole_source:
         return True
-    views = item.engagement.get("views", 0) if item.engagement else 0
+    views = item.engagement.get("views") or 0 if item.engagement else 0
     return views >= _VIDEO_ENGAGEMENT_FLOOR_VIEWS
 
 

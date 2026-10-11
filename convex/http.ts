@@ -1,8 +1,12 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { mcp } from "./mcp";
 
 const http = httpRouter();
+
+// MCP endpoint (/mcp), OAuth endpoints and /.well-known discovery documents
+mcp.registerRoutes(http);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,7 +69,8 @@ function generateNoteHTML(note: {
   const imageUrl =
     note.screenshotUrl ||
     "https://better-todo.co/og-image.png";
-  const canonicalUrl = `https://better-todo.co/share/${note.slug}`;
+  // Encoded because it lands in an href and an inline script string
+  const canonicalUrl = `https://better-todo.co/share/${encodeURIComponent(note.slug)}`;
   const siteName = "better todo";
   const twitterHandle = "@waynesutton";
 

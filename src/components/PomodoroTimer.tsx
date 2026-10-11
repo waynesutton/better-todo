@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
   StopwatchIcon,
@@ -44,7 +44,6 @@ export function PomodoroTimer({
   const hasPlayedCountdownSound = useRef(false);
   const lastEndSoundIndex = useRef(0);
   const hasCalledComplete = useRef(false);
-  const hasFetchedImage = useRef(false);
   const activeAudioRef = useRef<HTMLAudioElement[]>([]);
   const userStartedInThisSession = useRef(false);
 
@@ -68,8 +67,6 @@ export function PomodoroTimer({
   const stopPomodoro = useMutation(api.pomodoro.stopPomodoro);
   const completePomodoro = useMutation(api.pomodoro.completePomodoro);
   const updatePomodoroPreset = useMutation(api.pomodoro.updatePomodoroPreset);
-  const fetchBackgroundImage = useAction(api.unsplash.fetchBackgroundImage);
-
   // Refs to store latest values for use in Worker callback (avoids recreating Worker)
   const sessionRef = useRef(session);
   const advancePomodoroPhaseRef = useRef(advancePomodoroPhase);
@@ -155,7 +152,6 @@ export function PomodoroTimer({
       hasPlayedStartSound.current = false;
       hasPlayedCountdownSound.current = false;
       hasCalledComplete.current = false;
-      hasFetchedImage.current = false;
       userStartedInThisSession.current = false;
       if (workerRef.current) {
         workerRef.current.postMessage({ type: "stop" });
@@ -175,12 +171,6 @@ export function PomodoroTimer({
           time: session.remainingTime,
         });
       }
-
-      // Pre-fetch background image when timer starts
-      if (!hasFetchedImage.current) {
-        hasFetchedImage.current = true;
-        fetchBackgroundImage({ sessionId: session._id });
-      }
     } else if (session.status === "paused") {
       if (workerRef.current) {
         workerRef.current.postMessage({ type: "pause" });
@@ -192,7 +182,7 @@ export function PomodoroTimer({
       setIsFullScreen(true);
       setDisplayTime(0);
     }
-  }, [session, fetchBackgroundImage, durationMinutes]);
+  }, [session, durationMinutes]);
 
   // List of end sounds to rotate through
   const endSounds = [

@@ -1,5 +1,19 @@
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
+import { Doc, Id } from "./_generated/dataModel";
+
+// Load a session only if it belongs to the caller (guest sessions have no userId)
+async function getOwnedSession(
+  ctx: MutationCtx,
+  userId: string | undefined,
+  sessionId: Id<"pomodoroSessions">,
+): Promise<Doc<"pomodoroSessions"> | null> {
+  const session = await ctx.db.get(sessionId);
+  if (!session || session.userId !== userId) {
+    return null;
+  }
+  return session;
+}
 
 // Get active pomodoro session for current user
 export const getPomodoroSession = query({
@@ -127,14 +141,7 @@ export const pausePomodoro = mutation({
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject;
 
-    // Use indexed query to verify ownership
-    const session = await ctx.db
-      .query("pomodoroSessions")
-      .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
-      )
-      .filter((q) => q.eq(q.field("_id"), args.sessionId))
-      .unique();
+    const session = await getOwnedSession(ctx, userId, args.sessionId);
 
     if (!session) {
       // Session doesn't exist (idempotent)
@@ -159,14 +166,7 @@ export const resumePomodoro = mutation({
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject;
 
-    // Use indexed query to verify ownership
-    const session = await ctx.db
-      .query("pomodoroSessions")
-      .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
-      )
-      .filter((q) => q.eq(q.field("_id"), args.sessionId))
-      .unique();
+    const session = await getOwnedSession(ctx, userId, args.sessionId);
 
     if (!session) {
       // Session doesn't exist (idempotent)
@@ -190,14 +190,7 @@ export const stopPomodoro = mutation({
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject;
 
-    // Use indexed query to verify ownership
-    const session = await ctx.db
-      .query("pomodoroSessions")
-      .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
-      )
-      .filter((q) => q.eq(q.field("_id"), args.sessionId))
-      .unique();
+    const session = await getOwnedSession(ctx, userId, args.sessionId);
 
     if (!session) {
       // Session doesn't exist (idempotent)
@@ -218,14 +211,7 @@ export const completePomodoro = mutation({
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject;
 
-    // Use indexed query to check ownership and status in one operation
-    const session = await ctx.db
-      .query("pomodoroSessions")
-      .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
-      )
-      .filter((q) => q.eq(q.field("_id"), args.sessionId))
-      .unique();
+    const session = await getOwnedSession(ctx, userId, args.sessionId);
 
     // If session doesn't exist or already completed, no-op (idempotent)
     if (!session || session.status === "completed") {
@@ -237,36 +223,6 @@ export const completePomodoro = mutation({
       status: "completed",
       remainingTime: 0,
       lastUpdated: Date.now(),
-    });
-
-    return null;
-  },
-});
-
-// Update session with background image URL (called from unsplash action)
-export const updateBackgroundImage = internalMutation({
-  args: { sessionId: v.id("pomodoroSessions"), imageUrl: v.string() },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    const userId = identity?.subject;
-
-    // Use indexed query to verify ownership
-    const session = await ctx.db
-      .query("pomodoroSessions")
-      .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
-      )
-      .filter((q) => q.eq(q.field("_id"), args.sessionId))
-      .unique();
-
-    if (!session) {
-      // Session doesn't exist or doesn't belong to user (idempotent)
-      return null;
-    }
-
-    await ctx.db.patch(args.sessionId, {
-      backgroundImageUrl: args.imageUrl,
     });
 
     return null;
@@ -287,14 +243,7 @@ export const updatePomodoroPreset = mutation({
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject;
 
-    // Use indexed query to verify ownership
-    const session = await ctx.db
-      .query("pomodoroSessions")
-      .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
-      )
-      .filter((q) => q.eq(q.field("_id"), args.sessionId))
-      .unique();
+    const session = await getOwnedSession(ctx, userId, args.sessionId);
 
     // Idempotent: if session doesn't exist, no-op
     if (!session) {
@@ -317,7 +266,7 @@ export const updatePomodoroPreset = mutation({
   },
 });
 
-// 🆕 New: Mutation to handle focus/break cycle transitions (Goal 2)
+// Mutation to handle focus/break cycle transitions (Goal 2)
 export const advancePomodoroPhase = mutation({
   args: {
     sessionId: v.id("pomodoroSessions"),
@@ -328,14 +277,7 @@ export const advancePomodoroPhase = mutation({
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject;
 
-    // Use indexed query instead of ctx.db.get()
-    const session = await ctx.db
-      .query("pomodoroSessions")
-      .withIndex("by_user", (q) =>
-        userId ? q.eq("userId", userId) : q.eq("userId", undefined)
-      )
-      .filter((q) => q.eq(q.field("_id"), args.sessionId))
-      .unique();
+    const session = await getOwnedSession(ctx, userId, args.sessionId);
 
     if (!session) return null; // idempotent safety
 

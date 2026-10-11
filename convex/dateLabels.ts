@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserId } from "./users";
 
 // Get all date labels for the current user
 export const getDateLabels = query({
@@ -11,12 +12,10 @@ export const getDateLabels = query({
     }),
   ),
   handler: async (ctx) => {
-    // Get authenticated user ID from WorkOS
-    // No auth required
-    if (false) {
-      
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      return [];
     }
-    const userId = "demo-user";
 
     const labels = await ctx.db
       .query("dateLabels")
@@ -38,12 +37,10 @@ export const setDateLabel = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Get authenticated user ID from WorkOS
-    // No auth required
-    if (false) {
-      
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
     }
-    const userId = "demo-user";
 
     // Check if label already exists
     const existing = await ctx.db
@@ -54,10 +51,12 @@ export const setDateLabel = mutation({
       .first();
 
     if (existing) {
-      // Update existing label
+      // Idempotent: skip the write when nothing changed
+      if (existing.label === args.label) {
+        return null;
+      }
       await ctx.db.patch(existing._id, { label: args.label });
     } else {
-      // Create new label
       await ctx.db.insert("dateLabels", {
         userId,
         date: args.date,
@@ -76,12 +75,10 @@ export const removeDateLabel = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Get authenticated user ID from WorkOS
-    // No auth required
-    if (false) {
-      
+    const userId = await getUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
     }
-    const userId = "demo-user";
 
     const existing = await ctx.db
       .query("dateLabels")

@@ -12,7 +12,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import http, log, subproc
+from . import env, health, http, log, subproc
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -70,7 +70,7 @@ def _has_injected_credentials() -> bool:
 
 def _has_process_credentials() -> bool:
     """Return True when AUTH_TOKEN/CT0 are present in process env."""
-    return bool(os.environ.get("AUTH_TOKEN") and os.environ.get("CT0"))
+    return bool(env.read_secret_env("AUTH_TOKEN") and env.read_secret_env("CT0"))
 
 
 def _subprocess_env() -> Dict[str, str]:
@@ -85,6 +85,19 @@ def _subprocess_env() -> Dict[str, str]:
 
 def _log(msg: str):
     log.source_log("Bird", msg, tty_only=False)
+
+
+def classify_run_failure(detail: str) -> str:
+    """Map Bird's subprocess-only failure shapes to run outcome states."""
+    text = detail.lower()
+    if any(marker in text for marker in ("interstitial", "non-json", "invalid json")):
+        return health.SCHEMA_DRIFT
+    if any(
+        marker in text
+        for marker in ("cookie expired", "expired cookie", "unauthorized", "forbidden", "login required")
+    ):
+        return health.AUTH_FAILED
+    return http.classify_failure(message=detail)
 
 
 def _extract_core_subject(topic: str) -> str:
@@ -270,11 +283,18 @@ def _run_bird_search(query: str, count: int, timeout: int) -> Dict[str, Any]:
         if terminal_error is not None:
             return terminal_error
 
-        if result.returncode != 0:
-            error = result.stderr.strip() or "Bird search failed"
-            return {"error": error, "items": []}
-
         output = result.stdout.strip()
+        if result.returncode != 0:
+            if not output:
+                error = result.stderr.strip() or "Bird search failed"
+                return {"error": error, "items": []}
+            # Windows/Node 24: the vendored Bird CLI uses native fetch (undici),
+            # and calling process.exit() while keep-alive sockets are still
+            # closing trips a libuv assertion -> non-zero exit code AFTER it has
+            # already written a complete, valid JSON result to stdout. Trust
+            # stdout when it has content; only treat a non-zero exit as a real
+            # failure when stdout is empty.
+
         if not output:
             return {"items": []}
 
@@ -442,11 +462,14 @@ def search_handles(
             _log(f"Handle search error for @{handle}: {e}")
             return []
 
-        if result.returncode != 0:
-            _log(f"Handle search failed for @{handle}: {result.stderr.strip()}")
-            return []
-
         output = result.stdout.strip()
+        if result.returncode != 0:
+            if not output:
+                _log(f"Handle search failed for @{handle}: {result.stderr.strip()}")
+                return []
+            # Windows/Node 24: benign libuv assertion can cause non-zero exit
+            # AFTER valid JSON is written to stdout. Trust stdout content.
+
         if not output:
             return []
 

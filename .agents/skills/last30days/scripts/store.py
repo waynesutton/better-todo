@@ -12,11 +12,13 @@ Database location: ~/.local/share/last30days/research.db
 
 import argparse
 import json
+import os
 import sqlite3
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, str(SCRIPT_DIR))
@@ -32,6 +34,45 @@ _db_override = None
 
 def _get_db_path() -> Path:
     return _db_override or DB_PATH
+
+
+@contextmanager
+def scoped_db(db_path: Optional[Path]) -> Iterator[None]:
+    """Route all store access inside the block to ``db_path``.
+
+    ``None`` keeps the shared store. Scoped runs (``--save-dir``) use this so
+    their findings land next to their briefs instead of leaking into the
+    shared research.db that unscoped searches read.
+    """
+    global _db_override
+    if db_path is None:
+        yield
+        return
+    previous = _db_override
+    _db_override = Path(db_path)
+    try:
+        yield
+    finally:
+        _db_override = previous
+
+
+def ensure_private_db_files(db_path: Optional[Path] = None) -> Path:
+    """Create/harden the research database and SQLite sidecars owner-only."""
+    path = db_path or _get_db_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.exists():
+        try:
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            pass
+        else:
+            os.close(fd)
+    for candidate in (path, Path(f"{path}-wal"), Path(f"{path}-shm")):
+        try:
+            candidate.chmod(0o600)
+        except FileNotFoundError:
+            pass
+    return path
 
 
 SCHEMA_V1 = """
@@ -543,8 +584,8 @@ def _record_sightings(
             finding.get("source", "unknown"),
             url,
             finding.get("source_title") or finding.get("title", ""),
-            finding.get("engagement_score", 0),
-            finding.get("relevance_score", 0),
+            finding.get("engagement_score") if finding.get("engagement_score") is not None else 0,
+            finding.get("relevance_score") if finding.get("relevance_score") is not None else 0,
         ))
 
     if not sighting_rows:

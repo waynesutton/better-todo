@@ -768,6 +768,7 @@ export const checkSlugAvailability = query({
 });
 
 // Get note by slug with image URLs (public query, no auth required)
+// Public projection: never return the owner's userId
 export const getNoteBySlug = query({
   args: {
     slug: v.string(),
@@ -776,7 +777,6 @@ export const getNoteBySlug = query({
     v.object({
       _id: v.id("fullPageNotes"),
       _creationTime: v.number(),
-      userId: v.string(),
       title: v.optional(v.string()),
       content: v.string(),
       format: v.optional(v.union(
@@ -833,7 +833,6 @@ export const getNoteBySlug = query({
     return {
       _id: note._id,
       _creationTime: note._creationTime,
-      userId: note.userId,
       title: note.title,
       content: note.content,
       format: note.format,
@@ -1124,14 +1123,10 @@ export const generateWeeklyRecapIntoNote = mutation({
     }
     const userId = identity.subject;
 
-    // Verify ownership via indexed query
-    const note = await ctx.db
-      .query("fullPageNotes")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.noteId))
-      .unique();
+    // Verify ownership with a direct get plus userId check
+    const note = await ctx.db.get(args.noteId);
 
-    if (!note) {
+    if (!note || note.userId !== userId) {
       throw new Error("Note not found or unauthorized");
     }
 

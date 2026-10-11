@@ -13092,3 +13092,346 @@ button:active,
     animation: none;
   }
 }
+
+/* Connected Agents (MCP) section in Settings */
+.agents-url {
+  overflow-x: auto;
+  white-space: nowrap;
+  user-select: all;
+}
+
+.agents-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.agents-name-input {
+  padding-right: 12px;
+  font-family: inherit;
+}
+
+.agents-new-key .api-key-save-btn {
+  margin-top: 10px;
+}
+
+.agents-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.agents-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+}
+
+.agents-row + .agents-row {
+  border-top: 1px solid var(--border-color);
+}
+
+.agents-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agents-row-title {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agents-row-meta {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.agents-row .api-key-delete-btn {
+  padding: 6px 8px;
+}
+
+/* Collapsible Grok Bot setup prompt */
+.agents-prompt {
+  margin-top: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+}
+
+.agents-prompt-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.agents-prompt-summary::-webkit-details-marker {
+  display: none;
+}
+
+.agents-prompt-summary:focus-visible {
+  outline: 2px solid var(--text-secondary);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.agents-prompt-chevron {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.agents-prompt[open] .agents-prompt-chevron {
+  transform: rotate(90deg);
+}
+
+.agents-prompt-body {
+  padding: 0 12px 12px;
+}
+
+.agents-prompt-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.agents-prompt-note {
+  flex: 1;
+  margin-top: 0;
+}
+
+.agents-prompt-text {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agents-prompt-chevron {
+    transition: none;
+  }
+}
+
+.agents-matched-tag {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Agent consent page (/connect) */
+.connect-page {
+  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10vh 20px 40px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.connect-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 32px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.connect-brand {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-size: var(--font-app-name);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.connect-title {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.connect-text {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.connect-small {
+  font-size: 12px;
+}
+
+.connect-unverified {
+  margin: 0 0 20px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--border-color);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.connect-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.connect-scopes {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.connect-device {
+  margin: 0 0 20px;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+}
+
+.connect-user-code {
+  margin: 4px 0 14px;
+  font-family: "SF Mono", Monaco, "Andale Mono", monospace;
+  font-size: 26px;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+}
+
+.connect-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.connect-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.connect-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.connect-btn:focus-visible,
+.connect-code-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.connect-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.connect-btn-primary {
+  border: 1px solid var(--mobile-add-button-bg);
+  background: var(--mobile-add-button-bg);
+  color: #ffffff;
+}
+
+.connect-btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.connect-btn-secondary {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.connect-btn-secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.connect-code-form {
+  display: flex;
+  gap: 8px;
+}
+
+.connect-code-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: "SF Mono", Monaco, "Andale Mono", monospace;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+
+.connect-error {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e16d76;
+}
+
+.connect-signin {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .connect-card {
+    padding: 24px 20px;
+  }
+}

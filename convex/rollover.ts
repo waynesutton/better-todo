@@ -2,20 +2,12 @@ import { mutation, internalMutation, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { getUserId } from "./users";
+import { formatDateInTz } from "./lib/time";
 
 // End of day auto rollover: moves the previous day's incomplete todos to the
 // current day and closes (archives) the previous day when it has no notes.
 // Runs hourly via cron (see crons.ts) so each opted-in user is processed
 // within the first hour after their local midnight.
-
-// Format a timestamp as YYYY-MM-DD in a given IANA timezone
-function formatDateInTz(ms: number, timezone: string): string {
-  const d = new Date(ms);
-  const y = d.toLocaleString("en-CA", { timeZone: timezone, year: "numeric" });
-  const m = d.toLocaleString("en-CA", { timeZone: timezone, month: "2-digit" });
-  const dd = d.toLocaleString("en-CA", { timeZone: timezone, day: "2-digit" });
-  return `${y}-${m}-${dd}`;
-}
 
 // Add days to a YYYY-MM-DD date string (UTC-safe string math)
 function addDays(dateStr: string, delta: number): string {

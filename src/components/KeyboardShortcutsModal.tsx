@@ -5,6 +5,7 @@ import { GearSix, Kanban, Keyboard, Rows } from "@phosphor-icons/react";
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { ConnectedAgentsSection } from "./ConnectedAgentsSection";
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -656,6 +657,9 @@ export function KeyboardShortcutsModal({
               </div>
             </div>
           )}
+
+          {/* Connected AI agents (MCP) */}
+          {isAuthenticated && <ConnectedAgentsSection />}
 
           {/* Code Blocks Section */}
           <div className="keyboard-shortcuts-category">

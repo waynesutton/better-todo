@@ -22,7 +22,7 @@ def _first_of(*values, default=None):
             return v
     return default
 
-from . import dates, http, log
+from . import dates, health, http, log
 
 SCRAPECREATORS_BASE = "https://api.scrapecreators.com/v1/reddit"
 
@@ -76,6 +76,16 @@ NOISE_WORDS = frozenset({
 
 def _log(msg: str):
     log.source_log("Reddit", msg, tty_only=False)
+
+
+def classify_run_failure(detail: str) -> str:
+    """Map Reddit auth and anti-bot responses that do not carry HTTP status."""
+    text = detail.lower()
+    if any(marker in text for marker in ("interstitial", "blocked by reddit", "too many requests")):
+        return health.RATE_LIMITED
+    if any(marker in text for marker in ("login required", "invalid token", "expired token")):
+        return health.AUTH_FAILED
+    return http.classify_failure(message=detail)
 
 
 def _extract_core_subject(topic: str) -> str:
@@ -487,7 +497,9 @@ def search_reddit(
         with ThreadPoolExecutor(max_workers=min(5, len(subreddits))) as executor:
             futures = {}
             for sub in subreddits:
-                futures[executor.submit(_subreddit_search, sub, core, token, "relevance", timeframe)] = sub
+                futures[http.submit_with_context(
+                    executor, _subreddit_search, sub, core, token, "relevance", timeframe,
+                )] = sub
             for future in as_completed(futures):
                 sub = futures[future]
                 sub_posts = future.result()
@@ -506,7 +518,9 @@ def search_reddit(
             # from relevant communities instead of keyword-matched noise.
             sort = "top" if intent in ("product", "comparison") else ("relevance" if i == 0 else "top")
             _log(f"Global search {i+1}/{max_global}: '{query}' (sort={sort})")
-            futures[executor.submit(_global_search, query, token, sort, timeframe)] = query
+            futures[http.submit_with_context(
+                executor, _global_search, query, token, sort, timeframe,
+            )] = query
         for future in as_completed(futures):
             query = futures[future]
             posts = future.result()
@@ -529,7 +543,9 @@ def search_reddit(
             futures = {}
             for sub in discovered_subs[:subreddit_limit]:
                 _log(f"Subreddit search: r/{sub} for '{core}'")
-                futures[executor.submit(_subreddit_search, sub, core, token, "relevance", timeframe)] = sub
+                futures[http.submit_with_context(
+                    executor, _subreddit_search, sub, core, token, "relevance", timeframe,
+                )] = sub
             for future in as_completed(futures):
                 sub = futures[future]
                 sub_posts = future.result()
@@ -622,7 +638,9 @@ def enrich_with_comments(
 
     with ThreadPoolExecutor(max_workers=min(4, len(top_items))) as executor:
         futures = {
-            executor.submit(fetch_post_comments, item.get("url", ""), token): item
+            http.submit_with_context(
+                executor, fetch_post_comments, item.get("url", ""), token,
+            ): item
             for item in top_items
             if item.get("url")
         }

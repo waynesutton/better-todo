@@ -1,5 +1,10 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import {
+  createNoteForUser,
+  getOwnedNote,
+  updateNoteForUser,
+} from "./lib/userData";
 
 // Get all notes for a specific date (excludes folder notes)
 export const getNotesByDate = query({
@@ -93,21 +98,7 @@ export const createNote = mutation({
     if (!identity) {
       throw new Error("Not authenticated");
     }
-    const userId = identity.subject;
-
-    // Use timestamp-based ordering instead of reading all notes
-    // This avoids write conflicts when creating multiple notes rapidly
-    const order = Date.now();
-
-    return await ctx.db.insert("notes", {
-      userId: userId,
-      date: args.date,
-      folderId: args.folderId,
-      title: args.title,
-      content: "",
-      order: order,
-      collapsed: false,
-    });
+    return await createNoteForUser(ctx, identity.subject, args);
   },
 });
 
@@ -128,26 +119,17 @@ export const updateNote = mutation({
     }
     const userId = identity.subject;
 
-    // Verify ownership using indexed query
-    const note = await ctx.db
-      .query("notes")
-      .withIndex("by_user_and_date", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("_id"), args.id))
-      .unique();
-
+    const note = await getOwnedNote(ctx, userId, args.id);
     if (!note) {
       throw new Error("Note not found or unauthorized");
     }
 
-    // Build updates object only with provided fields
-    const updates: Record<string, any> = {};
-    if (args.title !== undefined) updates.title = args.title;
-    if (args.content !== undefined) updates.content = args.content;
-    if (args.collapsed !== undefined) updates.collapsed = args.collapsed;
-    if (args.pinnedToTop !== undefined) updates.pinnedToTop = args.pinnedToTop;
-
-    // Patch after verifying ownership
-    await ctx.db.patch(args.id, updates);
+    await updateNoteForUser(ctx, args.id, {
+      title: args.title,
+      content: args.content,
+      collapsed: args.collapsed,
+      pinnedToTop: args.pinnedToTop,
+    });
     return null;
   },
 });
@@ -165,17 +147,7 @@ export const deleteNote = mutation({
     }
     const userId = identity.subject;
 
-    // Use indexed query to verify ownership without reading the document first
-    const note = await ctx.db
-      .query("notes")
-      .filter((q) => 
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("_id"), args.id)
-        )
-      )
-      .unique();
-    
+    const note = await getOwnedNote(ctx, userId, args.id);
     if (!note) {
       // Note doesn't exist or doesn't belong to user (idempotent)
       return null;

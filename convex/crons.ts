@@ -22,4 +22,12 @@ crons.cron(
   {},
 );
 
+// Daily: delete connected agent (MCP) activity older than 30 days
+crons.interval(
+  "cleanup old mcp activity",
+  { hours: 24 },
+  internal.mcpActivity.cleanupOldActivity,
+  {},
+);
+
 export default crons;

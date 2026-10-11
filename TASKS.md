@@ -8,6 +8,21 @@ git push -u origin main
 
 ## Recently Completed
 
+- Unreleased (uncommitted) - Grok Bot and MCP agents: per user MCP server, API keys and OAuth consent, smart matching with TypeSafe, activity log in Settings. PRD: prds/grokbot-mcp.md
+  - [x] `convex/lib/time.ts` and `convex/lib/userData.ts`, todos, notes and agent mutations refactored onto them
+  - [x] `@convex-dev/mcp` registered, 10 tools, 5 scopes, server instructions
+  - [x] `mcpActivity` table, Settings section, 30 day cleanup cron
+  - [x] 2026-10-10 07:38 UTC - Collapsed Grok Bot setup prompt with copy button in Connected Agents. No key in the prompt; Grok Bot asks for it through a masked secret request
+  - [x] `/connect` consent page with frame protection
+  - [x] vitest plus convex-test suite (10 tests), TypeSafe eval, convex-doctor 100
+  - [ ] Deploy: `npx convex deploy`, set `MCP_CONSENT_URL` on prod, deploy Netlify
+  - [x] `users.storeUser` now requires the caller's own identity
+- 2026-10-10 07:21 UTC - Security audit of all 138 public functions: date labels scoped per user, `storeUser` locked to caller, share page stops returning owner id, Clerk and react-router advisories patched. PRD: prds/security-audit-2026-10.md
+  - [x] Removed the Unsplash background action (public, spent quota without auth) and its pomodoro mutation
+  - [ ] Remove `UNSPLASH_ACCESS_KEY` from dev and prod env after deploy
+  - [ ] Decide what to do with the 1 orphaned `demo-user` date label in production
+  - [ ] Bump AI SDK when `@ai-sdk/provider-utils` drops `undici` 5
+
 - 2026-08-31 21:30 UTC - Todos in the floating PiP window can be dragged up and down to reorder. PRD: prds/float-window-todo-reorder.md
 - 2026-08-31 16:43 UTC - Copy and rollover keep source-day todo order, copy inserts in parallel, Agent Tasks can be turned off per user in Settings. PRD: prds/copy-order-and-agent-tasks-toggle.md
 

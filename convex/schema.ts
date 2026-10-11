@@ -354,4 +354,19 @@ export default defineSchema({
     noteId: v.id("fullPageNotes"),
     createdAt: v.number(),
   }).index("by_user_and_weekKey", ["userId", "weekKey"]),
+
+  // What connected AI agents (MCP) changed, shown in Settings. Written in the
+  // same transaction as each MCP write. Never stores tokens or full content.
+  mcpActivity: defineTable({
+    userId: v.string(),
+    connectionId: v.string(), // Component connection id (API key or OAuth grant)
+    clientId: v.optional(v.string()), // OAuth client id; undefined for API keys
+    tool: v.string(), // MCP tool name, e.g. "add_todo"
+    summary: v.string(), // Short text, at most 120 chars
+    targetDate: v.optional(v.string()), // YYYY-MM-DD the change landed on
+    matchConfidence: v.optional(v.number()), // Set when smart matching picked the record
+    createdAt: v.number(),
+  })
+    .index("by_userId_and_createdAt", ["userId", "createdAt"])
+    .index("by_createdAt", ["createdAt"]),
 });

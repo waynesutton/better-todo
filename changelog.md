@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Connect an AI assistant (MCP)** - Grok Bot, Claude, Cursor and other MCP clients can read and write your todos, notes and projects (not yet committed)
+  - MCP server at `https://<deployment>.convex.site/mcp`, built on `@convex-dev/mcp`. Each user gets their own connections and can revoke them in Settings
+  - Tools: `list_today`, `search`, `add_todo`, `add_note`, `complete_todo`, `update_todo`, `update_note`, `get_note`, `list_projects`, `get_project`. No delete tools
+  - Scopes `todos:read`, `todos:write`, `notes:read`, `notes:write`, `projects:read`. A read only key gets 403 on writes
+  - Agents can say "finish the rent todo" instead of passing an id. Exact and unique substring matches resolve in code, then optional TypeSafe ranking acts only on high confidence, otherwise the agent gets candidates to ask about
+  - "Today" uses your saved timezone, falling back to America/Los_Angeles
+  - Settings shows the MCP URL, API key creation, connections and the last 20 agent actions. Activity rows are deleted after 30 days
+  - Collapsed "Grok Bot setup prompt" with a copy button. The prompt carries the MCP URL but never the key, and tells Grok Bot to collect the key through a masked secret request, keep it out of chat, files and memory, then confirm with `list_today`
+  - `/connect` consent page for OAuth and device code clients. Shows scopes and redirect host, labels the client unverified, cannot be framed
+  - Shared `convex/lib/userData.ts` helpers now back the UI mutations and agent tools, so both paths behave the same
+  - First automated tests: `npm test` runs vitest with convex-test
+
 - **Drag to reorder in the floating window** - The floated out todo list is now sortable, so the order can be changed without going back to the main window (2026-08-31)
   - Hover a todo to reveal a grip on the left, then drag it up or down. Same `@dnd-kit` sortable the main list uses
   - Only the incomplete section is draggable. Completed todos stay below the Done divider, where their order carries no meaning
@@ -18,6 +30,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - New `agentTasksEnabled` field on `userPreferences`. Missing or true keeps the feature on
   - Off hides the sparkles header icon, Send to Agent, Run Note, the Agent Tasks view, Shift + A, and the shortcut row
   - `createAgentTask` rejects the write if the setting is off
+
+### Security
+
+- **Public function audit** - Swept all 138 public Convex functions for missing auth (not yet committed)
+  - Date labels were stored under one hardcoded `demo-user` id, so every account shared the same labels and anyone could edit them. They are now scoped to the signed in user. Labels saved before this fix no longer show
+  - `users.storeUser` had no auth check and trusted the `userId` argument. It now only writes the caller's own row
+  - Public share pages no longer return the note owner's user id
+  - `npm audit fix` patched Clerk (critical), react-router, axios, form-data, js-cookie, follow-redirects and AI SDK advisories without major version bumps
+  - `/meta/share` URL encodes the slug before placing it in HTML
+  - Weekly recap ownership check uses a direct get instead of a filtered range scan
+
+### Removed
+
+- **Unsplash backgrounds in Pomodoro full screen** - The public `unsplash.fetchBackgroundImage` action could be called by anyone and spent the Unsplash quota (not yet committed)
+  - Removed `convex/unsplash.ts`, the internal `updateBackgroundImage` mutation, and the fetch when a timer starts
+  - The full screen timer still works. The background toggle only appears for older sessions that already saved an image
+  - Pomodoro ownership checks now use a direct get plus userId check instead of filtered range scans
 
 ### Fixed
 

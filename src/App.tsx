@@ -24,6 +24,7 @@ import { Changelog } from "./pages/Changelog";
 import { StreaksPage } from "./pages/StreaksPage";
 import { NotFound } from "./pages/NotFound";
 import { Stats } from "./pages/Stats";
+import { Connect } from "./pages/Connect";
 import { SharedNoteView } from "./pages/SharedNoteView";
 import { format } from "date-fns";
 import { Search, Menu, X, MessageCircle, Sparkles } from "lucide-react";
@@ -2562,6 +2563,7 @@ function AppRouter() {
       <Route path="/changelog" element={<Changelog />} />
       <Route path="/stats" element={<Stats />} />
       <Route path="/streaks" element={<StreaksPage />} />
+      <Route path="/connect" element={<Connect />} />
       <Route path="/share/:slug" element={<SharedNoteView />} />
       <Route path="/d/:date" element={<App />} />
       <Route path="/p/:folderSlug" element={<App />} />

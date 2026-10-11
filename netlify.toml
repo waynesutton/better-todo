@@ -7,6 +7,13 @@
 path = "/share/*"
 function = "shareBotMeta"
 
+# Agent consent page (MCP) must never be framed (clickjacking)
+[[headers]]
+  for = "/connect"
+  [headers.values]
+    Content-Security-Policy = "frame-ancestors 'none'"
+    X-Frame-Options = "DENY"
+
 # SPA fallback - all routes go to index.html (React Router handles routing)
 [[redirects]]
   from = "/*"
